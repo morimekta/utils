@@ -2,6 +2,7 @@ package android.os;
 
 import android.util.SparseBooleanArray;
 
+import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -319,15 +320,61 @@ public final class Parcel {
     }
 
     public <T extends Parcelable> T readParcelable(ClassLoader loader) {
+        Parcelable.Creator<?> creator = readCreator(loader);
+        T out = creator.createFromParcel()
         return null;
     }
 
     public <T extends Parcelable> void writeParcelableArray(T[] arr, int flags) {
+        if (arr.length == 0) {
+            // Handle thingies.
+        }
+        Class<?> klass = arr[0].getClass();
+        writeCreator(klass);
+        for (int i = 0; i < arr.length; ++i) {
 
+        }
     }
 
     public <T extends Parcelable> T[] readParcelableArray(ClassLoader loader) {
+        Parcelable.Creator<?> creator = readCreator(loader);
         return null;
+    }
+
+    private Parcelable.Creator<?> getCreator(Class<?> klass) {
+        Parcelable.Creator<?> creator = null;
+        if (klass.equals(String.class)) {
+            creator = STRING_CREATOR;
+        } else {
+            try {
+                Field field = klass.getDeclaredField("CREATOR");
+                boolean accessible = field.isAccessible();
+                field.setAccessible(true);
+                creator = (Parcelable.Creator<?>) field.get(null);
+                field.setAccessible(accessible);
+            } catch (NoSuchFieldException e) {
+                e.printStackTrace();
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            }
+        }
+        return creator;
+    }
+
+    private Parcelable.Creator<?> readCreator(ClassLoader loader) {
+        if (loader == null) loader = ClassLoader.getSystemClassLoader();
+
+        String name = readString();
+        Parcelable.Creator<?> creator = null;
+        try {
+            return getCreator(loader.loadClass(name));
+        } catch (ClassNotFoundException cfe) {
+            return null;
+        }
+   }
+
+    private void writeCreator(Class<?> klass) {
+        writeString(klass.getName());
     }
 
     public <T extends Parcelable> void writeTypedObject(T source, int flags) {
@@ -432,21 +479,21 @@ public final class Parcel {
         long result = 0;
         switch (bytes) {
             case 8:
-                result |= (byte) (valueOf(from[pos + 7]) << 56);
+                result |= valueOf(from[pos + 7]) << 56;
             case 7:
-                result |= (byte) (valueOf(from[pos + 6]) << 48);
+                result |= valueOf(from[pos + 6]) << 48;
             case 6:
-                result |= (byte) (valueOf(from[pos + 5]) << 40);
+                result |= valueOf(from[pos + 5]) << 40;
             case 5:
-                result |= (byte) (valueOf(from[pos + 4]) << 32);
+                result |= valueOf(from[pos + 4]) << 32;
             case 4:
-                result |= (byte) (valueOf(from[pos + 3]) << 24);
+                result |= valueOf(from[pos + 3]) << 24;
             case 3:
-                result |= (byte) (valueOf(from[pos + 2]) << 16);
+                result |= valueOf(from[pos + 2]) << 16;
             case 2:
-                result |= (byte) (valueOf(from[pos + 1]) << 8);
+                result |= valueOf(from[pos + 1]) << 8;
             case 1:
-                result |= (byte) (valueOf(from[pos]));
+                result |= valueOf(from[pos]);
         }
         return result;
     }
