@@ -30,7 +30,7 @@ public interface Parcelable {
     /**
      * Creator class.
      */
-    interface Creator<P extends Parcelable> {
+    interface Creator<P> {
         /**
 	 * Create a new instance of the Parcelable class, instantiating it from
 	 * the given Parcel whose data had previously been written by
@@ -48,7 +48,7 @@ public interface Parcelable {
      * Specialization of Parcelable.Creator that allows you to receive the
      * ClassLoader the object is being created in.
      */
-    interface ClassLoaderCreator<P extends Parcelable> extends Creator<P> {
+    interface ClassLoaderCreator<P> extends Creator<P> {
         /**
 	 * Create a new instance of the Parcelable class, instantiating it from
 	 * the given Parcel whose data had previously been written by
