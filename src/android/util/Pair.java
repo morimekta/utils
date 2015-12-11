@@ -5,7 +5,7 @@ package android.util;
  * provides a sensible implementation of equals(), returning true if equals()
  * is true on each of the contained objects.
  */
-public class Pair<F, S> {
+public final class Pair<F, S> {
     public final F first;
     public final S second;
 
@@ -29,15 +29,8 @@ public class Pair<F, S> {
         if (o == null || !(o instanceof Pair)) return false;
         Pair<?,?> other = (Pair<?,?>) o;
 
-        if (first != null){
-            if (!first.equals(other.first)) return false;
-        } else if (other.first != null) return false;
-
-        if (second != null){
-            if (!second.equals(other.second)) return false;
-        } else if (other.second != null) return false;
-        
-        return true;
+        return (equals(first, other.first) &&
+                equals(second, other.second);
     }
     
     @Override
@@ -59,5 +52,10 @@ public class Pair<F, S> {
 
     private static String toString(Object o) {
         return o == null ? "null" : o.toString();
+    }
+
+    private static boolean equals(Object a, Object b) {
+        if (a == null || b == null) return (a == null && b == null);
+        return a.equals(b);
     }
 }
