@@ -16,3 +16,5 @@ bazel-bin
 bazel-genfiles
 bazel-testlogs
 bazel-out
+
+out/

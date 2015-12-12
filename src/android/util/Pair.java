@@ -46,7 +46,7 @@ public final class Pair<F, S> {
 
     @Override
     public String toString() {
-        return String.format("Pair(%s,%s)",
+        return String.format("(%s,%s)",
                              Objects.toString(first),
                              Objects.toString(second));
     }

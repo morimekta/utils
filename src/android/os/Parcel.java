@@ -2,16 +2,37 @@ package android.os;
 
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.Queue;
 
 import static java.lang.Math.ceil;
 import static java.lang.Math.min;
 import static java.lang.System.arraycopy;
+import static java.util.Arrays.fill;
 
 /**
- * ...
+ * Non-Android port of android serialization utility class.
+ * <p>
+ * Base post of the
+ * <a href="http://developer.android.com/reference/android/os/Parcel.html">android.os.Parcel</a>
+ * class. This is mimicking the interface and base functionality of the parcel,
+ * but not the IPC callable functionality. As opposed to the Android version
+ * this will serialize everything immediately. There are also a couple of
+ * methods *not* implemented as they refer to android-internal utility classes
+ * or android system functionality.
+ * <p>
+ * E.g. methods referencing android.util.* classes are omitted (SparseArray,
+ * Size, SizeF, IBinder).
+ * <p>
+ * The main reason for porting this is to be able to extensively test parcelable
+ * classes without needing the whole
+ * <p>
+ * Parcel: http://developer.android.com/reference/android/os/Parcel.html
+ * Parcelable: http://developer.android.com/reference/android/os/Parcelable.html
+ * <p>
+ * Also see {@link android.os.Parcelable}.
  */
 public final class Parcel {
     /**
@@ -20,6 +41,11 @@ public final class Parcel {
      * @return The obtained parcel.
      */
     public static Parcel obtain() {
+        synchronized (pool) {
+            if (pool.size() > 0) {
+                return pool.poll();
+            }
+        }
         return new Parcel();
     }
 
@@ -29,6 +55,17 @@ public final class Parcel {
     public void recycle() {
         size = 0;
         position = 0;
+        // clear data so it won't leak.
+        fill(buffer, 0, buffer.length, (byte) 0);
+
+        synchronized (pool) {
+            // If the pool is already full, cycle back in new parcels to enable
+            // refreshing memory.
+            if (pool.size() == kMaxPoolSize) {
+                pool.poll();
+            }
+            pool.offer(this);
+        }
     }
 
     public void appendFrom(Parcel parcel, int offset, int length) {
@@ -167,7 +204,8 @@ public final class Parcel {
 
     public String readString() {
         final int len = readInt();
-        if (len < 0) return null;
+        if (len < 0)
+            return null;
         ensureAvailable(len);
         String out = new String(buffer, position, len, StandardCharsets.UTF_8);
         position += len;
@@ -281,6 +319,7 @@ public final class Parcel {
     }
 
     public void writeIntArray(int[] arr) {
+        ensureCapacity(4 + (4 * arr.length));
         writeInt(arr.length);
         for (int i = 0; i < arr.length; ++i) {
             writeInt(arr[i]);
@@ -302,6 +341,7 @@ public final class Parcel {
     }
 
     public void writeLongArray(long[] arr) {
+        ensureCapacity(4 + (8 * arr.length));
         writeInt(arr.length);
         for (int i = 0; i < arr.length; ++i) {
             writeLong(arr[i]);
@@ -427,15 +467,31 @@ public final class Parcel {
     private int    size;
     private int    position;
 
+    private static final int kCapacityStep = 1 << 10;  // 1k per capacity step.
+    private static final int kMaxPoolSize  = 10;
+    private static final Queue<Parcel> pool;
+
+    static {
+        pool = new ArrayDeque<>(kMaxPoolSize);
+    }
+
+    // Only used in tests.
+    @SuppressWarnings("unused")
+    protected static void clearPool() {
+        synchronized (pool) {
+            pool.clear();
+        }
+    }
+
     private Parcel() {
-        buffer = new byte[1024];
+        buffer = new byte[kCapacityStep];
         size = 0;
         position = 0;
     }
 
     private void ensureCapacity(int capacity) {
         if (buffer.length < capacity) {
-            capacity = (int) ceil((float) capacity / 1024) * 1024;
+            capacity = (int) ceil((float) capacity / kCapacityStep) * kCapacityStep;
             byte[] newBuffer = new byte[capacity];
             arraycopy(buffer, 0, newBuffer, 0, size);
             buffer = newBuffer;
@@ -497,7 +553,7 @@ public final class Parcel {
     private void grow(int newSize) {
         if (newSize > size) {
             ensureCapacity(newSize);
-            Arrays.fill(buffer, size, newSize, (byte) 0);
+            fill(buffer, size, newSize, (byte) 0);
             size = newSize;
         }
     }

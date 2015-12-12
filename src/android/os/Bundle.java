@@ -1,5 +1,8 @@
 package android.os;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -216,35 +219,83 @@ public final class Bundle extends BaseBundle implements Parcelable {
                     Object value = entry.getValue().second;
                     switch (entry.getValue().first) {
                         case BUNDLE:
-                            Bundle b = (Bundle) value;
+                            Bundle b = cast(value);
                             b.writeToParcel(dest, flags);
                             break;
                         case BYTE:
-                            dest.writeByte((Byte) value);
+                            dest.writeByte(cast(value));
                             break;
                         case BYTE_ARRAY:
-                            dest.writeByteArray((byte[]) value);
+                            dest.writeByteArray(cast(value));
                             break;
                         case CHAR:
                             dest.writeCharArray(new char[]{(Character) value});
                             break;
                         case CHAR_ARRAY:
-                            dest.writeCharArray((char[]) value);
+                            dest.writeCharArray(cast(value));
                             break;
                         case CHAR_SEQUENCE:
                             dest.writeString(value.toString());
                             break;
                         case CHAR_SEQUENCE_ARRAY:
+                            CharSequence[] csarr = cast(value);
+                            String[] strarr = new String[csarr.length];
+                            for (int i = 0; i < csarr.length; ++i) {
+                                strarr[i] = csarr[i] == null ? null : csarr[i].toString();
+                            }
+                            dest.writeStringArray(strarr);
+                            break;
                         case FLOAT:
+                            dest.writeFloat(cast(value));
+                            break;
                         case FLOAT_ARRAY:
+                            dest.writeFloatArray(cast(value));
+                            break;
                         case INT_ARRAY_LIST:
+                            ArrayList<Integer> ali = cast(value);
+                            int[] iarr = new int[ali.size()];
+                            for (int i = 0; i < ali.size(); ++i) {
+                                iarr[i] = ali.get(i);
+                            }
+                            dest.writeIntArray(iarr);
+                            break;
                         case PARCELABLE:
+                            dest.writeParcelable(cast(value), 0);
+                            break;
                         case PARCELABLE_ARRAY:
+                            dest.writeParcelableArray(cast(value), 0);
+                            break;
                         case PARCELABLE_ARRAY_LIST:
+                            @SuppressWarnings("unchecked")
+                            ArrayList<Parcelable> alp = cast(value);
+                            dest.writeParcelableArray(alp.toArray(new Parcelable[alp.size()]), 0);
+                            break;
                         case SERIALIZABLE:
+                            try {
+                                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                                ObjectOutputStream oos = new ObjectOutputStream(baos);
+                                oos.writeObject(value);
+                                oos.flush();
+                                dest.writeByteArray(baos.toByteArray());
+                            } catch (IOException e) {
+                                throw new BadParcelableException("Value at key " + entry.getKey() + " is not serializable.");
+                            }
+                            break;
                         case SHORT:
+                            dest.writeInt((Short) value);
+                            break;
                         case SHORT_ARRAY:
+                            short[] sharr = cast(value);
+                            iarr = new int[sharr.length];
+                            for (int i = 0; i < sharr.length; ++i) {
+                                iarr[i] = sharr[i];
+                            }
+                            dest.writeIntArray(iarr);
+                            break;
                         case STRING_ARRAY_LIST:
+                            ArrayList<String> als = cast(value);
+                            dest.writeStringArray(als.toArray(new String[als.size()]));
+                            break;
                         default:
                             throw new BadParcelableException(
                                     "Unknown type for bundle serialization " + entry.getValue().first);
@@ -252,6 +303,11 @@ public final class Bundle extends BaseBundle implements Parcelable {
                 }
             }
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T> T cast(Object o) {
+        return (T) o;
     }
 
     public static Creator<Bundle> CREATOR = new ClassLoaderCreator<Bundle>() {

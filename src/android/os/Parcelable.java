@@ -1,5 +1,14 @@
 package android.os;
 
+/**
+ * Interface for classes whose instances can be written to and restored from a
+ * {@link Parcel}. Classes implementing the Parcelable interface must also have a
+ * non-null static field called <code>CREATOR</code> of a type that implements
+ * the {@link Parcelable.Creator} interface.
+ *
+ * See <a href="http://developer.android.com/reference/android/os/Parcelable.html">android.os.Parcelable</a>
+ * documentation for reference.
+ */
 public interface Parcelable {
     /**
      * Bit masks for use with describeContents(): each bit represents a kind of
