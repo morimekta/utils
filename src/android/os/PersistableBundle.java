@@ -9,13 +9,16 @@ import android.util.Pair;
 public final class PersistableBundle
         extends BaseBundle
         implements Parcelable {
-    public PersistableBundle() {
+    public PersistableBundle(int capacity) {
+        super(capacity);
     }
 
-    public PersistableBundle(int capacity) {
+    public PersistableBundle() {
+        this(0);
     }
 
     public PersistableBundle(PersistableBundle bundle) {
+        this(bundle.size());
         putAll(bundle);
     }
 

@@ -8,16 +8,6 @@ import java.util.Set;
 import android.util.Pair;
 
 public abstract class BaseBundle {
-    protected final Map<String, Pair<Type, Object>> map;
-
-    protected BaseBundle(Map<String, Pair<Type, Object>> map) {
-        this.map = Collections.synchronizedMap(map);
-    }
-
-    protected BaseBundle() {
-        this(new HashMap<>());
-    }
-
     /**
      * Clear the mapping contained in the Bundle.
      */
@@ -180,6 +170,18 @@ public abstract class BaseBundle {
 
     public void putStringArray(String key, String[] array) {
         put(key, Type.STRING_ARRAY, array);
+    }
+
+    // --- PROTECTED AFTER HERE ---
+
+    protected final Map<String, Pair<Type, Object>> map;
+
+    protected BaseBundle(Map<String, Pair<Type, Object>> map) {
+        this.map = Collections.synchronizedMap(map);
+    }
+
+    protected BaseBundle(int capacity) {
+        this(capacity > 0 ? new HashMap<>(capacity) : new HashMap<>());
     }
 
     protected <T> T get(String key, Type type, T defaultValue) {

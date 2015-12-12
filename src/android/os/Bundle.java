@@ -9,19 +9,19 @@ import android.util.Pair;
 
 public final class Bundle extends BaseBundle implements Parcelable {
     public Bundle() {
-        this.loader = ClassLoader.getSystemClassLoader();
+        this(null, 0);
     }
 
     public Bundle(ClassLoader loader) {
-        this.loader = loader != null ? loader : ClassLoader.getSystemClassLoader();
+        this(loader, 0);
     }
 
     public Bundle(int capacity) {
-        this();
+        this(null, capacity);
     }
 
     public Bundle(Bundle bundle) {
-        this.loader = bundle.loader;
+        this(bundle.loader, bundle.size());
         map.putAll(bundle.map);
     }
 
@@ -276,12 +276,18 @@ public final class Bundle extends BaseBundle implements Parcelable {
     @SuppressWarnings("unchecked")
     public static Bundle EMPTY = new Bundle(Collections.EMPTY_MAP);
 
-    private Bundle(Map<String, Pair<Type, Object>> map) {
-        super(map);
-    }
-
     // --- PRIVATE AFTER HERE ---
 
-    ClassLoader loader;
+    private Bundle(Map<String, Pair<Type, Object>> map) {
+        super(map);
+        this.loader = ClassLoader.getSystemClassLoader();
+    }
+
+    private Bundle(ClassLoader loader, int capacity) {
+        super(capacity);
+        this.loader = loader != null ? loader : ClassLoader.getSystemClassLoader();
+    }
+
+    private final ClassLoader loader;
 
 }
