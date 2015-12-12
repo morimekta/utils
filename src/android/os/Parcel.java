@@ -1,31 +1,19 @@
 package android.os;
 
-import android.util.SparseBooleanArray;
-
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static java.lang.Math.ceil;
+import static java.lang.Math.min;
 import static java.lang.System.arraycopy;
 
 /**
  * ...
  */
 public final class Parcel {
-    public static final Parcelable.Creator<String> STRING_CREATOR = new Parcelable.Creator<String>() {
-        @Override
-        public String createFromParcel(Parcel source) {
-            return source.readString();
-        }
-
-        @Override
-        public String[] newArray(int size) {
-            return new String[size];
-        }
-    };
-
     /**
      * Retrieve a new Parcel object from the pool.
      *
@@ -65,7 +53,8 @@ public final class Parcel {
 
     public void setDataCapacity(int capacity) {
         if (capacity < size) {
-            throw new IllegalArgumentException("New capacity " + capacity + " is smaller than current data size: " + size);
+            throw new IllegalArgumentException(
+                    "New capacity " + capacity + " is smaller than current data size: " + size);
         }
         byte[] tmp = new byte[capacity];
         arraycopy(buffer, 0, tmp, 0, size);
@@ -80,7 +69,8 @@ public final class Parcel {
     }
 
     public void setDataSize(int newSize) {
-        if (newSize == size) return;
+        if (newSize == size)
+            return;
         if (newSize < size) {
             trim(newSize);
         } else {
@@ -88,14 +78,14 @@ public final class Parcel {
         }
     }
 
-    public synchronized byte[] marshall() {
+    public byte[] marshall() {
         byte[] result = new byte[size];
         arraycopy(buffer, 0, result, 0, size);
         return result;
     }
 
-    public synchronized void unmarshall(byte[] data, int offset, int length) {
-        size = 0;
+    public void unmarshall(byte[] data, int offset, int length) {
+        position = size = 0;
         append(data, offset, length);
     }
 
@@ -164,17 +154,20 @@ public final class Parcel {
     }
 
     public void writeString(String s) {
-        byte[] bytes = s.getBytes(StandardCharsets.UTF_8);
-        ensureCapacity(size + 4 + bytes.length);
-        size += encode(bytes.length, buffer, size);
-        arraycopy(bytes, 0, buffer, size, bytes.length);
-        size += bytes.length;
+        if (s != null) {
+            byte[] bytes = s.getBytes(StandardCharsets.UTF_8);
+            ensureCapacity(size + 4 + bytes.length);
+            size += encode(bytes.length, buffer, size);
+            arraycopy(bytes, 0, buffer, size, bytes.length);
+            size += bytes.length;
+        } else {
+            writeInt(-1);
+        }
     }
 
     public String readString() {
-        ensureAvailable(4);
-        int len = (int) decode(buffer, position, 4);
-        position += 4;
+        final int len = readInt();
+        if (len < 0) return null;
         ensureAvailable(len);
         String out = new String(buffer, position, len, StandardCharsets.UTF_8);
         position += len;
@@ -192,13 +185,11 @@ public final class Parcel {
 
     public void readBooleanArray(boolean[] dest) {
         boolean[] arr = createBooleanArray();
-        arraycopy(arr, 0, dest, 0, Math.min(dest.length, arr.length));
+        arraycopy(arr, 0, dest, 0, min(dest.length, arr.length));
     }
 
     public boolean[] createBooleanArray() {
-        ensureAvailable(4);
-        int len = (int) decode(buffer, position, 4);
-        position += 4;
+        final int len = readInt();
         byte[] tmp = new byte[booleanArraySizeToBytes(len)];
         arraycopy(buffer, position, tmp, 0, tmp.length);
         position += tmp.length;
@@ -209,27 +200,24 @@ public final class Parcel {
         writeByteArray(arr, 0, arr.length);
     }
 
-    public synchronized void writeByteArray(byte[] arr, int offset, int len) {
+    public void writeByteArray(byte[] arr, int offset, int len) {
         ensureCapacity(size + 4 + len);
         size += encode(len, buffer, size);
         arraycopy(arr, offset, buffer, size, len);
         size += len;
     }
 
-    public synchronized void readByteArray(byte[] dest) {
-        ensureAvailable(4);
-        int len = (int) decode(buffer, position, 4);
-        int copyLen = Math.min(dest.length, len);
+    public void readByteArray(byte[] dest) {
+        final int len = readInt();
+        final int copyLen = min(dest.length, len);
         position += 4;
         ensureAvailable(len);
         arraycopy(buffer, position, dest, 0, copyLen);
         position += len;
     }
 
-    public synchronized byte[] createByteArray() {
-        ensureAvailable(4);
-        int len = (int) decode(buffer, position, 4);
-        position += 4;
+    public byte[] createByteArray() {
+        final int len = readInt();
         ensureAvailable(len);
         byte[] out = new byte[len];
         arraycopy(buffer, position, out, 0, len);
@@ -238,174 +226,206 @@ public final class Parcel {
     }
 
     public void writeCharArray(char[] arr) {
+        writeByteArray(chars2bytes(arr));
     }
 
     public void readCharArray(char[] dest) {
-
+        char[] out = createCharArray();
+        arraycopy(out, 0, dest, 0, min(out.length, dest.length));
     }
 
     public char[] createCharArray() {
-        return null;
+        return bytes2chars(createByteArray());
     }
 
     public void writeDoubleArray(double[] arr) {
-
+        writeInt(arr.length);
+        for (int i = 0; i < arr.length; ++i) {
+            writeDouble(arr[i]);
+        }
     }
 
     public void readDoubleArray(double[] dest) {
-
+        double[] out = createDoubleArray();
+        arraycopy(out, 0, dest, 0, min(dest.length, out.length));
     }
 
     public double[] createDoubleArray() {
-        return null;
+        final int len = readInt();
+        final double[] out = new double[len];
+        for (int i = 0; i < len; ++i) {
+            out[i] = readDouble();
+        }
+        return out;
     }
 
     public void writeFloatArray(float[] arr) {
+        writeInt(arr.length);
+        for (int i = 0; i < arr.length; ++i) {
+            writeFloat(arr[i]);
+        }
     }
 
     public void readFloatArray(float[] dest) {
-
+        float[] out = createFloatArray();
+        arraycopy(out, 0, dest, 0, min(dest.length, out.length));
     }
 
     public float[] createFloatArray() {
-        return null;
+        final int len = readInt();
+        final float[] out = new float[len];
+        for (int i = 0; i < len; ++i) {
+            out[i] = readFloat();
+        }
+        return out;
     }
 
     public void writeIntArray(int[] arr) {
-
+        writeInt(arr.length);
+        for (int i = 0; i < arr.length; ++i) {
+            writeInt(arr[i]);
+        }
     }
 
     public void readIntArray(int[] dest) {
-
+        int[] out = createIntArray();
+        arraycopy(out, 0, dest, 0, min(dest.length, out.length));
     }
 
     public int[] createIntArray() {
-        return null;
+        final int len = readInt();
+        final int[] out = new int[len];
+        for (int i = 0; i < len; ++i) {
+            out[i] = readInt();
+        }
+        return out;
     }
 
     public void writeLongArray(long[] arr) {
-
+        writeInt(arr.length);
+        for (int i = 0; i < arr.length; ++i) {
+            writeLong(arr[i]);
+        }
     }
 
     public void readLongArray(long[] dest) {
-
+        long[] out = createLongArray();
+        arraycopy(out, 0, dest, 0, min(dest.length, out.length));
     }
 
     public long[] createLongArray() {
-        return null;
+        final int len = readInt();
+        final long[] out = new long[len];
+        for (int i = 0; i < len; ++i) {
+            out[i] = readLong();
+        }
+        return out;
     }
 
     public void writeStringArray(String[] arr) {
-
+        writeInt(arr.length);
+        for (int i = 0; i < arr.length; ++i) {
+            writeString(arr[i]);
+        }
     }
 
     public void readStringArray(String[] dest) {
-
+        final int len = readInt();
+        for (int i = 0; i < len; i++) {
+            String tmp = readString();
+            if (i < dest.length) {
+                dest[i] = tmp;
+            }
+        }
     }
 
     public String[] createStringArray() {
-        return null;
-    }
-
-    public void writeSparseBooleanArray(SparseBooleanArray arr) {
-
-    }
-
-    public SparseBooleanArray readSparseBooleanArray() {
-        return null;
+        final int len = readInt();
+        String[] out = new String[len];
+        for (int i = 0; i < len; ++i) {
+            out[i] = readString();
+        }
+        return out;
     }
 
     public void writeParcelable(Parcelable p, int flags) {
-
+        writeCreator(p.getClass());
+        p.writeToParcel(this, flags);
     }
 
     public <T extends Parcelable> T readParcelable(ClassLoader loader) {
-        Parcelable.Creator<?> creator = readCreator(loader);
-        T out = creator.createFromParcel()
-        return null;
+        Parcelable.Creator<T> creator = readCreator(loader);
+        return creator.createFromParcel(this);
     }
 
     public <T extends Parcelable> void writeParcelableArray(T[] arr, int flags) {
-        if (arr.length == 0) {
-            // Handle thingies.
-        }
-        Class<?> klass = arr[0].getClass();
-        writeCreator(klass);
-        for (int i = 0; i < arr.length; ++i) {
-
-        }
+        writeCreator(arr.getClass().getComponentType());
+        writeTypedArray(arr, flags);
     }
 
     public <T extends Parcelable> T[] readParcelableArray(ClassLoader loader) {
-        Parcelable.Creator<?> creator = readCreator(loader);
-        return null;
-    }
-
-    private Parcelable.Creator<?> getCreator(Class<?> klass) {
-        Parcelable.Creator<?> creator = null;
-        if (klass.equals(String.class)) {
-            creator = STRING_CREATOR;
-        } else {
-            try {
-                Field field = klass.getDeclaredField("CREATOR");
-                boolean accessible = field.isAccessible();
-                field.setAccessible(true);
-                creator = (Parcelable.Creator<?>) field.get(null);
-                field.setAccessible(accessible);
-            } catch (NoSuchFieldException e) {
-                e.printStackTrace();
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
-            }
-        }
-        return creator;
-    }
-
-    private Parcelable.Creator<?> readCreator(ClassLoader loader) {
-        if (loader == null) loader = ClassLoader.getSystemClassLoader();
-
-        String name = readString();
-        Parcelable.Creator<?> creator = null;
-        try {
-            return getCreator(loader.loadClass(name));
-        } catch (ClassNotFoundException cfe) {
-            return null;
-        }
-   }
-
-    private void writeCreator(Class<?> klass) {
-        writeString(klass.getName());
+        Parcelable.Creator<T> creator = readCreator(loader);
+        return createTypedArray(creator);
     }
 
     public <T extends Parcelable> void writeTypedObject(T source, int flags) {
-
+        source.writeToParcel(this, flags);
     }
 
     public <T extends Parcelable> T readTypedObject(Parcelable.Creator<T> creator) {
-        return null;
+        return creator.createFromParcel(this);
     }
 
     public <T extends Parcelable> void writeTypedArray(T[] arr, int flags) {
-
+        ensureCapacity(size + 4);
+        size += encode(arr.length, buffer, size);
+        for (int i = 0; i < arr.length; ++i) {
+            writeTypedObject(arr[i], flags);
+        }
     }
 
     public <T extends Parcelable> T[] createTypedArray(Parcelable.Creator<T> creator) {
-        return null;
+        int len = (int) decode(buffer, position, 4);
+        T[] out = creator.newArray(len);
+        for (int i = 0; i < len; ++i) {
+            out[i] = readTypedObject(creator);
+        }
+        return out;
     }
 
     public <T extends Parcelable> void writeTypedList(List<T> list) {
-
+        writeInt(list.size());
+        for (T value : list) {
+            writeTypedObject(value, 0);
+        }
     }
 
     public <T extends Parcelable> ArrayList<T> createTypedArrayList(Parcelable.Creator<T> creator) {
-        return null;
+        final int size = readInt();
+        ArrayList<T> out = new ArrayList<>(size);
+        for (int i = 0; i < size; ++i) {
+            out.add(readTypedObject(creator));
+        }
+        return out;
     }
+
+    public static final Parcelable.Creator<String> STRING_CREATOR = new Parcelable.Creator<String>() {
+        @Override
+        public String createFromParcel(Parcel source) {
+            return source.readString();
+        }
+
+        @Override
+        public String[] newArray(int size) {
+            return new String[size];
+        }
+    };
 
     // --- PRIVATE AFTER HERE ---
 
     private byte[] buffer;
-    private int size;
-    private int position;
+    private int    size;
+    private int    position;
 
     private Parcel() {
         buffer = new byte[1024];
@@ -415,7 +435,7 @@ public final class Parcel {
 
     private void ensureCapacity(int capacity) {
         if (buffer.length < capacity) {
-            capacity = (int) Math.ceil(capacity / 1024) * 1024;
+            capacity = (int) ceil((float) capacity / 1024) * 1024;
             byte[] newBuffer = new byte[capacity];
             arraycopy(buffer, 0, newBuffer, 0, size);
             buffer = newBuffer;
@@ -424,19 +444,57 @@ public final class Parcel {
 
     private void ensureAvailable(int avail) {
         if ((position + avail) > size) {
-            throw new IllegalStateException(
+            throw new ParcelFormatException(
                     "Unable to read " + avail + " bytes at position " + position +
-                            " only " + (size - position) + " bytes available");
+                    " only " + (size - position) + " bytes available");
         }
     }
 
-    private synchronized void trim(int newSize) {
+    @SuppressWarnings("unchecked")
+    private <T> Parcelable.Creator<T> getCreator(Class<T> klass) {
+        if (klass.equals(String.class)) {
+            return (Parcelable.Creator<T>) STRING_CREATOR;
+        } else {
+            try {
+                Field field = klass.getDeclaredField("CREATOR");
+                boolean accessible = field.isAccessible();
+                field.setAccessible(true);
+                Parcelable.Creator<T> creator = (Parcelable.Creator<T>) field.get(null);
+                field.setAccessible(accessible);
+                return creator;
+            } catch (NoSuchFieldException e) {
+                throw new BadParcelableException("No creator for parcelable class " + klass.getSimpleName());
+            } catch (IllegalAccessException e) {
+                throw new BadParcelableException("Unable to access creator for class " + klass.getSimpleName());
+            }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> Parcelable.Creator<T> readCreator(ClassLoader loader) {
+        if (loader == null) {
+            loader = ClassLoader.getSystemClassLoader();
+        }
+
+        String name = readString();
+        try {
+            return getCreator((Class<T>) loader.loadClass(name));
+        } catch (ClassNotFoundException cfe) {
+            throw new BadParcelableException(cfe);
+        }
+    }
+
+    private void writeCreator(Class<?> klass) {
+        writeString(klass.getName());
+    }
+
+    private void trim(int newSize) {
         if (newSize < size) {
             size = newSize;
         }
     }
 
-    private synchronized void grow(int newSize) {
+    private void grow(int newSize) {
         if (newSize > size) {
             ensureCapacity(newSize);
             Arrays.fill(buffer, size, newSize, (byte) 0);
@@ -444,7 +502,7 @@ public final class Parcel {
         }
     }
 
-    private synchronized void append(byte[] array, int offset, int length) {
+    private void append(byte[] array, int offset, int length) {
         ensureCapacity(size + length);
         arraycopy(array, offset, buffer, size, length);
         size += length;
@@ -542,7 +600,28 @@ public final class Parcel {
     }
 
     private static long valueOf(byte b) {
-        if (b < 0) return 0x100 + b;
+        if (b < 0)
+            return 0x100 + b;
         return b;
     }
+
+    private byte[] chars2bytes(char[] chars) {
+        byte[] out = new byte[chars.length * 2];
+        for (int i = 0; i < chars.length; ++i) {
+            int op = i * 2;
+            out[op] = (byte) (chars[i] % 0x00ff);
+            out[op + 1] = (byte) ((chars[i] % 0xff00) >> 8);
+        }
+        return out;
+    }
+
+    private char[] bytes2chars(byte[] bytes) {
+        char[] out = new char[bytes.length / 2];
+        for (int i = 0; i < out.length; ++i) {
+            int bp = i * 2;
+            out[i] = (char) (bytes[bp + 1] << 8 ^ bytes[bp]);
+        }
+        return out;
+    }
 }
+

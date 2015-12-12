@@ -4,9 +4,9 @@ public interface Parcelable {
     /**
      * Bit masks for use with describeContents(): each bit represents a kind of
      * object considered to have potential special significance when
-     * marshalled.
+     * marshaled.
      */
-    static final int CONTENTS_FILE_DESCRIPTOR      = 0x00000001;
+    int CONTENTS_FILE_DESCRIPTOR = 0x00000001;
 
     /**
      * Flag for use with writeToParcel(Parcel, int): the object being written
@@ -14,11 +14,11 @@ public interface Parcelable {
      * someFunction()", "void someFunction(out Parcelable)", or "void
      * someFunction(inout Parcelable)".
      */
-    static final int PARCELABLE_WRITE_RETURN_VALUE = 0x00000001;
+    int PARCELABLE_WRITE_RETURN_VALUE = 0x00000001;
 
     /**
      * Describe the kinds of special objects contained in this Parcelable's
-     * marshalled representation.
+     * marshaled representation.
      */
     int describeContents();
 
@@ -32,9 +32,9 @@ public interface Parcelable {
      */
     interface Creator<P> {
         /**
-	 * Create a new instance of the Parcelable class, instantiating it from
-	 * the given Parcel whose data had previously been written by
-	 * Parcelable.writeToParcel().
+         * Create a new instance of the Parcelable class, instantiating it from
+         * the given Parcel whose data had previously been written by
+         * Parcelable.writeToParcel().
          */
         P createFromParcel(Parcel source);
 
@@ -48,11 +48,12 @@ public interface Parcelable {
      * Specialization of Parcelable.Creator that allows you to receive the
      * ClassLoader the object is being created in.
      */
-    interface ClassLoaderCreator<P> extends Creator<P> {
+    interface ClassLoaderCreator<P>
+            extends Creator<P> {
         /**
-	 * Create a new instance of the Parcelable class, instantiating it from
-	 * the given Parcel whose data had previously been written by
-	 * Parcelable.writeToParcel() and using the given ClassLoader.
+         * Create a new instance of the Parcelable class, instantiating it from
+         * the given Parcel whose data had previously been written by
+         * Parcelable.writeToParcel() and using the given ClassLoader.
          */
         P createFromParcel(Parcel source, ClassLoader loader);
     }
