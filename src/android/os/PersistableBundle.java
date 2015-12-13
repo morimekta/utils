@@ -6,6 +6,11 @@ import java.util.Objects;
 
 import android.util.Pair;
 
+/**
+ * A simpler variant of {@link Bundle} that only contains a few basic types
+ * and itself.
+ */
+@SuppressWarnings("unused")
 public final class PersistableBundle
         extends BaseBundle
         implements Parcelable {
@@ -66,17 +71,25 @@ public final class PersistableBundle
     @Override
     public void writeToParcel(Parcel dest, int flags) {
         synchronized (map) {
-            dest.writeInt(size());
-            for (Map.Entry<String, Pair<Type, Object>> entry : map.entrySet()) {
-                if (!writeToParcel(dest, entry.getKey(), entry.getValue().first, entry.getValue().second)) {
-                    if (entry.getValue().first.equals(Type.PERSISTABLE_BUNDLE)) {
-                        PersistableBundle inner = (PersistableBundle) entry.getValue().second;
-                        inner.writeToParcel(dest, flags);
-                    } else {
-                        throw new BadParcelableException(
-                                "Unknown type for persistable bundle serialization " + entry.getValue().first);
+            if (isWriting) {
+                throw new BadParcelableException("Trying to write with circular references.");
+            }
+            try {
+                isWriting = true;
+                dest.writeInt(size());
+                for (Map.Entry<String, Pair<Type, Object>> entry : map.entrySet()) {
+                    if (!writeToParcel(dest, entry.getKey(), entry.getValue().first, entry.getValue().second)) {
+                        if (entry.getValue().first.equals(Type.PERSISTABLE_BUNDLE)) {
+                            PersistableBundle inner = (PersistableBundle) entry.getValue().second;
+                            inner.writeToParcel(dest, flags);
+                        } else {
+                            throw new BadParcelableException(
+                                    "Unknown type for persistable bundle serialization " + entry.getValue().first);
+                        }
                     }
                 }
+            } finally {
+                isWriting = false;
             }
         }
     }
@@ -112,4 +125,6 @@ public final class PersistableBundle
     private PersistableBundle(Map<String, Pair<Type, Object>> map) {
         super(map);
     }
+
+    private boolean isWriting = false;
 }

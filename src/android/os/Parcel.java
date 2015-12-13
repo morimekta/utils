@@ -34,6 +34,7 @@ import static java.util.Arrays.fill;
  * <p>
  * Also see {@link android.os.Parcelable}.
  */
+@SuppressWarnings("unused")
 public final class Parcel {
     /**
      * Retrieve a new Parcel object from the pool.
@@ -277,9 +278,10 @@ public final class Parcel {
     }
 
     public void writeDoubleArray(double[] arr) {
+        ensureCapacity(4 + (8 * arr.length));
         writeInt(arr.length);
-        for (int i = 0; i < arr.length; ++i) {
-            writeDouble(arr[i]);
+        for (double d : arr) {
+            writeDouble(d);
         }
     }
 
@@ -298,9 +300,10 @@ public final class Parcel {
     }
 
     public void writeFloatArray(float[] arr) {
+        ensureCapacity(4 + (4 * arr.length));
         writeInt(arr.length);
-        for (int i = 0; i < arr.length; ++i) {
-            writeFloat(arr[i]);
+        for (float f : arr) {
+            writeFloat(f);
         }
     }
 
@@ -321,8 +324,8 @@ public final class Parcel {
     public void writeIntArray(int[] arr) {
         ensureCapacity(4 + (4 * arr.length));
         writeInt(arr.length);
-        for (int i = 0; i < arr.length; ++i) {
-            writeInt(arr[i]);
+        for (int i : arr) {
+            writeInt(i);
         }
     }
 
@@ -343,8 +346,8 @@ public final class Parcel {
     public void writeLongArray(long[] arr) {
         ensureCapacity(4 + (8 * arr.length));
         writeInt(arr.length);
-        for (int i = 0; i < arr.length; ++i) {
-            writeLong(arr[i]);
+        for (long l : arr) {
+            writeLong(l);
         }
     }
 
@@ -364,8 +367,8 @@ public final class Parcel {
 
     public void writeStringArray(String[] arr) {
         writeInt(arr.length);
-        for (int i = 0; i < arr.length; ++i) {
-            writeString(arr[i]);
+        for (String s : arr) {
+            writeString(s);
         }
     }
 
@@ -417,16 +420,15 @@ public final class Parcel {
     }
 
     public <T extends Parcelable> void writeTypedArray(T[] arr, int flags) {
-        ensureCapacity(size + 4);
-        size += encode(arr.length, buffer, size);
-        for (int i = 0; i < arr.length; ++i) {
-            writeTypedObject(arr[i], flags);
+        writeInt(arr.length);
+        for (T t : arr) {
+            writeTypedObject(t, flags);
         }
     }
 
     public <T extends Parcelable> T[] createTypedArray(Parcelable.Creator<T> creator) {
-        int len = (int) decode(buffer, position, 4);
-        T[] out = creator.newArray(len);
+        final int len = readInt();
+        final T[] out = creator.newArray(len);
         for (int i = 0; i < len; ++i) {
             out[i] = readTypedObject(creator);
         }

@@ -4,8 +4,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 /**
- * @author Stein Eldar Johnsen
- * @since 12.12.15.
+ * Parcelable wrapper around the {@link java.util.UUID} class.
  */
 public class ParcelUuid implements Parcelable {
     public ParcelUuid(UUID uuid) {

@@ -1,8 +1,7 @@
 package android.util;
 
 /**
- * @author Stein Eldar Johnsen
- * @since 11.12.15.
+ * One of the core exceptions in android.
  */
 public class AndroidException
         extends Exception {

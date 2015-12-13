@@ -7,7 +7,14 @@ import java.util.Set;
 
 import android.util.Pair;
 
-
+/**
+ * Base class for the two Bundle classes. This mimicks the android.os class
+ * hierarchy, and generalized the two Bundle classes nicely.
+ *
+ * NOTE: Though I don't understand all of the choices of which types to allow
+ * where (@morimekta).
+ */
+@SuppressWarnings("unused")
 public abstract class BaseBundle {
     /**
      * Clear the mapping contained in the Bundle.
@@ -185,6 +192,7 @@ public abstract class BaseBundle {
         this(capacity > 0 ? new HashMap<>(capacity) : new HashMap<>());
     }
 
+    @SuppressWarnings("unchecked")
     protected <T> T get(String key, Type type, T defaultValue) {
         Pair<Type, Object> val = map.get(key);
         if (val != null && type.equals(val.first)) {
@@ -201,7 +209,7 @@ public abstract class BaseBundle {
         dest.writeString(key);
         dest.writeInt(type.ordinal());
         if (value == null) {
-            dest.writeByte((byte)0);
+            dest.writeByte((byte) 0);
             return true;
         }
         dest.writeByte((byte) 1);
@@ -323,8 +331,7 @@ public abstract class BaseBundle {
         SERIALIZABLE,
         SHORT,
         SHORT_ARRAY,
-        STRING_ARRAY_LIST,
-        ;
+        STRING_ARRAY_LIST,;
 
         public static Type valueOf(int ordinal) {
             for (Type type : values()) {

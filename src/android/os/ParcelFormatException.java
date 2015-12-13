@@ -1,8 +1,7 @@
 package android.os;
 
 /**
- * @author Stein Eldar Johnsen
- * @since 11.12.15.
+ * Exception that happens while unmarshaling a parcel back to objects.
  */
 public class ParcelFormatException
         extends RuntimeException {

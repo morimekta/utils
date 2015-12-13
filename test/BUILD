@@ -5,4 +5,5 @@ java_test(
         '//src',
         '//third-party:junit'
     ],
+    size = 'small',
 )

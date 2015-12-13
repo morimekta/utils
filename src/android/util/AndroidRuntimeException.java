@@ -1,8 +1,7 @@
 package android.util;
 
 /**
- * @author Stein Eldar Johnsen
- * @since 11.12.15.
+ * Runtime exceptions for android.
  */
 public class AndroidRuntimeException
         extends RuntimeException {

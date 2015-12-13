@@ -3,8 +3,7 @@ package android.os;
 import android.util.AndroidRuntimeException;
 
 /**
- * @author Stein Eldar Johnsen
- * @since 11.12.15.
+ * Exception thrown then the parcelable contains data unsuited for parcelling.
  */
 public class BadParcelableException
         extends AndroidRuntimeException {
