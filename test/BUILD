@@ -3,5 +3,6 @@ java_test(
     srcs = glob(['**/*.java']),
     deps = [
         '//src',
+        '//third-party:junit'
     ],
 )
