@@ -18,3 +18,4 @@ bazel-testlogs
 bazel-out
 
 out/
+out
