@@ -1,15 +1,15 @@
 package android.util;
 
-import java.util.UUID;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.runners.BlockJUnit4ClassRunner;
+
+import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
-@RunWith(JUnit4.class)
+@RunWith(BlockJUnit4ClassRunner.class)
 public class PairTest {
     @Test
     public void testEquals() {

@@ -1,8 +1,8 @@
 java_test(
     name = "test",
-    srcs = glob(['**/*.java']),
+    srcs = glob(['**/*Test.java']),
     deps = [
-        '//src',
+        '//java:java',
         '//third-party:junit'
     ],
     size = 'small',

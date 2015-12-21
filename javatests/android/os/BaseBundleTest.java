@@ -1,19 +1,18 @@
 package android.os;
 
-import java.util.Collections;
-import java.util.Map;
-
 import android.util.Pair;
-
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.runners.BlockJUnit4ClassRunner;
+
+import java.util.Collections;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 
-@RunWith(JUnit4.class)
+@RunWith(BlockJUnit4ClassRunner.class)
 public class BaseBundleTest {
     @Rule
     public ExpectedException thrown = ExpectedException.none();

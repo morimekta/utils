@@ -3,12 +3,12 @@ package android.os;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.runners.BlockJUnit4ClassRunner;
 
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
 
-@RunWith(JUnit4.class)
+@RunWith(BlockJUnit4ClassRunner.class)
 public class ParcelTest {
     @After
     public void tearDown() {
