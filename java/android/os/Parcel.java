@@ -627,30 +627,30 @@ public final class Parcel {
         return isTrue(arr[pos / 8], pos % 8);
     }
 
-    private static byte setBit(byte b, boolean value, int pos) {
-        byte mask = (byte) (0xFF ^ (0x01 << pos));
-        byte bit = (byte) (value ? (0x01 << pos) : 0);
-        return (byte) ((b & mask) | bit);
+    private static int setBit(int b, boolean value, int pos) {
+        int bit = (value ? (0x01 << pos) : 0);
+        return b | bit;
     }
 
     private static byte[] packBits(boolean[] arr) {
-        int len = booleanArraySizeToBytes(arr.length);
-        byte[] dest = new byte[len];
-        for (int i = 0; i < dest.length; ++i) {
-            byte b = 0;
-            for (int j = 0; j < 8; ++j) {
-                int pos = 8 * j + i;
+        final int len = booleanArraySizeToBytes(arr.length);
+        final byte[] dest = new byte[len];
+
+        int pos = 0;
+        for (int i = 0; i < len; ++i) {
+            int b = 0;
+            for (int j = 0; j < 8; ++j, ++pos) {
                 if (pos < arr.length) {
                     b = setBit(b, arr[pos], j);
                 }
             }
-            dest[i] = b;
+            dest[i] = (byte) b;
         }
         return dest;
     }
 
     private static boolean[] unpackBits(byte[] arr, int len) {
-        boolean[] out = new boolean[len];
+        final boolean[] out = new boolean[len];
         for (int i = 0; i < len; ++i) {
             out[i] = isTrue(arr, i);
         }
@@ -674,10 +674,14 @@ public final class Parcel {
     }
 
     private char[] bytes2chars(byte[] bytes) {
-        char[] out = new char[bytes.length / 2];
+        char[] out = new char[bytes.length / Character.BYTES];
         for (int i = 0; i < out.length; ++i) {
             int bp = i * 2;
-            out[i] = (char) (bytes[bp + 1] << 8 ^ bytes[bp]);
+            int a = bytes[bp + 1];
+            if (a < 0) a = 0x100 + a;
+            int b = bytes[bp];
+            if (b < 0) b = 0x100 + b;
+            out[i] = (char) (a << 8 | b);
         }
         return out;
     }
