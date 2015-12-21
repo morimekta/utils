@@ -580,14 +580,14 @@ public final class Parcel {
     }
 
     private static int encode(long value, byte[] into, int offset) {
-        into[offset] = (byte) (value & 0x00000000000000ffL);
-        into[offset + 1] = (byte) ((value % 0x000000000000ff00L) >> 8);
-        into[offset + 2] = (byte) ((value % 0x0000000000ff0000L) >> 16);
-        into[offset + 3] = (byte) ((value % 0x00000000ff000000L) >> 24);
-        into[offset + 4] = (byte) ((value % 0x000000ff00000000L) >> 32);
-        into[offset + 5] = (byte) ((value % 0x0000ff0000000000L) >> 40);
-        into[offset + 6] = (byte) ((value % 0x00ff000000000000L) >> 48);
-        into[offset + 7] = (byte) ((value % 0xff00000000000000L) >> 56);
+        into[offset]     = (byte)  (value & 0x00000000000000ffL);
+        into[offset + 1] = (byte) ((value & 0x000000000000ff00L) >> 8);
+        into[offset + 2] = (byte) ((value & 0x0000000000ff0000L) >> 16);
+        into[offset + 3] = (byte) ((value & 0x00000000ff000000L) >> 24);
+        into[offset + 4] = (byte) ((value & 0x000000ff00000000L) >> 32);
+        into[offset + 5] = (byte) ((value & 0x0000ff0000000000L) >> 40);
+        into[offset + 6] = (byte) ((value & 0x00ff000000000000L) >> 48);
+        into[offset + 7] = (byte) ((value & 0xff00000000000000L) >> 56);
         return 8;
     }
 
