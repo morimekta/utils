@@ -5,10 +5,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.BlockJUnit4ClassRunner;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertSame;
+import java.util.ArrayList;
+import java.util.Random;
+
+import static org.junit.Assert.*;
 
 @RunWith(BlockJUnit4ClassRunner.class)
 public class ParcelTest {
@@ -201,54 +201,191 @@ public class ParcelTest {
     public void testFloatArray() {
         Parcel parcel = Parcel.obtain();
 
+        float[] arr1 = new float[]{-7.8f, 7.8f, -3.4028231753567E38f, 7.006499E-46f};
+        float[] arr2 = new float[]{};
+
+        parcel.writeFloatArray(arr1);
+        parcel.writeFloatArray(arr2);
+
+        assertArrayEquals(arr1, parcel.createFloatArray(), 0.000000001f);
+        assertArrayEquals(arr2, parcel.createFloatArray(), 0.000000001f);
+        assertEquals(0, parcel.dataAvail());
     }
 
     @Test
     public void testIntArray() {
         Parcel parcel = Parcel.obtain();
 
+        int[] arr1 = new int[]{-78, 78, -340282317, 700649900};
+        int[] arr2 = new int[]{};
+
+        parcel.writeIntArray(arr1);
+        parcel.writeIntArray(arr2);
+
+        assertArrayEquals(arr1, parcel.createIntArray());
+        assertArrayEquals(arr2, parcel.createIntArray());
+        assertEquals(0, parcel.dataAvail());
     }
 
     @Test
     public void testLongArray() {
         Parcel parcel = Parcel.obtain();
 
+        long[] arr1 = new long[]{-78, 78, -3402823174735833452L, 3402823174735833452L};
+        long[] arr2 = new long[]{};
+
+        parcel.writeLongArray(arr1);
+        parcel.writeLongArray(arr2);
+
+        assertArrayEquals(arr1, parcel.createLongArray());
+        assertArrayEquals(arr2, parcel.createLongArray());
+        assertEquals(0, parcel.dataAvail());
     }
 
     @Test
     public void testStringArray() {
         Parcel parcel = Parcel.obtain();
 
+        String[] arr1 = new String[]{};
+        String[] arr2 = new String[]{"all", "work", "and", "no", "play", "makes", "jack", "a", "dull", "boy"};
+
+        parcel.writeStringArray(arr1);
+        parcel.writeStringArray(arr2);
+
+        assertArrayEquals(arr1, parcel.createStringArray());
+        assertArrayEquals(arr2, parcel.createStringArray());
+        assertEquals(0, parcel.dataAvail());
     }
 
     @Test
     public void testParcelable() {
         Parcel parcel = Parcel.obtain();
 
+        TestParcelable parcelable = new TestParcelable();
+        parcelable.number = 666;
+
+        parcel.writeParcelable(parcelable, 0);
+
+        TestParcelable copy = parcel.readParcelable(ClassLoader.getSystemClassLoader());
+
+        assertNotSame(parcelable, copy);
+        assertEquals(parcelable.number, copy.number);
+        assertEquals(0, parcel.dataAvail());
     }
 
     @Test
     public void testParcelableArray() {
         Parcel parcel = Parcel.obtain();
 
+        Random random = new Random();
+
+        TestParcelable[] arr = new TestParcelable[400];
+        for (int i = 0; i < arr.length; ++i) {
+            arr[i] = new TestParcelable();
+            arr[i].number = random.nextInt();
+            if (arr[i].number % 4 == 0) {
+                arr[i].parcelable = new TestParcelable();
+                arr[i].parcelable.number = random.nextInt();
+            }
+        }
+
+        parcel.writeParcelableArray(arr, 0);
+
+        TestParcelable[] out = parcel.readParcelableArray(ClassLoader.getSystemClassLoader());
+
+        assertEquals(arr.length, out.length);
+
+        for (int i = 0; i < out.length; ++i) {
+            assertEquals(arr[i].number, out[i].number);
+            if (arr[i].parcelable != null) {
+                assertNotNull(out[i].parcelable);
+                assertEquals(arr[i].parcelable.number, out[i].parcelable.number);
+            }
+        }
+        assertEquals(0, parcel.dataAvail());
     }
 
     @Test
     public void testTypedObject() {
         Parcel parcel = Parcel.obtain();
 
+        TestParcelable parcelable = new TestParcelable();
+        parcelable.number = 666;
+
+        parcel.writeTypedObject(parcelable, 0);
+
+        TestParcelable copy = parcel.readTypedObject(TestParcelable.CREATOR);
+
+        assertNotSame(parcelable, copy);
+        assertEquals(parcelable.number, copy.number);
+        assertEquals(0, parcel.dataAvail());
     }
 
     @Test
     public void testTypedArray() {
         Parcel parcel = Parcel.obtain();
 
+        Random random = new Random();
+
+        TestParcelable[] arr = new TestParcelable[400];
+        for (int i = 0; i < arr.length; ++i) {
+            arr[i] = new TestParcelable();
+            arr[i].number = random.nextInt();
+            if (arr[i].number % 4 == 0) {
+                arr[i].typedObject = new TestParcelable();
+                arr[i].typedObject.number = random.nextInt();
+            }
+        }
+
+        parcel.writeTypedArray(arr, 0);
+
+        TestParcelable[] out = parcel.createTypedArray(TestParcelable.CREATOR);
+
+        assertEquals(arr.length, out.length);
+
+        for (int i = 0; i < out.length; ++i) {
+            assertEquals(arr[i].number, out[i].number);
+            if (arr[i].typedObject != null) {
+                assertNotNull(out[i].typedObject);
+                assertEquals(arr[i].typedObject.number, out[i].typedObject.number);
+            }
+        }
+        assertEquals(0, parcel.dataAvail());
     }
 
     @Test
     public void testTypedArrayList() {
         Parcel parcel = Parcel.obtain();
 
+        Random random = new Random();
+
+        ArrayList<TestParcelable> list = new ArrayList<>(400);
+        for (int i = 0; i < 400; ++i) {
+            TestParcelable tmp = new TestParcelable();
+            tmp.number = random.nextInt();
+            if (tmp.number % 4 == 0) {
+                tmp.typedObject = new TestParcelable();
+                tmp.typedObject.number = random.nextInt();
+            }
+            list.add(tmp);
+        }
+
+        parcel.writeTypedList(list);
+
+        ArrayList<TestParcelable> out = parcel.createTypedArrayList(TestParcelable.CREATOR);
+
+        assertEquals(list.size(), out.size());
+
+        for (int i = 0; i < out.size(); ++i) {
+            TestParcelable a = list.get(i);
+            TestParcelable b = out.get(i);
+            assertEquals(a.number, b.number);
+            if (a.typedObject != null) {
+                assertNotNull(b.typedObject);
+                assertEquals(a.typedObject.number, b.typedObject.number);
+            }
+        }
+        assertEquals(0, parcel.dataAvail());
     }
 
     public static class TestParcelable
