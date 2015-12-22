@@ -2,10 +2,7 @@ package android.os;
 
 import android.util.Pair;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Base class for the two Bundle classes. This mimicks the android.os class
@@ -178,6 +175,83 @@ public abstract class BaseBundle {
 
     public void putStringArray(String key, String[] array) {
         put(key, Type.STRING_ARRAY, array);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == this) {
+            return true;
+        }
+        if (o == null || !(getClass().equals(o.getClass()))) {
+            return false;
+        }
+        BaseBundle other = (BaseBundle) o;
+
+        if (!keySet().equals(other.keySet())) {
+            return false;
+        }
+        for (String key : keySet()) {
+            Pair<Type, Object> a = map.get(key);
+            Pair<Type, Object> b = other.map.get(key);
+            if (!a.first.equals(b.first)) return false;
+            // Note: This is bacause array comparison needs to call special
+            // methods. array.equals() is not enough.
+            switch (a.first) {
+                case BOOLEAN_ARRAY:
+                    if (!Arrays.equals((boolean[]) a.second, (boolean[])b.second)) {
+                        return false;
+                    }
+                    break;
+                case BYTE_ARRAY:
+                    if (!Arrays.equals((byte[]) a.second, (byte[])b.second)) {
+                        return false;
+                    }
+                    break;
+                case SHORT_ARRAY:
+                    if (!Arrays.equals((short[]) a.second, (short[])b.second)) {
+                        return false;
+                    }
+                    break;
+                case INT_ARRAY:
+                    if (!Arrays.equals((int[]) a.second, (int[])b.second)) {
+                        return false;
+                    }
+                    break;
+                case LONG_ARRAY:
+                    if (!Arrays.equals((long[]) a.second, (long[])b.second)) {
+                        return false;
+                    }
+                    break;
+                case FLOAT_ARRAY:
+                    if (!Arrays.equals((float[]) a.second, (float[])b.second)) {
+                        return false;
+                    }
+                    break;
+                case DOUBLE_ARRAY:
+                    if (!Arrays.equals((double[]) a.second, (double[])b.second)) {
+                        return false;
+                    }
+                    break;
+                case CHAR_ARRAY:
+                    if (!Arrays.equals((char[]) a.second, (char[])b.second)) {
+                        return false;
+                    }
+                    break;
+                case STRING_ARRAY:
+                case CHAR_SEQUENCE_ARRAY:
+                case PARCELABLE_ARRAY:
+                    if (!Arrays.equals((Object[]) a.second, (Object[])b.second)) {
+                        return false;
+                    }
+                    break;
+                default:
+                    if (!Objects.equals(a.second, b.second)) {
+                        return false;
+                    }
+                    break;
+            }
+        }
+        return true;
     }
 
     // --- PROTECTED AFTER HERE ---

@@ -9,8 +9,9 @@ import org.junit.runners.BlockJUnit4ClassRunner;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 @RunWith(BlockJUnit4ClassRunner.class)
 public class BaseBundleTest {
@@ -33,9 +34,61 @@ public class BaseBundleTest {
         BaseBundle empty = new BaseBundleImpl(Collections.EMPTY_MAP);
         assertEquals(0, empty.size());
 
+        assertTrue(empty.isEmpty());
+        assertFalse(empty.containsKey("KEY"));
+
         // Check that its NOT writable.
         thrown.expect(UnsupportedOperationException.class);
         empty.putString("KEY", "value");
+    }
+
+    @Test
+    public void testKeySet() {
+        BaseBundle bundle = new BaseBundleImpl(10);
+        bundle.putBoolean("A", true);
+        bundle.putBoolean("B", true);
+        bundle.putBoolean("C", false);
+        bundle.putBoolean("D", false);
+        bundle.putBoolean("E", true);
+
+        Set<String> set = bundle.keySet();
+
+        assertTrue(set.contains("A"));
+        assertTrue(set.contains("B"));
+        assertTrue(set.contains("C"));
+        assertTrue(set.contains("D"));
+        assertTrue(set.contains("E"));
+        assertEquals(5, set.size());
+
+        assertTrue(bundle.containsKey("A"));
+        assertTrue(bundle.containsKey("B"));
+        assertTrue(bundle.containsKey("C"));
+        assertTrue(bundle.containsKey("D"));
+        assertTrue(bundle.containsKey("E"));
+        assertEquals(5, bundle.size());
+    }
+
+    @Test
+    public void testBoolean() {
+        BaseBundle bundle = new BaseBundleImpl(10);
+        bundle.putBoolean("A", true);
+        bundle.putBoolean("B", false);
+        bundle.putBoolean("C", true);
+        bundle.putBoolean("D", false);
+        bundle.putBoolean("E", true);
+
+        assertTrue(bundle.getBoolean("A", false));
+        assertFalse(bundle.getBoolean("B", true));
+        assertTrue(bundle.getBoolean("C", false));
+        assertFalse(bundle.getBoolean("D", true));
+        assertTrue(bundle.getBoolean("E", false));
+
+        // non-existing
+        assertFalse(bundle.getBoolean("F", false));
+        assertTrue(bundle.getBoolean("G", true));
+
+        // wrong type.
+        assertEquals(4, bundle.getInt("B", 4));
     }
 
     private class BaseBundleImpl

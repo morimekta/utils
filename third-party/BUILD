@@ -6,6 +6,7 @@ java_library(
   ],
   testonly = 1,
   visibility = ['//visibility:public'],
-  resources = ['LICENSE-Apache-2.0'],
   licenses = ['notice'],
 )
+
+exports_files(glob(['LICENSE-*']))
