@@ -28,8 +28,12 @@ public final class Pair<F, S> {
 
     @Override
     public boolean equals(Object o) {
-        if (o == null || !(o instanceof Pair))
+        if (o == this) {
+            return true;
+        }
+        if (o == null || !(o instanceof Pair)) {
             return false;
+        }
         Pair<?, ?> other = (Pair<?, ?>) o;
 
         return (Objects.equals(first, other.first) &&
@@ -38,10 +42,7 @@ public final class Pair<F, S> {
 
     @Override
     public int hashCode() {
-        int hash = Pair.class.hashCode();
-        hash ^= Objects.hashCode(first);
-        hash ^= Objects.hashCode(second);
-        return hash;
+        return Objects.hash(Pair.class, first, second);
     }
 
     @Override

@@ -26,10 +26,12 @@ public class PairTest {
         Pair<Integer, String> a = Pair.create(4, "a");
         Pair<Integer, String> b1 = Pair.create(4, "b");
         Pair<Integer, String> b2 = Pair.create(4, "b");
-        Pair<UUID, String> c = Pair.create(null, "c");
+        Pair<UUID, String> c1 = Pair.create(null, "c");
+        Pair<String, UUID> c2 = Pair.create("c", null);
 
         assertNotEquals(a.hashCode(), b1.hashCode());
         assertEquals(b1.hashCode(), b2.hashCode());
+        assertNotEquals(c1.hashCode(), c2.hashCode());
     }
 
     @Test
