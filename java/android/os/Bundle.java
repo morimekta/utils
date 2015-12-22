@@ -334,7 +334,7 @@ public final class Bundle extends BaseBundle implements Parcelable {
         @Override
         public Bundle createFromParcel(Parcel source, ClassLoader loader) {
             final int size = source.readInt();
-            Bundle bundle = new Bundle(size);
+            Bundle bundle = new Bundle(loader, size);
             for (int i = 0; i < size; ++i) {
                 String key = source.readString();
                 Type type = Type.valueOf(source.readInt());
