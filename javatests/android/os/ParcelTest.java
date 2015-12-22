@@ -41,11 +41,13 @@ public class ParcelTest {
         parcel.writeByte((byte) -4);
         parcel.writeByte((byte) 125);
         parcel.writeByte((byte) -128);
+        assertEquals(4, parcel.dataSize());
 
         assertEquals((byte) 4, parcel.readByte());
         assertEquals((byte) -4, parcel.readByte());
         assertEquals((byte) 125, parcel.readByte());
         assertEquals((byte) -128, parcel.readByte());
+        assertEquals(0, parcel.dataAvail());
     }
 
     @Test
@@ -56,11 +58,13 @@ public class ParcelTest {
         parcel.writeDouble(7.8d);
         parcel.writeDouble(1797693048934892789238E287);
         parcel.writeDouble(-1797693048934892789238E287);
+        assertEquals(4 * 8, parcel.dataSize());
 
         assertEquals(-7.8d, parcel.readDouble(), 0.000000001);
         assertEquals(7.8d, parcel.readDouble(), 0.000000001);
         assertEquals(1797693048934892789238E287, parcel.readDouble(), 0.000000001);
         assertEquals(-1797693048934892789238E287, parcel.readDouble(), 0.000000001);
+        assertEquals(0, parcel.dataAvail());
     }
 
     @Test
@@ -71,11 +75,13 @@ public class ParcelTest {
         parcel.writeFloat(7.8f);
         parcel.writeFloat(33489348927892E25f);
         parcel.writeFloat(-33489348927892E25f);
+        assertEquals(4 * 4, parcel.dataSize());
 
         assertEquals(-7.8d, parcel.readFloat(), 0.0001);
         assertEquals(7.8d, parcel.readFloat(), 0.0001);
         assertEquals(33489348927892E25f, parcel.readFloat(), 0.0001);
         assertEquals(-33489348927892E25f, parcel.readFloat(), 0.0001);
+        assertEquals(0, parcel.dataAvail());
     }
 
     @Test
@@ -86,11 +92,13 @@ public class ParcelTest {
         parcel.writeInt(-8);
         parcel.writeInt(2048934892);
         parcel.writeInt(-2048934892);
+        assertEquals(4 * 4, parcel.dataSize());
 
         assertEquals(8, parcel.readInt());
         assertEquals(-8, parcel.readInt());
         assertEquals(2048934892, parcel.readInt());
         assertEquals(-2048934892, parcel.readInt());
+        assertEquals(0, parcel.dataAvail());
     }
 
     @Test
@@ -101,11 +109,13 @@ public class ParcelTest {
         parcel.writeLong(-8);
         parcel.writeLong(8548934892113347344L);
         parcel.writeLong(-8548934892113347344L);
+        assertEquals(4 * 8, parcel.dataSize());
 
         assertEquals(8, parcel.readLong());
         assertEquals(-8, parcel.readLong());
         assertEquals(8548934892113347344L, parcel.readLong());
         assertEquals(-8548934892113347344L, parcel.readLong());
+        assertEquals(0, parcel.dataAvail());
     }
 
     @Test
@@ -116,11 +126,13 @@ public class ParcelTest {
         parcel.writeString("");
         parcel.writeString("\0something\0");
         parcel.writeString("asdjkh asdjkh aSLJKDH JHKL asdjkhg asdjkhg asdjkhg asdjkhgf asdjkhgf asdjkhgf sajkdhgf skajdhgf asdjhkgf asdjkhg sdjkh");
+        assertEquals(152, parcel.dataSize());
 
         assertEquals("blaargh", parcel.readString());
         assertEquals("", parcel.readString());
         assertEquals("\0something\0", parcel.readString());
         assertEquals("asdjkh asdjkh aSLJKDH JHKL asdjkhg asdjkhg asdjkhg asdjkhgf asdjkhgf asdjkhgf sajkdhgf skajdhgf asdjhkgf asdjkhg sdjkh", parcel.readString());
+        assertEquals(0, parcel.dataAvail());
     }
 
     @Test
@@ -135,6 +147,7 @@ public class ParcelTest {
 
         assertArrayEquals(arr1, parcel.createBooleanArray());
         assertArrayEquals(arr2, parcel.createBooleanArray());
+        assertEquals(0, parcel.dataAvail());
     }
 
     @Test
@@ -151,6 +164,7 @@ public class ParcelTest {
         assertArrayEquals(arr1, parcel.createByteArray());
         assertArrayEquals(arr2, parcel.createByteArray());
         assertArrayEquals(new byte[]{4, 5, 6, 7, 8, 9, 0}, parcel.createByteArray());
+        assertEquals(0, parcel.dataAvail());
     }
 
     @Test
@@ -165,13 +179,14 @@ public class ParcelTest {
 
         assertArrayEquals(arr1, parcel.createCharArray());
         assertArrayEquals(arr2, parcel.createCharArray());
+        assertEquals(0, parcel.dataAvail());
     }
 
     @Test
     public void testDoubleArray() {
         Parcel parcel = Parcel.obtain();
 
-        double[] arr1 = new double[]{-7.8d, 7.8d, 1797693048934892789238E287, 1797693048934892789238E287};
+        double[] arr1 = new double[]{-7.8d, 7.8d, -1.797693048934892789238E308, 0.24703286234234E-323};
         double[] arr2 = new double[]{};
 
         parcel.writeDoubleArray(arr1);
@@ -179,6 +194,7 @@ public class ParcelTest {
 
         assertArrayEquals(arr1, parcel.createDoubleArray(), 0.000000001);
         assertArrayEquals(arr2, parcel.createDoubleArray(), 0.000000001);
+        assertEquals(0, parcel.dataAvail());
     }
 
     @Test
@@ -233,5 +249,54 @@ public class ParcelTest {
     public void testTypedArrayList() {
         Parcel parcel = Parcel.obtain();
 
+    }
+
+    public static class TestParcelable
+            implements Parcelable {
+        public int            number;
+        public TestParcelable typedObject;
+        public TestParcelable parcelable;
+
+        @Override
+        public int describeContents() {
+            return 0;
+        }
+
+        @Override
+        public void writeToParcel(Parcel dest, int flags) {
+            dest.writeInt(number);
+            if (typedObject != null) {
+                dest.writeByte((byte) 0);
+                dest.writeTypedObject(typedObject, flags);
+            } else {
+                dest.writeByte((byte) 1);
+            }
+            if (parcelable != null) {
+                dest.writeByte((byte) 1);
+                dest.writeParcelable(parcelable, flags);
+            } else {
+                dest.writeByte((byte) 0);
+            }
+        }
+
+        public static Creator<TestParcelable> CREATOR = new Creator<TestParcelable>() {
+            @Override
+            public TestParcelable createFromParcel(Parcel source) {
+                TestParcelable out = new TestParcelable();
+                out.number = source.readInt();
+                if (source.readByte() == 0) {
+                    out.typedObject = source.readTypedObject(this);
+                }
+                if (source.readByte() == 1) {
+                    out.parcelable = source.readParcelable(TestParcelable.class.getClassLoader());
+                }
+                return out;
+            }
+
+            @Override
+            public TestParcelable[] newArray(int size) {
+                return new TestParcelable[size];
+            }
+        };
     }
 }
