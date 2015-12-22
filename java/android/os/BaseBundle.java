@@ -189,7 +189,7 @@ public abstract class BaseBundle {
     }
 
     protected BaseBundle(int capacity) {
-        this(capacity > 0 ? new HashMap<>(capacity) : new HashMap<>());
+        this(capacity > 0 ? new HashMap<String, Pair<Type, Object>>(capacity) : new HashMap<String, Pair<Type, Object>>());
     }
 
     @SuppressWarnings("unchecked")

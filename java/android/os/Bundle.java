@@ -235,16 +235,16 @@ public final class Bundle extends BaseBundle implements Parcelable {
                                 break;
                             }
                             case BYTE:
-                                dest.writeByte(cast(value));
+                                dest.writeByte((byte) cast(value));
                                 break;
                             case BYTE_ARRAY:
-                                dest.writeByteArray(cast(value));
+                                dest.writeByteArray((byte[]) cast(value));
                                 break;
                             case CHAR:
                                 dest.writeInt((int) (char) ((Character) value));
                                 break;
                             case CHAR_ARRAY:
-                                dest.writeCharArray(cast(value));
+                                dest.writeCharArray((char[]) cast(value));
                                 break;
                             case CHAR_SEQUENCE:
                                 dest.writeString(value == null ? null : value.toString());
@@ -259,10 +259,10 @@ public final class Bundle extends BaseBundle implements Parcelable {
                                 break;
                             }
                             case FLOAT:
-                                dest.writeFloat(cast(value));
+                                dest.writeFloat((float) cast(value));
                                 break;
                             case FLOAT_ARRAY:
-                                dest.writeFloatArray(cast(value));
+                                dest.writeFloatArray((float[]) cast(value));
                                 break;
                             case INT_ARRAY_LIST: {
                                 ArrayList<Integer> list = cast(value);
@@ -274,10 +274,10 @@ public final class Bundle extends BaseBundle implements Parcelable {
                                 break;
                             }
                             case PARCELABLE:
-                                dest.writeParcelable(cast(value), 0);
+                                dest.writeParcelable((Parcelable) cast(value), 0);
                                 break;
                             case PARCELABLE_ARRAY:
-                                dest.writeParcelableArray(cast(value), 0);
+                                dest.writeParcelableArray((Parcelable[]) cast(value), 0);
                                 break;
                             case PARCELABLE_ARRAY_LIST: {
                                 @SuppressWarnings("unchecked")
