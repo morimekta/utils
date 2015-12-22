@@ -1,11 +1,11 @@
 package android.os;
 
+import android.util.Pair;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-
-import android.util.Pair;
 
 /**
  * Base class for the two Bundle classes. This mimicks the android.os class
@@ -331,7 +331,14 @@ public abstract class BaseBundle {
         SERIALIZABLE,
         SHORT,
         SHORT_ARRAY,
-        STRING_ARRAY_LIST,;
+        STRING_ARRAY_LIST,
+
+        // --- Bundle, not supported.
+        SIZE,
+        SIZE_F,
+        BINDER,
+        SPARSE_PARCELABLE_ARRAY,
+        ;
 
         public static Type valueOf(int ordinal) {
             for (Type type : values()) {

@@ -1,16 +1,11 @@
 package android.os;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
+import android.util.Pair;
+
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Map;
-
-import android.util.Pair;
 
 /**
  * Main bundle class. A bundle is a type-safe string to object map.
@@ -22,15 +17,20 @@ import android.util.Pair;
 @SuppressWarnings("unused")
 public final class Bundle extends BaseBundle implements Parcelable {
     public Bundle() {
-        this(null, 0);
+        this(null, kDefaultSize);
     }
 
     public Bundle(ClassLoader loader) {
-        this(loader, 0);
+        this(loader, kDefaultSize);
     }
 
     public Bundle(int capacity) {
         this(null, capacity);
+    }
+
+    public Bundle(PersistableBundle bundle) {
+        this(null, bundle.size());
+        map.putAll(bundle.map);
     }
 
     public Bundle(Bundle bundle) {
@@ -447,6 +447,8 @@ public final class Bundle extends BaseBundle implements Parcelable {
     public static Bundle EMPTY = new Bundle(Collections.EMPTY_MAP);
 
     // --- PRIVATE AFTER HERE ---
+
+    private static final int kDefaultSize = 1 << 8;
 
     private Bundle(Map<String, Pair<Type, Object>> map) {
         super(map);
