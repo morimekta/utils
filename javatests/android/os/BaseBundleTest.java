@@ -19,18 +19,21 @@
 
 package android.os;
 
-import android.util.Pair;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.BlockJUnit4ClassRunner;
 
+import android.util.Pair;
+
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 @RunWith(BlockJUnit4ClassRunner.class)
 public class BaseBundleTest {

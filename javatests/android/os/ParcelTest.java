@@ -27,7 +27,11 @@ import org.junit.runners.BlockJUnit4ClassRunner;
 import java.util.ArrayList;
 import java.util.Random;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertSame;
 
 @RunWith(BlockJUnit4ClassRunner.class)
 public class ParcelTest {

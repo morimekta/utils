@@ -218,7 +218,7 @@ public abstract class BaseBundle {
             Pair<Type, Object> a = map.get(key);
             Pair<Type, Object> b = other.map.get(key);
             if (!a.first.equals(b.first)) return false;
-            // Note: This is bacause array comparison needs to call special
+            // Note: This is because array comparison needs to call special
             // methods. array.equals() is not enough.
             switch (a.first) {
                 case BOOLEAN_ARRAY:
