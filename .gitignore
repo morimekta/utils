@@ -17,5 +17,7 @@ bazel-genfiles
 bazel-testlogs
 bazel-out
 
+target/
+target
 out/
 out
