@@ -22,6 +22,7 @@ package android.os;
 import android.util.Pair;
 
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -29,11 +30,11 @@ import java.util.Objects;
 import java.util.Set;
 
 /**
- * Base class for the two Bundle classes. This mimicks the android.os class
+ * Base class for the two Bundle classes. This mimics the android.os class
  * hierarchy, and generalized the two Bundle classes nicely.
  *
- * NOTE: Though I don't understand all of the choices of which types to allow
- * where (@morimekta).
+ * NOTE: Though I don't really understand or agree to all of the choices
+ * of which types to allow where (@morimekta).
  */
 @SuppressWarnings("unused")
 public abstract class BaseBundle {
@@ -386,7 +387,7 @@ public abstract class BaseBundle {
     }
 
     protected BaseBundle(int capacity) {
-        this(capacity > 0 ? new TreeMap<String, Pair<Type, Object>>() : new TreeMap<String, Pair<Type, Object>>());
+        this(capacity > 0 ? new HashMap<String, Pair<Type, Object>>(capacity) : new HashMap<String, Pair<Type, Object>>());
     }
 
     @SuppressWarnings("unchecked")

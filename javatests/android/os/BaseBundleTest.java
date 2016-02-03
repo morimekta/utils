@@ -19,13 +19,12 @@
 
 package android.os;
 
+import android.util.Pair;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.BlockJUnit4ClassRunner;
-
-import android.util.Pair;
 
 import java.util.Collections;
 import java.util.Map;
@@ -51,7 +50,7 @@ public class BaseBundleTest {
     }
 
     @Test
-    public void testEmptyBunble() {
+    public void testEmptyBundle() {
         @SuppressWarnings("unchecked")
         BaseBundle empty = new BaseBundleImpl(Collections.EMPTY_MAP);
         assertEquals(0, empty.size());
@@ -103,9 +102,6 @@ public class BaseBundleTest {
         assertTrue(bundle.getBoolean("C", true));
         assertFalse(bundle.getBoolean("D", false));
         assertFalse(bundle.getBoolean("E"));
-
-        // wrong type.
-        assertEquals(4, bundle.getInt("B", 4));
     }
 
     @Test

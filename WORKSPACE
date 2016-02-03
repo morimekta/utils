@@ -4,7 +4,13 @@ maven_jar(
 )
 
 # junit:junit:jar:4.12
+# org.hamcrest:hamcrest-library:jar:1.3
 maven_jar(
     name = "org.hamcrest_hamcrest-core",
     artifact = "org.hamcrest:hamcrest-core:1.3",
+)
+
+maven_jar(
+    name = "org.hamcrest_hamcrest-library",
+    artifact = "org.hamcrest:hamcrest-library:1.3",
 )
