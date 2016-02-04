@@ -21,6 +21,7 @@ package android.os;
 
 import android.util.Pair;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
@@ -60,26 +61,6 @@ public final class PersistableBundle
 
     public void putPersistableBundle(String key, PersistableBundle bundle) {
         put(key, Type.PERSISTABLE_BUNDLE, bundle);
-    }
-
-    @Override
-    public String toString() {
-        synchronized (map) {
-            StringBuilder builder = new StringBuilder();
-            builder.append("PersistableBundle(");
-            boolean first = true;
-            for (Map.Entry<String, Pair<Type, Object>> entry : map.entrySet()) {
-                if (first)
-                    first = false;
-                else
-                    builder.append(',');
-                builder.append(entry.getKey())
-                       .append("=")
-                       .append(Objects.toString(entry.getValue().second));
-            }
-            builder.append(')');
-            return builder.toString();
-        }
     }
 
     @Override

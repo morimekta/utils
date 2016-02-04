@@ -95,22 +95,33 @@ public class BaseBundleTest {
         BaseBundle bundle = new BaseBundleImpl(10);
         bundle.putBoolean("A", true);
         bundle.putBoolean("B", false);
-        bundle.putBoolean("C", true);
-        bundle.putBoolean("D", false);
-        bundle.putBoolean("E", true);
 
+        assertTrue(bundle.getBoolean("A"));
+        assertFalse(bundle.getBoolean("B"));
         assertTrue(bundle.getBoolean("A", false));
         assertFalse(bundle.getBoolean("B", true));
-        assertTrue(bundle.getBoolean("C", false));
-        assertFalse(bundle.getBoolean("D", true));
-        assertTrue(bundle.getBoolean("E", false));
-
-        // non-existing
-        assertFalse(bundle.getBoolean("F", false));
-        assertTrue(bundle.getBoolean("G", true));
+        assertTrue(bundle.getBoolean("C", true));
+        assertFalse(bundle.getBoolean("D", false));
+        assertFalse(bundle.getBoolean("E"));
 
         // wrong type.
         assertEquals(4, bundle.getInt("B", 4));
+    }
+
+    @Test
+    public void testSimple() {
+        BaseBundle bundle = new BaseBundleImpl(100);
+
+        bundle.putBoolean("bool", true);
+        bundle.putBooleanArray("boolA", new boolean[]{true, false});
+        bundle.putDouble("double", 4.1234d);
+        bundle.putDoubleArray("doubleA", new double[]{1.44, 2.71, 3.14, 6.674});
+        bundle.putInt("int", 1234567890);
+        bundle.putIntArray("intA", new int[]{1, 2, 3, 4, 5, 6, 7, 8, 9, 0});
+        bundle.putLong("long", 1234567890123456789L);
+        bundle.putLongArray("longA", new long[]{12L, 34L, 56L, 78L, 90L, 123L, 456L, 789L});
+        bundle.putString("string", "String");
+        bundle.putStringArray("stringA", new String[]{"S", "t", "r", "i", "ng"});
     }
 
     private class BaseBundleImpl

@@ -206,7 +206,7 @@ public abstract class BaseBundle {
         if (o == this) {
             return true;
         }
-        if (o == null || !(getClass().equals(o.getClass()))) {
+        if (o == null || !getClass().equals(o.getClass())) {
             return false;
         }
         BaseBundle other = (BaseBundle) o;
@@ -278,6 +278,105 @@ public abstract class BaseBundle {
         return true;
     }
 
+    @Override
+    public String toString() {
+        synchronized (map) {
+            StringBuilder builder = new StringBuilder();
+            builder.append(getClass().getSimpleName())
+                   .append('(');
+            boolean first = true;
+            for (Map.Entry<String, Pair<Type, Object>> entry : map.entrySet()) {
+                if (first)
+                    first = false;
+                else
+                    builder.append(',');
+                builder.append(entry.getKey())
+                        .append("=");
+                switch (entry.getValue().first) {
+                    case BOOLEAN_ARRAY:
+                        builder.append(Arrays.toString((boolean[]) entry.getValue().second).replaceAll(" ", ""));
+                        break;
+                    case BYTE_ARRAY:
+                        builder.append(Arrays.toString((byte[]) entry.getValue().second).replaceAll(" ", ""));
+                        break;
+                    case SHORT_ARRAY:
+                        builder.append(Arrays.toString((short[]) entry.getValue().second).replaceAll(" ", ""));
+                        break;
+                    case INT_ARRAY:
+                        builder.append(Arrays.toString((int[]) entry.getValue().second).replaceAll(" ", ""));
+                        break;
+                    case LONG_ARRAY:
+                        builder.append(Arrays.toString((long[]) entry.getValue().second).replaceAll(" ", ""));
+                        break;
+                    case FLOAT_ARRAY:
+                        builder.append(Arrays.toString((float[]) entry.getValue().second).replaceAll(" ", ""));
+                        break;
+                    case DOUBLE_ARRAY:
+                        builder.append(Arrays.toString((double[]) entry.getValue().second).replaceAll(" ", ""));
+                        break;
+                    case STRING_ARRAY:
+                    case CHAR_SEQUENCE_ARRAY: {
+                        CharSequence[] o = (CharSequence[]) entry.getValue().second;
+                        if (o == null) {
+                            builder.append("null");
+                        } else {
+                            builder.append('[');
+                            boolean cs_first = true;
+                            for (CharSequence cs : o) {
+                                if (cs_first) cs_first = false;
+                                else builder.append(',');
+                                builder.append('\"').append(Objects.toString(cs)).append('\"');
+                            }
+                            builder.append(']');
+                        }
+                        break;
+                    }
+                    case PARCELABLE_ARRAY: {
+                        Object[] arr = (Object[]) entry.getValue().second;
+                        if (arr == null) {
+                            builder.append("null");
+                        } else {
+                            builder.append('[');
+                            boolean cs_first = true;
+                            for (Object p : arr) {
+                                if (cs_first) cs_first = false;
+                                else builder.append(',');
+                                builder.append(Objects.toString(p));
+                            }
+                            builder.append(']');
+                        }
+                        break;
+                    }
+                    case INT_ARRAY_LIST: {
+                        @SuppressWarnings("unchecked")
+                        ArrayList<Integer> arr = (ArrayList) entry.getValue().second;
+                        if (arr == null) {
+                            builder.append("null");
+                        } else {
+                            builder.append('[');
+                            boolean cs_first = true;
+                            for (Integer it : arr) {
+                                if (cs_first) cs_first = false;
+                                else builder.append(',');
+                                builder.append(Integer.toString(it));
+                            }
+                            builder.append(']');
+                        }
+                        break;
+                    }
+                    case PARCELABLE_ARRAY_LIST:
+                        builder.append(Objects.toString(entry.getValue().second).replaceAll(" ", ""));
+                        break;
+                    default:
+                        builder.append(Objects.toString(entry.getValue().second));
+                        break;
+                }
+            }
+            builder.append(')');
+            return builder.toString();
+        }
+    }
+
     // --- PROTECTED AFTER HERE ---
 
     protected final Map<String, Pair<Type, Object>> map;
@@ -287,7 +386,7 @@ public abstract class BaseBundle {
     }
 
     protected BaseBundle(int capacity) {
-        this(capacity > 0 ? new HashMap<String, Pair<Type, Object>>(capacity) : new HashMap<String, Pair<Type, Object>>());
+        this(capacity > 0 ? new TreeMap<String, Pair<Type, Object>>() : new TreeMap<String, Pair<Type, Object>>());
     }
 
     @SuppressWarnings("unchecked")
@@ -326,13 +425,13 @@ public abstract class BaseBundle {
                 dest.writeDoubleArray((double[]) value);
                 return true;
             case INT:
-                dest.writeInt((Integer) value);
+                dest.writeInt((int) value);
                 return true;
             case INT_ARRAY:
                 dest.writeIntArray((int[]) value);
                 return true;
             case LONG:
-                dest.writeLong((Long) value);
+                dest.writeLong((long) value);
                 return true;
             case LONG_ARRAY:
                 dest.writeLongArray((long[]) value);
@@ -360,7 +459,7 @@ public abstract class BaseBundle {
 
         switch (type) {
             case BOOLEAN:
-                putBoolean(key, source.readByte() > 0);
+                putBoolean(key, source.readByte() != 0);
                 return true;
             case BOOLEAN_ARRAY:
                 putBooleanArray(key, source.createBooleanArray());

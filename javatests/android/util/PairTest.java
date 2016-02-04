@@ -26,7 +26,9 @@ import org.junit.runners.BlockJUnit4ClassRunner;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
 
 @RunWith(BlockJUnit4ClassRunner.class)
 public class PairTest {
@@ -38,6 +40,10 @@ public class PairTest {
 
         assertNotEquals(a, b1);
         assertEquals(b1, b2);
+
+        assertTrue(a.equals(a));
+        assertFalse(a.equals(null));
+        assertFalse(a.equals(new Object()));
     }
 
     @Test

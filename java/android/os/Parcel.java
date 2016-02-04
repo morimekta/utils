@@ -20,7 +20,6 @@
 package android.os;
 
 import java.lang.reflect.Field;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +28,7 @@ import java.util.Queue;
 import static java.lang.Math.ceil;
 import static java.lang.Math.min;
 import static java.lang.System.arraycopy;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.fill;
 
 /**
@@ -212,7 +212,7 @@ public final class Parcel {
 
     public void writeString(String s) {
         if (s != null) {
-            byte[] bytes = s.getBytes(StandardCharsets.UTF_8);
+            byte[] bytes = s.getBytes(UTF_8);
             ensureCapacity(size + 4 + bytes.length);
             size += encode(bytes.length, buffer, size);
             arraycopy(bytes, 0, buffer, size, bytes.length);
@@ -227,7 +227,7 @@ public final class Parcel {
         if (len < 0)
             return null;
         ensureAvailable(len);
-        String out = new String(buffer, position, len, StandardCharsets.UTF_8);
+        String out = new String(buffer, position, len, UTF_8);
         position += len;
         return out;
     }
@@ -235,7 +235,7 @@ public final class Parcel {
     public void writeBooleanArray(boolean[] arr) {
         byte[] bytes = packBits(arr);
         ensureCapacity(4 + bytes.length);
-        encode(arr.length, buffer, 4);
+        encode(arr.length, buffer, size);
         size += 4;
         arraycopy(bytes, 0, buffer, size, bytes.length);
         size += bytes.length;
@@ -591,51 +591,48 @@ public final class Parcel {
     }
 
     private static int encode(int value, byte[] into, int offset) {
-        into[offset] = (byte) (value & 0x000000ff);
-        into[offset + 1] = (byte) ((value & 0x0000ff00) >>> 8);
-        into[offset + 2] = (byte) ((value & 0x00ff0000) >>> 16);
         into[offset + 3] = (byte) ((value & 0xff000000) >>> 24);
+        into[offset + 2] = (byte) ((value & 0x00ff0000) >>> 16);
+        into[offset + 1] = (byte) ((value & 0x0000ff00) >>> 8);
+        into[offset]     = (byte)  (value & 0x000000ff);
         return 4;
     }
 
     private static int encode(long value, byte[] into, int offset) {
-        into[offset]     = (byte)  (value & 0x00000000000000ffL);
-        into[offset + 1] = (byte) ((value & 0x000000000000ff00L) >>> 8);
-        into[offset + 2] = (byte) ((value & 0x0000000000ff0000L) >>> 16);
-        into[offset + 3] = (byte) ((value & 0x00000000ff000000L) >>> 24);
-        into[offset + 4] = (byte) ((value & 0x000000ff00000000L) >>> 32);
-        into[offset + 5] = (byte) ((value & 0x0000ff0000000000L) >>> 40);
-        into[offset + 6] = (byte) ((value & 0x00ff000000000000L) >>> 48);
         into[offset + 7] = (byte) ((value & 0xff00000000000000L) >>> 56);
+        into[offset + 6] = (byte) ((value & 0x00ff000000000000L) >>> 48);
+        into[offset + 5] = (byte) ((value & 0x0000ff0000000000L) >>> 40);
+        into[offset + 4] = (byte) ((value & 0x000000ff00000000L) >>> 32);
+        into[offset + 3] = (byte) ((value & 0x00000000ff000000L) >>> 24);
+        into[offset + 2] = (byte) ((value & 0x0000000000ff0000L) >>> 16);
+        into[offset + 1] = (byte) ((value & 0x000000000000ff00L) >>> 8);
+        into[offset]     = (byte)  (value & 0x00000000000000ffL);
         return 8;
     }
 
-    private static long decode(byte[] from, int pos, int bytes) {
+    private static long decode(byte[] from, int offset, int bytes) {
         long result = 0;
         switch (bytes) {
             case 8:
-                result |= valueOf(from[pos + 7]) << 56;
-            case 7:
-                result |= valueOf(from[pos + 6]) << 48;
-            case 6:
-                result |= valueOf(from[pos + 5]) << 40;
-            case 5:
-                result |= valueOf(from[pos + 4]) << 32;
+                result = valueOf(from[offset + 7]) << 56
+                       | valueOf(from[offset + 6]) << 48
+                       | valueOf(from[offset + 5]) << 40
+                       | valueOf(from[offset + 4]) << 32;
             case 4:
-                result |= valueOf(from[pos + 3]) << 24;
-            case 3:
-                result |= valueOf(from[pos + 2]) << 16;
-            case 2:
-                result |= valueOf(from[pos + 1]) << 8;
-            case 1:
-                result |= valueOf(from[pos]);
+                result = result
+                       | valueOf(from[offset + 3]) << 24
+                       | valueOf(from[offset + 2]) << 16
+                       | valueOf(from[offset + 1]) <<  8
+                       | valueOf(from[offset]);
+                break;
+            default:
+                throw new IllegalArgumentException();
         }
         return result;
     }
 
     private static int booleanArraySizeToBytes(int size) {
-        int bytes = size / 8;
-        return bytes + ((size % 8 > 0) ? 1 : 0);
+        return (size + 7) / 8;
     }
 
     private static boolean isTrue(byte b, int pos) {
@@ -678,7 +675,7 @@ public final class Parcel {
 
     private static long valueOf(byte b) {
         if (b < 0)
-            return 0x100 + b;
+            return 0x100L + b;
         return b;
     }
 
@@ -687,7 +684,7 @@ public final class Parcel {
         for (int i = 0; i < chars.length; ++i) {
             int op = i * 2;
             out[op] = (byte) (chars[i] % 0x00ff);
-            out[op + 1] = (byte) ((chars[i] % 0xff00) >> 8);
+            out[op + 1] = (byte) ((chars[i] % 0xff00) >>> 8);
         }
         return out;
     }
