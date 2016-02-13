@@ -34,7 +34,7 @@
       <artifactId>utils</artifactId>
       <version>0.1-SNAPSHOT</version>
     </parent>
-    <artifactId>android-net.morimekta.util</artifactId>
+    <artifactId>android-util</artifactId>
     <packaging>jar</packaging>
 
     <!-- 1.7 required for android compatibility. -->
