@@ -34,6 +34,7 @@
 
     <modules>
         <module>android-util</module>
+        <module>console-util</module>
         <module>io-util</module>
     </modules>
 </project>
