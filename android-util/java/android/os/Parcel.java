@@ -44,7 +44,7 @@ import static java.util.Arrays.fill;
  * methods *not* implemented as they refer to android-internal utility classes
  * or android system functionality.
  * <p>
- * E.g. methods referencing android.util.* classes are omitted (SparseArray,
+ * E.g. methods referencing android.net.morimekta.util.* classes are omitted (SparseArray,
  * Size, SizeF, IBinder).
  * <p>
  * The main reason for porting this is to be able to extensively test parcelable
