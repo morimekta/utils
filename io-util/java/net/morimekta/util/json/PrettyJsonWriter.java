@@ -26,18 +26,28 @@ import net.morimekta.util.io.IndentedPrintWriter;
 import java.io.OutputStream;
 
 /**
- * @author Stein Eldar Johnsen
- * @since 19.10.15
+ * JSON Writer that automatically prints prettified JSON based on the
+ * inherent structure of the data.
  */
 public class PrettyJsonWriter extends JsonWriter {
     private static final char SPACE = ' ';
 
     private final IndentedPrintWriter mIndentedWriter;
 
+    /**
+     * Create a Prettified JSON writer that writes to the given output stream.
+     *
+     * @param out The stream to write to.
+     */
     public PrettyJsonWriter(OutputStream out) {
         this(new IndentedPrintWriter(out));
     }
 
+    /**
+     * Create a Prettified JSON writer that writes to the given indented print writer.
+     *
+     * @param writer The writer to write to.
+     */
     public PrettyJsonWriter(IndentedPrintWriter writer) {
         super(writer);
         mIndentedWriter = writer;

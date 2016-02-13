@@ -30,8 +30,7 @@ import java.util.Stack;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
- * @author Stein Eldar Johnsen
- * @since 19.10.15
+ * IO-optimized JSON writer.
  */
 public class JsonWriter {
     public static final String kNull  = "null";
@@ -325,7 +324,7 @@ public class JsonWriter {
         return false;
     }
 
-    // Copied from org.json JSONObject.quote and modified for local use.
+    // Ported from org.json JSONObject.quote and modified for local use.
     private void writeQuoted(CharSequence string) {
         if (string != null && string.length() != 0) {
             int len = string.length();

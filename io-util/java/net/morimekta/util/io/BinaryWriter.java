@@ -26,7 +26,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 /**
- * Binary data writer.
+ * IO-Optimized binary writer.
  */
 public class BinaryWriter extends OutputStream {
     private final OutputStream out;

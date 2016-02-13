@@ -26,8 +26,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /**
- * @author Stein Eldar Johnsen
- * @since 16.01.16.
+ * IO-Optimized binary reader.
  */
 public class BinaryReader extends InputStream {
     private final InputStream in;
