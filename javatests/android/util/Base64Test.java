@@ -25,6 +25,10 @@ import java.util.Random;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+/**
+ * Tests for base64 utilities. Updated from Android to match the current
+ * implementation of Base64.
+ */
 public class Base64Test extends TestCase {
     /** Decodes a string, returning a string. */
     private String decodeString(String in) throws Exception {

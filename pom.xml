@@ -3,11 +3,39 @@
          xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <modelVersion>4.0.0</modelVersion>
+
+    <name>Android Utilities</name>
+    <description>
+        Utility classes mimicking classes from android.os and android.util that
+        does not really require an android phone to run. Created to facilitate
+        testing and usage of android compatible libraries without having to run
+        it on an actual phone.
+
+        Note that android.os.Parcel and android.os.Bundle only supports a
+        subset of it's original interface as these parts actually are dependent
+        on the native phone library to work properly, or they have no real need
+        on modern phones / outsude android.
+    </description>
+    <url>http://www.github.com/morimekta/android-util</url>
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <scm>
+        <url>https://github.com/morimekta/android-util.git</url>
+    </scm>
+
     <groupId>net.morimekta</groupId>
     <artifactId>android-util</artifactId>
     <version>0.1</version>
+    <packaging>jar</packaging>
 
-    <!-- 1.7 required for android support. -->
+    <!-- 1.7 required for android compatibility. -->
     <properties>
         <maven.compiler.source>1.7</maven.compiler.source>
         <maven.compiler.target>1.7</maven.compiler.target>

@@ -9,20 +9,27 @@ on the whole android SDK.
 
 ## Interfaces
 
-* [android.os.Parcelable](src/android/os/Parcelable.java)
+* [android.os.Parcelable](java/android/os/Parcelable.java) Parcelable class interface.
 
 ## Classes
 
-* [android.os.Parcel](src/android/os/Parcel.java)
-* [android.os.BaseBundle](src/android/os/BaseBundle.java)
-* [android.os.Bundle](src/android/os/Bundle.java)
-* [android.os.ParcelUuid](src/android/os/ParcelUuid.java)
-* [android.os.PersistableBundle](src/android/os/PersistableBundle.java)
-* [android.util.Pair](src/android/util/Pair.java)
+* [android.os.BaseBundle](java/android/os/BaseBundle.java) Base class for Bundle and PersistableBundle.
+* [android.os.Bundle](java/android/os/Bundle.java) Type safe map with parcel support.
+* [android.os.Parcel](java/android/os/Parcel.java) Object serializer.
+* [android.os.ParcelUuid](java/android/os/ParcelUuid.java) UUID wrapper for Parcel.
+* [android.os.PersistableBundle](java/android/os/PersistableBundle.java) Bundle with persistable values.
+* [android.util.Base64](java/android/util/Base64.java) Base64 utility class.
+* [android.util.Base64InputStream](java/android/util/Base64InputStream.java) Base64 decoding input stream.
+* [android.util.Base64OutputStream](java/android/util/Base64OutputStream.java) Base64 encoding output stream.
+* [android.util.Pair](java/android/util/Pair.java) Immutable pair utility.
 
 ## Exceptions
 
-* [android.os.BadParcelableException](src/android/os/BadParcelableException.java)
-* [android.os.ParcelFormatException](src/android/os/ParcelFormatException.java)
-* [android.util.AndroidException](src/android/util/AndroidException.java)
-* [android.util.AndroidRuntimeException](src/android/util/AndroidRuntimeException.java)
+* [android.os.BadParcelableException](java/android/os/BadParcelableException.java) Object contains data not suitable for parceling.
+* [android.os.ParcelFormatException](java/android/os/ParcelFormatException.java) Parcel contains data not compatible with deserializing parcelable.
+* [android.util.AndroidException](java/android/util/AndroidException.java) Base android exception.
+* [android.util.AndroidRuntimeException](java/android/util/AndroidRuntimeException.java) Base android runtime exception.
+
+# Contributors
+
+* [Stein Eldar Johnsen](http://www.github.com/morimekta) Main contributor and maintainer of Android Utilities.

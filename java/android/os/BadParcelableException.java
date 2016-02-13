@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2016, Stein Eldar johnsen
+ *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
@@ -22,7 +24,7 @@ package android.os;
 import android.util.AndroidRuntimeException;
 
 /**
- * Exception thrown then the parcelable contains data unsuited for parcelling.
+ * Exception thrown when the parcelable contains data unsuited for parcelling.
  */
 public class BadParcelableException
         extends AndroidRuntimeException {

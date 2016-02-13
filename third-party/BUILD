@@ -19,5 +19,3 @@ java_library(
   visibility = ['//visibility:public'],
   licenses = ['notice'],
 )
-
-exports_files(glob(['LICENSE-*']))
