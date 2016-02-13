@@ -29,7 +29,3 @@ on the whole android SDK.
 * [android.os.ParcelFormatException](java/android/os/ParcelFormatException.java) Parcel contains data not compatible with deserializing parcelable.
 * [android.util.AndroidException](java/android/util/AndroidException.java) Base android exception.
 * [android.util.AndroidRuntimeException](java/android/util/AndroidRuntimeException.java) Base android runtime exception.
-
-# Contributors
-
-* [Stein Eldar Johnsen](http://www.github.com/morimekta) Main contributor and maintainer of Android Utilities.

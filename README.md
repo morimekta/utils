@@ -10,3 +10,7 @@ Various utilities maintained and primarily developed by @morimekta.
   android devices or heavy testing frameworks like robolectric.
 * [IO Utilities](io-util/README.md) Utilities for facilitating heavy
   computational IO, specifically reading and writing typed data to IO streams.
+
+## Contributors
+
+* [Stein Eldar Johnsen](http://www.github.com/morimekta) Main contributor and maintainer of Android Utilities.
