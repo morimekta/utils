@@ -13,4 +13,4 @@ Various utilities maintained and primarily developed by @morimekta.
 
 ## Contributors
 
-* [Stein Eldar Johnsen](http://www.github.com/morimekta) Main contributor and maintainer of Android Utilities.
+* [Stein Eldar Johnsen](http://www.github.com/morimekta) Main contributor and maintainer.
