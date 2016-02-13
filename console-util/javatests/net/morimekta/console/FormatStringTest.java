@@ -37,7 +37,7 @@ public class FormatStringTest {
         FormatString fmt = new FormatString("abba");
 
         assertEquals("abba", fmt.format());
-        assertEquals("abba", fmt.format(new String[0]));
+        assertEquals("abba", fmt.format(new Object[]{null}));
 
         fmt = new FormatString("abba %5.2f");
 
