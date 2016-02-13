@@ -4,19 +4,11 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <modelVersion>4.0.0</modelVersion>
 
-    <name>Android Utilities</name>
+    <name>Morimekta Utilities</name>
     <description>
-        Utility classes mimicking classes from android.os and android.util that
-        does not really require an android phone to run. Created to facilitate
-        testing and usage of android compatible libraries without having to run
-        it on an actual phone.
-
-        Note that android.os.Parcel and android.os.Bundle only supports a
-        subset of it's original interface as these parts actually are dependent
-        on the native phone library to work properly, or they have no real need
-        on modern phones / outsude android.
+        Various utilities maintained and primarily developed by @morimekta.
     </description>
-    <url>http://www.github.com/morimekta/android-util</url>
+    <url>http://www.github.com/morimekta/utils</url>
 
     <licenses>
         <license>
@@ -27,49 +19,20 @@
     </licenses>
 
     <scm>
-        <url>https://github.com/morimekta/android-util.git</url>
+        <url>https://github.com/morimekta/utils.git</url>
     </scm>
 
-    <groupId>net.morimekta</groupId>
-    <artifactId>android-util</artifactId>
-    <version>0.1</version>
-    <packaging>jar</packaging>
+    <groupId>net.morimekta.utils</groupId>
+    <artifactId>utils</artifactId>
+    <version>0.1-SNAPSHOT</version>
+    <packaging>pom</packaging>
 
-    <!-- 1.7 required for android compatibility. -->
     <properties>
-        <maven.compiler.source>1.7</maven.compiler.source>
-        <maven.compiler.target>1.7</maven.compiler.target>
-        <java.version>1.7</java.version>
+        <junit.version>4.12</junit.version>
+        <hamcrest.version>1.3</hamcrest.version>
     </properties>
 
-    <dependencies>
-        <dependency>
-            <groupId>org.hamcrest</groupId>
-            <artifactId>hamcrest-library</artifactId>
-            <version>1.3</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.12</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
-
-    <build>
-        <sourceDirectory>java/</sourceDirectory>
-        <testSourceDirectory>javatests/</testSourceDirectory>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.3</version>
-                <configuration>
-                    <source>${java.version}</source>
-                    <target>${java.version}</target>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>    
+    <modules>
+      <module>android-util</module>
+    </modules>
 </project>
