@@ -28,9 +28,13 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 /**
  * @author Stein Eldar Johnsen
@@ -57,9 +61,27 @@ public class StringsTest {
         mString_withUtf8 = "123á";
     }
 
-    private String TSU_readString(byte[] bytes) throws IOException {
-        ByteArrayInputStream is = new ByteArrayInputStream(bytes);
-        return Strings.readString(is);
+    @Test
+    public void testJoin() {
+        assertEquals("a,b", Strings.join(",", 'a', 'b'));
+        assertEquals("a,b", Strings.join(",", "a", "b"));
+        List<String> tmp = new LinkedList<>();
+        Collections.addAll(tmp, "a", "b");
+        assertEquals("a;b", Strings.join(";", tmp));
+    }
+
+    @Test
+    public void testIsInteger() {
+        assertTrue(Strings.isInteger("0"));
+        assertTrue(Strings.isInteger("1"));
+        assertTrue(Strings.isInteger("1234567890"));
+        assertTrue(Strings.isInteger("-1234567890"));
+
+        assertFalse(Strings.isInteger("+2"));
+        assertFalse(Strings.isInteger("beta"));
+        assertFalse(Strings.isInteger("    -5 "));
+        assertFalse(Strings.isInteger("0x44"));  // hex not supported.
+        assertFalse(Strings.isInteger(""));
     }
 
     @Test
@@ -120,5 +142,48 @@ public class StringsTest {
 
         assertEquals("abc", Strings.readString(is, "\r\n"));
         assertEquals("xyz", Strings.readString(is, "\r\n"));
+    }
+
+    @Test
+    public void testTimes() {
+        assertEquals("bbbbb", Strings.times("b", 5));
+    }
+
+    @Test
+    public void testCamelCase() {
+        assertEquals("", Strings.camelCase("", ""));
+        assertEquals("getMyThing", Strings.camelCase("get", "my_thing"));
+        assertEquals("getMyThing", Strings.camelCase("get", "my.thing"));
+        assertEquals("getMyThing", Strings.camelCase("get", "my-thing"));
+        assertEquals("getMyThing", Strings.camelCase("get", "my...thing"));
+        assertEquals("MyThing", Strings.camelCase("", "my_thing"));
+    }
+
+    @Test
+    public void testC_case() {
+        assertEquals("", Strings.c_case("", ""));
+        assertEquals("", Strings.c_case("", "", ""));
+
+        assertEquals("get_my_thing_now", Strings.c_case("get_", "MyThing", "_now"));
+        assertEquals("get_abbr_now", Strings.c_case("get_", "ABBR", "_now"));
+        assertEquals("get_pascal_is_not_nice_now", Strings.c_case("get_", "Pascal_Is_Not_Nice", "_now"));
+
+        // TODO: This case should be possible to split to: "get_abbr_and_more_now".
+        assertEquals("get_abbrand_more_now", Strings.c_case("get_", "ABBRAndMore", "_now"));
+    }
+
+    @Test
+    public void testConstructor() throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
+        Constructor<Strings> c = Strings.class.getDeclaredConstructor();
+        assertFalse(c.isAccessible());
+
+        c.setAccessible(true);
+        c.newInstance();  // to make code coverage 100%.
+        c.setAccessible(false);
+    }
+
+    private String TSU_readString(byte[] bytes) throws IOException {
+        ByteArrayInputStream is = new ByteArrayInputStream(bytes);
+        return Strings.readString(is);
     }
 }

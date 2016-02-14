@@ -33,8 +33,6 @@ import java.util.regex.Pattern;
  * String utilities.
  */
 public class Strings {
-    private static final Pattern INT = Pattern.compile("-?[0-9]+");
-
     /**
      * Join set of strings with delimiter.
      *
@@ -282,4 +280,9 @@ public class Strings {
         return string.substring(0, 1)
                      .toUpperCase() + string.substring(1);
     }
+
+    // defeat instantiation.
+    private Strings() {}
+
+    private static final Pattern INT = Pattern.compile("-?[0-9]+");
 }
