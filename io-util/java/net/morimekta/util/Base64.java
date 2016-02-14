@@ -90,8 +90,6 @@ public class Base64 {
             -9, -9, -9, -9, -9,                                  // Decimal 123 - 127
     };
 
-    /* ********  D E T E R M I N E   W H I C H   A L H A B E T  ******** */
-
     /** Defeats instantiation. */
     private Base64() {
     }
@@ -267,9 +265,8 @@ public class Base64 {
      *
      *
      * @param src the array to convert
-     * @param srcOffset the index where conversion begins
      * @param dest the array to hold the conversion
-     * @param destOffset the index where output will be put
+     * @param offset the index where output will be put
      * @return the number of decoded bytes converted
      * @throws NullPointerException if source or destination arrays are null
      * @throws IllegalArgumentException if srcOffset or destOffset are invalid
@@ -277,62 +274,49 @@ public class Base64 {
      * @since 1.3
      */
     protected static int decode4to3(byte[] src,
-                                    int srcOffset,
-                                    int srcLen,
+                                    int len,
                                     byte[] dest,
-                                    int destOffset) {
-        if (srcLen < 2) {
-            throw new IllegalArgumentException(String.format(
-                    "Source array with length %d cannot have offset of %d.",
-                    src.length,
-                    srcOffset));
-        }
-        if (srcOffset < 0 || srcOffset + srcLen > src.length) {
-            throw new IllegalArgumentException(String.format(
-                    "Source array with length %d cannot have offset of %d and still process four bytes.",
-                    src.length,
-                    srcOffset));
-        }   // end if
-        if (destOffset < 0 || destOffset + (srcLen - 1) > dest.length) {
+                                    int offset) {
+        // There isn't enough space in the destination array for decoded data.
+        if ((offset + len - 1) > dest.length) {
             throw new IllegalArgumentException(String.format(
                     "Destination array with length %d cannot have offset of %d and still store three bytes.",
                     dest.length,
-                    destOffset));
-        }   // end if
-
+                    offset));
+        }
         // Example: Dk or Dk==
-        if (srcLen == 2 || (src[srcOffset + 2] == EQUALS_SIGN && src[srcOffset + 3] == EQUALS_SIGN)) {
+        if (len == 2 || (src[2] == EQUALS_SIGN && src[3] == EQUALS_SIGN)) {
             int outBuff =
-                    (validate(src[srcOffset])     << 18) |
-                    (validate(src[srcOffset + 1]) << 12);
+                    (validate(src[0]) << 18) |
+                    (validate(src[1]) << 12);
 
-            dest[destOffset] = (byte) (outBuff >>> 16);
+            dest[offset] = (byte) (outBuff >>> 16);
             return 1;
         }
 
         // Example: DkL or DkL=
-        else if (srcLen == 3 || src[srcOffset + 3] == EQUALS_SIGN) {
+        else if (len == 3 || src[3] == EQUALS_SIGN) {
             int outBuff =
-                    (validate(src[srcOffset])     << 18) |
-                    (validate(src[srcOffset + 1]) << 12) |
-                    (validate(src[srcOffset + 2]) << 6);
+                    (validate(src[0]) << 18) |
+                    (validate(src[1]) << 12) |
+                    (validate(src[2]) << 6);
 
-            dest[destOffset] = (byte) (outBuff >>> 16);
-            dest[destOffset + 1] = (byte) (outBuff >>> 8);
+            dest[offset]     = (byte) (outBuff >>> 16);
+            dest[offset + 1] = (byte) (outBuff >>> 8);
             return 2;
         }
 
         // Example: DkLE
         else {
             int outBuff =
-                    (validate(src[srcOffset])     << 18) |
-                    (validate(src[srcOffset + 1]) << 12) |
-                    (validate(src[srcOffset + 2]) << 6) |
-                    (validate(src[srcOffset + 3]));
+                    (validate(src[0]) << 18) |
+                    (validate(src[1]) << 12) |
+                    (validate(src[2]) << 6) |
+                    (validate(src[3]));
 
-            dest[destOffset] = (byte) (outBuff >> 16);
-            dest[destOffset + 1] = (byte) (outBuff >> 8);
-            dest[destOffset + 2] = (byte) (outBuff);
+            dest[offset]     = (byte) (outBuff >> 16);
+            dest[offset + 1] = (byte) (outBuff >> 8);
+            dest[offset + 2] = (byte) (outBuff);
 
             return 3;
         }
@@ -409,7 +393,7 @@ public class Base64 {
                 if (sbiDecode >= EQUALS_SIGN_ENC) {
                     b4[b4Posn++] = source[i];
                     if (b4Posn > 3) {
-                        outBuffPosn += decode4to3(b4, 0, 4, outBuff, outBuffPosn);
+                        outBuffPosn += decode4to3(b4, 4, outBuff, outBuffPosn);
                         b4Posn = 0;
                     }
                 }
@@ -423,7 +407,7 @@ public class Base64 {
         }
 
         if (b4Posn > 0) {
-            outBuffPosn += decode4to3(b4, 0, b4Posn, outBuff, outBuffPosn);
+            outBuffPosn += decode4to3(b4, b4Posn, outBuff, outBuffPosn);
         }
 
         if (outBuffPosn < outBuff.length) {
