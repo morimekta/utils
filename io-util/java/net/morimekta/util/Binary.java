@@ -161,8 +161,10 @@ public class Binary implements Comparable<Binary>, Serializable {
     /**
      * Make a hex string from a byte array.
      *
+     * @param line_len Length of each line.
      * @return The hex string.
      */
+    @Deprecated
     public String toHexString(int line_len) {
         StringBuilder builder = new StringBuilder();
         for (int i = 0; i < bytes.length; ++i) {

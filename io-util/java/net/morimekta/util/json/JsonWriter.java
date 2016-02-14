@@ -53,6 +53,12 @@ public class JsonWriter {
         context = new JsonContext(JsonContext.Mode.VALUE);
     }
 
+    protected void reset() {
+        writer.flush();
+        stack.clear();
+        context = new JsonContext(JsonContext.Mode.VALUE);
+    }
+
     public void flush() {
         writer.flush();
     }
@@ -78,9 +84,6 @@ public class JsonWriter {
     }
 
     public JsonWriter endObject() throws JsonException {
-        if (context == null) {
-            throw new JsonException("Ending object on closed writer.");
-        }
         if (!context.map()) {
             throw new JsonException("Unexpected end, not in object.");
         }
@@ -93,9 +96,6 @@ public class JsonWriter {
     }
 
     public JsonWriter endArray() throws JsonException {
-        if (context == null) {
-            throw new JsonException("Ending array on closed writer.");
-        }
         if (!context.list()) {
             throw new JsonException("Unexpected end, not in list.");
         }
@@ -170,7 +170,7 @@ public class JsonWriter {
         startKey();
 
         if (key == null) {
-            throw new JsonException("Expected map key, got null");
+            throw new JsonException("Expected map key, but got null.");
         }
 
         writeQuoted(key);
@@ -182,7 +182,7 @@ public class JsonWriter {
         startKey();
 
         if (key == null) {
-            throw new JsonException("Expected map key, got null");
+            throw new JsonException("Expected map key, but got null.");
         }
 
         writer.write('\"');
@@ -196,7 +196,7 @@ public class JsonWriter {
         startKey();
 
         if (key == null) {
-            throw new JsonException("Expected map key, got null");
+            throw new JsonException("Expected map key, but got null.");
         }
 
         writer.write(key.toString());
@@ -287,14 +287,11 @@ public class JsonWriter {
     }
 
     protected void startKey() throws JsonException {
-        if (context == null) {
-            throw new JsonException("Starting key on closed writer.");
-        }
         if (!context.map()) {
             throw new JsonException("Unexpected map key outside map.");
         }
         if (!context.key()) {
-            throw new JsonException("Unexpected map key, expected value or end");
+            throw new JsonException("Unexpected map key, expected value or end.");
         }
 
         if (context.num > 0) {
@@ -306,11 +303,12 @@ public class JsonWriter {
     }
 
     protected boolean startValue() throws JsonException {
-        if (context == null) {
-            throw new JsonException("Starting value on closed writer.");
-        }
-        if (context.key()) {
-            throw new JsonException("Unexpected map key, expected value.");
+        if (!context.value()) {
+            if (context.expect == JsonContext.Expect.VALUE) {
+                throw new JsonException("Value already written, and not in container.");
+            } else {
+                throw new JsonException("Expected map key, but got value.");
+            }
         }
         if (context.list()) {
             if (context.num > 0) {
@@ -320,6 +318,8 @@ public class JsonWriter {
             return true;
         } else if (context.map()) {
             context.expect = JsonContext.Expect.KEY;
+        } else {
+            ++context.num;
         }
         return false;
     }
