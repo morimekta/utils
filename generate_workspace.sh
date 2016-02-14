@@ -52,7 +52,7 @@ do
 done
 
 TMP_file=$(mktemp -t 'generate_workspace.XXXXXXXXXX')
-POMS=( $(find | grep '/pom.xml' | sed -e 's:/pom.xml$::' -e "s:^./:-m ${location}/:") )
+POMS=( $(find | grep -v '^\./pom.xml' | grep '/pom.xml' | sed -e 's:/pom.xml$::' -e "s:^./:-m ${location}/:") )
 
 echo "-- log file ${TMP_file}"
 echo "## generate_workspace ${POMS[@]}"
@@ -62,6 +62,7 @@ cd ${bazel_workspace}
 bazel run //src/tools/generate_workspace -- ${POMS[@]} 1> ${TMP_file} 2>&1 || exit 1
 
 echo "-- done"
+echo
 
 WS=$(cat ${TMP_file} | tail -n 2 | head -n 1)
 BUILD=$(cat ${TMP_file} | tail -n 1)
@@ -74,7 +75,6 @@ then
 fi
 
 echo "-- writing WORKSPACE"
-
 if [[ -f third-party/common.WORKSPACE ]]
 then
     cat third-party/common.WORKSPACE                         > WORKSPACE
