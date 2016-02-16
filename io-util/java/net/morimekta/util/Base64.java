@@ -212,7 +212,9 @@ public class Base64 {
         // Try to determine more precisely how big the array needs to be.
         // If we get it right, we don't have to do an array copy, and
         // we save a bunch of memory.
-        int bufLen = (len / 3) * 4 + (len % 3 > 0 ? 4 : 0); // Bytes needed for actual encoding
+        int blocks = len / 3;
+        int extra = len % 3;
+        int bufLen = blocks * 4 + (extra > 0 ? extra + 1 : 0); // Bytes needed for actual encoding
         byte[] dest = new byte[bufLen];
 
         int srcPos = 0;
@@ -220,26 +222,14 @@ public class Base64 {
         final int len2 = len - 2;
         for (; srcPos < len2; srcPos += 3) {
             destPos += encode3to4(source, srcPos + off, 3, dest, destPos);
-        }   // end for: each piece of array
-
-        if (srcPos < len) {
-            destPos += encode3to4(source, srcPos + off, len - srcPos, dest, destPos);
-        }   // end if: some padding needed
-
-        // Only resize array if we didn't guess it right.
-        if (destPos < dest.length) {
-            // If breaking lines and the last byte falls right at
-            // the line length (76 bytes per line), there will be
-            // one extra byte, and the array will need to be resized.
-            // Not too bad of an estimate on array size, I'd say.
-            byte[] finalOut = new byte[destPos];
-            System.arraycopy(dest, 0, finalOut, 0, destPos);
-            return finalOut;
-        } else {
-            return dest;
         }
 
-    }   // end encode
+        if (srcPos < len) {
+            encode3to4(source, srcPos + off, len - srcPos, dest, destPos);
+        }
+
+        return dest;
+    }
 
     public static byte[] encode(byte[] source) {
         return encode(source, 0, source.length);
@@ -326,7 +316,7 @@ public class Base64 {
         byte b = DECODABET[from & 0x7F];
         if (b < 0) {
             throw new IllegalArgumentException(String.format(
-                    "Invalid%s url safe base64 character \\u%04d",
+                    "Invalid base64 character \\u%04d",
                     (b & 0xff)));
         }
         return b;
@@ -358,7 +348,9 @@ public class Base64 {
      * @param len    The number of byte sof input to decode.
      * @return decoded data
      */
-    public static byte[] decode(byte[] source, int offset, int len) {
+    public static byte[] decode(final byte[] source,
+                                final int offset,
+                                final int len) {
         if (source == null) {
             throw new NullPointerException("Cannot decode null source array.");
         }
@@ -388,7 +380,7 @@ public class Base64 {
 
             // White space, Equals sign, or legit Base64 character
             // Note the values such as -5 and -9 in the
-            // DECODABETs at the top of the file.
+            // DECODABET at the top of the file.
             if (sbiDecode >= WHITE_SPACE_ENC) {
                 if (sbiDecode >= EQUALS_SIGN_ENC) {
                     b4[b4Posn++] = source[i];
@@ -416,7 +408,7 @@ public class Base64 {
             return out;
         }
         return outBuff;
-    }   // end decode
+    }
 
     /**
      * Decodes data from Base64 notation, automatically
