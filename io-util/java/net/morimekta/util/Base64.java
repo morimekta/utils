@@ -18,7 +18,7 @@
  */
 package net.morimekta.util;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.nio.charset.StandardCharsets.US_ASCII;
 
 /**
  * Minimal Base64 utility. Will always encode with standard base64 encoding, no
@@ -140,12 +140,10 @@ public class Base64 {
                      (numSigBytes > 2 ? ((source[srcOffset + 2] << 24) >>> 24) : 0);
 
         switch (numSigBytes) {
-            case 3:
+            case 1:
                 destination[destOffset] = ALPHABET[(inBuff >>> 18)];
                 destination[destOffset + 1] = ALPHABET[(inBuff >>> 12) & 0x3f];
-                destination[destOffset + 2] = ALPHABET[(inBuff >>> 6) & 0x3f];
-                destination[destOffset + 3] = ALPHABET[(inBuff) & 0x3f];
-                return 4;
+                return 2;
 
             case 2:
                 destination[destOffset] = ALPHABET[(inBuff >>> 18)];
@@ -153,13 +151,12 @@ public class Base64 {
                 destination[destOffset + 2] = ALPHABET[(inBuff >>> 6) & 0x3f];
                 return 3;
 
-            case 1:
+            default:
                 destination[destOffset] = ALPHABET[(inBuff >>> 18)];
                 destination[destOffset + 1] = ALPHABET[(inBuff >>> 12) & 0x3f];
-                return 2;
-
-            default:
-                return 0;
+                destination[destOffset + 2] = ALPHABET[(inBuff >>> 6) & 0x3f];
+                destination[destOffset + 3] = ALPHABET[(inBuff) & 0x3f];
+                return 4;
         }
     }
 
@@ -177,7 +174,7 @@ public class Base64 {
 
     public static String encodeToString(byte[] source, int off, int len) {
         byte[] encoded = encode(source, off, len);
-        return new String(encoded, UTF_8);
+        return new String(encoded, US_ASCII);
     }
 
     public static byte[] encode(final byte[] source, final int off, final int len) {
@@ -190,7 +187,7 @@ public class Base64 {
         }   // end if: off < 0
 
         if (len < 0) {
-            throw new IllegalArgumentException("Cannot have length offset: " + len);
+            throw new IllegalArgumentException("Cannot have negative length: " + len);
         }   // end if: len < 0
 
         if (off + len > source.length) {
@@ -267,13 +264,6 @@ public class Base64 {
                                     int len,
                                     byte[] dest,
                                     int offset) {
-        // There isn't enough space in the destination array for decoded data.
-        if ((offset + len - 1) > dest.length) {
-            throw new IllegalArgumentException(String.format(
-                    "Destination array with length %d cannot have offset of %d and still store three bytes.",
-                    dest.length,
-                    offset));
-        }
         // Example: Dk or Dk==
         if (len == 2 || (src[2] == EQUALS_SIGN && src[3] == EQUALS_SIGN)) {
             int outBuff =
@@ -316,8 +306,7 @@ public class Base64 {
         byte b = DECODABET[from & 0x7F];
         if (b < 0) {
             throw new IllegalArgumentException(String.format(
-                    "Invalid base64 character \\u%04d",
-                    (b & 0xff)));
+                    "Invalid base64 character \\u%04x", from));
         }
         return b;
     }
@@ -344,21 +333,30 @@ public class Base64 {
      * any are present, there must be the correct number of them.
      *
      * @param source The data to decode
-     * @param offset The offset within the input array at which to start
+     * @param off The offset within the input array at which to start
      * @param len    The number of byte sof input to decode.
      * @return decoded data
      */
     public static byte[] decode(final byte[] source,
-                                final int offset,
+                                final int off,
                                 final int len) {
         if (source == null) {
             throw new NullPointerException("Cannot decode null source array.");
         }
-        if (offset < 0 || offset + len > source.length) {
+
+        if (off < 0) {
+            throw new IllegalArgumentException("Cannot have negative offset: " + off);
+        }
+
+        if (len < 0) {
+            throw new IllegalArgumentException("Cannot have negative length: " + len);
+        }
+
+        if ((off + len) > source.length) {
             throw new IllegalArgumentException(String.format(
                     "Source array with length %d cannot have offset of %d and process %d bytes.",
                     source.length,
-                    offset,
+                    off,
                     len));
         }
 
@@ -375,7 +373,7 @@ public class Base64 {
         int i;                   // Source array counter
         byte sbiDecode;          // Special value from DECODABET
 
-        for (i = offset; i < offset + len; i++) {  // Loop through source
+        for (i = off; i < off + len; i++) {  // Loop through source
             sbiDecode = DECODABET[source[i] & 0x7F];
 
             // White space, Equals sign, or legit Base64 character
@@ -411,8 +409,7 @@ public class Base64 {
     }
 
     /**
-     * Decodes data from Base64 notation, automatically
-     * detecting gzip-compressed data and decompressing it.
+     * Decodes data from Base64 notation.
      *
      * @param s the string to decode
      * @return the decoded data
@@ -423,7 +420,7 @@ public class Base64 {
             throw new NullPointerException("Input string was null.");
         }
 
-        byte[] bytes = s.getBytes(UTF_8);
+        byte[] bytes = s.getBytes(US_ASCII);
         return decode(bytes, 0, bytes.length);
     }
 }

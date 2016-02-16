@@ -40,17 +40,29 @@ import java.util.Locale;
  * </pre>
  */
 public class Utf8StreamReader extends Reader {
-    private final InputStream in;
     private final int[]       buffer;
+
+    private InputStream in;
+
+    private char surrogate;
 
     public Utf8StreamReader(InputStream in) {
         this.in = in;
         this.buffer = new int[5];
+        this.surrogate = 0;
     }
 
     @Override
     public int read(char[] cbuf, int off, int len) throws IOException {
+        if (in == null) throw new IOException("Reading from a closed stream.");
+
         for (int i = 0; i < len; ++i) {
+            if (surrogate != 0) {
+                cbuf[off + i] = surrogate;
+                surrogate = 0;
+                continue;
+            }
+
             final int r = in.read();
             if (r < 0) {
                 if (i == 0) {
@@ -99,7 +111,7 @@ public class Utf8StreamReader extends Reader {
         in.close();
     }
 
-    protected static char convert(final int[] arr, final int num) throws IOException {
+    protected char convert(final int[] arr, final int num) throws IOException {
         int cp = 0;
         switch (num) {
             case 1:
@@ -131,6 +143,12 @@ public class Utf8StreamReader extends Reader {
             }
             cp = (cp << 6) | (arr[i] & 0x3f);
         }
-        return (char) cp;
+
+        if (Character.isBmpCodePoint(cp)) {
+            return (char) cp;
+        } else {
+            surrogate = Character.lowSurrogate(cp);
+            return Character.highSurrogate(cp);
+        }
     }
 }
