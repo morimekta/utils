@@ -133,7 +133,7 @@ public class Binary implements Comparable<Binary>, Serializable {
      */
     public static Binary fromHexString(String hex) {
         if (hex.length() % 2 != 0) {
-            throw new AssertionError("Wrong hex string length");
+            throw new IllegalArgumentException("Illegal hex string length: " + hex.length());
         }
         final int len = hex.length() / 2;
         final byte[] out = new byte[len];
@@ -154,24 +154,6 @@ public class Binary implements Comparable<Binary>, Serializable {
         StringBuilder builder = new StringBuilder();
         for (int i = 0; i < bytes.length; ++i) {
             builder.append(String.format("%02x", bytes[i]));
-        }
-        return builder.toString();
-    }
-
-    /**
-     * Make a hex string from a byte array.
-     *
-     * @param line_len Length of each line.
-     * @return The hex string.
-     */
-    @Deprecated
-    public String toHexString(int line_len) {
-        StringBuilder builder = new StringBuilder();
-        for (int i = 0; i < bytes.length; ++i) {
-            builder.append(String.format("%02x", bytes[i]));
-            if (i % line_len == (line_len - 1)) {
-                builder.append('\n');
-            }
         }
         return builder.toString();
     }

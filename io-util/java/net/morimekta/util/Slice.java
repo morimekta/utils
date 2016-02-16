@@ -88,7 +88,7 @@ public class Slice implements Comparable<Slice> {
         }
         for (; pos < off + len; ++pos) {
             res *= radix;
-            res += valueOfHex(fb[pos]);
+            res += validate(valueOfHex(fb[pos]), radix);
         }
         return neg ? -res : res;
     }
@@ -175,12 +175,25 @@ public class Slice implements Comparable<Slice> {
                other.len == len;
     }
 
+    /**
+     * Slice ordering:
+     *  - Firstly ordered by start (offset) position.
+     *  - Secondly ordered by reverse length (longest slice first).
+     * @param o The other slice.
+     * @return Compared value.
+     */
     @Override
     public int compareTo(Slice o) {
         if (o.off != off) {
             return Integer.compare(off, o.off);
         }
         return Integer.compare(o.len, len);
+    }
+
+    private static int validate(int value, int radix) {
+        if (value >= radix) throw new IllegalArgumentException();
+        if (value < 0) throw new IllegalArgumentException();
+        return value;
     }
 
     private static int valueOfHex(byte b) {
