@@ -40,7 +40,7 @@ public class JsonWriter {
     private final PrintWriter        writer;
     private final Stack<JsonContext> stack;
 
-    private JsonContext context;
+    protected JsonContext context;
 
     public JsonWriter(OutputStream out) {
         this(new PrintWriter(new OutputStreamWriter(out, UTF_8)));

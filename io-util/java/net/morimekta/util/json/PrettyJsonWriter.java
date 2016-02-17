@@ -30,9 +30,9 @@ import java.io.OutputStream;
  * inherent structure of the data.
  */
 public class PrettyJsonWriter extends JsonWriter {
-    private static final char SPACE = ' ';
+    private static final int SPACE = ' ';
 
-    private final IndentedPrintWriter mIndentedWriter;
+    private final IndentedPrintWriter writer;
 
     /**
      * Create a Prettified JSON writer that writes to the given output stream.
@@ -50,35 +50,39 @@ public class PrettyJsonWriter extends JsonWriter {
      */
     public PrettyJsonWriter(IndentedPrintWriter writer) {
         super(writer);
-        mIndentedWriter = writer;
+        this.writer = writer;
     }
 
     @Override
     public PrettyJsonWriter object() throws JsonException {
         super.object();
-        mIndentedWriter.begin();
+        writer.begin();
         return this;
     }
 
     @Override
     public PrettyJsonWriter array() throws JsonException {
         super.array();
-        mIndentedWriter.begin();
+        writer.begin();
         return this;
     }
 
     @Override
     public PrettyJsonWriter endObject() throws JsonException {
-        mIndentedWriter.end()
-                       .appendln();
+        writer.end();
+        if (context.num != 0) {
+            writer.appendln();
+        }
         super.endObject();
         return this;
     }
 
     @Override
     public PrettyJsonWriter endArray() throws JsonException {
-        mIndentedWriter.end()
-                       .appendln();
+        writer.end();
+        if (context.num != 0) {
+            writer.appendln();
+        }
         super.endArray();
         return this;
     }
@@ -86,63 +90,63 @@ public class PrettyJsonWriter extends JsonWriter {
     @Override
     public PrettyJsonWriter key(boolean key) throws JsonException {
         super.key(key);
-        mIndentedWriter.append(SPACE);
+        writer.write(SPACE);
         return this;
     }
 
     @Override
     public PrettyJsonWriter key(byte key) throws JsonException {
         super.key(key);
-        mIndentedWriter.append(SPACE);
+        writer.write(SPACE);
         return this;
     }
 
     @Override
     public PrettyJsonWriter key(short key) throws JsonException {
         super.key(key);
-        mIndentedWriter.append(SPACE);
+        writer.write(SPACE);
         return this;
     }
 
     @Override
     public PrettyJsonWriter key(int key) throws JsonException {
         super.key(key);
-        mIndentedWriter.append(SPACE);
+        writer.write(SPACE);
         return this;
     }
 
     @Override
     public PrettyJsonWriter key(long key) throws JsonException {
         super.key(key);
-        mIndentedWriter.append(SPACE);
+        writer.write(SPACE);
         return this;
     }
 
     @Override
     public PrettyJsonWriter key(double key) throws JsonException {
         super.key(key);
-        mIndentedWriter.append(SPACE);
+        writer.write(SPACE);
         return this;
     }
 
     @Override
     public PrettyJsonWriter key(CharSequence key) throws JsonException {
         super.key(key);
-        mIndentedWriter.append(SPACE);
+        writer.write(SPACE);
         return this;
     }
 
     @Override
     public PrettyJsonWriter key(Binary key) throws JsonException {
         super.key(key);
-        mIndentedWriter.append(SPACE);
+        writer.write(SPACE);
         return this;
     }
 
     @Override
     public PrettyJsonWriter keyLiteral(CharSequence key) throws JsonException {
-        super.key(key);
-        mIndentedWriter.append(SPACE);
+        super.keyLiteral(key);
+        writer.write(SPACE);
         return this;
     }
 
@@ -196,20 +200,20 @@ public class PrettyJsonWriter extends JsonWriter {
 
     @Override
     public PrettyJsonWriter valueLiteral(CharSequence value) throws JsonException {
-        super.value(value);
+        super.valueLiteral(value);
         return this;
     }
 
     @Override
     protected void startKey() throws JsonException {
         super.startKey();
-        mIndentedWriter.appendln();
+        writer.appendln();
     }
 
     @Override
     protected boolean startValue() throws JsonException {
         if (super.startValue()) {
-            mIndentedWriter.appendln();
+            writer.appendln();
             return true;
         }
         return false;
