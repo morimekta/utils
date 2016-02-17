@@ -37,6 +37,9 @@ public class IOUtils {
      * @throws IOException
      */
     public static boolean skipUntil(InputStream in, byte[] separator) throws IOException {
+        if (separator == null) {
+            throw new NullPointerException("Null separator given");
+        }
         if(separator.length > 0) {
             if(separator.length == 1) { return skipUntil(in, separator[0]); }
             if(separator.length > 4) { return skipUntil(in, separator, new byte[separator.length]); }
@@ -76,12 +79,16 @@ public class IOUtils {
 
     /* -- PRIVATE METHODS -- */
 
+    private IOUtils() {}
+
     private static boolean skipUntil(InputStream in, byte[] separator, byte[] buffer) throws IOException {
         int r;
+        int l = 0;
         while((r = in.read()) >= 0) {
             System.arraycopy(buffer, 1, buffer, 0, buffer.length - 1);
             buffer[buffer.length - 1] = (byte) r;
-            if(Arrays.equals(separator, buffer)) { return true; }
+            ++l;
+            if(l >= buffer.length && Arrays.equals(separator, buffer)) { return true; }
         }
         return false;
     }
