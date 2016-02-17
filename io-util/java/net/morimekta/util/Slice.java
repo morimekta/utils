@@ -26,6 +26,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * A slice of a byte array.
+ *
+ * Note that all the helper methods assume UTF_8 encoding.
  */
 public class Slice implements Comparable<Slice> {
     protected final byte[] fb;
@@ -153,7 +155,7 @@ public class Slice implements Comparable<Slice> {
 
     @Override
     public String toString() {
-        return String.format("slice(off:%d,len:%d,total:%d)", off, len, fb.length);
+        return String.format("slice([%d..%d>/%d)", off, off + len, fb.length);
     }
 
     @Override
@@ -176,9 +178,14 @@ public class Slice implements Comparable<Slice> {
     }
 
     /**
+     * Compare slice with other slice.
+     *
      * Slice ordering:
      *  - Firstly ordered by start (offset) position.
      *  - Secondly ordered by reverse length (longest slice first).
+     *
+     * Result is undefined of the two slices point to different byte buffers.
+     *
      * @param o The other slice.
      * @return Compared value.
      */

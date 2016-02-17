@@ -36,7 +36,7 @@ public class Base64 {
     /* ********  P R I V A T E   F I E L D S  ******** */
 
     /** The equals sign (=) as a byte. */
-    protected final static byte EQUALS_SIGN = (byte) '=';
+    private final static byte EQUALS_SIGN = (byte) '=';
 
     private final static byte WHITE_SPACE_ENC = -5; // Indicates white space in encoding
     private final static byte EQUALS_SIGN_ENC = -1; // Indicates equals sign in encoding
@@ -119,11 +119,11 @@ public class Base64 {
      * @return the <var>destination</var> array
      * @since 1.3
      */
-    protected static int encode3to4(byte[] source,
-                                    int srcOffset,
-                                    int numSigBytes,
-                                    byte[] destination,
-                                    int destOffset) {
+    private static int encode3to4(byte[] source,
+                                  int srcOffset,
+                                  int numSigBytes,
+                                  byte[] destination,
+                                  int destOffset) {
         //           1         2         3
         // 01234567890123456789012345678901 Bit position
         // --------000000001111111122222222 Array position from threeBytes
@@ -180,15 +180,15 @@ public class Base64 {
     public static byte[] encode(final byte[] source, final int off, final int len) {
         if (source == null) {
             throw new NullPointerException("Cannot serialize a null array.");
-        }   // end if: null
+        }
 
         if (off < 0) {
             throw new IllegalArgumentException("Cannot have negative offset: " + off);
-        }   // end if: off < 0
+        }
 
         if (len < 0) {
             throw new IllegalArgumentException("Cannot have negative length: " + len);
-        }   // end if: len < 0
+        }
 
         if (off + len > source.length) {
             throw new IllegalArgumentException(String.format(
@@ -196,7 +196,7 @@ public class Base64 {
                     off,
                     len,
                     source.length));
-        }   // end if: off < 0
+        }
 
         if (len == 0) {
             return new byte[0];
@@ -255,31 +255,24 @@ public class Base64 {
      * @param dest the array to hold the conversion
      * @param offset the index where output will be put
      * @return the number of decoded bytes converted
-     * @throws NullPointerException if source or destination arrays are null
-     * @throws IllegalArgumentException if srcOffset or destOffset are invalid
-     *         or there is not enough room in the array.
-     * @since 1.3
      */
-    protected static int decode4to3(byte[] src,
-                                    int len,
-                                    byte[] dest,
-                                    int offset) {
+    private static int decode4to3(byte[] src,
+                                  int len,
+                                  byte[] dest,
+                                  int offset) {
         // Example: Dk or Dk==
         if (len == 2 || (src[2] == EQUALS_SIGN && src[3] == EQUALS_SIGN)) {
-            int outBuff =
-                    (validate(src[0]) << 18) |
-                    (validate(src[1]) << 12);
+            int outBuff = (validate(src[0]) << 18) | (validate(src[1]) << 12);
 
             dest[offset] = (byte) (outBuff >>> 16);
             return 1;
         }
 
         // Example: DkL or DkL=
-        else if (len == 3 || src[3] == EQUALS_SIGN) {
-            int outBuff =
-                    (validate(src[0]) << 18) |
-                    (validate(src[1]) << 12) |
-                    (validate(src[2]) << 6);
+        if (len == 3 || src[3] == EQUALS_SIGN) {
+            int outBuff = (validate(src[0]) << 18) |
+                          (validate(src[1]) << 12) |
+                          (validate(src[2]) << 6);
 
             dest[offset]     = (byte) (outBuff >>> 16);
             dest[offset + 1] = (byte) (outBuff >>> 8);
@@ -287,19 +280,15 @@ public class Base64 {
         }
 
         // Example: DkLE
-        else {
-            int outBuff =
-                    (validate(src[0]) << 18) |
-                    (validate(src[1]) << 12) |
-                    (validate(src[2]) << 6) |
-                    (validate(src[3]));
+        int outBuff = (validate(src[0]) << 18) |
+                      (validate(src[1]) << 12) |
+                      (validate(src[2]) << 6) |
+                      (validate(src[3]));
 
-            dest[offset]     = (byte) (outBuff >> 16);
-            dest[offset + 1] = (byte) (outBuff >> 8);
-            dest[offset + 2] = (byte) (outBuff);
-
-            return 3;
-        }
+        dest[offset]     = (byte) (outBuff >>> 16);
+        dest[offset + 1] = (byte) (outBuff >>> 8);
+        dest[offset + 2] = (byte) (outBuff);
+        return 3;
     }
 
     private static int validate(byte from) {

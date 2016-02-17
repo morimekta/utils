@@ -23,7 +23,10 @@ package net.morimekta.util;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.TreeSet;
@@ -32,6 +35,7 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -39,12 +43,12 @@ import static org.junit.Assert.fail;
  * Created by SteinEldar on 24.12.2015.
  */
 public class BinaryTest {
-    private byte[] a1 = new byte[]{'a', 'b', 'c'};
-    private byte[] a2 = new byte[]{'a', 'b', 'c'};
-    private byte[] b1 = new byte[]{'a', 'b', 'd'};
-    private byte[] b2 = new byte[]{'a', 'b', 'd'};
-    private byte[] c1 = new byte[]{'a', 'b', 'c', 'd'};
-    private byte[] c2 = new byte[]{'a', 'b', 'c', 'd'};
+    private byte[] a1;
+    private byte[] a2;
+    private byte[] b1;
+    private byte[] b2;
+    private byte[] c1;
+    private byte[] c2;
 
     @Before
     public void setUp() {
@@ -137,6 +141,40 @@ public class BinaryTest {
             fail("No exception on bad input");
         } catch (IllegalArgumentException e) {
             assertEquals("Illegal hex string length: 1", e.getMessage());
+        }
+    }
+
+    @Test
+    public void testGetByteBuffer() {
+        // Just test that the byte buffer contains a copy, and not the
+        // original array.
+        Binary a = Binary.wrap(a1);
+        ByteBuffer b = a.getByteBuffer();
+        assertNotSame(a1, b.array());
+    }
+
+    @Test
+    public void testIoStreams() throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+        Binary c = Binary.wrap(c1);
+        c.write(baos);
+
+        ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
+        Binary o = Binary.read(bais, baos.size());
+
+        assertEquals(c, o);
+    }
+
+    @Test
+    public void testReadNotEnough() {
+        ByteArrayInputStream bais = new ByteArrayInputStream(c1);
+
+        try {
+            Binary.read(bais, c1.length + 1);
+            fail("No exception on too short input array");
+        } catch (IOException e) {
+            assertEquals("End of stream before complete buffer read.", e.getMessage());
         }
     }
 
