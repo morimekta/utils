@@ -68,12 +68,7 @@ public class IndentedPrintWriter extends PrintWriter {
     }
 
     public IndentedPrintWriter(OutputStream out, String indent, String newline) {
-        super(new OutputStreamWriter(out, UTF_8));
-        this.indent = indent;
-        this.newline = newline;
-
-        this.indents = new Stack<>();
-        this.current = "";
+        this(new OutputStreamWriter(out, UTF_8), indent, newline);
     }
 
     public IndentedPrintWriter(Writer out) {

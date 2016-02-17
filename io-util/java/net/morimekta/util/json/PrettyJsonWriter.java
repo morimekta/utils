@@ -28,6 +28,14 @@ import java.io.OutputStream;
 /**
  * JSON Writer that automatically prints prettified JSON based on the
  * inherent structure of the data.
+ *
+ * This is deliberately kept separate from the default JsonWriter to
+ * keep the indention logic away from the default JsonWriter (since it is
+ * pretty latency sensitive).
+ *
+ * Can be used in place of the default JsonWriter, and will print pretty-
+ * printed JSON out of the box. Default indentation is from the indented
+ * print writer, which is 4 spaces,
  */
 public class PrettyJsonWriter extends JsonWriter {
     private static final int SPACE = ' ';
