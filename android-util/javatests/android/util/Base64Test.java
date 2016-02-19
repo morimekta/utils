@@ -147,14 +147,24 @@ public class Base64Test extends TestCase {
         assertEquals(BYTES, 8, Base64.decode("_-7dzLuqmYg", Base64.URL_SAFE));
 
         assertEquals("", Base64.encodeToString(BYTES, 0, 0, Base64.URL_SAFE));
-        assertEquals("_w", Base64.encodeToString(BYTES, 0, 1, Base64.URL_SAFE));
-        assertEquals("_-4", Base64.encodeToString(BYTES, 0, 2, Base64.URL_SAFE));
+        assertEquals("_w==", Base64.encodeToString(BYTES, 0, 1, Base64.URL_SAFE));
+        assertEquals("_-4=", Base64.encodeToString(BYTES, 0, 2, Base64.URL_SAFE));
         assertEquals("_-7d", Base64.encodeToString(BYTES, 0, 3, Base64.URL_SAFE));
-        assertEquals("_-7dzA", Base64.encodeToString(BYTES, 0, 4, Base64.URL_SAFE));
-        assertEquals("_-7dzLs", Base64.encodeToString(BYTES, 0, 5, Base64.URL_SAFE));
+        assertEquals("_-7dzA==", Base64.encodeToString(BYTES, 0, 4, Base64.URL_SAFE));
+        assertEquals("_-7dzLs=", Base64.encodeToString(BYTES, 0, 5, Base64.URL_SAFE));
         assertEquals("_-7dzLuq", Base64.encodeToString(BYTES, 0, 6, Base64.URL_SAFE));
-        assertEquals("_-7dzLuqmQ", Base64.encodeToString(BYTES, 0, 7, Base64.URL_SAFE));
-        assertEquals("_-7dzLuqmYg", Base64.encodeToString(BYTES, 0, 8, Base64.URL_SAFE));
+        assertEquals("_-7dzLuqmQ==", Base64.encodeToString(BYTES, 0, 7, Base64.URL_SAFE));
+        assertEquals("_-7dzLuqmYg=", Base64.encodeToString(BYTES, 0, 8, Base64.URL_SAFE));
+
+        assertEquals("", Base64.encodeToString(BYTES, 0, 0, Base64.URL_SAFE | Base64.NO_PADDING));
+        assertEquals("_w", Base64.encodeToString(BYTES, 0, 1, Base64.URL_SAFE | Base64.NO_PADDING));
+        assertEquals("_-4", Base64.encodeToString(BYTES, 0, 2, Base64.URL_SAFE | Base64.NO_PADDING));
+        assertEquals("_-7d", Base64.encodeToString(BYTES, 0, 3, Base64.URL_SAFE | Base64.NO_PADDING));
+        assertEquals("_-7dzA", Base64.encodeToString(BYTES, 0, 4, Base64.URL_SAFE | Base64.NO_PADDING));
+        assertEquals("_-7dzLs", Base64.encodeToString(BYTES, 0, 5, Base64.URL_SAFE | Base64.NO_PADDING));
+        assertEquals("_-7dzLuq", Base64.encodeToString(BYTES, 0, 6, Base64.URL_SAFE | Base64.NO_PADDING));
+        assertEquals("_-7dzLuqmQ", Base64.encodeToString(BYTES, 0, 7, Base64.URL_SAFE | Base64.NO_PADDING));
+        assertEquals("_-7dzLuqmYg", Base64.encodeToString(BYTES, 0, 8, Base64.URL_SAFE | Base64.NO_PADDING));
     }
 
     @Test
@@ -235,6 +245,13 @@ public class Base64Test extends TestCase {
         assertEquals(out_59.replaceAll("[\\n=]", ""), encodeToString(in_59, Base64.NO_WRAP | Base64.NO_PADDING));
         assertEquals(out_60.replaceAll("[\\n=]", ""), encodeToString(in_60, Base64.NO_WRAP | Base64.NO_PADDING));
         assertEquals(out_61.replaceAll("[\\n=]", ""), encodeToString(in_61, Base64.NO_WRAP | Base64.NO_PADDING));
+
+        assertEquals(out_56, encodeToString(in_56, Base64.URL_SAFE));
+        assertEquals(out_57, encodeToString(in_57, Base64.URL_SAFE));
+        assertEquals(out_58, encodeToString(in_58, Base64.URL_SAFE));
+        assertEquals(out_59, encodeToString(in_59, Base64.URL_SAFE));
+        assertEquals(out_60, encodeToString(in_60, Base64.URL_SAFE));
+        assertEquals(out_61, encodeToString(in_61, Base64.URL_SAFE));
 
         assertEquals(out_56.replaceAll("\\n", "\r\n"), encodeToString(in_56, Base64.CRLF));
         assertEquals(out_57.replaceAll("\\n", "\r\n"), encodeToString(in_57, Base64.CRLF));

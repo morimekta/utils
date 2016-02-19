@@ -47,9 +47,9 @@ public class Base64OutputStream extends FilterOutputStream {
      */
     public Base64OutputStream(OutputStream out, int options) {
         super(out);
-        this.breakLines = (options & (Base64.NO_WRAP | Base64.URL_SAFE)) == 0;
+        this.breakLines = (options & (Base64.NO_WRAP)) == 0;
         this.alphabet = Base64.getAlphabet(options);
-        this.noPadding = (options & (Base64.NO_PADDING | Base64.URL_SAFE)) != 0;
+        this.noPadding = (options & (Base64.NO_PADDING)) != 0;
         this.close = (options & Base64.NO_CLOSE) == 0;
         this.crlf = (options & Base64.CRLF) != 0;
         this.buffer = new byte[3];

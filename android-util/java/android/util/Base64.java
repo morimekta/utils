@@ -39,10 +39,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  *         per RFC 2045, not only when requested as per RFC 3548.
  *     </li>
  *     <li>
- *         URL encoded base64 ({@link URL_SAFE}) implies the {@link NO_WRAP}
- *         and {@link NO_PADDING} options; it will neither wrap nor pad the
- *         encoded bytes. This conflicts with the original android.net.morimekta.util.Base64
- *         class.
+ *         Even {@link URL_SAFE} encoding will both pad and wrap lines per default,
+ *         which frankly makes it neither safe for URLs nor filenames.
  *     </li>
  * </ul>
  */
@@ -383,9 +381,9 @@ public class Base64 {
             return new byte[0];
         }
 
-        final boolean breakLines = (options & (Base64.NO_WRAP | Base64.URL_SAFE)) == 0;
+        final boolean breakLines = (options & (Base64.NO_WRAP)) == 0;
         final boolean crlf = (options & Base64.CRLF) != 0;
-        final boolean noPadding = (options & (Base64.NO_PADDING | Base64.URL_SAFE)) != 0;
+        final boolean noPadding = (options & (Base64.NO_PADDING)) != 0;
         final byte[] alphabet = getAlphabet(options);
 
         //int    len43   = len * 4 / 3;
