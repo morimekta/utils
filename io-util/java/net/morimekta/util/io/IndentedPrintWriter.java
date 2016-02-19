@@ -120,19 +120,23 @@ public class IndentedPrintWriter extends PrintWriter {
     }
 
     public IndentedPrintWriter formatln(String format, Object... args) {
-        return appendln().append(String.format(format, args));
+        appendln();
+        super.format(format, args);
+        return this;
     }
 
     // --- Override PrintWriter methods to return IndentedPrintWriter.
 
     @Override
     public IndentedPrintWriter printf(String format, Object... args) {
-        return format(format, args);
+        super.format(format, args);
+        return this;
     }
 
     @Override
     public IndentedPrintWriter printf(Locale l, String format, Object... args) {
-        return format(l, format, args);
+        super.format(l, format, args);
+        return this;
     }
 
     @Override
