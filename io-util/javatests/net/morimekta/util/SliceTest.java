@@ -23,11 +23,10 @@ package net.morimekta.util;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.nio.charset.StandardCharsets;
-
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.fail;
 
 /**
  * @author Stein Eldar Johnsen
@@ -74,6 +73,18 @@ public class SliceTest {
 
         assertEquals(123L, slice.parseInteger());
         assertEquals(123.0, slice.parseDouble(), 0.0001);
+
+        slice = new Slice(data, 10, 4);
+        assertEquals(-123L, slice.parseInteger());
+        assertEquals(-123.0, slice.parseDouble(), 0.0001);
+
+        String hex = "0x7f";
+        slice = new Slice(hex.getBytes(), 0, 4);
+        assertEquals(127L, slice.parseInteger());
+
+        String oct = "0757";
+        slice = new Slice(oct.getBytes(), 0, 4);
+        assertEquals(495L, slice.parseInteger());
     }
 
     @Test
@@ -86,5 +97,57 @@ public class SliceTest {
         assertEquals('1', slice.charAt(0));
 
         assertEquals(123.45, slice.parseDouble(), 0.0001);
+    }
+
+    @Test
+    public void testSubstring() {
+        Slice slice = new Slice(data, 11, 6);
+
+        assertEquals("123", slice.substring(0, 3).asString());
+        assertEquals("23.4", slice.substring(1, -1).asString());
+
+        // substring cannot cut outside the boundaries of the original, only
+        // trim down, even though it would have become a valid slice.
+        try {
+            slice.substring(-1, 2);
+            fail();
+        } catch (IllegalArgumentException e) {
+            // pass()
+        }
+        try {
+            slice.substring(0, 10);
+            fail();
+        } catch (IllegalArgumentException e) {
+            // pass()
+        }
+
+        try {
+            slice.substring(3, -4);
+            fail();
+        } catch (IllegalArgumentException e) {
+            // pass()
+        }
+    }
+
+    @Test
+    public void testCharAt() {
+        Slice slice = new Slice(data, 11, 6);
+
+        assertEquals('1', slice.charAt(0));
+        assertEquals('.', slice.charAt(-3));
+
+        try {
+            slice.charAt(-8);
+            fail();
+        } catch (IllegalArgumentException e) {
+            // pass()
+        }
+
+        try {
+            slice.charAt(8);
+            fail();
+        } catch (IllegalArgumentException e) {
+            // pass()
+        }
     }
 }

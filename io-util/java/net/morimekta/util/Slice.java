@@ -54,6 +54,9 @@ public class Slice implements Comparable<Slice> {
     }
 
     public final Slice substring(int start, int end) {
+        if (start < 0 || end > len || end < -len) {
+            throw new IllegalArgumentException();
+        }
         int l = end < 0 ? (len - start) + end : end - start;
         if (l < 0 || l > (len - start)) {
             throw new IllegalArgumentException();
@@ -62,8 +65,11 @@ public class Slice implements Comparable<Slice> {
     }
 
     public final char charAt(int i) {
-        if (i < 0 || len <= i) {
+        if (i < -len || len <= i) {
             throw new IllegalArgumentException();
+        }
+        if (i < 0) {
+            i = len + i;
         }
         return (char) fb[off + i];
     }
