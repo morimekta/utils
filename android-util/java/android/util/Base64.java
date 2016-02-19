@@ -30,8 +30,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * Original Author: iharder
  * Reference: http://iharder.sourceforge.net/current/java/base64/
  * <p/>
- * NOTE: Note that the class is updated to to match the android.net.morimekta.util.Base64
- * interface. Since this interface does not follow the Base64 standard this
+ * NOTE: Note that the class is updated to to match the android.util.Base64
+ * interface. Since that interface does not follow the Base64 standard this
  * class also does not entirely follow the standard, notably:
  * <ul>
  *     <li>
@@ -41,6 +41,11 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  *     <li>
  *         Even {@link URL_SAFE} encoding will both pad and wrap lines per default,
  *         which frankly makes it neither safe for URLs nor filenames.
+ *     </li>
+ *     <li>
+ *         Line wrapping will only be applies as a splitter, it will never apply
+ *         to the end of the encoded string. This is a divergence from the
+ *         early implementation of the android.util.Base64 class at least.
  *     </li>
  * </ul>
  */
