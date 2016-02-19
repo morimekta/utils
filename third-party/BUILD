@@ -1,10 +1,17 @@
-# --- create a third-party/common.BUILD file to add non-managed
-# --- third-party dependencies to this file.
+java_library(
+    name = "org_objenesis_objenesis",
+    visibility = ["//visibility:public"],
+    exports = [
+        "@org_objenesis_objenesis//jar",
+    ],
+)
+
+# --- generated dependencies below this line ---
 
 # The following dependencies were calculated from:
-# /home/morimekta/src/utils/android-util/pom.xml
-# /home/morimekta/src/utils/console-util/pom.xml
-# /home/morimekta/src/utils/io-util/pom.xml
+# android-util/pom.xml
+# console-util/pom.xml
+# io-util/pom.xml
 
 
 java_library(
@@ -30,5 +37,12 @@ java_library(
     exports = [
         "@org_hamcrest_hamcrest_library//jar",
         "@org_hamcrest_hamcrest_core//jar",
+    ],
+)
+java_library(
+    name = "org_mockito_mockito_core",
+    visibility = ["//visibility:public"],
+    exports = [
+        "@org_mockito_mockito_core//jar",
     ],
 )

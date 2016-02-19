@@ -81,12 +81,12 @@ then
     echo                                                    >> WORKSPACE
     echo "# --- generated dependencies below this line ---" >> WORKSPACE
     echo                                                    >> WORKSPACE
-echo
+else
     echo "# --- create a third-party/common.WORKSPACE file to add non-managed" > WORKSPACE
     echo "# --- third-party dependencies to this file."                       >> WORKSPACE
     echo                                                                      >> WORKSPACE
 fi
-cat ${WS} >> WORKSPACE
+cat ${WS} | sed "s:${location}/::" >> WORKSPACE
 
 echo "-- writing third-party/BUILD"
 if [[ -f third-party/common.BUILD ]]
@@ -100,6 +100,6 @@ else
     echo "# --- third-party dependencies to this file."                   >> third-party/BUILD
     echo                                                                  >> third-party/BUILD
 fi
-cat ${BUILD} >> third-party/BUILD
+cat ${BUILD} | sed "s:${location}/::" >> third-party/BUILD
 
 exit 0
