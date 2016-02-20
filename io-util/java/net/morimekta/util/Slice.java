@@ -96,7 +96,7 @@ public class Slice implements Comparable<Slice> {
         }
         for (; pos < off + len; ++pos) {
             res *= radix;
-            res += validate(valueOfHex(fb[pos]), radix);
+            res += validate(fb[pos], valueOfHex(fb[pos]), radix);
         }
         return neg ? -res : res;
     }
@@ -138,14 +138,15 @@ public class Slice implements Comparable<Slice> {
     }
 
     public boolean contains(byte[] a) {
-        pos:
-        for (int i = off; i <= (off + len - a.length); ++i) {
-            for (int j = 0; j < a.length; ++j) {
-                if (a[j] != fb[off + i + j]) {
-                    continue pos;
+        final int last_pos = off + len - a.length;
+        outer:
+        for (int pos = off; pos <= last_pos; ++pos) {
+            for (int a_off = 0; a_off < a.length; ++a_off) {
+                if (a[a_off] != fb[pos + a_off]) {
+                    continue outer;
                 }
-                return true;
             }
+            return true;
         }
         return false;
     }
@@ -203,9 +204,20 @@ public class Slice implements Comparable<Slice> {
         return Integer.compare(o.len, len);
     }
 
-    private static int validate(int value, int radix) {
-        if (value >= radix) throw new IllegalArgumentException();
-        if (value < 0) throw new IllegalArgumentException();
+    private static int validate(byte c, int value, int radix) {
+        if (value < 0 || value >= radix) {
+            if (c < 0x20 || c == 0x7f) {
+                throw new IllegalArgumentException(
+                        String.format("Char \'0x%02x\' not valid value for radix %d",
+                                      c,
+                                      radix));
+            } else {
+                throw new IllegalArgumentException(
+                        String.format("Char \'%c\' not valid value for radix %d",
+                                      (char) c,
+                                      radix));
+            }
+        }
         return value;
     }
 
