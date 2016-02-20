@@ -22,5 +22,6 @@ target
 out/
 out
 
+pom.xml.versionsBackup
 pom.xml.releaseBackup
 release.properties
