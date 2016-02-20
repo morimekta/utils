@@ -21,3 +21,6 @@ target/
 target
 out/
 out
+
+pom.xml.releaseBackup
+release.properties

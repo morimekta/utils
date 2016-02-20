@@ -27,6 +27,7 @@
 
     <scm>
         <url>https://github.com/morimekta/utils.git</url>
+        <tag>HEAD</tag>
     </scm>
 
     <parent>
