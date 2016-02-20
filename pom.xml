@@ -31,6 +31,7 @@
 
     <scm>
         <url>https://github.com/morimekta/utils.git</url>
+        <developerConnection>scm:git:ssh://git@github.com/morimekta/utils.git</developerConnection>
     </scm>
 
     <groupId>net.morimekta.utils</groupId>
