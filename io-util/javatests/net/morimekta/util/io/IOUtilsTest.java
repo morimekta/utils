@@ -94,6 +94,11 @@ public class IOUtilsTest {
         in.reset();
         assertFalse(IOUtils.skipUntil(in, "fiver".getBytes(UTF_8)));
         assertEquals(-1, in.read());
+
+        byte[] tmp = new byte[]{'4', '5'};
+        byte[] sep = new byte[]{'\0', '4'};
+
+        assertFalse(IOUtils.skipUntil(new ByteArrayInputStream(tmp), sep));
     }
 
     @Test

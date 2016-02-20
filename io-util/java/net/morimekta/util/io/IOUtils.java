@@ -40,19 +40,25 @@ public class IOUtils {
         if (separator == null) {
             throw new NullPointerException("Null separator given");
         }
-        if(separator.length > 0) {
-            if(separator.length == 1) { return skipUntil(in, separator[0]); }
-            if(separator.length > 4) { return skipUntil(in, separator, new byte[separator.length]); }
+        final int len = separator.length;
+        if(len > 0) {
+            if(len == 1) { return skipUntil(in, separator[0]); }
+            if(len > 4) { return skipUntil(in, separator, new byte[len]); }
 
-            int mask = separator.length == 2 ? 0xffff : separator.length == 3 ? 0xffffff : 0xffffffff;
+            int mask = len == 2 ? 0xffff : len == 3 ? 0xffffff : 0xffffffff;
             int sep = (separator[0] % 0x100) << 8 | separator[1];
-            if(separator.length > 2) { sep = sep << 8 | separator[2]; }
-            if(separator.length > 3) { sep = sep << 8 | separator[3]; }
-            int r;
+            if(len > 2) {
+                sep = sep << 8 | separator[2];
+            }
+            if(len > 3) {
+                sep = sep << 8 | separator[3];
+            }
+            int r, p = 0;
             int tmp = 0;
             while((r = in.read()) >= 0) {
+                ++p;
                 tmp = tmp << 8 | r;
-                if((tmp & mask) == sep) {
+                if(p >= len && (tmp & mask) == sep) {
                     return true;
                 }
             }
