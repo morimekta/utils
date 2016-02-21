@@ -39,3 +39,7 @@ library (public domain, unlicensed):
 From Android OSS project (Apache 2.0 licensed):
 
 * [android.util.Base64Test](android-util/javatests/android/util/Base64Test.java)
+
+## Release Process
+
+Follow the steps described [here](RELEASE.md).
