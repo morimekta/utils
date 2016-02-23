@@ -22,6 +22,11 @@ target
 out/
 out
 
+.idea/*
+.idea/!codeStyleSettings.xml
+!.idea/codeStyleSettings.xml
+*.iml
+
 pom.xml.versionsBackup
 pom.xml.releaseBackup
 release.properties
