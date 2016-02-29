@@ -30,8 +30,11 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
 /**
- * @author Stein Eldar Johnsen
- * @since 19.10.15
+ * Class for tokenizing a JSON document and return one token at a time. It is
+ * optimized for high volume JSON parsing, and avoids things like buffer
+ * copying and utf-8 parsing. The tokens are just references back to the
+ * original input buffer, so are not safe to use as reference (except for
+ * token type) after the next token has been read.
  */
 public class JsonTokenizer {
     private static final int CONSOLIDATE_LINE_ON = 1 << 7;  // 128
@@ -48,7 +51,15 @@ public class JsonTokenizer {
     private StringBuilder lineBuilder;
     private JsonToken     unreadToken;
 
-    public JsonTokenizer(InputStream in) throws IOException {
+    /**
+     * Create a JSON tokenizer that reads from the input steam. It will only
+     * read as far as requested, and no bytes further. It has no checking of
+     * whether the document follows the JSON standard, but will only accept
+     * JSON formatted tokens.
+     *
+     * @param in Input stream to parse.
+     */
+    public JsonTokenizer(InputStream in) {
         this.reader = in;
         this.line = 1;
         this.linePos = 0;
@@ -62,6 +73,16 @@ public class JsonTokenizer {
         this.unreadToken = null;
     }
 
+    /**
+     * Expect a new JSON token on the stream.
+     *
+     * @param message Message to add to exception if there are no more JSON
+     *                tokens on the stream.
+     * @return The next token.
+     * @throws JsonException If no more tokens, or the token is illegally
+     *         formatted.
+     * @throws IOException If unable to read from stream.
+     */
     public JsonToken expect(String message) throws JsonException, IOException {
         if (!hasNext()) {
             throw newParseException("Unexpected end of file while " + message);
@@ -69,14 +90,81 @@ public class JsonTokenizer {
         return next();
     }
 
-    public int expectSymbol(String message, char... symbols) throws IOException, JsonException {
+    /**
+     * Expect a string literal JSON token. A string literal is a double-quote
+     * delimited UTF-8 encoded, JSON-escaped string.
+     *
+     * @param message Message to add to exception if there are no more JSON
+     *                tokens on the stream.
+     * @return The string literal token.
+     * @throws JsonException If no more tokens, or the token is illegally
+     *         formatted.
+     * @throws IOException If unable to read from stream.
+     */
+    public JsonToken expectString(String message) throws IOException, JsonException {
+        if (!hasNext()) {
+            throw newParseException(String.format("Unexpected end of stream while %s", message));
+        } else {
+            if (unreadToken.isLiteral()) {
+                return next();
+            }
+
+            throw new JsonException(String.format("Expected string literal, but found %s while %s",
+                                                  unreadToken.type.toString().toLowerCase(),
+                                                  message), this, unreadToken);
+        }
+    }
+
+    /**
+     * Expect a JSON number. A number is a 64 bit integer (long), or a 64-bit
+     * real (double) number. The long can be decimal (base-10), octal (base-8)
+     * with '0' prefix, or hexadecimal (base-16) encoded with '0x' prefix, and
+     * the double can be a decimal point number (-0.0), or a scientific notation
+     * number (-0.0e-1).
+     *
+     * @param message Message to add to exception if there are no more JSON
+     *                tokens on the stream.
+     * @return The number token.
+     * @throws JsonException If no more tokens, or the token is illegally
+     *         formatted.
+     * @throws IOException If unable to read from stream.
+     */
+    public JsonToken expectNumber(String message) throws IOException, JsonException {
+        if (!hasNext()) {
+            throw newParseException(String.format("Unexpected end of stream while %s", message));
+        } else {
+            if (unreadToken.isInteger() || unreadToken.isReal()) {
+                return next();
+            }
+
+            throw new JsonException(String.format("Expected number, but found %s while %s",
+                                                  unreadToken.type.toString().toLowerCase(),
+                                                  message), this, unreadToken);
+        }
+    }
+
+    /**
+     * Expect a string literal JSON token. A string literal is a double-quote
+     * delimited UTF-8 encoded, JSON-escaped string.
+     *
+     * @param message Message to add to exception if there are no more JSON
+     *                tokens on the stram.
+     * @param symbols List of symbol characters to expect. If
+     * @return The symbol that was encountered.
+     * @throws JsonException If no more tokens, or the token is illegally
+     *         formatted.
+     * @throws IOException If unable to read from stream.
+     */
+    public char expectSymbol(String message, char... symbols) throws IOException, JsonException {
+        if (symbols.length == 0) {
+            throw new IllegalArgumentException("No symbols to match.");
+        }
         if (!hasNext()) {
             throw newParseException(String.format("Unexpected end of stream while %s", message));
         } else {
             for (int i = 0; i < symbols.length; ++i) {
                 if (unreadToken.isSymbol(symbols[i])) {
-                    unreadToken = null;
-                    return i;
+                    return next().charAt(0);
                 }
             }
 
@@ -87,6 +175,15 @@ public class JsonTokenizer {
         }
     }
 
+    /**
+     * Whether there is another token on the stream. This will read up until
+     * it finds a JSON token, or until the stream ends.
+     *
+     * @return True if (and only if) there is at least one more token on the
+     *         stream.
+     * @throws JsonException If the next token is illegally formatted.
+     * @throws IOException If unable to read from stream.
+     */
     public boolean hasNext() throws IOException, JsonException {
         if (unreadToken == null) {
             unreadToken = next();
@@ -94,6 +191,13 @@ public class JsonTokenizer {
         return unreadToken != null;
     }
 
+    /**
+     * Returns the next token on the stream, or null if there are no more JSON
+     * tokens on the stream.
+     * @return The next token, or null.
+     * @throws JsonException If the next token is illegally formatted.
+     * @throws IOException If unable to read from stream.
+     */
     public JsonToken next() throws IOException, JsonException {
         if (unreadToken != null) {
             JsonToken tmp = unreadToken;
@@ -111,8 +215,11 @@ public class JsonTokenizer {
                 if (lastByte < 0) {
                     break;
                 }
-                lineBuffer.put((byte) lastByte);
-                ++linePos;
+
+                if (lastByte != '\n') {
+                    lineBuffer.put((byte) lastByte);
+                    ++linePos;
+                }
             }
 
             if (lastByte == '\n') {
@@ -135,9 +242,8 @@ public class JsonTokenizer {
                        lastByte == '{' || lastByte == '}' ||
                        lastByte == ':' || lastByte == ',') {
                 return nextSymbol();
-            } else if (lastByte < 32 ||
-                       (127 <= lastByte && lastByte < 160) ||
-                       (8192 <= lastByte && lastByte < 8448)) {
+            } else if (lastByte < 0x20 || lastByte >= 0x7F) {
+                // UTF-8 characters are only allowed inside JSON string literals.
                 throw newParseException(String.format("Illegal character in JSON structure: '\\u%04x'", lastByte));
             } else {
                 return nextToken();
@@ -146,6 +252,31 @@ public class JsonTokenizer {
 
         return null;
     }
+
+    /**
+     * Returns the line requested.
+     * @param line The line number (1 .. N)
+     * @return The line string, not including the line-break.
+     * @throws IOException If unable to read from the string.
+     * @throws IllegalArgumentException If the line number requested is less
+     *         than 1.
+     */
+    public String getLine(int line) throws IOException {
+        if (line < 1) {
+            throw new IllegalArgumentException("Invalid line number requested: " + line);
+        }
+        if (lines.size() >= line) {
+            return lines.get(line - 1);
+        } else {
+            flushLineBuffer();
+            lineBuilder.append(Strings.readString(new Utf8StreamReader(reader), '\n'));
+            String ln = lineBuilder.toString();
+            lines.add(ln);
+            return ln;
+        }
+    }
+
+    // --- INTERNAL ---
 
     private JsonToken nextSymbol() {
         lastByte = 0;
@@ -157,7 +288,7 @@ public class JsonTokenizer {
         int startOffset = lineBuffer.position() - 1;
         int len = 0;
         while (lastByte == '_' || lastByte == '.' ||
-               (lastByte >= '0' && lastByte <= '0') ||
+               (lastByte >= '0' && lastByte <= '9') ||
                (lastByte >= 'a' && lastByte <= 'z') ||
                (lastByte >= 'A' && lastByte <= 'Z')) {
             ++len;
@@ -172,18 +303,43 @@ public class JsonTokenizer {
         return new JsonToken(JsonToken.Type.TOKEN, lineBuffer.array(), startOffset, len, line, startPos);
     }
 
-    private JsonToken nextNumber() throws IOException {
+    private JsonToken nextNumber() throws IOException, JsonException {
+        // NOTE: This code is pretty messy because it is a full state-engine
+        // to ensure that the parsed number follows the JSON number syntax.
+        // Alternatives are:
+        //
+        // dec = -?0
+        // dec = -?.0
+        // dec = -?0.0
+        // sci = (dec)[eE][+-]?[0-9]+
+        //
+        // Octal and hexadecimal numbers are not supported.
+        //
+        // It is programmed as a state-engine to be very efficient, but
+        // correctly detect valid JSON (and what is invalid if not).
+
         int startPos = linePos;
         int startOffset = lineBuffer.position() - 1;
         // number (any type).
         int len = 0;
-        while (lastByte == '+' ||
-               lastByte == '-' ||
-               lastByte == 'x' ||
-               lastByte == '.' ||
-               (lastByte >= 'a' && lastByte <= 'f') ||
-               (lastByte >= 'A' && lastByte <= 'F') ||
-               (lastByte >= '0' && lastByte <= '9')) {
+
+        if (lastByte == '-') {
+            // only base 10 decimals can be negative.
+            ++len;
+            lastByte = reader.read();
+            if (lastByte < 0) {
+                throw new JsonException("Negative indicator without number.");
+            }
+            lineBuffer.put((byte) lastByte);
+            ++linePos;
+
+            if (!(lastByte == '.' || (lastByte >= '0' && lastByte <= '9'))) {
+                throw new JsonException("No decimal after negative indicator.");
+            }
+        }
+
+        // decimal part.
+        while (lastByte >= '0' && lastByte <= '9') {
             ++len;
             // numbers are terminated by first non-numeric character.
             lastByte = reader.read();
@@ -193,8 +349,70 @@ public class JsonTokenizer {
             lineBuffer.put((byte) lastByte);
             ++linePos;
         }
+        // fraction part.
+        if (lastByte == '.') {
+            ++len;
+            // numbers are terminated by first non-numeric character.
+            lastByte = reader.read();
+            if (lastByte >= 0) {
+                lineBuffer.put((byte) lastByte);
+                ++linePos;
 
-        return new JsonToken(JsonToken.Type.NUMBER, lineBuffer.array(), startOffset, len, line, startPos);
+                while (lastByte >= '0' && lastByte <= '9') {
+                    ++len;
+                    // numbers are terminated by first non-numeric character.
+                    lastByte = reader.read();
+                    if (lastByte < 0) {
+                        break;
+                    }
+                    lineBuffer.put((byte) lastByte);
+                    ++linePos;
+                }
+            }
+        }
+        // exponent part.
+        if (lastByte == 'e' || lastByte == 'E') {
+            ++len;
+            // numbers are terminated by first non-numeric character.
+            lastByte = reader.read();
+            if (lastByte >= 0) {
+                lineBuffer.put((byte) lastByte);
+                ++linePos;
+
+                // The exponent can be explicitly prefixed with both '+'
+                // and '-'.
+                if (lastByte == '-' || lastByte == '+') {
+                    ++len;
+                    // numbers are terminated by first non-numeric character.
+                    lastByte = reader.read();
+                    if (lastByte >= 0) {
+                        lineBuffer.put((byte) lastByte);
+                        ++linePos;
+                    }
+                }
+
+                while (lastByte >= '0' && lastByte <= '9') {
+                    ++len;
+                    // numbers are terminated by first non-numeric character.
+                    lastByte = reader.read();
+                    if (lastByte < 0) {
+                        break;
+                    }
+                    lineBuffer.put((byte) lastByte);
+                    ++linePos;
+                }
+            }
+        }
+
+        // A number must be terminated correctly: End of stream, space or a
+        // symbol that may be after a value: ',' '}' ']'.
+        if (lastByte < 0 || lastByte == ' ' ||
+            lastByte == ',' || lastByte == '}' || lastByte == ']' ||
+            lastByte == '\t' || lastByte == '\n' || lastByte == '\r') {
+            return new JsonToken(JsonToken.Type.NUMBER, lineBuffer.array(), startOffset, len, line, startPos);
+        } else {
+            throw new JsonException(String.format("Wrongly terminated JSON number: %c.", lastByte));
+        }
     }
 
     private JsonToken nextString() throws IOException, JsonException {
@@ -248,21 +466,6 @@ public class JsonTokenizer {
                                  lineBuffer.position() - startOffset,
                                  line,
                                  startPos);
-        }
-    }
-
-    public String getLine(int line) throws IOException {
-        if (line < 1) {
-            throw new IllegalArgumentException("Oops!!!");
-        }
-        if (lines.size() >= line) {
-            return lines.get(line - 1);
-        } else {
-            flushLineBuffer();
-            lineBuilder.append(Strings.readString(new Utf8StreamReader(reader), '\n'));
-            String ln = lineBuilder.toString();
-            lines.add(ln);
-            return ln;
         }
     }
 
