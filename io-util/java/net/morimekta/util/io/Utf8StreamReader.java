@@ -82,22 +82,31 @@ public class Utf8StreamReader extends Reader {
                 // 110xxxxx + 1 * 10xxxxxx  = 11 bit
                 if ((r & 0xC0) == 0xC0) {
                     buffer[c++] = in.read();
-                }
-                // 1110xxxx + 2 * 10xxxxxx  = 16 bit
-                if ((buffer[0] & 0xE0) == 0xE0) {
-                    buffer[c++] = in.read();
-                }
-                // 11110xxx + 3 * 10xxxxxx  = 21 bit
-                if ((buffer[0] & 0xF0) == 0xF0) {
-                    buffer[c++] = in.read();
-                }
-                // 111110xx + 4 * 10xxxxxx  = 26 bit
-                if ((buffer[0] & 0xF8) == 0xF8) {
-                    buffer[c++] = in.read();
-                }
-                // 1111110x + 5 * 10xxxxxx  = 31 bit
-                if ((buffer[0] & 0xFC) == 0xFC) {
-                    buffer[c++] = in.read();
+
+                    // 1110xxxx + 2 * 10xxxxxx  = 16 bit
+                    if ((buffer[0] & 0xE0) == 0xE0) {
+                        buffer[c++] = in.read();
+
+                        // 11110xxx + 3 * 10xxxxxx  = 21 bit
+                        if ((buffer[0] & 0xF0) == 0xF0) {
+                            buffer[c++] = in.read();
+
+                            // 111110xx + 4 * 10xxxxxx  = 26 bit
+                            if ((buffer[0] & 0xF8) == 0xF8) {
+                                buffer[c++] = in.read();
+
+                                // 1111110x + 5 * 10xxxxxx  = 31 bit
+                                if ((buffer[0] & 0xFC) == 0xFC) {
+                                    buffer[c++] = in.read();
+
+                                    if ((buffer[0] & 0xFE) != 0xFC) {
+                                        cbuf[off + i] = '?';
+                                        continue;
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
 
                 cbuf[off + i] = convert(buffer, c);
