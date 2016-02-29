@@ -162,9 +162,10 @@ public class JsonTokenizer {
         if (!hasNext()) {
             throw newParseException(String.format("Unexpected end of stream while %s", message));
         } else {
-            for (int i = 0; i < symbols.length; ++i) {
-                if (unreadToken.isSymbol(symbols[i])) {
-                    return next().charAt(0);
+            for (char symbol : symbols) {
+                if (unreadToken.isSymbol(symbol)) {
+                    unreadToken = null;
+                    return symbol;
                 }
             }
 
@@ -216,13 +217,22 @@ public class JsonTokenizer {
                     break;
                 }
 
-                if (lastByte != '\n') {
+                if (lastByte == JsonToken.kCarReturnCharacter) {
+                    // CR has no other purpose than being in front of LF.
+                    // Supported because of windows file format default
+                    // newline encoding. Essentially the character is just
+                    // ignored throughout the file.
+                    lastByte = 0;
+                    continue;
+                }
+
+                if (lastByte != JsonToken.kNewLineCharacter) {
                     lineBuffer.put((byte) lastByte);
                     ++linePos;
                 }
             }
 
-            if (lastByte == '\n') {
+            if (lastByte == JsonToken.kNewLineCharacter) {
                 // New line
                 flushLineBuffer();
 
@@ -232,15 +242,19 @@ public class JsonTokenizer {
                 lastByte = 0;
 
                 lineBuilder = new StringBuilder();
-            } else if (lastByte == ' ' || lastByte == '\t') {
+            } else if (lastByte == JsonToken.kSpaceCharacter ||
+                       lastByte == JsonToken.kTabCharacter) {
                 lastByte = 0;
-            } else if (lastByte == '\"') {
+            } else if (lastByte == JsonToken.kStringDelimiter) {
                 return nextString();
             } else if (lastByte == '-' || (lastByte >= '0' && lastByte <= '9')) {
                 return nextNumber();
-            } else if (lastByte == '[' || lastByte == ']' ||
-                       lastByte == '{' || lastByte == '}' ||
-                       lastByte == ':' || lastByte == ',') {
+            } else if (lastByte == JsonToken.kListStartChar ||
+                       lastByte == JsonToken.kListEndChar ||
+                       lastByte == JsonToken.kMapStartChar ||
+                       lastByte == JsonToken.kMapEndChar ||
+                       lastByte == JsonToken.kKeyValSepChar ||
+                       lastByte == JsonToken.kListSepChar) {
                 return nextSymbol();
             } else if (lastByte < 0x20 || lastByte >= 0x7F) {
                 // UTF-8 characters are only allowed inside JSON string literals.
@@ -269,7 +283,7 @@ public class JsonTokenizer {
             return lines.get(line - 1);
         } else {
             flushLineBuffer();
-            lineBuilder.append(Strings.readString(new Utf8StreamReader(reader), '\n'));
+            lineBuilder.append(Strings.readString(new Utf8StreamReader(reader), JsonToken.kNewLineCharacter));
             String ln = lineBuilder.toString();
             lines.add(ln);
             return ln;
@@ -406,9 +420,14 @@ public class JsonTokenizer {
 
         // A number must be terminated correctly: End of stream, space or a
         // symbol that may be after a value: ',' '}' ']'.
-        if (lastByte < 0 || lastByte == ' ' ||
-            lastByte == ',' || lastByte == '}' || lastByte == ']' ||
-            lastByte == '\t' || lastByte == '\n' || lastByte == '\r') {
+        if (lastByte < 0 ||
+            lastByte == JsonToken.kListSepChar ||
+            lastByte == JsonToken.kMapEndChar ||
+            lastByte == JsonToken.kListEndChar ||
+            lastByte == JsonToken.kSpaceCharacter ||
+            lastByte == JsonToken.kTabCharacter ||
+            lastByte == JsonToken.kNewLineCharacter ||
+            lastByte == JsonToken.kCarReturnCharacter) {
             return new JsonToken(JsonToken.Type.NUMBER, lineBuffer.array(), startOffset, len, line, startPos);
         } else {
             throw new JsonException(String.format("Wrongly terminated JSON number: %c.", lastByte));
@@ -443,9 +462,9 @@ public class JsonTokenizer {
 
             if (esc) {
                 esc = false;
-            } else if (lastByte == '\\') {
+            } else if (lastByte == JsonToken.kEscapeCharacter) {
                 esc = true;
-            } else if (lastByte == '\"') {
+            } else if (lastByte == JsonToken.kStringDelimiter) {
                 break;
             }
         }

@@ -30,7 +30,7 @@ import java.util.Objects;
  */
 public class JsonToken extends Slice {
     public enum Type {
-        // on of []{},:
+        // one of []{},:
         SYMBOL,
         // numerical
         NUMBER,
@@ -50,6 +50,13 @@ public class JsonToken extends Slice {
     public static final char kMapStartChar  = '{';
     public static final char kMapEndChar    = '}';
     public static final char kKeyValSepChar = ':';
+
+    protected static final char kStringDelimiter = '\"';
+    protected static final char kEscapeCharacter = '\\';
+    protected static final char kSpaceCharacter = ' ';
+    protected static final char kTabCharacter = '\t';
+    protected static final char kNewLineCharacter = '\n';
+    protected static final char kCarReturnCharacter = '\r';
 
     public final Type type;
     public final int  lineNo;
@@ -75,7 +82,7 @@ public class JsonToken extends Slice {
     }
 
     public boolean isLiteral() {
-        return type == Type.LITERAL;
+        return type == Type.LITERAL && length() >= 2;
     }
 
     public boolean isBoolean() {
@@ -148,7 +155,6 @@ public class JsonToken extends Slice {
                         out.append('\t');
                         break;
                     case '\"':
-                    case '\'':
                     case '\\':
                         out.append(ch);
                         break;
@@ -157,8 +163,12 @@ public class JsonToken extends Slice {
                             out.append('?');
                         } else {
                             String n = tmp.substring(i + 1, i + 5);
-                            int cp = Integer.parseInt(n, 16);
-                            out.append((char) cp);
+                            try {
+                                int cp = Integer.parseInt(n, 16);
+                                out.append((char) cp);
+                            } catch (NumberFormatException e) {
+                                out.append('?');
+                            }
                         }
                         i += 4;  // skipping 4 more characters.
                         break;
@@ -177,7 +187,7 @@ public class JsonToken extends Slice {
 
     @Override
     public int hashCode() {
-        return Objects.hash(toString(), type, lineNo);
+        return Objects.hash(JsonToken.class, super.hashCode(), type, lineNo, linePos);
     }
 
     @Override
@@ -190,7 +200,12 @@ public class JsonToken extends Slice {
         }
         JsonToken other = (JsonToken) o;
 
-        return super.equals(o) && Objects.equals(lineNo, other.lineNo);
+        return fb == other.fb &&
+               off == other.off &&
+               len == other.len &&
+               type == other.type &&
+               lineNo == other.lineNo &&
+               linePos == other.linePos;
     }
 
     @Override
