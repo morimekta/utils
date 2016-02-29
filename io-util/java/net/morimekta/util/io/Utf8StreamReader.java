@@ -73,7 +73,7 @@ public class Utf8StreamReader extends Reader {
             } else if (r < 0x80) {
                 cbuf[off + i] = (char) r;
             } else if ((r & 0xC0) == 0x80) {
-                // This byte pattern should not be here.
+                // 10xxxxxx: This byte pattern should not be here.
                 cbuf[off + i] = '?';
             } else {
                 buffer[0] = r;

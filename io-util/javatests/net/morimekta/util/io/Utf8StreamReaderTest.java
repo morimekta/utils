@@ -33,6 +33,11 @@ import static org.junit.Assert.assertEquals;
  * @since 28.12.15.
  */
 public class Utf8StreamReaderTest {
+    // TODO: test unicode U+2A6B2.
+    // It is the highest unicode codepoint that also has a valid printable
+    // character on most platforms.
+    // https://en.wikipedia.org/wiki/List_of_CJK_Unified_Ideographs_Extension_B_(Part_7_of_7)
+
     @Test
     public void testRead_ASCII() throws IOException {
         byte[] data = new byte[]{'a', 'b', 'b', 'a', '\t', 'x'};
