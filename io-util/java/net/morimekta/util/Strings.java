@@ -34,6 +34,48 @@ import java.util.regex.Pattern;
  */
 public class Strings {
     /**
+     * Properly java-escape the string for printing to console.
+     * @param string The string to escape.
+     * @return The escaped string.
+     */
+    public static String escape(String string) {
+        StringBuilder builder = new StringBuilder();
+        for (char c : string.toCharArray()) {
+            switch (c) {
+                case '\b':
+                    builder.append('\\').append('b');
+                    break;
+                case '\t':
+                    builder.append('\\').append('t');
+                    break;
+                case '\n':
+                    builder.append('\\').append('n');
+                    break;
+                case '\f':
+                    builder.append('\\').append('f');
+                    break;
+                case '\r':
+                    builder.append('\\').append('r');
+                    break;
+                case '"':
+                case '\'':
+                    builder.append('\\').append(c);
+                    break;
+                default:
+                    if (c < 32 || c == 127) {
+                        builder.append(String.format("\\%03o", (int) c));
+                    } else if ((127 < c && c < 160) || (8192 <= c && c < 8448) || !Character.isDefined(c)) {
+                        builder.append(String.format("\\u%04x", (int) c));
+                    } else {
+                        builder.append(c);
+                    }
+                    break;
+            }
+        }
+        return builder.toString();
+    }
+
+    /**
      * Join set of strings with delimiter.
      *
      * @param delimiter The delimiter.

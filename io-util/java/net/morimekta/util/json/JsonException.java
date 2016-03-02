@@ -25,8 +25,7 @@ import net.morimekta.util.Strings;
 import java.io.IOException;
 
 /**
- * @author Stein Eldar Johnsen
- * @since 19.10.15
+ * Exception in JSON parsing or generation.
  */
 public class JsonException extends Exception {
     private final String line;
@@ -72,18 +71,23 @@ public class JsonException extends Exception {
         return len;
     }
 
+    public String describe() {
+        if (getLine() != null) {
+            return String.format("JSON Error on line %d: %s\n" +
+                                 "# %s\n" +
+                                 "#%s%s",
+                                 getLineNo(),
+                                 getLocalizedMessage(),
+                                 getLine(),
+                                 Strings.times("-", getLinePos()),
+                                 Strings.times("^", getLen()));
+        } else {
+            return String.format("JSON Error: %s", getLocalizedMessage());
+        }
+    }
+
     @Override
     public String toString() {
-        if (line != null) {
-            return String.format("%s : %d : %d - %d\n# %s\n#%s^",
-                                 getLocalizedMessage(),
-                                 getLineNo(),
-                                 getLinePos(),
-                                 getLen(),
-                                 getLine(),
-                                 Strings.times("-", linePos));
-        } else {
-            return String.format("JsonException(%s)", getLocalizedMessage());
-        }
+        return String.format("JsonException(%s)", describe());
     }
 }

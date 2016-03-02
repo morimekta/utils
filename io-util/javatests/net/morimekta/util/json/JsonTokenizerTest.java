@@ -189,9 +189,20 @@ public class JsonTokenizerTest {
             assertEquals(2, e.getLineNo());
             assertEquals("    \"first\": \"value\",", e.getLine());
             assertEquals(5, e.getLinePos());
-            assertEquals("Expected number, but found literal while __number__ : 2 : 5 - 7\n" +
+            assertEquals(7, e.getLen());
+            assertEquals("JsonException(JSON Error on line 2: Expected number, but found literal while __number__\n" +
                          "#     \"first\": \"value\",\n" +
-                         "#-----^", e.toString());
+                         "#-----^^^^^^^)", e.toString());
+
+            UncheckedJsonException ue = new UncheckedJsonException(e);
+            assertEquals(e.getMessage(), ue.getMessage());
+            assertEquals(e.getLocalizedMessage(), ue.getLocalizedMessage());
+            assertEquals(e.getLine(), ue.getLine());
+            assertEquals(e.getLineNo(), ue.getLineNo());
+            assertEquals(e.getLinePos(), ue.getLinePos());
+            assertEquals(e.getLen(), ue.getLen());
+            assertEquals(e.describe(), ue.describe());
+            assertEquals("Unchecked" + e.toString(), ue.toString());
         }
 
         try {

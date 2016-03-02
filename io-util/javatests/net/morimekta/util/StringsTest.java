@@ -21,6 +21,7 @@
 package net.morimekta.util;
 
 import net.morimekta.util.io.Utf8StreamReader;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -34,7 +35,10 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * @author Stein Eldar Johnsen
@@ -59,6 +63,15 @@ public class StringsTest {
         mString = "123";
         mString_withEscaping = "123\t";
         mString_withUtf8 = "123á";
+    }
+
+    @Test
+    public void testJavaEscape() {
+        assertEquals("abcde", Strings.escape("abcde"));
+        assertEquals("a\\nb\\rc\\fd\\te\\b.", Strings.escape("a\nb\rc\fd\te\b."));
+        assertEquals("\\u2002.䀂.\\\".\\'.", Strings.escape("\u2002.\u4002.\".\'."));
+        assertEquals("\\000\\177\\033",
+                     Strings.escape("\000\177\033"));
     }
 
     @Test

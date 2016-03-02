@@ -21,6 +21,7 @@
 package net.morimekta.util.json;
 
 import net.morimekta.util.Binary;
+
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
@@ -397,6 +398,7 @@ public class JsonWriterTest {
             fail("Expected JsonExpection");
         } catch (JsonException e) {
             assertEquals(message, e.getMessage());
+            assertEquals("JsonException(JSON Error: " + message + ")", e.toString());
         }
     }
 
