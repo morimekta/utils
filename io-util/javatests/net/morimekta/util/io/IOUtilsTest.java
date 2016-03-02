@@ -22,6 +22,7 @@
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
@@ -111,6 +112,16 @@ public class IOUtilsTest {
         when(in.read()).thenThrow(new IOException("Don't do this!"));
 
         assertException("Don't do this!", " ", in);
+    }
+
+    @Test
+    public void testCopy() throws IOException {
+        InputStream in = new ByteArrayInputStream(lorem.getBytes(UTF_8));
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+        IOUtils.copy(in, out);
+
+        assertEquals(lorem, new String(out.toByteArray(), UTF_8));
     }
 
     @Test

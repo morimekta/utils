@@ -22,6 +22,7 @@ package net.morimekta.util.io;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Arrays;
 
 /**
@@ -43,7 +44,7 @@ public class IOUtils {
         final int len = separator.length;
         if(len > 0) {
             if(len == 1) { return skipUntil(in, separator[0]); }
-            if(len > 4) { return skipUntil(in, separator, new byte[len]); }
+            if(len > 4) { return skipUntilInternal(in, separator, new byte[len]); }
 
             int mask = len == 2 ? 0xffff : len == 3 ? 0xffffff : 0xffffffff;
             int sep = (separator[0] % 0x100) << 8 | separator[1];
@@ -83,11 +84,21 @@ public class IOUtils {
         return false;
     }
 
+    public static void copy(InputStream in, OutputStream out) throws IOException {
+        byte[] buffer = new byte[BUF_SIZE];
+        int r;
+        while((r = in.read(buffer)) >= 0) {
+            out.write(buffer, 0, r);
+        }
+    }
+
     /* -- PRIVATE METHODS -- */
+
+    private static final int BUF_SIZE = 4096;
 
     private IOUtils() {}
 
-    private static boolean skipUntil(InputStream in, byte[] separator, byte[] buffer) throws IOException {
+    private static boolean skipUntilInternal(InputStream in, byte[] separator, byte[] buffer) throws IOException {
         int r;
         int l = 0;
         while((r = in.read()) >= 0) {
@@ -98,5 +109,4 @@ public class IOUtils {
         }
         return false;
     }
-
 }
