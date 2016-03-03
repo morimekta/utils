@@ -6,10 +6,12 @@ Stein Eldar Johnsen. Contributions are welcome.
 
 ## Utilities
 
-* [Android Utilities](android-util/README.md) Utilities for developing
+* [Android Utilities](utils-android/README.md) Utilities for developing
   android-integrated libraries that can be tested without requiring testing on
   android devices or heavy testing frameworks like robolectric.
-* [IO Utilities](io-util/README.md) Utilities for facilitating heavy
+* [Console Utilities](utils-console/README.md) Utilities for facilitating
+  interactive command line interfaces.
+* [IO Utilities](utils-io/README.md) Utilities for facilitating heavy
   computational IO, specifically reading and writing typed data to IO streams.
 
 ## Contributors / Authors
@@ -31,14 +33,14 @@ project, then this project does **not** claim copyright over that file.
 From [iharder/base64](http://iharder.sourceforge.net/current/java/base64/)
 library (public domain, unlicensed):
 
-* [android.util.Base64](android-util/java/android/util/Base64.java)
-* [android.util.Base64OutputStream](android-util/java/android/util/Base64OutputStream.java) 
-* [android.util.Base64InputStream](android-util/java/android/util/Base64InputStream.java) 
-* [net.morimekta.util.Base64](io-util/java/net/morimekta/util/Base64.java) 
+* [android.util.Base64](utils-android/java/android/util/Base64.java)
+* [android.util.Base64OutputStream](utils-android/java/android/util/Base64OutputStream.java) 
+* [android.util.Base64InputStream](utils-android/java/android/util/Base64InputStream.java) 
+* [net.morimekta.util.Base64](utils-io/java/net/morimekta/util/Base64.java) 
 
 From Android OSS project (Apache 2.0 licensed):
 
-* [android.util.Base64Test](android-util/javatests/android/util/Base64Test.java)
+* [android.util.Base64Test](utils-android/javatests/android/util/Base64Test.java)
 
 ## Release Process
 

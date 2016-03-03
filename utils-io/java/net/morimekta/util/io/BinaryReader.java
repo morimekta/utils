@@ -64,23 +64,6 @@ public class BinaryReader extends InputStream {
      * Read binary data from stream.
      *
      * @param out The output buffer to read into.
-     * @throws IOException If unable to fill the entire byte array.
-     */
-    public int expect(byte[] out) throws IOException {
-        int i, off = 0;
-        while (off < out.length && (i = in.read(out, off, out.length - off)) > 0) {
-            off += i;
-        }
-        if (off < out.length) {
-            throw new IOException();
-        }
-        return off;
-    }
-
-    /**
-     * Read binary data from stream.
-     *
-     * @param out The output buffer to read into.
      * @param off Offset in out array to writeBinary to.
      * @param len Number of bytes to read.
      * @throws IOException If unable to fill the requested part of the byte array.
@@ -97,6 +80,22 @@ public class BinaryReader extends InputStream {
             off += i;
         }
         return off;
+    }
+
+    /**
+     * Read binary data from stream.
+     *
+     * @param out The output buffer to read into.
+     * @throws IOException If unable to fill the entire byte array.
+     */
+    public void expect(byte[] out) throws IOException {
+        int i, off = 0;
+        while (off < out.length && (i = in.read(out, off, out.length - off)) > 0) {
+            off += i;
+        }
+        if (off < out.length) {
+            throw new IOException();
+        }
     }
 
     @Override

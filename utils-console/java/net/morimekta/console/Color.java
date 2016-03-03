@@ -25,9 +25,14 @@ import java.util.Objects;
 import java.util.TreeSet;
 
 /**
- * Unix terminal color helper.
+ * Unix terminal color helper. The printed syntax of the color is:
+ * <pre>
+ * \033[${code}m
+ * \033[${code};${code}m
+ * </pre>
+ * etc.
  */
-public class Color {
+public class Color implements Char {
     public static final Color CLEAR = new Color(0);
 
     public static final Color DEFAULT = new Color(39);
@@ -84,18 +89,18 @@ public class Color {
                 mods.clear();
                 mods.add(0);
                 break;
-            } else if (i < 10) {
+            } else if (i < 10) {  // 1..9: modifiers
                 // Text modifier.
                 mods.add(i);
                 mods.remove(i + 20);
-            } else if (i < 30) {
+            } else if (i < 30) {  // 21..29, unset mods.
                 // Negative (unset) text modifier.
                 mods.add(i);
                 mods.remove(i - 20);
-            } else if (i < 40) {
+            } else if (i < 40) {  // 30..39, text color.
                 // Foreground (text) color.
                 fg = i;
-            } else if (i < 50) {
+            } else if (i < 50) {  // 40..49, background color.
                 // Background color.
                 bg = i;
             }
@@ -187,6 +192,22 @@ public class Color {
     @Override
     public String toString() {
         return str;
+    }
+
+    @Override
+    public int codepoint() {
+        return -1;
+    }
+
+    @Override
+    public int printableWidth() {
+        // colors never take up space.
+        return 0;
+    }
+
+    @Override
+    public int length() {
+        return str.length();
     }
 
     /**
