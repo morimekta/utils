@@ -50,7 +50,7 @@
 
     <groupId>net.morimekta.utils</groupId>
     <artifactId>utils</artifactId>
-    <version>0.1.1-SNAPSHOT</version>
+    <version>0.2.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <properties>
@@ -59,9 +59,9 @@
     </properties>
 
     <modules>
-        <module>android-util</module>
-        <module>console-util</module>
-        <module>io-util</module>
+        <module>utils-android</module>
+        <module>utils-console</module>
+        <module>utils-io</module>
     </modules>
 
     <build>

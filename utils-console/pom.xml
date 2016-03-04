@@ -4,17 +4,10 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <modelVersion>4.0.0</modelVersion>
 
-    <name>Android Utilities</name>
+    <name>Console Utilities</name>
     <description>
-        Utility classes mimicking classes from android.os and android.net.morimekta.util that
-        does not really require an android phone to run. Created to facilitate
-        testing and usage of android compatible libraries without having to run
-        it on an actual phone.
-
-        Note that android.os.Parcel and android.os.Bundle only supports a
-        subset of it's original interface as these parts actually are dependent
-        on the native phone library to work properly, or they have no real need
-        on modern phones / outside android.
+        Utilities helping with various *nix console topics. Mostly geared
+        toward expressive and interactive command line applications.
     </description>
 
     <licenses>
@@ -33,19 +26,22 @@
     <parent>
         <groupId>net.morimekta.utils</groupId>
         <artifactId>utils</artifactId>
-        <version>0.1.1-SNAPSHOT</version>
+        <version>0.2.0-SNAPSHOT</version>
     </parent>
-    <artifactId>android-util</artifactId>
+    <artifactId>utils-console</artifactId>
     <packaging>jar</packaging>
 
-    <!-- 1.7 required for android compatibility. -->
     <properties>
-        <maven.compiler.source>1.7</maven.compiler.source>
-        <maven.compiler.target>1.7</maven.compiler.target>
-        <java.version>1.7</java.version>
+        <java.version>1.8</java.version>
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>args4j</groupId>
+            <artifactId>args4j</artifactId>
+            <version>2.32</version>
+        </dependency>
+
         <dependency>
             <groupId>org.hamcrest</groupId>
             <artifactId>hamcrest-library</artifactId>
@@ -74,5 +70,5 @@
                 </configuration>
             </plugin>
         </plugins>
-    </build>    
+    </build>
 </project>
