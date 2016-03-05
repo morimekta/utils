@@ -23,8 +23,8 @@ public class ConsoleUtil {
         char[] cstr = string.toCharArray();
         for (int i = 0; i < cstr.length; ++i) {
             char c = cstr[i];
-            if (c == 0x1B) {  // esc
-
+            if (c == 0x1B) {  // esc, \033
+                // TODO: FIX.
             } else if (c == '\t' || c == '\r' || c == '\n' || c == '\f') {
                 throw new IllegalArgumentException("");
             } else if (c < 0x20 || (0x7F <= c && c < 0xA0)) {
@@ -45,7 +45,7 @@ public class ConsoleUtil {
                 if ((0x00003000 <= cp && cp < 0x00003040) ||  // CJK symbols & punctuations
                     (0x00003300 <= cp && cp < 0x00004DC0) ||  // CJK compatibility (square symbols), Extension A
                     (0x00004E00 <= cp && cp < 0x00010000) ||  // CJK Main group of ideographs
-                    (0x00020000 <= cp && cp < 0x0002a6C0) ||  // CJK Extension B
+                    (0x00020000 <= cp && cp < 0x0002A6C0) ||  // CJK Extension B
                     (0x0002A700 <= cp && cp < 0x0002CEB0)) {  // CJK Extension C, D, E
                     // CJK or other double-width character.
                     len += 2;

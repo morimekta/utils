@@ -201,7 +201,7 @@ public class Color implements Char {
 
     @Override
     public int printableWidth() {
-        // colors never take up space.
+        // colors never take up  screen realestate.
         return 0;
     }
 
