@@ -44,19 +44,19 @@ public class JsonToken extends Slice {
     public static final byte[] kTrue  = new byte[]{'t', 'r', 'u', 'e'};
     public static final byte[] kFalse = new byte[]{'f', 'a', 'l', 's', 'e'};
 
-    public static final char kListStartChar = '[';
-    public static final char kListEndChar   = ']';
-    public static final char kListSepChar   = ',';
-    public static final char kMapStartChar  = '{';
-    public static final char kMapEndChar    = '}';
-    public static final char kKeyValSepChar = ':';
+    public static final char kListStart = '[';
+    public static final char kListEnd   = ']';
+    public static final char kListSep   = ',';
+    public static final char kMapStart  = '{';
+    public static final char kMapEnd    = '}';
+    public static final char kKeyValSep = ':';
 
-    protected static final char kStringDelimiter = '\"';
-    protected static final char kEscapeCharacter = '\\';
-    protected static final char kSpaceCharacter = ' ';
-    protected static final char kTabCharacter = '\t';
-    protected static final char kNewLineCharacter = '\n';
-    protected static final char kCarReturnCharacter = '\r';
+    protected static final char kDoubleQuote    = '\"';
+    protected static final char kEscape         = '\\';
+    protected static final char kSpace          = ' ';
+    protected static final char kTab            = '\t';
+    protected static final char kNewLine        = '\n';
+    protected static final char kCarriageReturn = '\r';
 
     public final Type type;
     public final int  lineNo;
@@ -89,12 +89,16 @@ public class JsonToken extends Slice {
         return type == Type.TOKEN && strEquals(kTrue) || strEquals(kFalse);
     }
 
+    public boolean isNumber() {
+        return type == Type.NUMBER;
+    }
+
     public boolean isInteger() {
         return type == Type.NUMBER && !containsAny((byte) '.', (byte) 'e', (byte) 'E');
     }
 
-    public boolean isReal() {
-        return type == Type.NUMBER;
+    public boolean isDouble() {
+        return type == Type.NUMBER && containsAny((byte) '.', (byte) 'e', (byte) 'E');
     }
 
     public boolean booleanValue() {

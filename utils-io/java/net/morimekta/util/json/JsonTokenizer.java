@@ -85,7 +85,7 @@ public class JsonTokenizer {
      */
     public JsonToken expect(String message) throws JsonException, IOException {
         if (!hasNext()) {
-            throw newParseException("Unexpected end of file while " + message);
+            throw newParseException("Unexpected end of file while %s", message);
         }
         return next();
     }
@@ -103,15 +103,15 @@ public class JsonTokenizer {
      */
     public JsonToken expectString(String message) throws IOException, JsonException {
         if (!hasNext()) {
-            throw newParseException(String.format("Unexpected end of stream while %s", message));
+            throw newParseException("Unexpected end of stream while %s", message);
         } else {
             if (unreadToken.isLiteral()) {
                 return next();
             }
 
-            throw new JsonException(String.format("Expected string literal, but found %s while %s",
-                                                  unreadToken.type.toString().toLowerCase(),
-                                                  message), this, unreadToken);
+            throw newMismatchException("Expected string literal, but found %s while %s",
+                                       unreadToken.type.toString().toLowerCase(),
+                                       message);
         }
     }
 
@@ -131,15 +131,15 @@ public class JsonTokenizer {
      */
     public JsonToken expectNumber(String message) throws IOException, JsonException {
         if (!hasNext()) {
-            throw newParseException(String.format("Unexpected end of stream while %s", message));
+            throw newParseException("Unexpected end of stream while %s", message);
         } else {
-            if (unreadToken.isInteger() || unreadToken.isReal()) {
+            if (unreadToken.isInteger() || unreadToken.isDouble()) {
                 return next();
             }
 
-            throw new JsonException(String.format("Expected number, but found %s while %s",
-                                                  unreadToken.type.toString().toLowerCase(),
-                                                  message), this, unreadToken);
+            throw newMismatchException("Expected number, but found %s while %s",
+                                       unreadToken.type.toString().toLowerCase(),
+                                       message);
         }
     }
 
@@ -160,7 +160,7 @@ public class JsonTokenizer {
             throw new IllegalArgumentException("No symbols to match.");
         }
         if (!hasNext()) {
-            throw newParseException(String.format("Unexpected end of stream while %s", message));
+            throw newParseException("Unexpected end of stream while %s", message);
         } else {
             for (char symbol : symbols) {
                 if (unreadToken.isSymbol(symbol)) {
@@ -169,10 +169,10 @@ public class JsonTokenizer {
                 }
             }
 
-            throw new JsonException(String.format("Expected one of \"%s\", but found \"%s\" while %s",
-                                                  Strings.join("", symbols),
-                                                  unreadToken.toString(),
-                                                  message), this, unreadToken);
+            throw newMismatchException("Expected one of \"%s\", but found \"%s\" while %s",
+                                       Strings.join("", symbols),
+                                       unreadToken.toString(),
+                                       message);
         }
     }
 
@@ -190,6 +190,21 @@ public class JsonTokenizer {
             unreadToken = next();
         }
         return unreadToken != null;
+    }
+
+    /**
+     * Return the next token or throw an exception. Though it does not consume
+     * that token.
+     *
+     * @return The next token.
+     * @throws IOException
+     * @throws JsonException
+     */
+    public JsonToken peek(String message) throws IOException, JsonException {
+        if (!hasNext()) {
+            throw newParseException("Unexpected end of stream while %s", message);
+        }
+        return unreadToken;
     }
 
     /**
@@ -217,48 +232,52 @@ public class JsonTokenizer {
                     break;
                 }
 
-                if (lastByte == JsonToken.kCarReturnCharacter) {
-                    // CR has no other purpose than being in front of LF.
-                    // Supported because of windows file format default
-                    // newline encoding. Essentially the character is just
-                    // ignored throughout the file.
-                    lastByte = 0;
-                    continue;
-                }
-
-                if (lastByte != JsonToken.kNewLineCharacter) {
+                if (lastByte != JsonToken.kNewLine &&
+                    lastByte != JsonToken.kCarriageReturn) {
                     lineBuffer.put((byte) lastByte);
                     ++linePos;
                 }
             }
 
-            if (lastByte == JsonToken.kNewLineCharacter) {
+            if (lastByte == JsonToken.kNewLine ||
+                lastByte == JsonToken.kCarriageReturn) {
                 // New line
                 flushLineBuffer();
 
                 lines.add(lineBuilder.toString());
-                ++line;
                 linePos = 0;
-                lastByte = 0;
-
                 lineBuilder = new StringBuilder();
-            } else if (lastByte == JsonToken.kSpaceCharacter ||
-                       lastByte == JsonToken.kTabCharacter) {
+                ++line;
+
+                // Handle CR-LF character pairs as a single newline.
+                if (lastByte == JsonToken.kCarriageReturn) {
+                    lastByte = reader.read();
+                    if (lastByte == JsonToken.kNewLine) {
+                        lastByte = 0;
+                    } else if (lastByte != JsonToken.kCarriageReturn){
+                        lineBuffer.put((byte) lastByte);
+                        ++linePos;
+                    }
+                } else {
+                    lastByte = 0;
+                }
+            } else if (lastByte == JsonToken.kSpace ||
+                       lastByte == JsonToken.kTab) {
                 lastByte = 0;
-            } else if (lastByte == JsonToken.kStringDelimiter) {
+            } else if (lastByte == JsonToken.kDoubleQuote) {
                 return nextString();
             } else if (lastByte == '-' || (lastByte >= '0' && lastByte <= '9')) {
                 return nextNumber();
-            } else if (lastByte == JsonToken.kListStartChar ||
-                       lastByte == JsonToken.kListEndChar ||
-                       lastByte == JsonToken.kMapStartChar ||
-                       lastByte == JsonToken.kMapEndChar ||
-                       lastByte == JsonToken.kKeyValSepChar ||
-                       lastByte == JsonToken.kListSepChar) {
+            } else if (lastByte == JsonToken.kListStart ||
+                       lastByte == JsonToken.kListEnd ||
+                       lastByte == JsonToken.kMapStart ||
+                       lastByte == JsonToken.kMapEnd ||
+                       lastByte == JsonToken.kKeyValSep ||
+                       lastByte == JsonToken.kListSep) {
                 return nextSymbol();
             } else if (lastByte < 0x20 || lastByte >= 0x7F) {
                 // UTF-8 characters are only allowed inside JSON string literals.
-                throw newParseException(String.format("Illegal character in JSON structure: '\\u%04x'", lastByte));
+                throw newParseException("Illegal character in JSON structure: '\\u%04x'", lastByte);
             } else {
                 return nextToken();
             }
@@ -283,7 +302,7 @@ public class JsonTokenizer {
             return lines.get(line - 1);
         } else {
             flushLineBuffer();
-            lineBuilder.append(Strings.readString(new Utf8StreamReader(reader), JsonToken.kNewLineCharacter));
+            lineBuilder.append(Strings.readString(new Utf8StreamReader(reader), JsonToken.kNewLine));
             String ln = lineBuilder.toString();
             lines.add(ln);
             return ln;
@@ -342,13 +361,13 @@ public class JsonTokenizer {
             ++len;
             lastByte = reader.read();
             if (lastByte < 0) {
-                throw new JsonException("Negative indicator without number.");
+                throw newParseException("Negative indicator without number.");
             }
             lineBuffer.put((byte) lastByte);
             ++linePos;
 
             if (!(lastByte == '.' || (lastByte >= '0' && lastByte <= '9'))) {
-                throw new JsonException("No decimal after negative indicator.");
+                throw newParseException("No decimal after negative indicator.");
             }
         }
 
@@ -421,16 +440,16 @@ public class JsonTokenizer {
         // A number must be terminated correctly: End of stream, space or a
         // symbol that may be after a value: ',' '}' ']'.
         if (lastByte < 0 ||
-            lastByte == JsonToken.kListSepChar ||
-            lastByte == JsonToken.kMapEndChar ||
-            lastByte == JsonToken.kListEndChar ||
-            lastByte == JsonToken.kSpaceCharacter ||
-            lastByte == JsonToken.kTabCharacter ||
-            lastByte == JsonToken.kNewLineCharacter ||
-            lastByte == JsonToken.kCarReturnCharacter) {
+            lastByte == JsonToken.kListSep ||
+            lastByte == JsonToken.kMapEnd ||
+            lastByte == JsonToken.kListEnd ||
+            lastByte == JsonToken.kSpace ||
+            lastByte == JsonToken.kTab ||
+            lastByte == JsonToken.kNewLine ||
+            lastByte == JsonToken.kCarriageReturn) {
             return new JsonToken(JsonToken.Type.NUMBER, lineBuffer.array(), startOffset, len, line, startPos);
         } else {
-            throw new JsonException(String.format("Wrongly terminated JSON number: %c.", lastByte));
+            throw newParseException("Wrongly terminated JSON number: %c.", lastByte);
         }
     }
 
@@ -462,9 +481,9 @@ public class JsonTokenizer {
 
             if (esc) {
                 esc = false;
-            } else if (lastByte == JsonToken.kEscapeCharacter) {
+            } else if (lastByte == JsonToken.kEscape) {
                 esc = true;
-            } else if (lastByte == JsonToken.kStringDelimiter) {
+            } else if (lastByte == JsonToken.kDoubleQuote) {
                 break;
             }
         }
@@ -493,7 +512,17 @@ public class JsonTokenizer {
         lineBuffer.clear();
     }
 
-    private JsonException newParseException(String s) throws IOException, JsonException {
-        return new JsonException(s, getLine(line), line, linePos, 0);
+    private JsonException newMismatchException(String format, Object... params) throws IOException {
+        if (params.length > 0) {
+            format = String.format(format, params);
+        }
+        return new JsonException(format, this, unreadToken);
+    }
+
+    private JsonException newParseException(String format, Object... params) throws IOException, JsonException {
+        if (params.length > 0) {
+            format = String.format(format, params);
+        }
+        return new JsonException(format, getLine(line), line, linePos, 0);
     }
 }

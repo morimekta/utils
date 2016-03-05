@@ -174,6 +174,28 @@ public class JsonTokenizerTest {
     }
 
     @Test
+    public void testPeek() throws IOException, JsonException {
+        JsonTokenizer tokenizer = makeTokenizer("{\n" +
+                                                "    \"first\": \"value\"\n" +
+                                                "}");
+        assertTrue(tokenizer.peek("Fail").isSymbol(JsonToken.kMapStart));
+        assertTrue(tokenizer.next().isSymbol(JsonToken.kMapStart));
+        assertEquals("first", tokenizer.peek("Fail").decodeJsonLiteral());
+        assertEquals("first", tokenizer.expect("Fail").decodeJsonLiteral());
+
+        tokenizer.expectSymbol("Fail", JsonToken.kKeyValSep);
+        tokenizer.expectString("Fail");
+        assertTrue(tokenizer.next().isSymbol(JsonToken.kMapEnd));
+
+        try {
+            tokenizer.peek("__message__");
+            fail("No exception on peek on end.");
+        } catch (JsonException e) {
+            assertEquals("Unexpected end of stream while __message__", e.getMessage());
+        }
+    }
+
+    @Test
     public void testGetLine() throws IOException {
         JsonTokenizer tokenizer = makeTokenizer("{\n" +
                                                 "    \"first\": \"value\",\n" +

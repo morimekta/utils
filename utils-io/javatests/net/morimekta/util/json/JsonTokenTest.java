@@ -59,12 +59,14 @@ public class JsonTokenTest {
         JsonToken token;
 
         token = new JsonToken(JsonToken.Type.TOKEN, "44".getBytes(), 0, 2, 1, 1);
+        assertFalse(token.isNumber());
         assertFalse(token.isInteger());
-        assertFalse(token.isReal());
+        assertFalse(token.isDouble());
 
         token = new JsonToken(JsonToken.Type.NUMBER, "44".getBytes(), 0, 2, 1, 1);
+        assertTrue(token.isNumber());
         assertTrue(token.isInteger());
-        assertTrue(token.isReal());
+        assertFalse(token.isDouble());
         assertEquals((byte) 44, token.byteValue());
         assertEquals((short) 44, token.shortValue());
         assertEquals(44, token.intValue());
@@ -72,8 +74,9 @@ public class JsonTokenTest {
         assertEquals(44.0, token.doubleValue(), 0.001);
 
         token = new JsonToken(JsonToken.Type.NUMBER, "44.44".getBytes(), 0, 5, 1, 1);
+        assertTrue(token.isNumber());
         assertFalse(token.isInteger());
-        assertTrue(token.isReal());
+        assertTrue(token.isDouble());
         assertEquals(44.44, token.doubleValue(), 0.001);
     }
 
