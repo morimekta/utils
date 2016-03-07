@@ -13,6 +13,8 @@ Stein Eldar Johnsen. Contributions are welcome.
   interactive command line interfaces.
 * [IO Utilities](utils-io/README.md) Utilities for facilitating heavy
   computational IO, specifically reading and writing typed data to IO streams.
+* [Testing Utilities](utils-testing/README.md) Extra matchers and other
+  utilities needed for testing complex java 8 apps.
 
 ## Contributors / Authors
 

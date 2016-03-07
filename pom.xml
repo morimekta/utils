@@ -63,6 +63,7 @@
         <module>utils-android</module>
         <module>utils-console</module>
         <module>utils-io</module>
+        <module>utils-testing</module>
     </modules>
 
     <build>
