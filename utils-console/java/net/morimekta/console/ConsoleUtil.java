@@ -1,5 +1,7 @@
 package net.morimekta.console;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 /**
  * Common character and console utilities. It can contain both standard unicode characters
  * and unix console control sequences. Here also resides lots of helper
@@ -7,6 +9,8 @@ package net.morimekta.console;
  * account control sequences, non-width characters and double width characters.
  */
 public class ConsoleUtil {
+    public static final int TAB_WIDTH = 4;
+
     /**
      * How many single-characters worth of console real-estate will be taken
      * up by this string if printed. Control characters will be ignored, and
@@ -18,54 +22,35 @@ public class ConsoleUtil {
      * @param string The string to measure.
      * @return The printed width.
      */
-    public static int printableWidth(String string) {
-        int len = 0;
-        char[] cstr = string.toCharArray();
-        for (int i = 0; i < cstr.length; ++i) {
-            char c = cstr[i];
-            if (c == 0x1B) {  // esc, \033
-                // TODO: FIX.
-            } else if (c == '\t' || c == '\r' || c == '\n' || c == '\f') {
-                throw new IllegalArgumentException("");
-            } else if (c < 0x20 || (0x7F <= c && c < 0xA0)) {
-                // other control characters. These should have no influence
-                // in the printed output, so can safely be ignored.
-                throw new IllegalArgumentException("Illegal character in stream 0x" + String.format("%02x", (int) c));
-            } else {
-                int cp = (int) c;
-
-                // Make sure to consume both surrogates on 32-bit code-points.
-                if (Character.isHighSurrogate(c)) {
-                    ++i;
-                    cp = Character.toCodePoint(c, cstr[i]);
-                }
-
-                // Character.isIdeographic(cp) does not seem to return the correct
-                // value, i.e it always return false.
-                if ((0x00003000 <= cp && cp < 0x00003040) ||  // CJK symbols & punctuations
-                    (0x00003300 <= cp && cp < 0x00004DC0) ||  // CJK compatibility (square symbols), Extension A
-                    (0x00004E00 <= cp && cp < 0x00010000) ||  // CJK Main group of ideographs
-                    (0x00020000 <= cp && cp < 0x0002A6C0) ||  // CJK Extension B
-                    (0x0002A700 <= cp && cp < 0x0002CEB0)) {  // CJK Extension C, D, E
-                    // CJK or other double-width character.
-                    len += 2;
-                } else {
-                    ++len;
-                }
-            }
-        }
-        return len;
+    public static int printableWidth(CharSequence string) {
+        AtomicInteger width = new AtomicInteger(0);
+        CharStream.stream(string).forEach(c -> width.addAndGet(c.printableWidth()));
+        return width.get();
     }
 
-    public static String expandTabs(String string) {
-        return expandTabs(string, 4);
+    public static String expandTabs(CharSequence string) {
+        return expandTabs(string, TAB_WIDTH);
     }
 
-    public static String expandTabs(String string, int tabWidth) {
+    public static String expandTabs(CharSequence string, int tabWidth) {
         return expandTabs(string, tabWidth, 0);
     }
 
-    public static String expandTabs(String string, int tabWidth, int offset) {
-        return string;
+    public static String expandTabs(CharSequence string, int tabWidth, int offset) {
+        StringBuilder builder = new StringBuilder();
+        AtomicInteger off = new AtomicInteger(offset);
+        CharStream.stream(string).forEachOrdered(c -> {
+            if (c.codepoint() == '\t') {
+                int l = tabWidth - (off.get() % tabWidth);
+                for (int i = 0; i < l; ++i) {
+                    builder.append(' ');
+                }
+                off.addAndGet(l);
+            } else {
+                builder.append(c);
+                off.addAndGet(c.printableWidth());
+            }
+        });
+        return builder.toString();
     }
 }

@@ -21,7 +21,6 @@
 package net.morimekta.console;
 
 import java.util.Arrays;
-import java.util.Objects;
 import java.util.TreeSet;
 
 /**
@@ -32,7 +31,7 @@ import java.util.TreeSet;
  * </pre>
  * etc.
  */
-public class Color implements Char {
+public class Color extends Control {
     public static final Color CLEAR = new Color(0);
 
     public static final Color DEFAULT = new Color(39);
@@ -70,7 +69,6 @@ public class Color implements Char {
     public static final Color UNSET_HIDDEN    = new Color(28);
 
     private final int[]  mods;
-    private final String str;
 
     /**
      * Create a color with the given modifiers.
@@ -78,46 +76,7 @@ public class Color implements Char {
      * @param values List of modifiers.
      */
     public Color(int... values) {
-        TreeSet<Integer> mods = new TreeSet<>();
-
-        int fg = 0;
-        int bg = 0;
-        for (int i : values) {
-            if (i == 0) {
-                fg = 0;
-                bg = 0;
-                mods.clear();
-                mods.add(0);
-                break;
-            } else if (i < 10) {  // 1..9: modifiers
-                // Text modifier.
-                mods.add(i);
-                mods.remove(i + 20);
-            } else if (i < 30) {  // 21..29, unset mods.
-                // Negative (unset) text modifier.
-                mods.add(i);
-                mods.remove(i - 20);
-            } else if (i < 40) {  // 30..39, text color.
-                // Foreground (text) color.
-                fg = i;
-            } else if (i < 50) {  // 40..49, background color.
-                // Background color.
-                bg = i;
-            }
-        }
-        if (fg != 0) {
-            mods.add(fg);
-        }
-        if (bg != 0) {
-            mods.add(bg);
-        }
-        this.mods = new int[mods.size()];
-        int i = 0;
-        for (int v : mods) {
-            this.mods[i] = v;
-            ++i;
-        }
-        this.str = mkString(mods);
+        this(mkModSet(values));
     }
 
     /**
@@ -126,6 +85,60 @@ public class Color implements Char {
      * @param colors The colors to combine.
      */
     public Color(Color... colors) {
+        this(mkModSet(colors));
+    }
+
+    public Color(CharSequence ctrl) {
+        this(parseModSet(ctrl));
+    }
+
+    private Color(TreeSet<Integer> mods) {
+        super(mkString(mods));
+
+        this.mods = new int[mods.size()];
+        int i = 0;
+        for (int v : mods) {
+            this.mods[i] = v;
+            ++i;
+        }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == this) {
+            return true;
+        }
+        if (o == null || !(o instanceof Color)) {
+            return false;
+        }
+        Color other = (Color) o;
+
+        return Arrays.equals(mods, other.mods);
+    }
+
+    /**
+     * Generate the color string.
+     *
+     * @param values The values combine into the color string.
+     * @return The shell color-settings string.
+     */
+    private static String mkString(TreeSet<Integer> values) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("\033["); // escape.
+        boolean first = true;
+        for (int i : values) {
+            if (first) {
+                first = false;
+            } else {
+                builder.append(';');
+            }
+            builder.append(String.format("%02d", i));
+        }
+        builder.append("m");
+        return builder.toString();
+    }
+
+    private static TreeSet<Integer> mkModSet(Color... colors) {
         TreeSet<Integer> mods = new TreeSet<>();
 
         int fg = 0;
@@ -162,73 +175,68 @@ public class Color implements Char {
         if (bg != 0) {
             mods.add(bg);
         }
-        this.mods = new int[mods.size()];
-        int i = 0;
-        for (int v : mods) {
-            this.mods[i] = v;
-            ++i;
-        }
-        this.str = mkString(mods);
+        return mods;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (o == this) {
-            return true;
-        }
-        if (o == null || !(o instanceof Color)) {
-            return false;
-        }
-        Color other = (Color) o;
+    private static TreeSet<Integer> mkModSet(int... values) {
+        TreeSet<Integer> mods = new TreeSet<>();
 
-        return Arrays.equals(mods, other.mods);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(Color.class, Arrays.hashCode(mods));
-    }
-
-    @Override
-    public String toString() {
-        return str;
-    }
-
-    @Override
-    public int codepoint() {
-        return -1;
-    }
-
-    @Override
-    public int printableWidth() {
-        // colors never take up  screen realestate.
-        return 0;
-    }
-
-    @Override
-    public int length() {
-        return str.length();
-    }
-
-    /**
-     * Generate the color string.
-     *
-     * @param values The values combine into the color string.
-     * @return The shell color-settings string.
-     */
-    private static String mkString(TreeSet<Integer> values) {
-        StringBuilder builder = new StringBuilder();
-        builder.append("\033["); // escape.
-        boolean first = true;
+        int fg = 0;
+        int bg = 0;
         for (int i : values) {
-            if (first) {
-                first = false;
-            } else {
-                builder.append(';');
+            if (i == 0) {
+                fg = 0;
+                bg = 0;
+                mods.clear();
+                mods.add(0);
+                break;
+            } else if (i < 10) {  // 1..9: modifiers
+                // Text modifier.
+                mods.add(i);
+                mods.remove(i + 20);
+            } else if (i < 30) {  // 21..29, unset mods.
+                // Negative (unset) text modifier.
+                mods.add(i);
+                mods.remove(i - 20);
+            } else if (i < 40) {  // 30..39, text color.
+                // Foreground (text) color.
+                fg = i;
+            } else if (i < 50) {  // 40..49, background color.
+                // Background color.
+                bg = i;
             }
-            builder.append(String.format("%02d", i));
         }
-        builder.append("m");
-        return builder.toString();
+        if (fg != 0) {
+            mods.add(fg);
+        }
+        if (bg != 0) {
+            mods.add(bg);
+        }
+
+        return mods;
+    }
+
+    private static TreeSet<Integer> parseModSet(CharSequence ctrl) {
+        int v = 0;
+        int n = 0;
+
+        TreeSet<Integer> mods = new TreeSet<>();
+        for (int i = 0; i < ctrl.length(); ++i) {
+            char c = ctrl.charAt(i);
+            if ('0' <= c && c <= '9') {
+                v *= 10;
+                v += (c - '0');
+                ++n;
+            } else if (n > 0) {
+                mods.add(v);
+                v = 0;
+                n = 0;
+            } else {
+                v = 0;
+                n = 0;
+            }
+        }
+
+        return mods;
     }
 }
