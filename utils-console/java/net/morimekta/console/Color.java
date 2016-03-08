@@ -20,6 +20,8 @@
  */
 package net.morimekta.console;
 
+import net.morimekta.util.Strings;
+
 import java.util.Arrays;
 import java.util.TreeSet;
 
@@ -88,7 +90,14 @@ public class Color extends Control {
         this(mkModSet(colors));
     }
 
-    public Color(CharSequence ctrl) {
+    /**
+     * Parse a char sequence as a color. The sequence is already assumed to
+     * have been recognized as a color control sequence, but the validity
+     * (and usability) of the sequence is not controlled.
+     *
+     * @param ctrl
+     */
+    protected Color(CharSequence ctrl) {
         this(parseModSet(ctrl));
     }
 
@@ -152,20 +161,16 @@ public class Color extends Control {
                     mods.clear();
                     mods.add(0);
                     break all;
-                } else {
-                    mods.remove(0);
-
-                    if (i < 10) {
-                        mods.add(i);
-                        mods.remove(i + 20);
-                    } else if (i < 30) {
-                        mods.add(i);
-                        mods.remove(i - 20);
-                    } else if (i < 40) {
-                        fg = i;
-                    } else if (i < 50) {
-                        bg = i;
-                    }
+                } else if (i < 10) {
+                    mods.add(i);
+                    mods.remove(i + 20);
+                } else if (i < 30) {
+                    mods.add(i);
+                    mods.remove(i - 20);
+                } else if (i < 40) {
+                    fg = i;
+                } else if (i < 50) {
+                    bg = i;
                 }
             }
         }
@@ -221,7 +226,7 @@ public class Color extends Control {
         int n = 0;
 
         TreeSet<Integer> mods = new TreeSet<>();
-        for (int i = 0; i < ctrl.length(); ++i) {
+        for (int i = 2; i < ctrl.length(); ++i) {
             char c = ctrl.charAt(i);
             if ('0' <= c && c <= '9') {
                 v *= 10;
@@ -232,8 +237,7 @@ public class Color extends Control {
                 v = 0;
                 n = 0;
             } else {
-                v = 0;
-                n = 0;
+                throw new IllegalArgumentException("Invalid color control sequence: \"" + Strings.escape(ctrl) + "\"");
             }
         }
 

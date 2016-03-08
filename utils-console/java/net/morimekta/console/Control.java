@@ -65,6 +65,19 @@ public class Control implements Char {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (o == this) {
+            return true;
+        }
+        if (o == null || !(o instanceof Control)) {
+            return false;
+        }
+        Control other = (Control) o;
+
+        return str.equals(other.str);
+    }
+
+    @Override
     public int hashCode() {
         return str.hashCode();
     }

@@ -24,6 +24,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.fail;
 
 /**
  * Tests for Color utility class.
@@ -69,7 +70,7 @@ public class ColorTest {
     }
 
     @Test
-    public void testColorCombinations() {
+    public void testConstructor() {
         Color br = new Color(31, 1);  // bold red.
 
         assertEquals("\033[01;31m", br.toString());
@@ -80,5 +81,30 @@ public class ColorTest {
 
         assertEquals(new Color(Color.BOLD, Color.RED), br);
         assertNotEquals(new Color(Color.BOLD, Color.RED), bg);
+
+        assertEquals(Color.CLEAR, new Color(Color.BOLD, Color.RED, Color.CLEAR));
+        assertEquals(new Color(Color.RED, Color.UNSET_BOLD), new Color(new Color(Color.BOLD, Color.RED), Color.UNSET_BOLD));
+        assertEquals("\033[01;31;46m", new Color(Color.BOLD, Color.RED, Color.BG_CYAN).toString());
+    }
+
+    @Test
+    public void testConstructor_parser() {
+        Color br = new Color(Color.BOLD, Color.RED);  // bold red.
+
+        assertEquals(new Color(Color.BOLD, Color.RED), new Color("\033[01;31m"));
+        try {
+            new Color("\033[01;m");
+            fail("No exception on invalid color sequence.");
+        } catch (IllegalArgumentException e) {
+            assertEquals("Invalid color control sequence: \"\\033[01;m\"", e.getMessage());
+        }
+    }
+
+    @Test
+    public void testEquals() {
+        assertEquals(Color.RED, Color.RED);
+        assertNotEquals(Color.RED, Color.BG_RED);
+        assertNotEquals(Color.RED, null);
+        assertNotEquals(Color.RED, new Object());
     }
 }

@@ -1,6 +1,8 @@
 package net.morimekta.console;
 
+import java.util.Iterator;
 import java.util.Spliterator;
+import java.util.Spliterators;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -9,6 +11,10 @@ import java.util.stream.StreamSupport;
  * Java 8 streams handling of character sequences.
  */
 public class CharStream {
+    public static Iterator<Char> iterator(CharSequence str) {
+        return Spliterators.iterator(new CharSpliterator(str));
+    }
+
     public static Stream<Char> stream(CharSequence str) {
         return StreamSupport.stream(new CharSpliterator(str), false);
     }

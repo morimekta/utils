@@ -38,9 +38,10 @@ public class Strings {
      * @param string The string to escape.
      * @return The escaped string.
      */
-    public static String escape(String string) {
+    public static String escape(CharSequence string) {
         StringBuilder builder = new StringBuilder();
-        for (char c : string.toCharArray()) {
+        for (int i = 0; i < string.length(); ++i) {
+            char c = string.charAt(i);
             switch (c) {
                 case '\b':
                     builder.append('\\').append('b');

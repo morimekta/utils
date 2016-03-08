@@ -22,13 +22,13 @@ public class Unicode implements Char {
         if (cp < 0x20 ||
             (0x7F <= cp && cp < 0xA0) ||
             cp == 0x061C ||
-            (0x2000 <= cp && cp <= 0x202F) ||
+            (0x2000 <= cp && cp <= 0x2100) ||
             (0xFFF9 <= cp && cp <= 0xFFFB)) {
             return 0;
         }
 
-        // TODO: There is also a set of non-width glyphs, e.g. used in some indian languages.
-        // These also have a printable width of 0.
+        // TODO: There is also a set of non-width glyphs, e.g. used in some indian language.
+        // These also have a printable width of 0, even though they are printed...
 
         // Character.isIdeographic(cp) does not seem to return the correct
         // value, i.e it always return false.

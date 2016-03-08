@@ -53,4 +53,6 @@ public class ConsoleUtil {
         });
         return builder.toString();
     }
+
+    private ConsoleUtil() {}
 }
