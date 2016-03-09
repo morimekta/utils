@@ -186,7 +186,7 @@ public class BinaryWriter extends OutputStream {
             case 1:
                 return writeUInt8(number);
         }
-        throw new IOException();
+        throw new IllegalArgumentException("Unsupported byte count for unsigned: " + bytes);
     }
 
     /**
@@ -205,7 +205,7 @@ public class BinaryWriter extends OutputStream {
             case 1:
                 return writeByte((byte) number);
         }
-        throw new IOException();
+        throw new IllegalArgumentException("Unsupported byte count for signed: " + bytes);
     }
 
     /**
@@ -224,7 +224,7 @@ public class BinaryWriter extends OutputStream {
             case 1:
                 return writeByte((byte) number);
         }
-        throw new IOException();
+        throw new IllegalArgumentException("Unsupported byte count for signed: " + bytes);
     }
 
     /**

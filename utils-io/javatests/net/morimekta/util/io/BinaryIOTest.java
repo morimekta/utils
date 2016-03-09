@@ -21,15 +21,21 @@
 package net.morimekta.util.io;
 
 import net.morimekta.util.Binary;
+
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verifyZeroInteractions;
 
 /**
  * Test testing the pairing between BinaryWriter and BinaryReader, and that
@@ -49,6 +55,48 @@ public class BinaryIOTest {
         ByteArrayInputStream in = new ByteArrayInputStream(out.toByteArray());
         out.reset();
         return new BinaryReader(in);
+    }
+
+    @Test
+    public void testRead() throws IOException {
+        out.write(new byte[]{1, 2, 3, 4});
+
+        BinaryReader reader = getReader();
+
+        assertEquals(1, reader.read());
+
+        byte[] tmp = new byte[10];
+        assertEquals(3, reader.read(tmp, 2, 8));
+        assertArrayEquals(new byte[]{0, 0, 2, 3, 4, 0, 0, 0, 0, 0},
+                          tmp);
+
+        try {
+            reader.read(tmp, 5, 6);
+        } catch (IllegalArgumentException e) {
+            assertEquals("Illegal arguments for read: byte[10], off:5, len:6",
+                         e.getMessage());
+        }
+    }
+
+    @Test
+    public void testWrite() throws IOException {
+        writer.write(new byte[]{1, 2, 3, 4}, 1, 2);
+        writer.write(0x7f);
+
+        byte[] tmp = new byte[4];
+        assertEquals(3, getReader().read(tmp));
+        assertArrayEquals(new byte[]{2, 3, 0x7f, 0}, tmp);
+    }
+
+    @Test
+    public void testClose() {
+        OutputStream out = mock(OutputStream.class);
+        InputStream in = mock(InputStream.class);
+
+        new BinaryWriter(out).close();
+        new BinaryReader(in).close();
+
+        verifyZeroInteractions(out, in);
     }
 
     @Test
@@ -79,6 +127,12 @@ public class BinaryIOTest {
         assertEquals((byte) 0xff, reader.expectByte());
         assertEquals((byte) '\"', reader.expectByte());
         assertEquals((byte) 0, reader.expectByte());
+
+        try {
+            reader.expectByte();
+        } catch (IOException e) {
+            assertEquals("Missing expected byte", e.getMessage());
+        }
     }
 
     @Test
@@ -95,6 +149,23 @@ public class BinaryIOTest {
         assertEquals((short) 0xffff, reader.expectShort());
         assertEquals((short) -12345, reader.expectShort());
         assertEquals((short) 0, reader.expectShort());
+    }
+
+    @Test
+    public void testBadShort(){
+        assertBadExpectShort("Missing byte 1 to expected short", new byte[]{});
+        assertBadExpectShort("Missing byte 2 to expected short", new byte[]{0});
+    }
+
+    private void assertBadExpectShort(String message, byte[] data) {
+        ByteArrayInputStream bais = new ByteArrayInputStream(data);
+        try {
+            BinaryReader reader = new BinaryReader(bais);
+            reader.expectShort();
+            fail("No exception on bad short");
+        } catch (IOException e) {
+            assertEquals(message, e.getMessage());
+        }
     }
 
     @Test
@@ -116,6 +187,25 @@ public class BinaryIOTest {
     }
 
     @Test
+    public void testBadInt() {
+        assertBadExpectInt("Missing byte 1 to expected int", new byte[]{});
+        assertBadExpectInt("Missing byte 2 to expected int", new byte[]{0});
+        assertBadExpectInt("Missing byte 3 to expected int", new byte[]{0, 0});
+        assertBadExpectInt("Missing byte 4 to expected int", new byte[]{0, 0, 0});
+    }
+
+    private void assertBadExpectInt(String message, byte[] data) {
+        ByteArrayInputStream bais = new ByteArrayInputStream(data);
+        try {
+            BinaryReader reader = new BinaryReader(bais);
+            reader.expectInt();
+            fail("No exception on bad int");
+        } catch (IOException e) {
+            assertEquals(message, e.getMessage());
+        }
+    }
+
+    @Test
     public void testLong() throws IOException {
         // test writing and reading shorts.
         writer.writeLong(1);
@@ -131,6 +221,29 @@ public class BinaryIOTest {
         assertEquals(0xffffffffffffffffL, reader.expectLong());
         assertEquals(-1234567890123456789L, reader.expectLong());
         assertEquals(0, reader.expectLong());
+    }
+
+    @Test
+    public void testBadLong() {
+        assertBadExpectLong("Missing byte 1 to expected long", new byte[]{});
+        assertBadExpectLong("Missing byte 2 to expected long", new byte[]{0});
+        assertBadExpectLong("Missing byte 3 to expected long", new byte[]{0, 0});
+        assertBadExpectLong("Missing byte 4 to expected long", new byte[]{0, 0, 0});
+        assertBadExpectLong("Missing byte 5 to expected long", new byte[]{0, 0, 0, 0});
+        assertBadExpectLong("Missing byte 6 to expected long", new byte[]{0, 0, 0, 0, 0});
+        assertBadExpectLong("Missing byte 7 to expected long", new byte[]{0, 0, 0, 0, 0, 0});
+        assertBadExpectLong("Missing byte 8 to expected long", new byte[]{0, 0, 0, 0, 0, 0, 0});
+    }
+
+    private void assertBadExpectLong(String message, byte[] data) {
+        ByteArrayInputStream bais = new ByteArrayInputStream(data);
+        try {
+            BinaryReader reader = new BinaryReader(bais);
+            reader.expectLong();
+            fail("No exception on bad long");
+        } catch (IOException e) {
+            assertEquals(message, e.getMessage());
+        }
     }
 
     @Test
@@ -165,14 +278,151 @@ public class BinaryIOTest {
     }
 
     @Test
-    public void testUnsigned() {
-        // TODO: implement
+    public void testBadBinary() throws IOException {
+        Binary bytes = Binary.wrap(new byte[]{0, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 9, 8, 7, 6, 5, 4, 3, 2, 1});
+        // test writing and reading bytes.
+        writer.writeBinary(bytes);
+
+        BinaryReader reader = getReader();
+
+        try {
+            reader.expectBinary(bytes.length() + 1);
+            fail("No exception on bad binary data");
+        } catch (IOException e) {
+            assertEquals("Not enough data available on stream: 20 < 21", e.getMessage());
+        }
     }
 
     @Test
-    public void testSigned() {
-        // TODO: implement
+    public void testExpectUnsigned() throws IOException {
+        writer.writeUInt8(1);
+        writer.writeUInt16(2);
+        writer.writeUInt24(3);
+        writer.writeUInt32(4);
+
+        BinaryReader reader = getReader();
+
+        assertEquals(1, reader.expectUInt8());
+        assertEquals(2, reader.expectUInt16());
+        assertEquals(3, reader.expectUInt24());
+        assertEquals(4, reader.expectUInt32());
     }
+
+    @Test
+    public void testReadUnsigned() throws IOException {
+        writer.writeUInt16(2);
+
+        BinaryReader reader = getReader();
+
+        assertEquals(2, reader.readUInt16());
+        assertEquals(0, reader.readUInt16());
+
+        writer.writeUInt8(5);
+        reader = getReader();
+
+        try {
+            reader.readUInt16();
+            fail("No exception in bad read");
+        } catch (IOException e) {
+            assertEquals("Missing byte 2 to read uint16", e.getMessage());
+        }
+    }
+
+    @Test
+    public void testUnsigned() throws IOException {
+        writer.writeUnsigned(1, 1);
+        writer.writeUnsigned(2, 2);
+        writer.writeUnsigned(3, 3);
+        writer.writeUnsigned(4, 4);
+
+        try {
+            writer.writeUnsigned(8, 8);
+            fail("No exception on bad argument");
+        } catch (IllegalArgumentException e) {
+            assertEquals("Unsupported byte count for unsigned: 8", e.getMessage());
+        }
+
+        BinaryReader reader = getReader();
+
+        try {
+            reader.expectUnsigned(8);
+            fail("No exception on bad argument");
+        } catch (IllegalArgumentException e) {
+            assertEquals("Unsupported byte count for unsigned: 8", e.getMessage());
+        }
+
+        assertEquals(1, reader.expectUnsigned(1));
+        assertEquals(2, reader.expectUnsigned(2));
+        assertEquals(3, reader.expectUnsigned(3));
+        assertEquals(4, reader.expectUnsigned(4));
+    }
+
+    @Test
+    public void testBadUnsigned() {
+        assertBadExpectUnsigned("Missing unsigned byte", new byte[]{}, 1);
+
+        assertBadExpectUnsigned("Missing byte 1 to expected uint16", new byte[]{}, 2);
+        assertBadExpectUnsigned("Missing byte 2 to expected uint16", new byte[]{0}, 2);
+
+        assertBadExpectUnsigned("Missing byte 1 to expected uint24", new byte[]{}, 3);
+        assertBadExpectUnsigned("Missing byte 2 to expected uint24", new byte[]{0}, 3);
+        assertBadExpectUnsigned("Missing byte 3 to expected uint24", new byte[]{0, 0}, 3);
+
+        assertBadExpectUnsigned("Missing byte 1 to expected int", new byte[]{}, 4);
+        assertBadExpectUnsigned("Missing byte 2 to expected int", new byte[]{0}, 4);
+        assertBadExpectUnsigned("Missing byte 3 to expected int", new byte[]{0, 0}, 4);
+        assertBadExpectUnsigned("Missing byte 4 to expected int", new byte[]{0, 0, 0}, 4);
+    }
+
+    private void assertBadExpectUnsigned(String message, byte[] data, int bytes) {
+        ByteArrayInputStream bais = new ByteArrayInputStream(data);
+        try {
+            BinaryReader reader = new BinaryReader(bais);
+            reader.expectUnsigned(bytes);
+            fail("No exception on bad short");
+        } catch (IOException e) {
+            assertEquals(message, e.getMessage());
+        }
+    }
+
+    @Test
+    public void testSigned() throws IOException {
+        writer.writeSigned(-1, 1);
+        writer.writeSigned(-2, 2);
+        writer.writeSigned(-3, 4);
+        writer.writeSigned(-4, 8);
+        writer.writeSigned(-100L, 1);
+        writer.writeSigned(-200L, 2);
+        writer.writeSigned(-300L, 4);
+        writer.writeSigned(-400L, 8);
+
+        try {
+            writer.writeSigned(-8, 3);
+            fail("No exception on bad argument");
+        } catch (IllegalArgumentException e) {
+            assertEquals("Unsupported byte count for signed: 3", e.getMessage());
+        }
+
+        try {
+            writer.writeSigned(-8L, 3);
+            fail("No exception on bad argument");
+        } catch (IllegalArgumentException e) {
+            assertEquals("Unsupported byte count for signed: 3", e.getMessage());
+        }
+
+        BinaryReader reader = getReader();
+
+        try {
+            reader.expectSigned(3);
+            fail("No exception on bad argument");
+        } catch (IllegalArgumentException e) {
+            assertEquals("Unsupported byte count for signed: 3", e.getMessage());
+        }
+
+        assertEquals(-1, reader.expectSigned(1));
+        assertEquals(-2, reader.expectSigned(2));
+        assertEquals(-3, reader.expectSigned(4));
+        assertEquals(-4, reader.expectSigned(8));    }
 
     @Test
     public void testZigzag() throws IOException {
@@ -237,6 +487,12 @@ public class BinaryIOTest {
 
         testVarint(1234567890123456789L, 9);
         testVarint(0xcafebabedeadbeefL, 10);
+    }
+
+    @Test
+    public void testEmptyVaring() throws IOException {
+        assertEquals(0, getReader().readIntVarint());
+        assertEquals(0L, getReader().readLongVarint());
     }
 
     private void testVarint(int value, int bytes) throws IOException {

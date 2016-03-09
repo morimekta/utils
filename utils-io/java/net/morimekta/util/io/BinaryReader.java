@@ -69,17 +69,20 @@ public class BinaryReader extends InputStream {
      * @throws IOException If unable to fill the requested part of the byte array.
      */
     @Override
-    public int read(byte[] out, int off, int len) throws IOException {
+    public int read(byte[] out, final int off, final int len) throws IOException {
         if (off < 0 || len < 0 || (off + len) > out.length) {
-            throw new IOException();
+            throw new IllegalArgumentException(String.format(
+                    "Illegal arguments for read: byte[%d], off:%d, len:%d",
+                    out.length, off, len));
         }
 
         final int end = off + len;
+        int pos = off;
         int i;
-        while (off < end && (i = in.read(out, off, len - off)) > 0) {
-            off += i;
+        while (pos < end && (i = in.read(out, off, end - off)) >= 0) {
+            pos += i;
         }
-        return off;
+        return pos - off;
     }
 
     /**
@@ -94,7 +97,7 @@ public class BinaryReader extends InputStream {
             off += i;
         }
         if (off < out.length) {
-            throw new IOException();
+            throw new IOException("Not enough data available on stream: " + off + " < " + out.length);
         }
     }
 
@@ -111,7 +114,7 @@ public class BinaryReader extends InputStream {
     public byte expectByte() throws IOException {
         int read = in.read();
         if (read < 0) {
-            throw new IOException();
+            throw new IOException("Missing expected byte");
         }
         return (byte) read;
     }
@@ -126,11 +129,11 @@ public class BinaryReader extends InputStream {
     public short expectShort() throws IOException {
         int b1 = in.read();
         if (b1 < 0) {
-            throw new IOException();
+            throw new IOException("Missing byte 1 to expected short");
         }
         int b2 = in.read();
         if (b2 < 0) {
-            throw new IOException();
+            throw new IOException("Missing byte 2 to expected short");
         }
         return (short) (b1 | b2 << 8);
     }
@@ -145,19 +148,19 @@ public class BinaryReader extends InputStream {
     public int expectInt() throws IOException {
         int b1 = in.read();
         if (b1 < 0) {
-            throw new IOException();
+            throw new IOException("Missing byte 1 to expected int");
         }
         int b2 = in.read();
         if (b2 < 0) {
-            throw new IOException();
+            throw new IOException("Missing byte 2 to expected int");
         }
         int b3 = in.read();
         if (b3 < 0) {
-            throw new IOException();
+            throw new IOException("Missing byte 3 to expected int");
         }
         int b4 = in.read();
         if (b4 < 0) {
-            throw new IOException();
+            throw new IOException("Missing byte 4 to expected int");
         }
         return (b1 | b2 << 8 | b3 << 16 | b4 << 24);
     }
@@ -172,35 +175,35 @@ public class BinaryReader extends InputStream {
     public long expectLong() throws IOException {
         int b1 = in.read();
         if (b1 < 0) {
-            throw new IOException();
+            throw new IOException("Missing byte 1 to expected long");
         }
         int b2 = in.read();
         if (b2 < 0) {
-            throw new IOException();
+            throw new IOException("Missing byte 2 to expected long");
         }
         int b3 = in.read();
         if (b3 < 0) {
-            throw new IOException();
+            throw new IOException("Missing byte 3 to expected long");
         }
         long b4 = in.read();
         if (b4 < 0) {
-            throw new IOException();
+            throw new IOException("Missing byte 4 to expected long");
         }
         long b5 = in.read();
         if (b5 < 0) {
-            throw new IOException();
+            throw new IOException("Missing byte 5 to expected long");
         }
         long b6 = in.read();
         if (b6 < 0) {
-            throw new IOException();
+            throw new IOException("Missing byte 6 to expected long");
         }
         long b7 = in.read();
         if (b7 < 0) {
-            throw new IOException();
+            throw new IOException("Missing byte 7 to expected long");
         }
         long b8 = in.read();
         if (b8 < 0) {
-            throw new IOException();
+            throw new IOException("Missing byte 8 to expected long");
         }
 
         return (b1 | b2 << 8 | b3 << 16 | b4 << 24 | b5 << 32 | b6 << 40 | b7 << 48 | b8 << 56);
@@ -249,7 +252,7 @@ public class BinaryReader extends InputStream {
     public int expectUInt8() throws IOException {
         int read = in.read();
         if (read < 0) {
-            throw new IOException();
+            throw new IOException("Missing unsigned byte");
         }
         return read;
     }
@@ -264,11 +267,11 @@ public class BinaryReader extends InputStream {
     public int expectUInt16() throws IOException {
         int b1 = in.read();
         if (b1 < 0) {
-            throw new IOException();
+            throw new IOException("Missing byte 1 to expected uint16");
         }
         int b2 = in.read();
         if (b2 < 0) {
-            throw new IOException();
+            throw new IOException("Missing byte 2 to expected uint16");
         }
         return (b1 | b2 << 8);
     }
@@ -287,7 +290,7 @@ public class BinaryReader extends InputStream {
         }
         int b2 = in.read();
         if (b2 < 0) {
-            throw new IOException();
+            throw new IOException("Missing byte 2 to read uint16");
         }
         return (b1 | b2 << 8);
     }
@@ -302,15 +305,15 @@ public class BinaryReader extends InputStream {
     public int expectUInt24() throws IOException {
         int b1 = in.read();
         if (b1 < 0) {
-            throw new IOException();
+            throw new IOException("Missing byte 1 to expected uint24");
         }
         int b2 = in.read();
         if (b2 < 0) {
-            throw new IOException();
+            throw new IOException("Missing byte 2 to expected uint24");
         }
         int b3 = in.read();
         if (b3 < 0) {
-            throw new IOException();
+            throw new IOException("Missing byte 3 to expected uint24");
         }
         return (b1 | b2 << 8 | b3 << 16);
     }
@@ -343,7 +346,7 @@ public class BinaryReader extends InputStream {
             case 1:
                 return expectUInt8();
         }
-        throw new IOException();
+        throw new IllegalArgumentException("Unsupported byte count for unsigned: " + bytes);
     }
 
     /**
@@ -363,7 +366,7 @@ public class BinaryReader extends InputStream {
             case 1:
                 return expectByte();
         }
-        throw new IOException();
+        throw new IllegalArgumentException("Unsupported byte count for signed: " + bytes);
     }
 
     /**
@@ -430,7 +433,7 @@ public class BinaryReader extends InputStream {
     public long readLongVarint() throws IOException {
         int i = in.read();
         if (i < 0) {
-            return 0;
+            return 0L;
         }
 
         boolean c = (i & 0x80) > 0;

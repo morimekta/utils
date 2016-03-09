@@ -54,7 +54,9 @@ public class Utf8StreamReader extends Reader {
 
     @Override
     public int read(char[] cbuf, int off, int len) throws IOException {
-        if (in == null) throw new IOException("Reading from a closed stream.");
+        if (in == null) {
+            throw new IOException("Reading from a closed stream.");
+        }
 
         for (int i = 0; i < len; ++i) {
             if (surrogate != 0) {

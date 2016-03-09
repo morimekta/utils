@@ -77,7 +77,7 @@ public class Utf8StreamReaderTest {
     }
 
     @Test
-    @Ignore
+    @Ignore("We're missing good data to test with surrogate pair unicode")
     public void testReadSurrogatePair() throws IOException {
         byte[] src = new byte[]{};
         ByteArrayInputStream bais = new ByteArrayInputStream(src);
