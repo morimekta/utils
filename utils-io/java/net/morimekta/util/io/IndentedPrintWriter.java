@@ -107,16 +107,21 @@ public class IndentedPrintWriter extends PrintWriter {
     }
 
     public IndentedPrintWriter appendln() {
-        newline().append(current);
+        newline();
+        super.append(current);
         return this;
     }
 
     public IndentedPrintWriter appendln(char c) {
-        return appendln().append(c);
+        appendln();
+        super.append(c);
+        return this;
     }
 
     public IndentedPrintWriter appendln(CharSequence str) {
-        return appendln().append(str);
+        appendln();
+        super.append(str);
+        return this;
     }
 
     public IndentedPrintWriter formatln(String format, Object... args) {

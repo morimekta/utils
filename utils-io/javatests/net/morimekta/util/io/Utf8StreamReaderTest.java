@@ -20,13 +20,15 @@
  */
 package net.morimekta.util.io;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Stein Eldar Johnsen
@@ -52,7 +54,7 @@ public class Utf8StreamReaderTest {
     @Test
     public void testRead_UTF8_longString() throws IOException {
         String original = "ü$Ѹ~OӐW| \\rBֆc}}ӂဂG3>㚉EGᖪǙ\\t;\\tၧb}H(πи-ˁ&H59XOqr/,?DרB㡧-Үyg9i/?l+ႬЁjZr=#DC+;|ԥ'f9VB5|8]cOEሹrĐaP.ѾҢ/^nȨޢ\\\"u";
-        byte[] data = original.getBytes(StandardCharsets.UTF_8);
+        byte[] data = original.getBytes(UTF_8);
         char[] out = new char[original.length()];
 
         Utf8StreamReader reader = new Utf8StreamReader(new ByteArrayInputStream(data));
@@ -64,7 +66,7 @@ public class Utf8StreamReaderTest {
     @Test
     public void testRead_UTF8_singleRead() throws IOException {
         String original = "ü$Ѹ~";
-        byte[] data = original.getBytes(StandardCharsets.UTF_8);
+        byte[] data = original.getBytes(UTF_8);
 
         ByteArrayInputStream bais = new ByteArrayInputStream(data);
 
@@ -72,5 +74,21 @@ public class Utf8StreamReaderTest {
         assertEquals('$', (char) new Utf8StreamReader(bais).read());
         assertEquals('Ѹ', (char) new Utf8StreamReader(bais).read());
         assertEquals('~', (char) new Utf8StreamReader(bais).read());
+    }
+
+    @Test
+    @Ignore
+    public void testReadSurrogatePair() throws IOException {
+        byte[] src = new byte[]{};
+        ByteArrayInputStream bais = new ByteArrayInputStream(src);
+
+        Utf8StreamReader reader = new Utf8StreamReader(bais);
+
+        char a = (char) reader.read();
+        char b = (char) reader.read();
+
+        assertTrue(Character.isHighSurrogate(a));
+        assertTrue(Character.isLowSurrogate(b));
+        assertEquals(0x2A6B2, Character.toCodePoint(a, b));
     }
 }
