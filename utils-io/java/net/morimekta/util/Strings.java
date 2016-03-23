@@ -125,16 +125,16 @@ public class Strings {
      * @param strings   The string collection to join.
      * @return The joined string.
      */
-    public static String join(String delimiter, Collection<String> strings) {
+    public static <T> String join(String delimiter, Collection<T> strings) {
         StringBuilder builder = new StringBuilder();
         boolean first = true;
-        for (String string : strings) {
+        for (T o : strings) {
             if (first) {
                 first = false;
             } else {
                 builder.append(delimiter);
             }
-            builder.append(string);
+            builder.append(o.toString());
         }
         return builder.toString();
     }
