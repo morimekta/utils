@@ -1,7 +1,5 @@
 package net.morimekta.console;
 
-import net.morimekta.util.Base64;
-
 import org.junit.Test;
 
 import java.lang.reflect.Constructor;
