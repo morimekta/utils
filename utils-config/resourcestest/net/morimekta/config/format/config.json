@@ -1,0 +1,24 @@
+{
+    "i": 1234,
+    "s": "string value.",
+    "b": true,
+    "conf": {
+        "sub_str": "another string value.",
+        "real": 1234.5678
+    },
+    "seq_i": [1, 2.2, 3.7, -4],
+    "seq_s": ["a", "b", "c"],
+    "seq_b": [false, false, false, true],
+    "seq_seq": [
+        [1, 2, 3],
+        [3, 2, 1]
+    ],
+    "seq_c": [
+        {
+            "my": "sql"
+        },
+        {
+            "my": "little pony"
+        }
+    ]
+}

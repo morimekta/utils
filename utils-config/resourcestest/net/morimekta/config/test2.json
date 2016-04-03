@@ -1,0 +1,10 @@
+{
+    "i": 1234,
+    "conf": {
+        "sub_str": "another string value.",
+        "real": 1234.5678
+    },
+    "sequence": [
+        1, 2, 3
+    ]
+}
