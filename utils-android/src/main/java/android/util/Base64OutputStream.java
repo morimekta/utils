@@ -66,7 +66,8 @@ public class Base64OutputStream extends FilterOutputStream {
      * stream actually gets a write() call. When decoding, bytes are buffered
      * four at a time.
      *
-     * @param theByte the byte to write
+     * @param theByte the byte to write.
+     * @throws IOException when unable to write data.
      */
     @Override
     public void write(int theByte)
@@ -96,7 +97,7 @@ public class Base64OutputStream extends FilterOutputStream {
      * Flushed the enclosed output stream, but does not write uncompleted 4-blocks.
      * To ensure consistency that only happens on close.
      *
-     * @throws IOException
+     * @throws IOException If unable to write to the output stream.
      */
     @Override
     public void flush() throws IOException {

@@ -31,7 +31,7 @@ public class IsEqualIgnoreIndentTest {
             new IsEqualIgnoreIndent(str);
             fail(String.format("Expected exception on new IsEqualIgnoreIndent(%s)",
                                Objects.toString(str)));
-        } catch (AssertionFailedError e) {
+        } catch (AssertionError e) {
             assertEquals(message, e.getMessage());
         }
     }

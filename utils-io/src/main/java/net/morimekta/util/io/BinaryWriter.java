@@ -58,6 +58,7 @@ public class BinaryWriter extends OutputStream {
      *
      * @param integer The number to writeBinary.
      * @return Number of bytes written.
+     * @throws IOException if unable to write to stream.
      */
     public int writeByte(byte integer) throws IOException {
         out.write(integer);
@@ -69,6 +70,7 @@ public class BinaryWriter extends OutputStream {
      *
      * @param integer The number to writeBinary.
      * @return Number of bytes written.
+     * @throws IOException if unable to write to stream.
      */
     public int writeShort(short integer) throws IOException {
         out.write(integer);
@@ -81,6 +83,7 @@ public class BinaryWriter extends OutputStream {
      *
      * @param integer The number to writeBinary.
      * @return Number of bytes written.
+     * @throws IOException if unable to write to stream.
      */
     public int writeInt(int integer) throws IOException {
         out.write(integer);
@@ -95,6 +98,7 @@ public class BinaryWriter extends OutputStream {
      *
      * @param integer The number to writeBinary.
      * @return Number of bytes written.
+     * @throws IOException if unable to write to stream.
      */
     public int writeLong(long integer) throws IOException {
         out.write((int) (integer));
@@ -113,6 +117,7 @@ public class BinaryWriter extends OutputStream {
      *
      * @param value The double value to writeBinary.
      * @return The number of bytes written.
+     * @throws IOException if unable to write to stream.
      */
     public int writeDouble(double value) throws IOException {
         return writeLong(Double.doubleToLongBits(value));
@@ -123,6 +128,7 @@ public class BinaryWriter extends OutputStream {
      *
      * @param value Binary to writeBinary.
      * @return Number of bytes written.
+     * @throws IOException if unable to write to stream.
      */
     public int writeBinary(Binary value) throws IOException {
         return value.write(out);
@@ -131,6 +137,7 @@ public class BinaryWriter extends OutputStream {
     /**
      * @param number Unsigned byte to writeBinary.
      * @return Number of bytes written.
+     * @throws IOException if unable to write to stream.
      */
     public int writeUInt8(int number) throws IOException {
         out.write(number);
@@ -140,6 +147,7 @@ public class BinaryWriter extends OutputStream {
     /**
      * @param number Unsigned short to writeBinary.
      * @return Number of bytes written.
+     * @throws IOException if unable to write to stream.
      */
     public int writeUInt16(int number) throws IOException {
         out.write(number);
@@ -150,6 +158,7 @@ public class BinaryWriter extends OutputStream {
     /**
      * @param number Unsigned short to writeBinary.
      * @return Number of bytes written.
+     * @throws IOException if unable to write to stream.
      */
     public int writeUInt24(int number) throws IOException {
         out.write(number);
@@ -161,6 +170,7 @@ public class BinaryWriter extends OutputStream {
     /**
      * @param number Unsigned short to writeBinary.
      * @return Number of bytes written.
+     * @throws IOException if unable to write to stream.
      */
     public int writeUInt32(int number) throws IOException {
         out.write(number);
@@ -174,6 +184,7 @@ public class BinaryWriter extends OutputStream {
      * @param number Unsigned integer to writeBinary.
      * @param bytes  Number of bytes to writeBinary.
      * @return Number of bytes written.
+     * @throws IOException if unable to write to stream.
      */
     public int writeUnsigned(int number, int bytes) throws IOException {
         switch (bytes) {
@@ -193,6 +204,7 @@ public class BinaryWriter extends OutputStream {
      * @param number Signed integer to writeBinary.
      * @param bytes  Number of bytes to writeBinary.
      * @return Number of bytes written.
+     * @throws IOException if unable to write to stream.
      */
     public int writeSigned(int number, int bytes) throws IOException {
         switch (bytes) {
@@ -212,6 +224,7 @@ public class BinaryWriter extends OutputStream {
      * @param number Signed integer to writeBinary.
      * @param bytes  Number of bytes to writeBinary.
      * @return Number of bytes written.
+     * @throws IOException if unable to write to stream.
      */
     public int writeSigned(long number, int bytes) throws IOException {
         switch (bytes) {
@@ -235,6 +248,7 @@ public class BinaryWriter extends OutputStream {
      *
      * @param number The number to writeBinary.
      * @return Number of bytes written.
+     * @throws IOException if unable to write to stream.
      */
     public int writeZigzag(int number) throws IOException {
         return writeVarint((number << 1) ^ (number >> 31));
@@ -248,6 +262,7 @@ public class BinaryWriter extends OutputStream {
      *
      * @param number The number to writeBinary.
      * @return Number of bytes written.
+     * @throws IOException if unable to write to stream.
      */
     public int writeZigzag(long number) throws IOException {
         return writeVarint((number << 1) ^ (number >> 63));
@@ -259,6 +274,7 @@ public class BinaryWriter extends OutputStream {
      *
      * @param varint The number to writeBinary.
      * @return The number of bytes written.
+     * @throws IOException if unable to write to stream.
      */
     public int writeVarint(int varint) throws IOException {
         int b = 1;
@@ -279,6 +295,7 @@ public class BinaryWriter extends OutputStream {
      *
      * @param varint The number to writeBinary.
      * @return The number of bytes written.
+     * @throws IOException if unable to write to stream.
      */
     public int writeVarint(long varint) throws IOException {
         int b = 1;

@@ -24,10 +24,10 @@ import static java.nio.charset.StandardCharsets.US_ASCII;
  * Minimal Base64 utility. Will always encode with standard base64 encoding, no
  * padding, and no wrapping, but will parse both URL_SAFE and standard base64
  * data (or even a mismatched mix).
- * <p/>
+ * <p>
  * The code is optimized to have a low stack count, but be call safe using
  * IllegalArgumentException on errors.
- * <p/>
+ * </p>
  * It is a minimal port of the
  * <a href="http://iharder.sourceforge.net/current/java/base64/">iharder Base64</a>
  * utility class.

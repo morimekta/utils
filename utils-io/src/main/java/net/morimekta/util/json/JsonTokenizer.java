@@ -148,7 +148,7 @@ public class JsonTokenizer {
      * delimited UTF-8 encoded, JSON-escaped string.
      *
      * @param message Message to add to exception if there are no more JSON
-     *                tokens on the stram.
+     *                tokens on the stream.
      * @param symbols List of symbol characters to expect. If
      * @return The symbol that was encountered.
      * @throws JsonException If no more tokens, or the token is illegally
@@ -196,9 +196,11 @@ public class JsonTokenizer {
      * Return the next token or throw an exception. Though it does not consume
      * that token.
      *
+     * @param message Message to add to exception if there are no more JSON
+     *                tokens on the stream.
      * @return The next token.
-     * @throws IOException
-     * @throws JsonException
+     * @throws JsonException If the next token is illegally formatted.
+     * @throws IOException If unable to read from stream.
      */
     public JsonToken peek(String message) throws IOException, JsonException {
         if (!hasNext()) {

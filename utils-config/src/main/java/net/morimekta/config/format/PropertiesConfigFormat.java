@@ -5,8 +5,6 @@ import net.morimekta.config.ConfigException;
 import net.morimekta.config.Sequence;
 import net.morimekta.config.Value;
 
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -33,7 +31,7 @@ public class PropertiesConfigFormat implements ConfigFormat {
 
     @Override
     public Config parse(InputStream in) throws ConfigException, IOException {
-        throw new NotImplementedException();
+        throw new IllegalStateException("not implemented");
     }
 
     // --- INTERNAL ---

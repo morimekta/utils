@@ -90,8 +90,8 @@ public class PropertiesConfigFormatTest {
             PropertiesConfigFormat formatter = new PropertiesConfigFormat();
             formatter.parse(new ByteArrayInputStream(new byte[0]));
             fail("No exception on parse.");
-        } catch (NotImplementedException e) {
-            // pass.
+        } catch (IllegalStateException e) {
+            assertEquals("not implemented", e.getMessage());
         }
     }
 }

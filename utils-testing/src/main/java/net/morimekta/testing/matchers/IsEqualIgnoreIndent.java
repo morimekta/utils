@@ -5,7 +5,7 @@ import org.hamcrest.Description;
 
 import java.util.Objects;
 
-import static junit.framework.Assert.assertNotNull;
+import static org.junit.Assert.assertNotNull;
 
 /**
  * Equality matcher that ignores line indent. But matches all other spacing.

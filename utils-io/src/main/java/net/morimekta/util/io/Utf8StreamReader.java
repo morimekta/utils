@@ -30,11 +30,11 @@ import java.util.Locale;
  * Similar to java native {@link java.io.InputStreamReader}, but locked to
  * utf-8, and explicitly with no buffering whatsoever. It will only read one
  * byte at a time until it has a valid unicode char.
- * <p/>
+ * <p>
  * In order to make this reader more efficient, rather wrap the input stream in
  * a BufferedInputStream, which can pass on any buffered bytes to later uses.
  * E.g.:
- * <p/>
+ * </p>
  * <pre>
  *     Reader reader = new Utf8StreamReader(new BufferedInputStream(in));
  * </pre>

@@ -111,7 +111,7 @@ public class Binary implements Comparable<Binary>, Serializable {
      * @param base64 The string to decode.
      * @return The resulting sequence.
      */
-    public static Binary fromBase64(String base64) throws IOException {
+    public static Binary fromBase64(String base64) {
         byte[] arr = Base64.decode(base64);
         return new Binary(arr);
     }
@@ -194,6 +194,7 @@ public class Binary implements Comparable<Binary>, Serializable {
      *
      * @param out Stream to write to.
      * @return Number of bytes written.
+     * @throws IOException When unable to write to stream.
      */
     public int write(OutputStream out) throws IOException {
         out.write(bytes);

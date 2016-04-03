@@ -49,11 +49,16 @@ public interface Parcelable {
     /**
      * Describe the kinds of special objects contained in this Parcelable's
      * marshaled representation.
+     *
+     * @return Bitmask of CONTENTS_* flags.
      */
     int describeContents();
 
     /**
      * Flatten this object in to a Parcel.
+     *
+     * @param dest The parcelable to write to.
+     * @param flags Bitmask of PARCELABLE_WRITE_* flags.
      */
     void writeToParcel(Parcel dest, int flags);
 
@@ -65,11 +70,17 @@ public interface Parcelable {
          * Create a new instance of the Parcelable class, instantiating it from
          * the given Parcel whose data had previously been written by
          * Parcelable.writeToParcel().
+         *
+         * @param source Parcel to read from.
+         * @return The created object.
          */
         P createFromParcel(Parcel source);
 
         /**
          * Create a new array of the Parcelable class.
+         *
+         * @param size The number of elements.
+         * @return The object array.
          */
         P[] newArray(int size);
     }
@@ -84,6 +95,10 @@ public interface Parcelable {
          * Create a new instance of the Parcelable class, instantiating it from
          * the given Parcel whose data had previously been written by
          * Parcelable.writeToParcel() and using the given ClassLoader.
+         *
+         * @param source Parcel to read from.
+         * @param loader The classloader to use to load instance classes.
+         * @return The created object.
          */
         P createFromParcel(Parcel source, ClassLoader loader);
     }

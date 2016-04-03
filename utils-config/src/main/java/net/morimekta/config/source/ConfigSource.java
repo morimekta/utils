@@ -15,6 +15,8 @@ public interface ConfigSource {
      * object.
      *
      * @return The loaded config.
+     * @throws IOException when unable to read the config.
+     * @throws ConfigException when unable to parse the config.
      */
     Config load() throws IOException, ConfigException;
 }

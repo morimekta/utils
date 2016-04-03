@@ -26,10 +26,10 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * Utilities for encoding and decoding the Base64 representation of binary
  * data. See RFCs <a href="http://www.ietf.org/rfc/rfc2045.txt">2045</a> and
  * <a href="http://www.ietf.org/rfc/rfc3548.txt">3548</a>.
- * <p/>
+ * <p>
  * Original Author: iharder
  * Reference: http://iharder.sourceforge.net/current/java/base64/
- * <p/>
+ * </p>
  * NOTE: Note that the class is updated to to match the android.util.Base64
  * interface. Since that interface does not follow the Base64 standard this
  * class also does not entirely follow the standard, notably:
@@ -204,6 +204,9 @@ public class Base64 {
      * It's possible, though silly, to specify ORDERED <b>and</b> URLSAFE
      * in which case one of them will be picked, though there is
      * no guarantee as to which one will be picked.
+     *
+     * @param options Option used to determine alphabet.
+     * @return The alphabet pos to byte value array.
      */
     protected static byte[] getAlphabet(int options) {
         if ((options & URL_SAFE) == URL_SAFE) {
@@ -219,6 +222,9 @@ public class Base64 {
      * It's possible, though silly, to specify ORDERED and URL_SAFE
      * in which case one of them will be picked, though there is
      * no guarantee as to which one will be picked.
+     *
+     * @param options Option used to determine decodabet.
+     * @return The decodabet pos to byte value array.
      */
     protected static byte[] getDecodabet(int options) {
         if ((options & URL_SAFE) == URL_SAFE) {
@@ -254,6 +260,8 @@ public class Base64 {
      * @param numSigBytes the number of significant bytes in your array
      * @param destination the array to hold the conversion
      * @param destOffset the index where output will be put
+     * @param noPadding True if no padding should be added.
+     * @param alphabet The alphabet to use.
      * @return the <var>destination</var> array
      * @since 1.3
      */
@@ -461,7 +469,6 @@ public class Base64 {
      * @param options Specified options
      * @return The Base64-encoded data as a String
      * @see Base64#NO_WRAP
-     * @throws IOException if there is an error
      * @throws NullPointerException if source array is null
      * @throws IllegalArgumentException if source array, offset, or length are invalid
      * @since 2.3.1
@@ -491,6 +498,7 @@ public class Base64 {
      *
      * @param src the array to convert
      * @param srcOffset the index where conversion begins
+     * @param srcLen The number of bytes to read within src.
      * @param dest the array to hold the conversion
      * @param destOffset the index where output will be put
      * @param decodabet alphabet type is pulled from this (standard, url-safe, ordered)
@@ -563,6 +571,13 @@ public class Base64 {
         }
     }
 
+    /**
+     * Validate char byte and revalculate to data byte value or throw IllegalArgumentException.
+     * @param decodabet The decodabet to use.
+     * @param from The char byte to check.
+     * @return The value byte.
+     * @throws IllegalArgumentException If the char is not valid for the alphabet.
+     */
     private static int validate(byte[] decodabet, byte from) {
         byte b = decodabet[from & 0x7F];
         if (b < 0) {
@@ -586,7 +601,7 @@ public class Base64 {
      *                DEFAULT to decode standard Base64.
      * @return decoded data
      */
-    public static byte[] decode(byte[] source, int options) throws IOException {
+    public static byte[] decode(byte[] source, int options) {
         return decode(source, 0, source.length, options);
     }
 

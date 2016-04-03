@@ -121,6 +121,7 @@ public class Strings {
     /**
      * Join collection with delimiter.
      *
+     * @param <T> Collection item type.
      * @param delimiter The delimiter.
      * @param strings   The string collection to join.
      * @return The joined string.
@@ -155,6 +156,7 @@ public class Strings {
      *
      * @param is The input stream to read.
      * @return The resulting string.
+     * @throws IOException when unable to read from stream.
      */
     public static String readString(InputStream is) throws IOException {
         return readString(new Utf8StreamReader(is), '\0');
@@ -166,6 +168,7 @@ public class Strings {
      * @param is   The input stream to read.
      * @param term Terminator character.
      * @return The string up until, but not including the terminator.
+     * @throws IOException when unable to read from stream.
      */
     public static String readString(InputStream is, String term) throws IOException {
         return readString(new Utf8StreamReader(is), term);
@@ -177,6 +180,7 @@ public class Strings {
      *
      * @param is The input stream to read.
      * @return The string up until, but not including the terminator.
+     * @throws IOException when unable to read from stream.
      */
     public static String readString(Reader is) throws IOException {
         return readString(is, '\0');
@@ -188,6 +192,7 @@ public class Strings {
      * @param is   The reader to read characters from.
      * @param term Terminator character.
      * @return The string up until, but not including the terminator.
+     * @throws IOException when unable to read from stream.
      */
     public static String readString(Reader is, char term) throws IOException {
         CharArrayWriter baos = new CharArrayWriter();
@@ -210,6 +215,7 @@ public class Strings {
      * @param is   The reader to read characters from.
      * @param term Terminator character.
      * @return The string up until, but not including the terminator.
+     * @throws IOException when unable to read from stream.
      */
     public static String readString(Reader is, String term) throws IOException {
         CharArrayWriter baos = new CharArrayWriter();
@@ -308,9 +314,9 @@ public class Strings {
      * Format a prefixed name as c_case. The prefix is kept verbatim, while the
      * name has a '_' character inserted before each upper-case letter, not
      * including the first character. Then the whole thing is lower-cased.
-     * <p/>
+     * <p>
      * Note that this will mangle upper-case abbreviations.
-     *
+     * </p>
      * @param prefix The prefix.
      * @param name   The name to c-case.
      * @return the_c_cased_name

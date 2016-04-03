@@ -69,8 +69,8 @@ public class Unicode implements Char {
 
     /**
      * Gets the unicode char representing a circled number.
-     * @param num
-     * @return
+     * @param num Number to get unicode char for.
+     * @return The unicode char representation.
      */
     public static Unicode numeric(int num) {
         if (num > 0) {

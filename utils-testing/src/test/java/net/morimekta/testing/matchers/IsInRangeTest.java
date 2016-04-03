@@ -34,7 +34,7 @@ public class IsInRangeTest {
             fail(String.format("Expected exception on new IsInRange(%s, %s)",
                                Objects.toString(lower),
                                Objects.toString(upper)));
-        } catch (AssertionFailedError e) {
+        } catch (AssertionError e) {
             assertEquals(message, e.getMessage());
         }
     }

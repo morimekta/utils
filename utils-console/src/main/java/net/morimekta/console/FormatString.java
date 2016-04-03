@@ -38,7 +38,7 @@ public class FormatString implements Localizable {
      * Create a format-string with the given format.
      * @param format The string format.
      *
-     * @see String::format for formatting reference.
+     * @see String#format(String, Object...) for formatting reference.
      */
     public FormatString(String format) {
         this(format, Locale.getDefault());
@@ -55,12 +55,6 @@ public class FormatString implements Localizable {
         this.locale = locale;
     }
 
-    /**
-     * Formats with specified locale.
-     * @param locale The locale to format the string with.
-     * @param args
-     * @return
-     */
     @Override
     public String formatWithLocale(Locale locale, Object... args) {
         return String.format(locale, format, args);

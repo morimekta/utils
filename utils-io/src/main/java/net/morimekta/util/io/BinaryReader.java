@@ -39,6 +39,7 @@ public class BinaryReader extends InputStream {
      * Read a single byte.
      *
      * @return the byte value, or -1 if end of stream.
+     * @throws IOException if unable to read from stream.
      */
     @Override
     public int read() throws IOException {
@@ -49,7 +50,7 @@ public class BinaryReader extends InputStream {
      * Read binary data from stream.
      *
      * @param out The output buffer to read into.
-     * @throws IOException If unable to fill the entire byte array.
+     * @throws IOException if unable to read from stream.
      */
     @Override
     public int read(byte[] out) throws IOException {
@@ -66,7 +67,7 @@ public class BinaryReader extends InputStream {
      * @param out The output buffer to read into.
      * @param off Offset in out array to writeBinary to.
      * @param len Number of bytes to read.
-     * @throws IOException If unable to fill the requested part of the byte array.
+     * @throws IOException if unable to read from stream.
      */
     @Override
     public int read(byte[] out, final int off, final int len) throws IOException {
@@ -89,7 +90,7 @@ public class BinaryReader extends InputStream {
      * Read binary data from stream.
      *
      * @param out The output buffer to read into.
-     * @throws IOException If unable to fill the entire byte array.
+     * @throws IOException if unable to read from stream.
      */
     public void expect(byte[] out) throws IOException {
         int i, off = 0;
@@ -108,7 +109,6 @@ public class BinaryReader extends InputStream {
      * Read a byte from the input stream.
      *
      * @return The number read.
-     *
      * @throws IOException If no byte to read.
      */
     public byte expectByte() throws IOException {
@@ -123,8 +123,7 @@ public class BinaryReader extends InputStream {
      * Read a short from the input stream.
      *
      * @return The number read.
-     *
-     * @throws IOException If no number to read.
+     * @throws IOException if unable to read from stream.
      */
     public short expectShort() throws IOException {
         int b1 = in.read();
@@ -142,8 +141,7 @@ public class BinaryReader extends InputStream {
      * Read an int from the input stream.
      *
      * @return The number read.
-     *
-     * @throws IOException If no number to read.
+     * @throws IOException if unable to read from stream.
      */
     public int expectInt() throws IOException {
         int b1 = in.read();
@@ -169,8 +167,7 @@ public class BinaryReader extends InputStream {
      * Read a long int from the input stream.
      *
      * @return The number read.
-     *
-     * @throws IOException If no number to read.
+     * @throws IOException if unable to read from stream.
      */
     public long expectLong() throws IOException {
         int b1 = in.read();
@@ -213,8 +210,7 @@ public class BinaryReader extends InputStream {
      * Read a double from the input stream.
      *
      * @return The number read.
-     *
-     * @throws IOException If no number to read.
+     * @throws IOException if unable to read from stream.
      */
     public double expectDouble() throws IOException {
         return Double.longBitsToDouble(expectLong());
@@ -225,6 +221,7 @@ public class BinaryReader extends InputStream {
      *
      * @param bytes Number of bytes to read.
      * @return The binary wrapper.
+     * @throws IOException if unable to read from stream.
      */
     public Binary expectBinary(int bytes) throws IOException {
         return Binary.wrap(expectBytes(bytes));
@@ -235,6 +232,7 @@ public class BinaryReader extends InputStream {
      *
      * @param bytes Number of bytes to read.
      * @return The binary wrapper.
+     * @throws IOException if unable to read from stream.
      */
     public byte[] expectBytes(final int bytes) throws IOException {
         byte[] out = new byte[bytes];
@@ -246,7 +244,6 @@ public class BinaryReader extends InputStream {
      * Read an unsigned byte from the input stream.
      *
      * @return Unsigned byte.
-     *
      * @throws IOException If no number to read.
      */
     public int expectUInt8() throws IOException {
@@ -261,7 +258,6 @@ public class BinaryReader extends InputStream {
      * Read an unsigned short from the input stream.
      *
      * @return The number read.
-     *
      * @throws IOException If no number to read.
      */
     public int expectUInt16() throws IOException {
@@ -280,7 +276,6 @@ public class BinaryReader extends InputStream {
      * Read an unsigned short from the input stream.
      *
      * @return The number read.
-     *
      * @throws IOException If no number to read.
      */
     public int readUInt16() throws IOException {
@@ -299,7 +294,6 @@ public class BinaryReader extends InputStream {
      * Read an unsigned short from the input stream.
      *
      * @return The number read.
-     *
      * @throws IOException If no number to read.
      */
     public int expectUInt24() throws IOException {
@@ -322,7 +316,6 @@ public class BinaryReader extends InputStream {
      * Read an unsigned int from the input stream.
      *
      * @return The number read.
-     *
      * @throws IOException If no number to read.
      */
     public int expectUInt32() throws IOException {
@@ -334,6 +327,7 @@ public class BinaryReader extends InputStream {
      *
      * @param bytes Number of bytes to read.
      * @return The number read.
+     * @throws IOException if unable to read from stream.
      */
     public int expectUnsigned(int bytes) throws IOException {
         switch (bytes) {
@@ -354,6 +348,7 @@ public class BinaryReader extends InputStream {
      *
      * @param bytes Number of bytes to read.
      * @return The number read.
+     * @throws IOException if unable to read from stream.
      */
     public long expectSigned(int bytes) throws IOException {
         switch (bytes) {
@@ -376,6 +371,7 @@ public class BinaryReader extends InputStream {
      * negative.
      *
      * @return The zigzag decoded value.
+     * @throws IOException if unable to read from stream.
      */
     public int readIntZigzag() throws IOException {
         int value = readIntVarint();
@@ -389,6 +385,7 @@ public class BinaryReader extends InputStream {
      * negative.
      *
      * @return The zigzag decoded value.
+     * @throws IOException if unable to read from stream.
      */
     public long readLongZigzag() throws IOException {
         long value = readLongVarint();
@@ -398,10 +395,11 @@ public class BinaryReader extends InputStream {
     /**
      * Write a signed number as varint (integer with variable number of bytes,
      * determined as part of the bytes themselves.
-     * <p/>
+     *
      * NOTE: Reading varint accepts end of stream as '0'.
      *
      * @return The varint read from stream.
+     * @throws IOException if unable to read from stream.
      */
     public int readIntVarint() throws IOException {
         int i = in.read();
@@ -425,10 +423,11 @@ public class BinaryReader extends InputStream {
     /**
      * Write a signed number as varint (integer with variable number of bytes,
      * determined as part of the bytes themselves.
-     * <p/>
+     *
      * NOTE: Reading varint accepts end of stream as '0'.
      *
      * @return The varint read from stream.
+     * @throws IOException if unable to read from stream.
      */
     public long readLongVarint() throws IOException {
         int i = in.read();

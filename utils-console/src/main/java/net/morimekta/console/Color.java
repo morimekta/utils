@@ -95,7 +95,7 @@ public class Color extends Control {
      * have been recognized as a color control sequence, but the validity
      * (and usability) of the sequence is not controlled.
      *
-     * @param ctrl
+     * @param ctrl Control sequence to make a color instance from.
      */
     protected Color(CharSequence ctrl) {
         this(parseModSet(ctrl));

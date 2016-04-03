@@ -35,7 +35,7 @@ public class IOUtils {
      * @param in Input stream to read from.
      * @param separator Separator bytes to skip until.
      * @return True iff the separator was encountered.
-     * @throws IOException
+     * @throws IOException if unable to read from stream.
      */
     public static boolean skipUntil(InputStream in, byte[] separator) throws IOException {
         if (separator == null) {
@@ -74,7 +74,7 @@ public class IOUtils {
      * @param in Input stream to read from.
      * @param separator Byte to skip until.
      * @return True iff the separator was encountered.
-     * @throws IOException
+     * @throws IOException if unable to read from stream.
      */
     public static boolean skipUntil(InputStream in, byte separator) throws IOException {
         int r;
@@ -84,6 +84,13 @@ public class IOUtils {
         return false;
     }
 
+    /**
+     * Copy all available data from one stream to another.
+     *
+     * @param in The stream to read fromn.
+     * @param out The stream to write to.
+     * @throws IOException If unable to read from or write to streams.
+     */
     public static void copy(InputStream in, OutputStream out) throws IOException {
         byte[] buffer = new byte[BUF_SIZE];
         int r;

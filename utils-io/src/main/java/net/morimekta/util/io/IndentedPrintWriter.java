@@ -35,7 +35,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * appended. This is a break with the standard convention, but then the calls
  * to println, appendln etc will always be consistent with the next
  * line-length.
- * <p/>
+ *
  * Example usage:
  * <pre>
  *     IndentedPrintWriter pw = new IndentedPrintWriter(out);

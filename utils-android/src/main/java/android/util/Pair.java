@@ -34,6 +34,9 @@ public final class Pair<F, S> {
 
     /**
      * Constructor for a Pair.
+     *
+     * @param first First part of pair.
+     * @param second Second part of pair.
      */
     public Pair(F first, S second) {
         this.first = first;
@@ -42,6 +45,12 @@ public final class Pair<F, S> {
 
     /**
      * Convenience method for creating an appropriately typed pair.
+     *
+     * @param <A> First type.
+     * @param <B> Second type.
+     * @param a First part.
+     * @param b Second part.
+     * @return The resulting pair.
      */
     public static <A, B> Pair<A, B> create(A a, B b) {
         return new Pair<>(a, b);
