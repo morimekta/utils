@@ -6,4 +6,3 @@ mainly at utilities used in the linux terminals.
 
 # Noteworthy Classes
 
-* [Color]()

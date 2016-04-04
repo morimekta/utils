@@ -35,14 +35,14 @@ project, then this project does **not** claim copyright over that file.
 From [iharder/base64](http://iharder.sourceforge.net/current/java/base64/)
 library (public domain, unlicensed):
 
-* [android.util.Base64](utils-android/java/android/util/Base64.java)
-* [android.util.Base64OutputStream](utils-android/java/android/util/Base64OutputStream.java) 
-* [android.util.Base64InputStream](utils-android/java/android/util/Base64InputStream.java) 
-* [net.morimekta.util.Base64](utils-io/java/net/morimekta/util/Base64.java) 
+* [android.util.Base64](utils-android/src/main/java/android/util/Base64.java)
+* [android.util.Base64OutputStream](utils-android/src/main/java/android/util/Base64OutputStream.java) 
+* [android.util.Base64InputStream](utils-android/src/main/java/android/util/Base64InputStream.java) 
+* [net.morimekta.util.Base64](utils-io/src/main/java/net/morimekta/util/Base64.java) 
 
 From Android OSS project (Apache 2.0 licensed):
 
-* [android.util.Base64Test](utils-android/javatests/android/util/Base64Test.java)
+* [android.util.Base64Test](utils-android/src/test/java/android/util/Base64Test.java)
 
 ## Release Process
 

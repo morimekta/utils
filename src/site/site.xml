@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<project xmlns="http://maven.apache.org/DECORATION/1.4.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/DECORATION/1.4.0
+                             http://maven.apache.org/xsd/decoration-1.4.0.xsd"
+         name="Morimekta Utilities">
+    <body>
+        <menu name="Docs" inherit="top">
+            <item href="index.html" name="Introduction" />
+        </menu>
+
+        <menu name="Modules" inherit="top">
+
+            <item href="utils-android.html" name="Android Utilities" />
+            <item href="utils-config.html" name="Config Utilities" />
+            <item href="utils-console.html" name="Console Utilities" />
+            <item href="utils-io.html" name="IO Utilities" />
+            <item href="utils-testing.html" name="Testing Utilities" />
+
+        </menu>
+
+        <menu ref="reports"/>
+    </body>
+    <custom>
+        <fluidoSkin>
+            <gitHub>
+                <projectId>morimekta/utils</projectId>
+                <ribbonOrientation>right</ribbonOrientation>
+                <ribbonColor>black</ribbonColor>
+            </gitHub>
+        </fluidoSkin>
+    </custom>
+    <skin>
+        <groupId>org.apache.maven.skins</groupId>
+        <artifactId>maven-fluido-skin</artifactId>
+        <version>1.5</version>
+    </skin>
+</project>
