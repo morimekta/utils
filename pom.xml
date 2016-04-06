@@ -8,7 +8,7 @@
     <description>
         Various utilities maintained and primarily developed by @morimekta.
     </description>
-    <url>http://www.github.com/morimekta/utils</url>
+    <url>http://www.morimekta.net/utils</url>
 
     <licenses>
         <license>
@@ -27,6 +27,11 @@
             <id>sonatype</id>
             <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
         </repository>
+        <site>
+            <id>morimekta</id>
+            <name>morimekta.net</name>
+            <url>http://www.morimekta.net/utils</url>
+        </site>
     </distributionManagement>
 
     <developers>
@@ -74,11 +79,11 @@
     </properties>
 
     <modules>
-        <module>utils-android</module>
-        <module>utils-config</module>
-        <module>utils-console</module>
-        <module>utils-io</module>
-        <module>utils-testing</module>
+        <module>android-util</module>
+        <module>config-util</module>
+        <module>console-util</module>
+        <module>io-util</module>
+        <module>testing-util</module>
     </modules>
 
     <build>
@@ -95,19 +100,6 @@
                 </configuration>
             </plugin>
             <plugin>
-                <artifactId>maven-resources-plugin</artifactId>
-                <configuration>
-                    <encoding>UTF-8</encoding>
-                </configuration>
-            </plugin>
-            <plugin>
-                <artifactId>maven-site-plugin</artifactId>
-                <configuration>
-                    <inputEncoding>UTF-8</inputEncoding>
-                    <outputEncoding>UTF-8</outputEncoding>
-                </configuration>
-            </plugin>
-            <plugin>
                 <artifactId>maven-source-plugin</artifactId>
                 <executions>
                     <execution>
@@ -119,13 +111,6 @@
                 </executions>
             </plugin>
             <plugin>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <encoding>UTF-8</encoding>
-                    <showDeprecation>true</showDeprecation>
-                </configuration>
-            </plugin>
-            <plugin>
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <executions>
                     <execution>
@@ -135,7 +120,6 @@
                         </goals>
                         <configuration>
                             <additionalparam>-Xdoclint:all</additionalparam>
-                            <encoding>UTF-8</encoding>
                         </configuration>
                     </execution>
                 </executions>
@@ -158,6 +142,34 @@
                         <version>1.9.1</version>
                     </dependency>
                 </dependencies>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-site-plugin</artifactId>
+                <configuration>
+                    <stagingDirectory>${project.basedir}/target/site</stagingDirectory>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.7.6.201602180812</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
         <pluginManagement>
@@ -214,45 +226,25 @@
                     <artifactId>maven-project-info-reports-plugin</artifactId>
                     <version>2.9</version>
                 </plugin>
+                <plugin>
+                    <artifactId>maven-surefire-report-plugin</artifactId>
+                    <version>2.19.1</version>
+                </plugin>
             </plugins>
         </pluginManagement>
     </build>
 
     <reporting>
-        <excludeDefaults>true</excludeDefaults>
         <outputDirectory>${project.build.directory}/site</outputDirectory>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-project-info-reports-plugin</artifactId>
-                <configuration>
-                    <dependencyDetailsEnabled>false</dependencyDetailsEnabled>
-                    <dependencyLocationsEnabled>false</dependencyLocationsEnabled>
-                </configuration>
                 <reportSets>
                     <reportSet>
                         <reports>
                             <report>license</report>
-                            <report>dependencies</report>
                             <report>project-team</report>
-                        </reports>
-                    </reportSet>
-                </reportSets>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <reportSets>
-                    <reportSet>
-                        <reports>
-                            <report>javadoc</report>
-                        </reports>
-                    </reportSet>
-                    <reportSet>
-                        <id>aggregate-javadoc</id>
-                        <inherited>false</inherited>
-                        <reports>
-                            <report>aggregate</report>
                         </reports>
                     </reportSet>
                 </reportSets>
