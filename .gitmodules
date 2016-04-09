@@ -1,0 +1,3 @@
+[submodule "morimekta.github.io"]
+	path = morimekta.github.io
+	url = git@github.com:morimekta/morimekta.github.io

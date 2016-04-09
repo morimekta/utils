@@ -148,7 +148,7 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-site-plugin</artifactId>
                 <configuration>
-                    <stagingDirectory>${project.basedir}/target/site</stagingDirectory>
+                    <stagingDirectory>${project.basedir}/morimekta.github.io/utils</stagingDirectory>
                 </configuration>
             </plugin>
 
