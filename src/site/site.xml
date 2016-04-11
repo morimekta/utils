@@ -9,6 +9,9 @@
 
         <menu name="Docs" inherit="top">
             <item href="index.html" name="Overview" />
+            <item href="release.html" name="Release Process" />
+            <item href="license-exceptions.html" name="License Exceptions" />
+            <item href="coverage-report/jacoco-multi/" name="Code Coverage" />
         </menu>
 
         <menu name="Modules" inherit="top">

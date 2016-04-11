@@ -71,6 +71,7 @@
         <maven.resources.encoding>UTF-8</maven.resources.encoding>
         <maven.site.encoding>UTF-8</maven.site.encoding>
 
+        <jacoco.version>0.7.6.201602180812</jacoco.version>
         <!-- library versions -->
         <arg4j.version>2.33</arg4j.version>
         <junit.version>4.12</junit.version>
@@ -84,6 +85,8 @@
         <module>console-util</module>
         <module>io-util</module>
         <module>testing-util</module>
+
+        <module>testing</module>
     </modules>
 
     <build>
