@@ -204,7 +204,7 @@ public class JsonConfigFormat implements ConfigFormat {
     protected void formatTo(JsonWriter writer, Sequence sequence)
             throws JsonException, ConfigException {
         writer.array();
-        for (Value item : sequence.values()) {
+        for (Value item : sequence.asValueArray()) {
             switch (item.type) {
                 case STRING:
                     writer.value((String) item.value);

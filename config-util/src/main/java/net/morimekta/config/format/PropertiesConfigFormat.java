@@ -56,7 +56,7 @@ public class PropertiesConfigFormat implements ConfigFormat {
 
     private void formatTo(String prefix, Sequence sequence, Properties properties) {
         int i = 0;
-        for (Value value : sequence.values()) {
+        for (Value value : sequence.asValueArray()) {
             String key = makeKey(prefix, Integer.toString(i));
             switch (value.type) {
                 case BOOLEAN:

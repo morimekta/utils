@@ -96,8 +96,9 @@ public class Config {
     }
 
     public boolean containsPrefix(String prefix) throws ConfigException {
+        String prefixed = prefix + '.';
         for (String key : keySet()) {
-            if (key.startsWith(prefix)) {
+            if (key.equals(prefix) || key.startsWith(prefixed)) {
                 return true;
             }
         }
@@ -122,20 +123,55 @@ public class Config {
         return getValue(key).asString();
     }
 
+    public String getString(String key, String def) throws ConfigException {
+        if (containsKey(key)) {
+            return getValue(key).asString();
+        }
+        return def;
+    }
+
     public boolean getBoolean(String key) throws ConfigException {
         return getValue(key).asBoolean();
+    }
+
+    public boolean getBoolean(String key, boolean def) throws ConfigException {
+        if (containsKey(key)) {
+            return getValue(key).asBoolean();
+        }
+        return def;
     }
 
     public int getInteger(String key) throws ConfigException {
         return getValue(key).asInteger();
     }
 
+    public int getInteger(String key, int def) throws ConfigException {
+        if (containsKey(key)) {
+            return getValue(key).asInteger();
+        }
+        return def;
+    }
+
     public long getLong(String key) throws ConfigException {
         return getValue(key).asLong();
     }
 
+    public long getLong(String key, long def) throws ConfigException {
+        if (containsKey(key)) {
+            return getValue(key).asLong();
+        }
+        return def;
+    }
+
     public double getDouble(String key) throws ConfigException {
         return getValue(key).asDouble();
+    }
+
+    public double getDouble(String key, double def) throws ConfigException {
+        if (containsKey(key)) {
+            return getValue(key).asDouble();
+        }
+        return def;
     }
 
     public Sequence getSequence(String key) throws ConfigException {
