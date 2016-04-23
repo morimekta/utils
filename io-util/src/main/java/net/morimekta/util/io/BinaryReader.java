@@ -134,7 +134,7 @@ public class BinaryReader extends InputStream {
         if (b2 < 0) {
             throw new IOException("Missing byte 2 to expected short");
         }
-        return (short) (b1 | b2 << 8);
+        return (short) unshift2bytes(b1, b2);
     }
 
     /**
@@ -160,7 +160,7 @@ public class BinaryReader extends InputStream {
         if (b4 < 0) {
             throw new IOException("Missing byte 4 to expected int");
         }
-        return (b1 | b2 << 8 | b3 << 16 | b4 << 24);
+        return unshift4bytes(b1, b2, b3, b4);
     }
 
     /**
@@ -203,7 +203,7 @@ public class BinaryReader extends InputStream {
             throw new IOException("Missing byte 8 to expected long");
         }
 
-        return (b1 | b2 << 8 | b3 << 16 | b4 << 24 | b5 << 32 | b6 << 40 | b7 << 48 | b8 << 56);
+        return unshift8bytes(b1, b2, b3, b4, b5, b6, b7, b8);
     }
 
     /**
@@ -269,7 +269,7 @@ public class BinaryReader extends InputStream {
         if (b2 < 0) {
             throw new IOException("Missing byte 2 to expected uint16");
         }
-        return (b1 | b2 << 8);
+        return unshift2bytes(b1, b2);
     }
 
     /**
@@ -287,7 +287,7 @@ public class BinaryReader extends InputStream {
         if (b2 < 0) {
             throw new IOException("Missing byte 2 to read uint16");
         }
-        return (b1 | b2 << 8);
+        return unshift2bytes(b1, b2);
     }
 
     /**
@@ -309,7 +309,7 @@ public class BinaryReader extends InputStream {
         if (b3 < 0) {
             throw new IOException("Missing byte 3 to expected uint24");
         }
-        return (b1 | b2 << 8 | b3 << 16);
+        return unshift3bytes(b1, b2, b3);
     }
 
     /**
@@ -446,5 +446,21 @@ public class BinaryReader extends InputStream {
             out = out | ((long) i & 0x7f) << shift;
         }
         return out;
+    }
+
+    protected int unshift2bytes(int b1, int b2) {
+        return (b1 | b2 << 8);
+    }
+
+    protected int unshift3bytes(int b1, int b2, int b3) {
+        return (b1 | b2 << 8 | b3 << 16);
+    }
+
+    protected int unshift4bytes(int b1, int b2, int b3, int b4) {
+        return (b1 | b2 << 8 | b3 << 16 | b4 << 24);
+    }
+
+    protected long unshift8bytes(long b1, long b2, long b3, long b4, long b5, long b6, long b7, long b8) {
+        return (b1 | b2 << 8 | b3 << 16 | b4 << 24 | b5 << 32 | b6 << 40 | b7 << 48 | b8 << 56);
     }
 }

@@ -29,7 +29,7 @@ import java.io.OutputStream;
  * IO-Optimized binary writer.
  */
 public class BinaryWriter extends OutputStream {
-    private final OutputStream out;
+    protected final OutputStream out;
 
     public BinaryWriter(OutputStream out) {
         this.out = out;
