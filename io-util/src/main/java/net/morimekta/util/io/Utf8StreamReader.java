@@ -78,6 +78,12 @@ public class Utf8StreamReader extends Reader {
                 // 10xxxxxx: This byte pattern should not be here.
                 cbuf[off + i] = '?';
             } else {
+                // invalid utf-8 starting byte.
+                if ((r & 0xFE) == 0xFE) {
+                    cbuf[off + i] = '?';
+                    continue;
+                }
+
                 buffer[0] = r;
                 int c = 1;
 
@@ -86,25 +92,20 @@ public class Utf8StreamReader extends Reader {
                     buffer[c++] = in.read();
 
                     // 1110xxxx + 2 * 10xxxxxx  = 16 bit
-                    if ((buffer[0] & 0xE0) == 0xE0) {
+                    if ((r & 0xE0) == 0xE0) {
                         buffer[c++] = in.read();
 
                         // 11110xxx + 3 * 10xxxxxx  = 21 bit
-                        if ((buffer[0] & 0xF0) == 0xF0) {
+                        if ((r & 0xF0) == 0xF0) {
                             buffer[c++] = in.read();
 
                             // 111110xx + 4 * 10xxxxxx  = 26 bit
-                            if ((buffer[0] & 0xF8) == 0xF8) {
+                            if ((r & 0xF8) == 0xF8) {
                                 buffer[c++] = in.read();
 
                                 // 1111110x + 5 * 10xxxxxx  = 31 bit
-                                if ((buffer[0] & 0xFC) == 0xFC) {
+                                if ((r & 0xFC) == 0xFC) {
                                     buffer[c++] = in.read();
-
-                                    if ((buffer[0] & 0xFE) != 0xFC) {
-                                        cbuf[off + i] = '?';
-                                        continue;
-                                    }
                                 }
                             }
                         }
