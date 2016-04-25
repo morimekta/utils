@@ -1,5 +1,8 @@
 package net.morimekta.console;
 
+import net.morimekta.console.chr.Char;
+import net.morimekta.console.chr.CharStream;
+
 import org.junit.Test;
 
 import java.lang.reflect.Constructor;

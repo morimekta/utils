@@ -1,4 +1,9 @@
-package net.morimekta.console;
+package net.morimekta.console.chr;
+
+import net.morimekta.console.chr.Char;
+import net.morimekta.console.chr.Color;
+import net.morimekta.console.chr.Control;
+import net.morimekta.console.chr.Unicode;
 
 import java.util.Iterator;
 import java.util.Spliterator;
@@ -21,12 +26,12 @@ public class CharStream {
 
     private CharStream() {}
 
-    protected static class CharSpliterator implements Spliterator<Char> {
+    private static class CharSpliterator implements Spliterator<Char> {
         private final CharSequence cstr;
 
         private volatile int pos;
 
-        public CharSpliterator(CharSequence cstr) {
+        private CharSpliterator(CharSequence cstr) {
             this.cstr = cstr;
             this.pos = 0;
         }

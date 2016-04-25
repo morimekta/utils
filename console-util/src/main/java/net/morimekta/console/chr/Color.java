@@ -18,7 +18,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package net.morimekta.console;
+package net.morimekta.console.chr;
 
 import net.morimekta.util.Strings;
 
@@ -97,7 +97,7 @@ public class Color extends Control {
      *
      * @param ctrl Control sequence to make a color instance from.
      */
-    protected Color(CharSequence ctrl) {
+    public Color(CharSequence ctrl) {
         this(parseModSet(ctrl));
     }
 

@@ -1,4 +1,6 @@
-package net.morimekta.console;
+package net.morimekta.console.util;
+
+import net.morimekta.console.util.ConsoleUtil;
 
 import org.junit.Test;
 

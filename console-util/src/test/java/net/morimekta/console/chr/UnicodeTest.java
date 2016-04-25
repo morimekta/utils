@@ -1,4 +1,6 @@
-package net.morimekta.console;
+package net.morimekta.console.chr;
+
+import net.morimekta.console.chr.Unicode;
 
 import org.junit.Test;
 

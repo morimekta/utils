@@ -1,4 +1,4 @@
-package net.morimekta.console;
+package net.morimekta.console.chr;
 
 /**
  * Unicode character representation. It represent the full 31-but unicode code

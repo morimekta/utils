@@ -1,4 +1,6 @@
-package net.morimekta.console;
+package net.morimekta.console.util;
+
+import net.morimekta.console.chr.CharStream;
 
 import java.util.concurrent.atomic.AtomicInteger;
 

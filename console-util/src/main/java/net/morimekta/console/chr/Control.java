@@ -1,4 +1,4 @@
-package net.morimekta.console;
+package net.morimekta.console.chr;
 
 import net.morimekta.util.Strings;
 

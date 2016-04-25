@@ -123,6 +123,11 @@ public class Utf8StreamReader extends Reader {
         in.close();
     }
 
+    @Override
+    public boolean ready() throws IOException {
+        return in != null && in.available() > 0;
+    }
+
     private char convert(final int[] arr, final int num) throws IOException {
         int cp = 0;
         switch (num) {
