@@ -30,3 +30,6 @@ out
 pom.xml.versionsBackup
 pom.xml.releaseBackup
 release.properties
+
+_site/
+_site
