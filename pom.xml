@@ -150,6 +150,7 @@
                 <artifactId>maven-site-plugin</artifactId>
                 <configuration>
                     <stagingDirectory>${project.basedir}/morimekta.github.io/utils</stagingDirectory>
+                    <skipDeploy>true</skipDeploy>
                 </configuration>
             </plugin>
 
