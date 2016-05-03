@@ -20,9 +20,11 @@
  */
 package net.morimekta.util.io;
 
+import java.io.CharArrayWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.Reader;
 import java.util.Arrays;
 
 /**
@@ -97,6 +99,92 @@ public class IOUtils {
         while((r = in.read(buffer)) >= 0) {
             out.write(buffer, 0, r);
         }
+    }
+
+    /**
+     * Read next string from input stream.
+     *
+     * @param is The input stream to read.
+     * @return The resulting string.
+     * @throws IOException when unable to read from stream.
+     */
+    public static String readString(InputStream is) throws IOException {
+        return readString(new Utf8StreamReader(is), '\0');
+    }
+
+    /**
+     * Read next string from input stream.
+     *
+     * @param is   The input stream to read.
+     * @param term Terminator character.
+     * @return The string up until, but not including the terminator.
+     * @throws IOException when unable to read from stream.
+     */
+    public static String readString(InputStream is, String term) throws IOException {
+        return readString(new Utf8StreamReader(is), term);
+    }
+
+    /**
+     * Read next string from input stream. The terminator is read but not
+     * included in the resulting string.
+     *
+     * @param is The input stream to read.
+     * @return The string up until, but not including the terminator.
+     * @throws IOException when unable to read from stream.
+     */
+    public static String readString(Reader is) throws IOException {
+        return readString(is, '\0');
+    }
+
+    /**
+     * Read next string from input stream.
+     *
+     * @param is   The reader to read characters from.
+     * @param term Terminator character.
+     * @return The string up until, but not including the terminator.
+     * @throws IOException when unable to read from stream.
+     */
+    public static String readString(Reader is, char term) throws IOException {
+        CharArrayWriter baos = new CharArrayWriter();
+
+        int ch_int;
+        while ((ch_int = is.read()) >= 0) {
+            final char ch = (char) ch_int;
+            if (ch == term) {
+                break;
+            }
+            baos.write(ch);
+        }
+
+        return baos.toString();
+    }
+
+    /**
+     * Read next string from input stream.
+     *
+     * @param is   The reader to read characters from.
+     * @param term Terminator character.
+     * @return The string up until, but not including the terminator.
+     * @throws IOException when unable to read from stream.
+     */
+    public static String readString(Reader is, String term) throws IOException {
+        CharArrayWriter baos = new CharArrayWriter();
+
+        int ch_int;
+        char last = term.charAt(term.length() - 1);
+        while ((ch_int = is.read()) >= 0) {
+            final char ch = (char) ch_int;
+            baos.write(ch);
+            if (ch == last && baos.size() >= term.length()) {
+                String tmp = baos.toString();
+                if (tmp.substring(tmp.length() - term.length())
+                       .equals(term)) {
+                    return tmp.substring(0, tmp.length() - term.length());
+                }
+            }
+        }
+
+        return baos.toString();
     }
 
     /* -- PRIVATE METHODS -- */

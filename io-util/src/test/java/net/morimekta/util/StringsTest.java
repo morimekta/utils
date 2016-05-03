@@ -20,51 +20,27 @@
  */
 package net.morimekta.util;
 
-import net.morimekta.util.io.Utf8StreamReader;
-
-import org.junit.Before;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import org.junit.Test;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Reader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 /**
  * @author Stein Eldar Johnsen
  * @since 18.10.15
  */
 public class StringsTest {
-    byte[] mArray;
-    byte[] mArray_withEscaping;
-    byte[] mArray_withNullbyte;
-    byte[] mArray_withUtf8;
-    String mString;
-    String mString_withEscaping;
-    String mString_withUtf8;
-
-    @Before
-    public void setUp() {
-        mArray = new byte[]{'1', '2', '3'};
-        mArray_withNullbyte = new byte[]{'1', '2', '3', '\0'};
-        mArray_withEscaping = new byte[]{'1', '2', '3', '\t'};
-        mArray_withUtf8 = new byte[]{'1', '2', '3', (byte) 0xc3, (byte) 0xa1};
-
-        mString = "123";
-        mString_withEscaping = "123\t";
-        mString_withUtf8 = "123á";
-    }
-
     @Test
     public void testJavaEscape() {
         assertEquals("abcde", Strings.escape("abcde"));
@@ -98,66 +74,6 @@ public class StringsTest {
     }
 
     @Test
-    public void testReadString() throws IOException {
-        assertEquals(mString, TSU_readString(mArray));
-        assertEquals(mString, TSU_readString(mArray_withNullbyte));
-        assertEquals(mString_withEscaping, TSU_readString(mArray_withEscaping));
-        assertEquals(mString_withUtf8, TSU_readString(mArray_withUtf8));
-    }
-
-    @Test(expected = IOException.class)
-    public void testReadString_ioException() throws IOException {
-        InputStream is = new InputStream() {
-            @Override
-            public int read() throws IOException {
-                // TODO Auto-generated method stub
-                throw new IOException();
-            }
-        };
-        fail("unexpected output: " + Strings.readString(is));
-    }
-
-    @Test
-    public void testReadString_partialRead() throws IOException {
-        byte[] buffer = new byte[]{'a', 'b', 'c', '\0', 'x', 'y', 'z'};
-        // BufferedInputStream supports marks.
-        InputStream is = new ByteArrayInputStream(buffer);
-
-        assertEquals("abc", Strings.readString(is));
-        assertEquals("xyz", Strings.readString(is));
-    }
-
-    @Test
-    public void testReadString_partialReadWithTerminator() throws IOException {
-        byte[] buffer = new byte[]{'a', 'b', 'c', '\r', '\n', 'x', 'y', 'z'};
-        // BufferedInputStream supports marks.
-        InputStream is = new ByteArrayInputStream(buffer);
-
-        assertEquals("abc", Strings.readString(is, "\r\n"));
-        assertEquals("xyz", Strings.readString(is, "\r\n"));
-    }
-
-    @Test
-    public void testReadString_partialReader() throws IOException {
-        byte[] buffer = new byte[]{'a', 'b', 'c', '\0', 'x', 'y', 'z'};
-        // BufferedInputStream supports marks.
-        Reader is = new Utf8StreamReader(new ByteArrayInputStream(buffer));
-
-        assertEquals("abc", Strings.readString(is));
-        assertEquals("xyz", Strings.readString(is));
-    }
-
-    @Test
-    public void testReadString_partialReaderWithTerminator() throws IOException {
-        byte[] buffer = new byte[]{'a', 'b', 'c', '\r', '\n', 'x', 'y', 'z'};
-        // BufferedInputStream supports marks.
-        Reader is = new Utf8StreamReader(new ByteArrayInputStream(buffer));
-
-        assertEquals("abc", Strings.readString(is, "\r\n"));
-        assertEquals("xyz", Strings.readString(is, "\r\n"));
-    }
-
-    @Test
     public void testTimes() {
         assertEquals("bbbbb", Strings.times("b", 5));
     }
@@ -186,6 +102,52 @@ public class StringsTest {
     }
 
     @Test
+    public void testAsString_double() {
+        assertEquals("1234.5678", Strings.asString(1234.5678d));
+        assertEquals("1234", Strings.asString(1234.0d));
+        assertEquals("1.23456789E14", Strings.asString(123456789000000.0d));
+    }
+
+    @Test
+    public void testAsString_binary() {
+        assertEquals("null", Strings.asString((Binary) null));
+        assertEquals("b64(AAECAwQ)", Strings.asString(Binary.wrap(new byte[]{0, 1, 2, 3, 4})));
+    }
+
+    @Test
+    public void testAsString_collection() {
+        assertEquals("null", Strings.asString((Collection) null));
+        assertEquals("[]", Strings.asString(Collections.EMPTY_LIST));
+        assertEquals("[]", Strings.asString(Collections.EMPTY_SET));
+        assertEquals("[12.4,22,1.23456789E16]",
+                     Strings.asString(ImmutableSet.of(12.4, 22, 12345678900000000d)));
+    }
+
+    @Test
+    public void testAsString_map() {
+        assertEquals("null", Strings.asString((Map<?, ?>) null));
+        assertEquals("{}", Strings.asString(Collections.EMPTY_MAP));
+        assertEquals("{12.4:\"a\",22:\"b a b\",1.23456789E16:\"c\"}",
+                     Strings.asString(ImmutableMap.of(12.4, "a",
+                                                      22, "b a b",
+                                                      12345678900000000d, "c")));
+    }
+
+    @Test
+    public void testAsString_object() {
+        assertAsString("null", null);
+        assertAsString("[]", Collections.EMPTY_LIST);
+        assertAsString("[]", Collections.EMPTY_SET);
+        assertAsString("{}", Collections.EMPTY_MAP);
+        assertAsString("b64(Bw)", Binary.wrap(new byte[]{7}));
+        assertAsString("b64(Bw)", Binary.wrap(new byte[]{7}));
+    }
+
+    private void assertAsString(String expected, Object value) {
+        assertEquals(expected, Strings.asString(value));
+    }
+
+    @Test
     public void testConstructor() throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
         Constructor<Strings> c = Strings.class.getDeclaredConstructor();
         assertFalse(c.isAccessible());
@@ -193,10 +155,5 @@ public class StringsTest {
         c.setAccessible(true);
         c.newInstance();  // to make code coverage 100%.
         c.setAccessible(false);
-    }
-
-    private String TSU_readString(byte[] bytes) throws IOException {
-        ByteArrayInputStream is = new ByteArrayInputStream(bytes);
-        return Strings.readString(is);
     }
 }

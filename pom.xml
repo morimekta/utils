@@ -69,6 +69,8 @@
         <maven.resources.encoding>UTF-8</maven.resources.encoding>
         <maven.site.encoding>UTF-8</maven.site.encoding>
 
+        <guava.version>19.0</guava.version>
+
         <jacoco.version>0.7.6.201602180812</jacoco.version>
         <!-- library versions -->
         <arg4j.version>2.33</arg4j.version>

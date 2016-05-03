@@ -20,19 +20,17 @@
  */
 package net.morimekta.util;
 
-import net.morimekta.util.io.Utf8StreamReader;
-
-import java.io.CharArrayWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Reader;
+import java.text.DecimalFormat;
 import java.util.Collection;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
  * String utilities.
  */
 public class Strings {
+    private static final String NULL = "null";
+
     /**
      * Properly java-escape the string for printing to console.
      * @param string The string to escape.
@@ -152,92 +150,6 @@ public class Strings {
     }
 
     /**
-     * Read next string from input stream.
-     *
-     * @param is The input stream to read.
-     * @return The resulting string.
-     * @throws IOException when unable to read from stream.
-     */
-    public static String readString(InputStream is) throws IOException {
-        return readString(new Utf8StreamReader(is), '\0');
-    }
-
-    /**
-     * Read next string from input stream.
-     *
-     * @param is   The input stream to read.
-     * @param term Terminator character.
-     * @return The string up until, but not including the terminator.
-     * @throws IOException when unable to read from stream.
-     */
-    public static String readString(InputStream is, String term) throws IOException {
-        return readString(new Utf8StreamReader(is), term);
-    }
-
-    /**
-     * Read next string from input stream. The terminator is read but not
-     * included in the resulting string.
-     *
-     * @param is The input stream to read.
-     * @return The string up until, but not including the terminator.
-     * @throws IOException when unable to read from stream.
-     */
-    public static String readString(Reader is) throws IOException {
-        return readString(is, '\0');
-    }
-
-    /**
-     * Read next string from input stream.
-     *
-     * @param is   The reader to read characters from.
-     * @param term Terminator character.
-     * @return The string up until, but not including the terminator.
-     * @throws IOException when unable to read from stream.
-     */
-    public static String readString(Reader is, char term) throws IOException {
-        CharArrayWriter baos = new CharArrayWriter();
-
-        int ch_int;
-        while ((ch_int = is.read()) >= 0) {
-            final char ch = (char) ch_int;
-            if (ch == term) {
-                break;
-            }
-            baos.write(ch);
-        }
-
-        return baos.toString();
-    }
-
-    /**
-     * Read next string from input stream.
-     *
-     * @param is   The reader to read characters from.
-     * @param term Terminator character.
-     * @return The string up until, but not including the terminator.
-     * @throws IOException when unable to read from stream.
-     */
-    public static String readString(Reader is, String term) throws IOException {
-        CharArrayWriter baos = new CharArrayWriter();
-
-        int ch_int;
-        char last = term.charAt(term.length() - 1);
-        while ((ch_int = is.read()) >= 0) {
-            final char ch = (char) ch_int;
-            baos.write(ch);
-            if (ch == last && baos.size() >= term.length()) {
-                String tmp = baos.toString();
-                if (tmp.substring(tmp.length() - term.length())
-                       .equals(term)) {
-                    return tmp.substring(0, tmp.length() - term.length());
-                }
-            }
-        }
-
-        return baos.toString();
-    }
-
-    /**
      * Multiply a string N times.
      *
      * @param s   The string to multiply.
@@ -328,6 +240,114 @@ public class Strings {
     public static String capitalize(String string) {
         return string.substring(0, 1)
                      .toUpperCase() + string.substring(1);
+    }
+
+    /**
+     * Make a minimal printable string from a double value.
+     *
+     * @param d The double value.
+     * @return The string value.
+     */
+    public static String asString(double d) {
+        long l = (long) d;
+        if (d > ((10 << 9) - 1) || (1 / d) > (10 << 6)) {
+            // Scientific notation should be used.
+            return new DecimalFormat("0.#########E0").format(d);
+        } else if (d == (double) l) {
+            // actually an integer or long value.
+            return Long.toString(l);
+        } else {
+            return Double.toString(d);
+        }
+    }
+
+    /**
+     * Make a minimal printable string from a binary value.
+     *
+     * @param bytes The binary value.
+     * @return The string value.
+     */
+    public static String asString(Binary bytes) {
+        if (bytes == null) {
+            return NULL;
+        }
+        return String.format("b64(%s)", bytes.toBase64());
+    }
+
+    /**
+     * Make a printable string from a collection using the tools here.
+     *
+     * @param collection The collection to stringify.
+     * @return The collection string value.
+     */
+    public static String asString(Collection<?> collection) {
+        if (collection == null) {
+            return NULL;
+        }
+        StringBuilder builder = new StringBuilder();
+        builder.append('[');
+        boolean first = true;
+        for (Object item : collection) {
+            if (first) {
+                first = false;
+            } else {
+                builder.append(',');
+            }
+            builder.append(asString(item));
+        }
+        builder.append(']');
+        return builder.toString();
+    }
+
+    /**
+     * Make a minimal printable string value from a typed map.
+     *
+     * @param map The map to stringify.
+     * @return The resulting string.
+     */
+    public static String asString(Map<?, ?> map) {
+        if (map == null) {
+            return NULL;
+        }
+        StringBuilder builder = new StringBuilder();
+        builder.append('{');
+        boolean first = true;
+        for (Map.Entry<?, ?> entry : map.entrySet()) {
+            if (first) {
+                first = false;
+            } else {
+                builder.append(',');
+            }
+            builder.append(asString(entry.getKey()))
+                   .append(':')
+                   .append(asString(entry.getValue()));
+        }
+        builder.append('}');
+        return builder.toString();
+    }
+
+    /**
+     * Make an object into a string using the typed tools here.
+     *
+     * @param o The object to stringify.
+     * @return The resulting string.
+     */
+    public static String asString(Object o) {
+        if (o == null) {
+            return NULL;
+        } else if (o instanceof CharSequence) {
+            return String.format("\"%s\"", escape((CharSequence) o));
+        } else if (o instanceof Map) {
+            return asString((Map<?, ?>) o);
+        } else if (o instanceof Collection) {
+            return asString((Collection<?>) o);
+        } else if (o instanceof Binary) {
+            return asString((Binary) o);
+        } else if (o instanceof Double) {
+            return asString(((Double) o).doubleValue());
+        } else {
+            return o.toString();
+        }
     }
 
     // defeat instantiation.

@@ -19,12 +19,16 @@
  * under the License.
  */package net.morimekta.util.io;
 
+import net.morimekta.util.Strings;
+
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Reader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
@@ -32,6 +36,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -45,6 +50,27 @@ public class IOUtilsTest {
             "aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse " +
             "cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in " +
             "culpa qui officia deserunt mollit anim id est laborum.";
+
+    private byte[] mArray;
+    private byte[] mArray_withEscaping;
+    private byte[] mArray_withNullbyte;
+    private byte[] mArray_withUtf8;
+    private String mString;
+    private String mString_withEscaping;
+    private String mString_withUtf8;
+
+    @Before
+    public void setUp() {
+        mArray = new byte[]{'1', '2', '3'};
+        mArray_withNullbyte = new byte[]{'1', '2', '3', '\0'};
+        mArray_withEscaping = new byte[]{'1', '2', '3', '\t'};
+        mArray_withUtf8 = new byte[]{'1', '2', '3', (byte) 0xc3, (byte) 0xa1};
+
+        mString = "123";
+        mString_withEscaping = "123\t";
+        mString_withUtf8 = "123á";
+    }
+
 
     @Test
     public void testSkipUntil() throws IOException {
@@ -125,6 +151,66 @@ public class IOUtilsTest {
     }
 
     @Test
+    public void testReadString() throws IOException {
+        assertEquals(mString, TSU_readString(mArray));
+        assertEquals(mString, TSU_readString(mArray_withNullbyte));
+        assertEquals(mString_withEscaping, TSU_readString(mArray_withEscaping));
+        assertEquals(mString_withUtf8, TSU_readString(mArray_withUtf8));
+    }
+
+    @Test(expected = IOException.class)
+    public void testReadString_ioException() throws IOException {
+        InputStream is = new InputStream() {
+            @Override
+            public int read() throws IOException {
+                // TODO Auto-generated method stub
+                throw new IOException();
+            }
+        };
+        fail("unexpected output: " + IOUtils.readString(is));
+    }
+
+    @Test
+    public void testReadString_partialRead() throws IOException {
+        byte[] buffer = new byte[]{'a', 'b', 'c', '\0', 'x', 'y', 'z'};
+        // BufferedInputStream supports marks.
+        InputStream is = new ByteArrayInputStream(buffer);
+
+        assertEquals("abc", IOUtils.readString(is));
+        assertEquals("xyz", IOUtils.readString(is));
+    }
+
+    @Test
+    public void testReadString_partialReadWithTerminator() throws IOException {
+        byte[] buffer = new byte[]{'a', 'b', 'c', '\r', '\n', 'x', 'y', 'z'};
+        // BufferedInputStream supports marks.
+        InputStream is = new ByteArrayInputStream(buffer);
+
+        assertEquals("abc", IOUtils.readString(is, "\r\n"));
+        assertEquals("xyz", IOUtils.readString(is, "\r\n"));
+    }
+
+    @Test
+    public void testReadString_partialReader() throws IOException {
+        byte[] buffer = new byte[]{'a', 'b', 'c', '\0', 'x', 'y', 'z'};
+        // BufferedInputStream supports marks.
+        Reader is = new Utf8StreamReader(new ByteArrayInputStream(buffer));
+
+        assertEquals("abc", IOUtils.readString(is));
+        assertEquals("xyz", IOUtils.readString(is));
+    }
+
+    @Test
+    public void testReadString_partialReaderWithTerminator() throws IOException {
+        byte[] buffer = new byte[]{'a', 'b', 'c', '\r', '\n', 'x', 'y', 'z'};
+        // BufferedInputStream supports marks.
+        Reader is = new Utf8StreamReader(new ByteArrayInputStream(buffer));
+
+        assertEquals("abc", IOUtils.readString(is, "\r\n"));
+        assertEquals("xyz", IOUtils.readString(is, "\r\n"));
+    }
+
+    @Test
     public void testConstructor()
             throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
         Constructor constructor = IOUtils.class.getDeclaredConstructor();
@@ -150,5 +236,10 @@ public class IOUtilsTest {
         } catch (IOException|NullPointerException e) {
             assertEquals(expected, e.getMessage());
         }
+    }
+
+    private String TSU_readString(byte[] bytes) throws IOException {
+        ByteArrayInputStream is = new ByteArrayInputStream(bytes);
+        return IOUtils.readString(is);
     }
 }

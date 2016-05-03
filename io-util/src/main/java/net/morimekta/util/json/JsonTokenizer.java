@@ -21,6 +21,7 @@
 package net.morimekta.util.json;
 
 import net.morimekta.util.Strings;
+import net.morimekta.util.io.IOUtils;
 import net.morimekta.util.io.Utf8StreamReader;
 
 import java.io.ByteArrayOutputStream;
@@ -304,7 +305,7 @@ public class JsonTokenizer {
             return lines.get(line - 1);
         } else {
             flushLineBuffer();
-            lineBuilder.append(Strings.readString(new Utf8StreamReader(reader), JsonToken.kNewLine));
+            lineBuilder.append(IOUtils.readString(new Utf8StreamReader(reader), JsonToken.kNewLine));
             String ln = lineBuilder.toString();
             lines.add(ln);
             return ln;
