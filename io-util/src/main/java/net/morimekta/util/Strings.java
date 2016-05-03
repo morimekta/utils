@@ -345,6 +345,8 @@ public class Strings {
             return asString((Binary) o);
         } else if (o instanceof Double) {
             return asString(((Double) o).doubleValue());
+        } else if (o instanceof Stringable) {
+            return ((Stringable) o).asString();
         } else {
             return o.toString();
         }

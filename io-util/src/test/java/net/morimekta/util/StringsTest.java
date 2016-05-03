@@ -141,6 +141,13 @@ public class StringsTest {
         assertAsString("{}", Collections.EMPTY_MAP);
         assertAsString("b64(Bw)", Binary.wrap(new byte[]{7}));
         assertAsString("b64(Bw)", Binary.wrap(new byte[]{7}));
+        assertAsString("tmp", new Tmp());
+    }
+
+    private static class Tmp implements Stringable {
+        public String asString() {
+            return "tmp";
+        }
     }
 
     private void assertAsString(String expected, Object value) {
