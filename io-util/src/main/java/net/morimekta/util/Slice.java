@@ -29,7 +29,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  *
  * Note that all the helper methods assume UTF_8 encoding.
  */
-public class Slice implements Comparable<Slice> {
+public class Slice implements Comparable<Slice>, Stringable {
     protected final byte[] fb;
     protected final int    off;
     protected final int    len;
@@ -49,6 +49,7 @@ public class Slice implements Comparable<Slice> {
      *
      * @return Slice decoded as UTF_8 string.
      */
+    @Override
     public final String asString() {
         return new String(fb, off, len, UTF_8);
     }

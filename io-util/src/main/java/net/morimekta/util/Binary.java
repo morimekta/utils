@@ -32,7 +32,7 @@ import java.util.Locale;
  * Simplistic byte sequence wrapper with lots of convenience methods. Used to
  * wrap byte arrays for the binary data type.
  */
-public class Binary implements Comparable<Binary>, Serializable {
+public class Binary implements Comparable<Binary>, Stringable, Serializable {
     private final byte[] bytes;
 
     public Binary(byte[] bytes) {
@@ -242,6 +242,15 @@ public class Binary implements Comparable<Binary>, Serializable {
             buffer.append(String.format(Locale.ENGLISH, "%02x", i));
         }
         buffer.append(")");
+        return buffer.toString();
+    }
+
+    @Override
+    public String asString() {
+        StringBuffer buffer = new StringBuffer();
+        buffer.append("b64(")
+              .append(toBase64())
+              .append(")");
         return buffer.toString();
     }
 }

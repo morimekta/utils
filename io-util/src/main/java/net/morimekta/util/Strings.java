@@ -262,19 +262,6 @@ public class Strings {
     }
 
     /**
-     * Make a minimal printable string from a binary value.
-     *
-     * @param bytes The binary value.
-     * @return The string value.
-     */
-    public static String asString(Binary bytes) {
-        if (bytes == null) {
-            return NULL;
-        }
-        return String.format("b64(%s)", bytes.toBase64());
-    }
-
-    /**
      * Make a printable string from a collection using the tools here.
      *
      * @param collection The collection to stringify.
@@ -335,18 +322,16 @@ public class Strings {
     public static String asString(Object o) {
         if (o == null) {
             return NULL;
-        } else if (o instanceof CharSequence) {
-            return String.format("\"%s\"", escape((CharSequence) o));
-        } else if (o instanceof Map) {
-            return asString((Map<?, ?>) o);
-        } else if (o instanceof Collection) {
-            return asString((Collection<?>) o);
-        } else if (o instanceof Binary) {
-            return asString((Binary) o);
-        } else if (o instanceof Double) {
-            return asString(((Double) o).doubleValue());
         } else if (o instanceof Stringable) {
             return ((Stringable) o).asString();
+        } else if (o instanceof CharSequence) {
+            return String.format("\"%s\"", escape((CharSequence) o));
+        } else if (o instanceof Double) {
+            return asString(((Double) o).doubleValue());
+        } else if (o instanceof Collection) {
+            return asString((Collection<?>) o);
+        } else if (o instanceof Map) {
+            return asString((Map<?, ?>) o);
         } else {
             return o.toString();
         }
