@@ -141,12 +141,21 @@ public class StringsTest {
         assertAsString("{}", Collections.EMPTY_MAP);
         assertAsString("b64(Bw)", Binary.wrap(new byte[]{7}));
         assertAsString("b64(Bw)", Binary.wrap(new byte[]{7}));
-        assertAsString("tmp", new Tmp());
+        assertAsString("5", new IsNumeric());
+        assertAsString("tmp", new IsStringable());
     }
 
-    private static class Tmp implements Stringable {
+    private static class IsStringable implements Stringable {
+        @Override
         public String asString() {
             return "tmp";
+        }
+    }
+
+    private static class IsNumeric implements Numeric {
+        @Override
+        public int asInteger() {
+            return 5;
         }
     }
 

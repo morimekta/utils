@@ -324,6 +324,8 @@ public class Strings {
             return NULL;
         } else if (o instanceof Stringable) {
             return ((Stringable) o).asString();
+        } else if (o instanceof Numeric) {
+            return String.format("%d", ((Numeric) o).asInteger());
         } else if (o instanceof CharSequence) {
             return String.format("\"%s\"", escape((CharSequence) o));
         } else if (o instanceof Double) {
