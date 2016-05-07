@@ -40,7 +40,7 @@ public class ConsoleUtil {
         StringBuilder builder = new StringBuilder();
         AtomicInteger off = new AtomicInteger(offset);
         CharStream.stream(string).forEachOrdered(c -> {
-            if (c.codepoint() == '\t') {
+            if (c.asInteger() == '\t') {
                 int l = tabWidth - (off.get() % tabWidth);
                 for (int i = 0; i < l; ++i) {
                     builder.append(' ');

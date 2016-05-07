@@ -1,19 +1,23 @@
 package net.morimekta.console;
 
+import net.morimekta.util.Numeric;
+import net.morimekta.util.Stringable;
+
 /**
  * General interface implemented by character-like classes. A char
  * can represent an actual character (Unicode), or a control sequence
  * (Control, Color) that can alter the look or behaviour of the console
  * the application runs in.
  */
-public interface Char {
+public interface Char extends Stringable, Numeric {
     /**
      * Unicode codepoint representing this character.
      *
      * @return The 31 bit unsigned unicode code-point, or -1 if not
      *         representing a single unicode character.
      */
-    int codepoint();
+    @Override
+    int asInteger();
 
     /**
      * The number of character spaces taken up by this symbol. Usually 1, but

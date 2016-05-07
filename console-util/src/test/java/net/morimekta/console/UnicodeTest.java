@@ -15,6 +15,6 @@ public class UnicodeTest {
         assertEquals(2, unicode.printableWidth());
         assertEquals(2, unicode.length());
         assertEquals(2, unicode.toString().length());
-        assertEquals(0x2A6B2, unicode.codepoint());
+        assertEquals(0x2A6B2, unicode.asInteger());
     }
 }

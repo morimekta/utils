@@ -1,5 +1,7 @@
 package net.morimekta.console;
 
+import net.morimekta.util.Strings;
+
 /**
  *
  * https://en.wikipedia.org/wiki/C0_and_C1_control_codes
@@ -45,8 +47,13 @@ public class Control implements Char {
     }
 
     @Override
-    public int codepoint() {
+    public int asInteger() {
         return -1;
+    }
+
+    @Override
+    public String asString() {
+        return Strings.escape(str);
     }
 
     @Override
