@@ -48,7 +48,7 @@ public class Utf8StreamReader extends Reader {
 
     public Utf8StreamReader(InputStream in) {
         this.in = in;
-        this.buffer = new int[5];
+        this.buffer = new int[6];
         this.surrogate = 0;
     }
 
@@ -123,11 +123,9 @@ public class Utf8StreamReader extends Reader {
         in.close();
     }
 
-    protected char convert(final int[] arr, final int num) throws IOException {
+    private char convert(final int[] arr, final int num) throws IOException {
         int cp = 0;
         switch (num) {
-            case 1:
-                throw new UnsupportedEncodingException("Not enough bytes for utf-8 encoding");
             case 2:
                 cp = (arr[0] & 0x1f);
                 break;
