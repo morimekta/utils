@@ -17,7 +17,7 @@ public class ByteBufferOutputStream extends OutputStream {
     @Override
     public void write(int i) throws IOException {
         if (!buffer.hasRemaining()) {
-            throw new IOException();
+            throw new IOException("Buffer overflow");
         }
         buffer.put((byte) i);
     }
@@ -25,7 +25,7 @@ public class ByteBufferOutputStream extends OutputStream {
     @Override
     public void write(byte[] bytes) throws IOException {
         if (buffer.remaining() < bytes.length) {
-            throw new IOException();
+            throw new IOException("Buffer overflow");
         }
         buffer.put(bytes, 0, bytes.length);
     }
@@ -33,7 +33,7 @@ public class ByteBufferOutputStream extends OutputStream {
     @Override
     public void write(byte[] bytes, int off, int len) throws IOException {
         if (buffer.remaining() < len) {
-            throw new IOException();
+            throw new IOException("Buffer overflow");
         }
         buffer.put(bytes, off, len);
     }

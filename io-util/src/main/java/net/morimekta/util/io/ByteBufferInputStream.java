@@ -18,7 +18,7 @@ public class ByteBufferInputStream extends InputStream {
     @Override
     public int read() throws IOException {
         if (buffer.hasRemaining()) {
-            return intValue(buffer.get());
+            return buffer.get() % 0x100;
         }
         return -1;
     }
@@ -43,10 +43,6 @@ public class ByteBufferInputStream extends InputStream {
         return -1;
     }
 
-    private int intValue(byte b) {
-        return (int)b % 0x100;
-    }
-
     @Override
     public boolean markSupported() {
         return true;
@@ -62,7 +58,7 @@ public class ByteBufferInputStream extends InputStream {
         try {
             buffer.reset();
         } catch (InvalidMarkException ime) {
-            throw new IOException(ime.getMessage(), ime);
+            throw new IOException("No mark set on stream", ime);
         }
     }
 }

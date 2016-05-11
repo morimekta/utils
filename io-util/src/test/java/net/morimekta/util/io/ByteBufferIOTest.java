@@ -7,6 +7,8 @@ import java.nio.ByteBuffer;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * Testing for the ByteBufferInputStream and ByteBufferOutputStream.
@@ -60,5 +62,110 @@ public class ByteBufferIOTest {
         assertEquals(2, bbis.read(indata2, 6, 2));
         assertArrayEquals(new byte[]{0, 0, 0, 0, 0, 0, 3, 2, 0, 0, 0, 0, 0, 0, 0, 0},
                           indata2);
+    }
+
+    @Test
+    public void testMarkReset() throws IOException {
+        byte[] data = new byte[]{9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 9, 8, 7, 6, 5, 4};
+        ByteBuffer buffer = ByteBuffer.wrap(data);
+
+        ByteBufferInputStream bbis = new ByteBufferInputStream(buffer);
+
+        assertTrue(bbis.markSupported());
+
+        assertEquals(9, bbis.read());
+        assertEquals(8, bbis.read());
+
+        // The "mark limit" is irrelevant.
+        bbis.mark(0);
+
+        assertEquals(7, bbis.read());
+        assertEquals(6, bbis.read());
+        assertEquals(5, bbis.read());
+
+        bbis.reset();
+
+        assertEquals(7, bbis.read());
+        assertEquals(6, bbis.read());
+
+        bbis.reset();
+
+        assertEquals(7, bbis.read());
+        assertEquals(6, bbis.read());
+        assertEquals(5, bbis.read());
+    }
+
+    @Test
+    public void testNoSuchMark() {
+        byte[] data = new byte[]{9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 9, 8, 7, 6, 5, 4};
+        ByteBuffer buffer = ByteBuffer.wrap(data);
+
+        ByteBufferInputStream bbis = new ByteBufferInputStream(buffer);
+
+        try {
+            bbis.reset();
+            fail("No exception on reset without mark.");
+        } catch (IOException e) {
+            assertEquals("No mark set on stream", e.getMessage());
+        }
+    }
+
+    @Test
+    public void testReadLessThanMax_array() throws IOException {
+        byte[] data = new byte[]{5, 4};
+        ByteBuffer buffer = ByteBuffer.wrap(data);
+        ByteBufferInputStream bbis = new ByteBufferInputStream(buffer);
+
+        byte[] out = new byte[10];
+
+        assertEquals(2, bbis.read(out));
+        assertArrayEquals(new byte[]{5, 4, 0, 0, 0, 0, 0, 0, 0, 0}, out);
+
+        assertEquals(-1, bbis.read(out));
+        assertEquals(-1, bbis.read());
+
+    }
+
+    @Test
+    public void testReadLessThanMax_arrayWithOffset() throws IOException {
+        byte[] data = new byte[]{5, 4};
+        ByteBuffer buffer = ByteBuffer.wrap(data);
+        ByteBufferInputStream bbis = new ByteBufferInputStream(buffer);
+
+        byte[] out = new byte[10];
+
+        assertEquals(2, bbis.read(out, 2, 5));
+        assertArrayEquals(new byte[]{0, 0, 5, 4, 0, 0, 0, 0, 0, 0}, out);
+
+        assertEquals(-1, bbis.read(out, 2, 5));
+        assertEquals(-1, bbis.read());
+    }
+
+    @Test
+    public void testWriteOverBuffer() throws IOException {
+        ByteBuffer buffer = ByteBuffer.allocate(10);
+        ByteBufferOutputStream bbos = new ByteBufferOutputStream(buffer);
+
+        try {
+            bbos.write(new byte[]{1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0});
+            fail("No exception on writing too much");
+        } catch (IOException e) {
+            assertEquals("Buffer overflow", e.getMessage());
+        }
+        try {
+            bbos.write(new byte[]{1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0}, 5, 12);
+            fail("No exception on writing too much");
+        } catch (IOException e) {
+            assertEquals("Buffer overflow", e.getMessage());
+        }
+
+        bbos.write(new byte[]{1, 2, 3, 4, 5, 6, 7, 8, 9, 0});
+
+        try {
+            bbos.write(5);
+            fail("No exception on writing too much");
+        } catch (IOException e) {
+            assertEquals("Buffer overflow", e.getMessage());
+        }
     }
 }
