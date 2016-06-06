@@ -22,9 +22,9 @@ import java.util.stream.StreamSupport;
  */
 public class Config {
     public static class Entry implements Comparable<Entry> {
-        public final String key;
+        public final String     key;
         public final Value.Type type;
-        public final Object value;
+        public final Object     value;
 
         private Entry(String key, Value.Type type, Object value) {
             this.key = key;
@@ -63,12 +63,11 @@ public class Config {
     }
 
     public Spliterator<String> keySpliterator() {
-        return Spliterators.spliterator(map.keySet(),
-                                        Spliterator.IMMUTABLE |
-                                        Spliterator.DISTINCT |
-                                        Spliterator.NONNULL |
-                                        Spliterator.SIZED |
-                                        Spliterator.SUBSIZED);
+        return Spliterators.spliterator(map.keySet(), Spliterator.IMMUTABLE |
+                                                      Spliterator.DISTINCT |
+                                                      Spliterator.NONNULL |
+                                                      Spliterator.SIZED |
+                                                      Spliterator.SUBSIZED);
     }
 
     public Set<Entry> entrySet() {
@@ -83,19 +82,26 @@ public class Config {
     }
 
     public Spliterator<Entry> entrySpliterator() {
-        return Spliterators.spliterator(entrySet(),
-                                        Spliterator.IMMUTABLE |
-                                        Spliterator.DISTINCT |
-                                        Spliterator.NONNULL |
-                                        Spliterator.SIZED |
-                                        Spliterator.SUBSIZED);
+        return Spliterators.spliterator(entrySet(), Spliterator.IMMUTABLE |
+                                                    Spliterator.DISTINCT |
+                                                    Spliterator.NONNULL |
+                                                    Spliterator.SIZED |
+                                                    Spliterator.SUBSIZED);
     }
 
     public boolean containsKey(String key) {
         return map.containsKey(key);
     }
 
-    public boolean containsPrefix(String prefix) throws ConfigException {
+    /**
+     * Checks if the given key prefix is present in the config. The prefix
+     * works as if the whole word is present, or if suffixed with '.' and
+     * more words.
+     *
+     * @param prefix The prefix to look for.
+     * @return The
+     */
+    public boolean containsPrefix(String prefix) {
         String prefixed = prefix + '.';
         for (String key : keySet()) {
             if (key.equals(prefix) || key.startsWith(prefixed)) {
@@ -105,84 +111,155 @@ public class Config {
         return false;
     }
 
-    public Value.Type typeOf(String key) throws ConfigException {
-        return getValue(key).type;
+    /**
+     * Get the value type of the value for the key.
+     *
+     * @param key The key to look up.
+     * @return The value type or null if not found.
+     */
+    public Value.Type typeOf(String key) {
+        try {
+            return getValue(key).type;
+        } catch (ConfigException e) {
+            return null;
+        }
     }
 
+    /**
+     * @return True if the config set is empty.
+     */
     public boolean isEmpty() {
         return map.isEmpty();
     }
 
+    /**
+     * @return The number of entries in the config.
+     */
     public int size() {
         return map.size();
     }
 
     // --- Type things.
 
-    public String getString(String key) throws ConfigException {
-        return getValue(key).asString();
-    }
-
-    public String getString(String key, String def) throws ConfigException {
-        if (containsKey(key)) {
+    public String getString(String key) {
+        try {
             return getValue(key).asString();
+        } catch (ConfigException e) {
+            throw new UncheckedConfigException(e);
         }
-        return def;
     }
 
-    public boolean getBoolean(String key) throws ConfigException {
-        return getValue(key).asBoolean();
+    public String getString(String key, String def) {
+        try {
+            if (containsKey(key)) {
+                return getValue(key).asString();
+            }
+            return def;
+        } catch (ConfigException e) {
+            throw new UncheckedConfigException(e);
+        }
     }
 
-    public boolean getBoolean(String key, boolean def) throws ConfigException {
-        if (containsKey(key)) {
+    public boolean getBoolean(String key) {
+        try {
             return getValue(key).asBoolean();
+        } catch (ConfigException e) {
+            throw new UncheckedConfigException(e);
         }
-        return def;
     }
 
-    public int getInteger(String key) throws ConfigException {
-        return getValue(key).asInteger();
+    public boolean getBoolean(String key, boolean def) {
+        try {
+            if (containsKey(key)) {
+                return getValue(key).asBoolean();
+            }
+            return def;
+        } catch (ConfigException e) {
+            throw new UncheckedConfigException(e);
+        }
     }
 
-    public int getInteger(String key, int def) throws ConfigException {
-        if (containsKey(key)) {
+    public int getInteger(String key) {
+        try {
             return getValue(key).asInteger();
+        } catch (ConfigException e) {
+            throw new UncheckedConfigException(e);
         }
-        return def;
     }
 
-    public long getLong(String key) throws ConfigException {
-        return getValue(key).asLong();
+    public int getInteger(String key, int def) {
+        try {
+            if (containsKey(key)) {
+                return getValue(key).asInteger();
+            }
+            return def;
+        } catch (ConfigException e) {
+            throw new UncheckedConfigException(e);
+        }
     }
 
-    public long getLong(String key, long def) throws ConfigException {
-        if (containsKey(key)) {
+    public long getLong(String key) {
+        try {
             return getValue(key).asLong();
+        } catch (ConfigException e) {
+            throw new UncheckedConfigException(e);
         }
-        return def;
     }
 
-    public double getDouble(String key) throws ConfigException {
-        return getValue(key).asDouble();
+    public long getLong(String key, long def) {
+        try {
+            if (containsKey(key)) {
+                return getValue(key).asLong();
+            }
+            return def;
+        } catch (ConfigException e) {
+            throw new UncheckedConfigException(e);
+        }
     }
 
-    public double getDouble(String key, double def) throws ConfigException {
-        if (containsKey(key)) {
+    public double getDouble(String key) {
+        try {
             return getValue(key).asDouble();
+        } catch (ConfigException e) {
+            throw new UncheckedConfigException(e);
         }
-        return def;
     }
 
-    public Sequence getSequence(String key) throws ConfigException {
-        return getValue(key).asSequence();
+    public double getDouble(String key, double def) {
+        try {
+            if (containsKey(key)) {
+                return getValue(key).asDouble();
+            }
+            return def;
+        } catch (ConfigException e) {
+            throw new UncheckedConfigException(e);
+        }
     }
 
-    public Config getConfig(String key) throws ConfigException {
-        return getValue(key).asConfig();
+    public Sequence getSequence(String key) {
+        try {
+            return getValue(key).asSequence();
+        } catch (ConfigException e) {
+            throw new UncheckedConfigException(e);
+        }
     }
 
-    public Value getValue(String key) throws KeyNotFoundException {
+    public Config getConfig(String key) {
+        try {
+            return getValue(key).asConfig();
+        } catch (ConfigException e) {
+            throw new UncheckedConfigException(e);
+        }
+    }
+
+    /**
+     * Get the config value spec for the key.
+     *
+     * @param key The key to look up.
+     * @return The value.
+     * @throws KeyNotFoundException If not found.
+     */
+    public Value getValue(String key) throws KeyNotFoundException{
         if (!map.containsKey(key)) {
             throw new KeyNotFoundException("No such key " + key);
         }
@@ -198,13 +275,14 @@ public class Config {
             return false;
         }
         Config other = (Config) o;
-        if (other.map.size() != map.size() ||
-            !other.map.keySet().equals(map.keySet())) {
+        if (other.map.size() != map.size() || !other.map.keySet()
+                                                        .equals(map.keySet())) {
             return false;
         }
 
         for (String key : map.keySet()) {
-            if (!map.get(key).equals(other.map.get(key))) {
+            if (!map.get(key)
+                    .equals(other.map.get(key))) {
                 return false;
             }
         }
@@ -223,7 +301,9 @@ public class Config {
             } else {
                 builder.append(',');
             }
-            builder.append(key).append(":").append(map.get(key).value.toString());
+            builder.append(key)
+                   .append(":")
+                   .append(map.get(key).value.toString());
         }
 
         builder.append(')');
@@ -239,7 +319,7 @@ public class Config {
     }
 
     public static class Builder {
-        private final Map<String,Value> map;
+        private final Map<String, Value> map;
 
         public Builder() {
             map = new HashMap<>();
@@ -330,5 +410,5 @@ public class Config {
 
     // --- PRIVATE ---
 
-    private final Map<String,Value> map;
+    private final Map<String, Value> map;
 }
