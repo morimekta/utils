@@ -248,9 +248,9 @@ public class Binary implements Comparable<Binary>, Stringable, Serializable {
     @Override
     public String asString() {
         StringBuffer buffer = new StringBuffer();
-        buffer.append("b64(")
+        buffer.append("[")
               .append(toBase64())
-              .append(")");
+              .append("]");
         return buffer.toString();
     }
 }

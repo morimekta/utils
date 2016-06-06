@@ -111,7 +111,7 @@ public class StringsTest {
     @Test
     public void testAsString_binary() {
         assertEquals("null", Strings.asString((Binary) null));
-        assertEquals("b64(AAECAwQ)", Strings.asString(Binary.wrap(new byte[]{0, 1, 2, 3, 4})));
+        assertEquals("[AAECAwQ]", Strings.asString(Binary.wrap(new byte[]{0, 1, 2, 3, 4})));
     }
 
     @Test
@@ -139,8 +139,8 @@ public class StringsTest {
         assertAsString("[]", Collections.EMPTY_LIST);
         assertAsString("[]", Collections.EMPTY_SET);
         assertAsString("{}", Collections.EMPTY_MAP);
-        assertAsString("b64(Bw)", Binary.wrap(new byte[]{7}));
-        assertAsString("b64(Bw)", Binary.wrap(new byte[]{7}));
+        assertAsString("[Bw]", Binary.wrap(new byte[]{7}));
+        assertAsString("[Bw]", Binary.wrap(new byte[]{7}));
         assertAsString("5", new IsNumeric());
         assertAsString("tmp", new IsStringable());
     }
