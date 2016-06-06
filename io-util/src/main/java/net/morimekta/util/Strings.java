@@ -60,6 +60,9 @@ public class Strings {
                 case '\'':
                     builder.append('\\').append(c);
                     break;
+                case '\\':
+                    builder.append('\\').append('\\');
+                    break;
                 default:
                     if (c < 32 || c == 127) {
                         builder.append(String.format("\\%03o", (int) c));
