@@ -30,7 +30,7 @@ public class Value {
         this.value = value;
     }
 
-    public boolean asBoolean() throws ConfigException {
+    public boolean asBoolean() {
         switch (type) {
             case BOOLEAN:
                 return (Boolean) value;
@@ -67,7 +67,7 @@ public class Value {
         }
     }
 
-    public int asInteger() throws ConfigException {
+    public int asInteger() {
         switch (type) {
             case NUMBER:
                 return ((Number) value).intValue();
@@ -85,7 +85,7 @@ public class Value {
         }
     }
 
-    public long asLong() throws ConfigException {
+    public long asLong() {
         switch (type) {
             case NUMBER:
                 return ((Number) value).longValue();
@@ -103,7 +103,7 @@ public class Value {
         }
     }
 
-    public double asDouble() throws ConfigException {
+    public double asDouble() {
         switch (type) {
             case NUMBER:
                 return ((Number) value).doubleValue();
@@ -121,7 +121,7 @@ public class Value {
         }
     }
 
-    public String asString() throws ConfigException {
+    public String asString() {
         if (type == Type.SEQUENCE || type == Type.CONFIG) {
             throw new IncompatibleValueException(
                     "Unable to convert " + type + " to a string");
@@ -129,7 +129,7 @@ public class Value {
         return value.toString();
     }
 
-    public Sequence asSequence() throws ConfigException {
+    public Sequence asSequence() {
         if (type != Type.SEQUENCE) {
             throw new IncompatibleValueException(
                     "Unable to convert " + type + " to a sequence");
@@ -137,7 +137,7 @@ public class Value {
         return (Sequence) value;
     }
 
-    public Config asConfig() throws ConfigException {
+    public Config asConfig() {
         if (type != Type.CONFIG) {
             throw new IncompatibleValueException(
                     "Unable to convert " + type + " to a config");
@@ -191,4 +191,92 @@ public class Value {
     public static Value create(Sequence value) {
         return new Value(Type.SEQUENCE, value);
     }
+
+    // package local value helpers.
+
+    static Object fromObject(Type type, Object elem) {
+        switch (type) {
+            case STRING:
+                if ((elem instanceof Sequence) || (elem instanceof Config)) {
+                    throw new IllegalArgumentException("Not a string value: " + elem.getClass()
+                                                                                    .getSimpleName());
+                }
+                // Cast everything into string.
+                return elem.toString();
+            case BOOLEAN:
+                if (elem instanceof Boolean) {
+                    return elem;
+                } else {
+                    switch (elem.toString().toLowerCase()) {
+                        case "0":
+                        case "f":
+                        case "false":
+                        case "n":
+                        case "no":
+                            return false;
+                        case "1":
+                        case "t":
+                        case "true":
+                        case "y":
+                        case "yes":
+                            return true;
+                        default:
+                            throw new IllegalArgumentException("Not a boolean value: " + elem.toString());
+                    }
+                }
+            case NUMBER:
+                if (elem instanceof Number) {
+                    return elem;
+                } else if (elem instanceof CharSequence) {
+                    String val = elem.toString().toLowerCase();
+                    if (val.contains(".") || val.contains("e")) {
+                        return Double.parseDouble(val);
+                    } else {
+                        return Long.parseLong(val);
+                    }
+                }
+                if (elem.toString().startsWith(elem.getClass().getName() + "@")) {
+                    throw new IllegalArgumentException("Not a number type: " + elem.getClass().getName());
+                } else {
+                    throw new IllegalArgumentException("Not a number value: " + elem.toString());
+                }
+            case SEQUENCE:
+                if (!(elem instanceof Sequence)) {
+                    throw new IllegalArgumentException("Not a sequence type: " + elem.getClass()
+                                                                                     .getSimpleName());
+                }
+                return elem;
+            case CONFIG:
+                if (!(elem instanceof Config)) {
+                    throw new IllegalArgumentException("Not a config type: " + elem.getClass()
+                                                                                   .getSimpleName());
+                }
+                return elem;
+            default:
+                // TODO: Maybe support more element types in sequences?
+                throw new IllegalArgumentException("Not supported sequence value type for " + type + ": " + elem.getClass());
+        }
+    }
+
+    static Object fromValue(Type type, Value value) {
+        switch (type) {
+            case STRING:
+                return value.asString();
+            case BOOLEAN:
+                return value.asBoolean();
+            case NUMBER: {
+                if (value.asDouble() == (double) value.asLong()) {
+                    return value.asLong();
+                }
+                return value.asDouble();
+            }
+            case SEQUENCE:
+                return value.asSequence();
+            case CONFIG:
+                return value.asConfig();
+        }
+
+        throw new ConfigException("Unhandled value type " + type);
+    }
+
 }

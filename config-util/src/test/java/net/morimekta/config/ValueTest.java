@@ -46,7 +46,7 @@ public class ValueTest {
         assertBadBoolean("Unable to parse the string \"foo\" to boolean", create("foo"));
         assertBadBoolean("Unable to convert number 4 to boolean", create(4));
         assertBadBoolean("Unable to convert double value to boolean", create(4.4));
-        assertBadBoolean("Unable to convert type SEQUENCE to a boolean", create(Sequence.builder(Value.Type.BOOLEAN).build()));
+        assertBadBoolean("Unable to convert type SEQUENCE to a boolean", create(new Sequence(Value.Type.BOOLEAN)));
     }
 
     private void assertAsBoolean(Value value, boolean b) throws ConfigException {
@@ -140,7 +140,7 @@ public class ValueTest {
                      create(1234).asString());
 
         try {
-            create(Sequence.builder(Value.Type.STRING).add("A").build()).asString();
+            create(Sequence.create("A")).asString();
         } catch (ConfigException e) {
             assertEquals("Unable to convert SEQUENCE to a string", e.getMessage());
         }
@@ -148,7 +148,7 @@ public class ValueTest {
 
     @Test
     public void testAsSequence() throws ConfigException {
-        assertEquals(Sequence.builder(Value.Type.STRING).add("A").build(),
+        assertEquals(Sequence.create("A"),
                      create(Sequence.create("A")).asSequence());
 
         try {
@@ -160,8 +160,9 @@ public class ValueTest {
 
     @Test
     public void testAsConfig() throws ConfigException {
-        assertEquals(Config.builder().putString("a", "b").build(),
-                     create(Config.builder().putString("a", "b").build()).asConfig());
+
+        assertEquals(new Config().putString("a", "b"),
+                     create(new Config().putString("a", "b")).asConfig());
 
         try {
             create("string").asConfig();

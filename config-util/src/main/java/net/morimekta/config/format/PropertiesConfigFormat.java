@@ -8,6 +8,7 @@ import net.morimekta.config.Value;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -36,19 +37,19 @@ public class PropertiesConfigFormat implements ConfigFormat {
 
     // --- INTERNAL ---
     private void formatTo(String prefix, Config config, Properties properties) {
-        for (Config.Entry entry : config.entrySet()) {
-            String key = makeKey(prefix, entry.key);
-            switch (entry.type) {
+        for (Map.Entry<String, Value> entry : config.entrySet()) {
+            String key = makeKey(prefix, entry.getKey());
+            switch (entry.getValue().type) {
                 case BOOLEAN:
                 case NUMBER:
                 case STRING:
-                    properties.setProperty(key, entry.value.toString());
+                    properties.setProperty(key, entry.getValue().value.toString());
                     break;
                 case SEQUENCE:
-                    formatTo(key, (Sequence) entry.value, properties);
+                    formatTo(key, (Sequence) entry.getValue().value, properties);
                     break;
                 case CONFIG:
-                    formatTo(key, (Config) entry.value, properties);
+                    formatTo(key, (Config) entry.getValue().value, properties);
                     break;
             }
         }

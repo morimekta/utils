@@ -2,26 +2,25 @@ package net.morimekta.config;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.ConcurrentModificationException;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Spliterator;
-import java.util.Spliterators;
 import java.util.stream.Collector;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
+
+import static net.morimekta.config.Value.fromObject;
+import static net.morimekta.config.Value.fromValue;
 
 /**
  * Immutable sequence of values of the same type. And the sequence is statically
  * annotated with the type of the values within the sequence.
  */
-public class Sequence implements Iterable {
-    private static final int characteristics =
-            Spliterator.ORDERED |
-            Spliterator.SIZED |
-            Spliterator.IMMUTABLE |
-            Spliterator.SUBSIZED;
+public class Sequence extends ArrayList<Object> {
+    /**
+     * Create an immutable sequence.
+     * @param type The type of elements. Note that a sequence cannot contain
+     *             sequences.
+     */
+    public Sequence(Value.Type type) {
+        super();
+        this.type = type;
+    }
 
     /**
      * Create an immutable sequence.
@@ -30,39 +29,20 @@ public class Sequence implements Iterable {
      * @param content The contained collection.
      */
     @SuppressWarnings("unchecked")
-    private Sequence(Value.Type type, Collection<?> content) {
+    public Sequence(Value.Type type, Collection<?> content) {
+        super();
         this.type = type;
-        this.seq = new Object[content.size()];
+        addAll(content);
+    }
 
-        int i = 0;
-        for (Object elem : content) {
-            if (i < seq.length) {
-                seq[i] = elem;
-                ++i;
-            } else {
-                throw new ConcurrentModificationException();
-            }
-        }
+    public Sequence(Value.Type type, Object... values) {
+        super();
+        this.type = type;
+        addAll(values);
     }
 
     public Value.Type type() {
         return type;
-    }
-
-    public int size() {
-        return seq.length;
-    }
-
-    public Object get(int i) {
-        if (i < 0) {
-            throw new IllegalArgumentException("Invalid index " + i);
-        }
-        if (i >= seq.length) {
-            throw new IndexOutOfBoundsException(
-                    "Index " + i + " outside range of sequence length " +
-                    seq.length);
-        }
-        return seq[i];
     }
 
     public boolean getBoolean(int i) throws ConfigException {
@@ -187,6 +167,7 @@ public class Sequence implements Iterable {
                 }
             }
         }
+
         return true;
     }
 
@@ -199,7 +180,7 @@ public class Sequence implements Iterable {
                .append('[');
 
         boolean first = true;
-        for (Object o : seq) {
+        for (Object o : this) {
             if (first) {
                 first = false;
             } else {
@@ -213,279 +194,123 @@ public class Sequence implements Iterable {
         return builder.toString();
     }
 
-    public Iterator<?> iterator() {
-        return Spliterators.iterator(spliterator());
-    }
-
-    public Stream<?> stream() {
-        return StreamSupport.stream(spliterator(), true);
-    }
-
-    public Spliterator<?> spliterator() {
-        return Spliterators.spliterator(seq, 0, seq.length, characteristics);
-    }
-
-    public static Collector<Object, Builder, Sequence> collect(final Value.Type type) {
-        return Collector.of(() -> new Builder(type),
-                            Builder::add,
+    public static Collector<Object, Sequence, Sequence> collect(final Value.Type type) {
+        return Collector.of(() -> new Sequence(type),
+                            Sequence::add,
                             (a, b) -> {
-                                a.addAll(b.seq);
+                                a.addAll(b);
                                 return a;
                             },
-                            Builder::build);
-    }
-
-    public Builder mutate() {
-        return new Builder(this);
-    }
-
-    public static Builder builder(Value.Type type) {
-        return new Builder(type);
+                            i -> i);
     }
 
     public static Sequence create(String... values) {
-        Builder builder = new Builder(Value.Type.STRING);
+        Sequence builder = new Sequence(Value.Type.STRING);
         for (String val : values) {
             builder.add(val);
         }
-        return builder.build();
+        return builder;
     }
 
     public static Sequence create(int... values) {
-        Builder builder = new Builder(Value.Type.NUMBER);
+        Sequence builder = new Sequence(Value.Type.NUMBER);
         for (int val : values) {
             builder.add(val);
         }
-        return builder.build();
+        return builder;
     }
 
     public static Sequence create(long... values) {
-        Builder builder = new Builder(Value.Type.NUMBER);
+        Sequence builder = new Sequence(Value.Type.NUMBER);
         for (long val : values) {
             builder.add(val);
         }
-        return builder.build();
+        return builder;
     }
 
     public static Sequence create(double... values) {
-        Builder builder = new Builder(Value.Type.NUMBER);
+        Sequence builder = new Sequence(Value.Type.NUMBER);
         for (double val : values) {
             builder.add(val);
         }
-        return builder.build();
+        return builder;
     }
 
     public static Sequence create(boolean... values) {
-        Builder builder = new Builder(Value.Type.BOOLEAN);
+        Sequence builder = new Sequence(Value.Type.BOOLEAN);
         for (boolean val : values) {
             builder.add(val);
         }
-        return builder.build();
+        return builder;
     }
 
-    public static class Builder {
-        private final Value.Type   type;
-        private final List<Object> seq;
+    public Object set(int i, Object elem) {
+        return super.set(i, fromObject(type, elem));
+    }
 
-        public Builder(Value.Type type) {
-            this.type = type;
-            this.seq = new ArrayList<>();
+    public boolean add(Object elem) {
+        return super.add(fromObject(type, elem));
+    }
+
+    public void add(int pos, Object elem) {
+        super.add(pos, fromObject(type, elem));
+    }
+
+    public Sequence setValue(int i, Value value) {
+        super.set(i, fromValue(type, value));
+        return this;
+    }
+
+    public Sequence addValue(Value value) {
+        super.add(fromValue(type, value));
+        return this;
+    }
+
+    public Sequence addValue(int i, Value value) {
+        super.add(i, fromValue(type, value));
+        return this;
+    }
+
+    @SuppressWarnings("unchecked")
+    public Sequence replaceValue(int i, Value value) {
+        set(i, fromValue(type, value));
+        return this;
+    }
+
+    public Sequence removeLast() {
+        if (size() == 0) {
+            throw new IllegalStateException("Unable to remove last of empty sequence");
         }
+        remove(size() - 1);
+        return this;
+    }
 
-        public Builder(Sequence base) {
-            this(base.type);
-            Collections.addAll(seq, base.seq);
+    public boolean addAll(Collection<?> coll) {
+        boolean ret = false;
+        for (Object o : coll) {
+            ret |= add(o);
         }
+        return ret;
+    }
 
-        public int size() {
-            return seq.size();
+    public boolean addAll(int pos, Collection<?> coll) {
+        boolean ret = false;
+        for (Object o : coll) {
+            add(pos++, o);
+            ret = true;
         }
+        return ret;
+    }
 
-        public Value.Type type() {
-            return type;
+    public boolean addAll(Object... coll) {
+        boolean ret = false;
+        for (Object o : coll) {
+            ret |= add(o);
         }
-
-        public Builder add(Object elem) {
-            switch (type) {
-                case STRING:
-                    if ((elem instanceof Sequence) ||
-                        (elem instanceof Config)) {
-                        throw new IllegalArgumentException("Not a string value: " +
-                                                           elem.getClass().getSimpleName());
-                    }
-                    // Cast everything into string.
-                    seq.add(elem.toString());
-                    break;
-                case BOOLEAN:
-                    if (!(elem instanceof Boolean)) {
-                        throw new IllegalArgumentException("Not a boolean value: " +
-                                                           elem.getClass().getSimpleName());
-                    }
-                    seq.add(elem);
-                    break;
-                case NUMBER:
-                    if (!(Number.class.isAssignableFrom(elem.getClass()))) {
-                        throw new IllegalArgumentException("Not a number value: " +
-                                                           elem.getClass().getSimpleName());
-                    }
-                    seq.add(elem);
-                    break;
-                case SEQUENCE:
-                    if (!(elem instanceof Sequence)) {
-                        throw new IllegalArgumentException("Not a sequence type: " +
-                                                           elem.getClass().getSimpleName());
-                    }
-                    seq.add(elem);
-                    break;
-                case CONFIG:
-                    if (!(elem instanceof Config)) {
-                        throw new IllegalArgumentException("Not a config type: " +
-                                                           elem.getClass().getSimpleName());
-                    }
-                    seq.add(elem);
-                    break;
-                default:
-                    // TODO: Maybe support more element types in sequences?
-                    throw new IllegalArgumentException("Not supported sequence value type: " + type);
-            }
-            return this;
-        }
-
-        public Builder addValue(Value value) {
-            return add(value.value);
-        }
-
-        public Value getValue(int i) {
-            if (i < 0) {
-                throw new IllegalArgumentException("Invalid index " + i);
-            }
-            if (i >= seq.size()) {
-                throw new IndexOutOfBoundsException(
-                        "Index " + i + " outside range of sequence length " +
-                        seq.size());
-            }
-            return new Value(type, seq.get(i));
-        }
-
-        public Builder insert(int i, Object elem) {
-            if (i < 0) {
-                throw new IllegalArgumentException("Illegal insert index " + i);
-            }
-            if (i > seq.size()) {
-                throw new IndexOutOfBoundsException(
-                        "Insert index " + i + " outside range of sequence length " +
-                        seq.size());
-            }
-            switch (type) {
-                case STRING:
-                    if ((elem instanceof Sequence) ||
-                        (elem instanceof Config)) {
-                        throw new IllegalArgumentException("Not a string value: " +
-                                                           elem.getClass().getSimpleName());
-                    }
-                    // Cast everything into string.
-                    seq.add(i, elem.toString());
-                    break;
-                case BOOLEAN:
-                    if (!(elem instanceof Boolean)) {
-                        throw new IllegalArgumentException("Not a boolean value: " +
-                                                           elem.getClass().getSimpleName());
-                    }
-                    seq.add(i, elem);
-                    break;
-                case NUMBER:
-                    if (!(Number.class.isAssignableFrom(elem.getClass()))) {
-                        throw new IllegalArgumentException("Not a number value: " +
-                                                           elem.getClass().getSimpleName());
-                    }
-                    seq.add(i, elem);
-                    break;
-                case SEQUENCE:
-                    if (!(elem instanceof Sequence)) {
-                        throw new IllegalArgumentException("Not a sequence type: " +
-                                                           elem.getClass().getSimpleName());
-                    }
-                    seq.add(i, elem);
-                    break;
-                case CONFIG:
-                    if (!(elem instanceof Config)) {
-                        throw new IllegalArgumentException("Not a config type: " +
-                                                           elem.getClass().getSimpleName());
-                    }
-                    seq.add(i, elem);
-                    break;
-                default:
-                    throw new IllegalArgumentException("Not supported sequence value type: " + type);
-            }
-            return this;
-        }
-
-        public Builder insertValue(int i, Value value) {
-            return insert(i, value.value);
-        }
-
-        public Builder replace(int i, Object value) {
-            if (i < 0) {
-                throw new IllegalArgumentException("Illegal replace index " + i);
-            }
-            if (i >= seq.size()) {
-                throw new IndexOutOfBoundsException(
-                        "Replace index " + i + " outside range of sequence length " +
-                        seq.size());
-            }
-
-            seq.remove(i);
-            insert(i, value);
-
-            return this;
-        }
-
-        @SuppressWarnings("unchecked")
-        public Builder replaceValue(int i, Value value) {
-            return replace(i, value.value);
-        }
-
-        public Builder remove(int i) {
-            if (i < 0) {
-                throw new IllegalArgumentException("Illegal remove index " + i);
-            }
-            if (i >= seq.size()) {
-                throw new IndexOutOfBoundsException(
-                        "Remove index " + i + " outside range of sequence length " +
-                        seq.size());
-            }
-
-            seq.remove(i);
-            return this;
-        }
-
-        public Builder removeLast() {
-            if (seq.size() == 0) {
-                throw new IllegalStateException("Unable to remove last of empty sequence");
-            }
-            seq.remove(seq.size() - 1);
-            return this;
-        }
-
-        public Builder addAll(Collection<?> coll) {
-            coll.forEach(this::add);
-            return this;
-        }
-
-        public Builder addAll(Object... coll) {
-            for (Object o : coll) {
-                add(o);
-            }
-            return this;
-        }
-
-        public Sequence build() {
-            return new Sequence(type, seq);
-        }
+        return ret;
     }
 
     // --- INTERNAL ---
 
-    private final Object[]   seq;
     private final Value.Type type;
 }

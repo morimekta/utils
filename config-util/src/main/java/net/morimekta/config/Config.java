@@ -1,15 +1,6 @@
 package net.morimekta.config;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.Spliterator;
-import java.util.Spliterators;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
+import java.util.TreeMap;
 
 /**
  * Base configuration object. Essentially a type-safe map from a string key that
@@ -20,273 +11,291 @@ import java.util.stream.StreamSupport;
  * It is not implementing the Map base class since it would require also
  * implementing generic entry adders (put, putAll), and type unsafe getters.
  */
-public class Config {
-    public static class Entry implements Comparable<Entry> {
-        public final String     key;
-        public final Value.Type type;
-        public final Object     value;
-
-        private Entry(String key, Value.Type type, Object value) {
-            this.key = key;
-            this.type = type;
-            this.value = value;
-        }
-
-        @Override
-        public int compareTo(Entry entry) {
-            return key.compareTo(entry.key);
-        }
-
-        @Override
-        public int hashCode() {
-            return key.hashCode();
-        }
+public class Config extends TreeMap<String, Value> {
+    public Config() {
+        this.up = null;
     }
 
-    private Config() {
-        map = new LinkedHashMap<>();
+    public Config(Config up) {
+        this.up = up;
     }
 
-    public Set<String> keySet() {
-        return new HashSet<>(map.keySet());
-    }
-
-    public Set<String> keySet(String prefix) {
-        return map.keySet()
-                  .stream()
-                  .filter(e -> e.equals(prefix) || e.startsWith(prefix + '.'))
-                  .collect(Collectors.toSet());
-    }
-
-    public Stream<String> keyStream() {
-        return StreamSupport.stream(keySpliterator(), false);
-    }
-
-    public Spliterator<String> keySpliterator() {
-        return Spliterators.spliterator(map.keySet(), Spliterator.IMMUTABLE |
-                                                      Spliterator.DISTINCT |
-                                                      Spliterator.NONNULL |
-                                                      Spliterator.SIZED |
-                                                      Spliterator.SUBSIZED);
-    }
-
-    public Set<Entry> entrySet() {
-        return map.entrySet()
-                  .stream()
-                  .map(e -> new Entry(e.getKey(), e.getValue().type, e.getValue().value))
-                  .collect(Collectors.toSet());
-    }
-
-    public Stream<Entry> entryStream() {
-        return StreamSupport.stream(entrySpliterator(), false);
-    }
-
-    public Spliterator<Entry> entrySpliterator() {
-        return Spliterators.spliterator(entrySet(), Spliterator.IMMUTABLE |
-                                                    Spliterator.DISTINCT |
-                                                    Spliterator.NONNULL |
-                                                    Spliterator.SIZED |
-                                                    Spliterator.SUBSIZED);
-    }
-
-    public boolean containsKey(String key) {
-        return map.containsKey(key);
+    public Config(Config up, Config copy) {
+        super(copy);
+        this.up = up;
     }
 
     /**
-     * Checks if the given key prefix is present in the config. The prefix
-     * works as if the whole word is present, or if suffixed with '.' and
-     * more words.
-     *
-     * @param prefix The prefix to look for.
-     * @return The
-     */
-    public boolean containsPrefix(String prefix) {
-        String prefixed = prefix + '.';
-        for (String key : keySet()) {
-            if (key.equals(prefix) || key.startsWith(prefixed)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Get the value type of the value for the key.
-     *
-     * @param key The key to look up.
-     * @return The value type or null if not found.
+     * Presence sensitive type checker.
+     * @param key
+     * @return
      */
     public Value.Type typeOf(String key) {
+        return getValue(key).type;
+    }
+
+    /**
+     * Get the value contained in this config object.
+     * @param key The simple key to look for.
+     * @return The value instance.
+     * @throws KeyNotFoundException
+     */
+    public Value getValue(String key) {
+        if (!containsKey(key)) {
+            throw new KeyNotFoundException("No such key " + key);
+        }
+        return get(key);
+    }
+
+    /**
+     * Get a value from the config looking up deeply into the config. It can also look
+     * "up" from the object. The "up" context is always the same for the same config
+     * instance.
+     *
+     * E.g.
+     *
+     * <code>
+     * Value v = deepGetValue("up.args");
+     * </code>
+     *
+     * Will first navigate one step "up", then try to find the value "args".
+     *
+     * @param key The key to look for.
+     * @return The value found.
+     */
+    public Value deepGetValue(String key) {
         try {
-            return getValue(key).type;
-        } catch (ConfigException e) {
-            return null;
+            return deepGetValueInternal(key);
+        } catch (KeyNotFoundException e) {
+            throw new KeyNotFoundException("No such entry " + key + " in config, " + e.getMessage());
         }
     }
 
-    /**
-     * @return True if the config set is empty.
-     */
-    public boolean isEmpty() {
-        return map.isEmpty();
+    private Value deepGetValueInternal(String key) {
+        String[] parts = key.split("[.]", 2);
+        if (parts.length == 2) {
+            if (super.containsKey(parts[0])) {
+                return getConfig(parts[0]).deepGetValueInternal(parts[1]);
+            } else if ("up".equals(parts[0])) {
+                if (up == null) {
+                    throw new KeyNotFoundException("No way to navigate \"up\", no context found.");
+                } else {
+                    return up.deepGetValueInternal(parts[1]);
+                }
+            }
+            throw new KeyNotFoundException("Key not found ", parts[0]);
+        }
+        return getValue(parts[0]);
     }
 
     /**
-     * @return The number of entries in the config.
+     * Checks if the key prefix exists deeply in the config. Also supports 'up'
+     * navigation, unless the config instance also contains the key "up".
+     *
+     * @param key The key to deeply look for.
+     * @return If the value is contained in the config including sub-configs.
      */
-    public int size() {
-        return map.size();
+    public boolean deepContainsKey(String key) {
+        String[] parts = key.split("[.]", 2);
+        if (parts.length == 2) {
+            if (super.containsKey(parts[0])) {
+                return getConfig(parts[0]).deepContainsKey(parts[1]);
+            } else {
+                return "up".equals(parts[0]) && up != null && up.deepContainsKey(parts[1]);
+            }
+        }
+        return containsKey(parts[0]);
     }
 
     // --- Type things.
 
     public String getString(String key) {
-        try {
-            return getValue(key).asString();
-        } catch (ConfigException e) {
-            throw new UncheckedConfigException(e);
-        }
+        return getValue(key).asString();
+    }
+
+    public String deepGetString(String key) {
+        return deepGetValue(key).asString();
     }
 
     public String getString(String key, String def) {
-        try {
-            if (containsKey(key)) {
-                return getValue(key).asString();
-            }
-            return def;
-        } catch (ConfigException e) {
-            throw new UncheckedConfigException(e);
+        if (containsKey(key)) {
+            return getValue(key).asString();
         }
+        return def;
+    }
+
+    public String deepGetString(String key, String def) {
+        if (deepContainsKey(key)) {
+            return deepGetValue(key).asString();
+        }
+        return def;
     }
 
     public boolean getBoolean(String key) {
-        try {
-            return getValue(key).asBoolean();
-        } catch (ConfigException e) {
-            throw new UncheckedConfigException(e);
-        }
+        return getValue(key).asBoolean();
+    }
+
+    public boolean deepGetBoolean(String key) {
+        return deepGetValue(key).asBoolean();
     }
 
     public boolean getBoolean(String key, boolean def) {
-        try {
-            if (containsKey(key)) {
-                return getValue(key).asBoolean();
-            }
-            return def;
-        } catch (ConfigException e) {
-            throw new UncheckedConfigException(e);
+        if (containsKey(key)) {
+            return getValue(key).asBoolean();
         }
+        return def;
+    }
+
+    public boolean deepGetBoolean(String key, boolean def) {
+        if (deepContainsKey(key)) {
+            return deepGetValue(key).asBoolean();
+        }
+        return def;
     }
 
     public int getInteger(String key) {
-        try {
-            return getValue(key).asInteger();
-        } catch (ConfigException e) {
-            throw new UncheckedConfigException(e);
-        }
+        return getValue(key).asInteger();
+    }
+
+    public int deepGetInteger(String key) {
+        return deepGetValue(key).asInteger();
     }
 
     public int getInteger(String key, int def) {
-        try {
-            if (containsKey(key)) {
-                return getValue(key).asInteger();
-            }
-            return def;
-        } catch (ConfigException e) {
-            throw new UncheckedConfigException(e);
+        if (containsKey(key)) {
+            return getValue(key).asInteger();
         }
+        return def;
+    }
+
+    public int deepGetInteger(String key, int def) {
+        if (deepContainsKey(key)) {
+            return deepGetValue(key).asInteger();
+        }
+        return def;
     }
 
     public long getLong(String key) {
-        try {
-            return getValue(key).asLong();
-        } catch (ConfigException e) {
-            throw new UncheckedConfigException(e);
-        }
+        return getValue(key).asLong();
+    }
+
+    public long deepGetLong(String key) {
+        return deepGetValue(key).asLong();
     }
 
     public long getLong(String key, long def) {
-        try {
-            if (containsKey(key)) {
-                return getValue(key).asLong();
-            }
-            return def;
-        } catch (ConfigException e) {
-            throw new UncheckedConfigException(e);
+        if (containsKey(key)) {
+            return getValue(key).asLong();
         }
+        return def;
+    }
+
+    public long deepGetLong(String key, long def) {
+        if (deepContainsKey(key)) {
+            return deepGetValue(key).asLong();
+        }
+        return def;
     }
 
     public double getDouble(String key) {
-        try {
-            return getValue(key).asDouble();
-        } catch (ConfigException e) {
-            throw new UncheckedConfigException(e);
-        }
+        return getValue(key).asDouble();
+    }
+
+    public double deepGetDouble(String key) {
+        return deepGetValue(key).asDouble();
     }
 
     public double getDouble(String key, double def) {
-        try {
-            if (containsKey(key)) {
-                return getValue(key).asDouble();
-            }
-            return def;
-        } catch (ConfigException e) {
-            throw new UncheckedConfigException(e);
+        if (containsKey(key)) {
+            return getValue(key).asDouble();
         }
+        return def;
+    }
+
+    public double deepGetDouble(String key, double def) {
+        if (deepContainsKey(key)) {
+            return deepGetValue(key).asDouble();
+        }
+        return def;
     }
 
     public Sequence getSequence(String key) {
-        try {
-            return getValue(key).asSequence();
-        } catch (ConfigException e) {
-            throw new UncheckedConfigException(e);
-        }
+        return getValue(key).asSequence();
     }
 
     public Config getConfig(String key) {
-        try {
-            return getValue(key).asConfig();
-        } catch (ConfigException e) {
-            throw new UncheckedConfigException(e);
-        }
+        return getValue(key).asConfig();
     }
 
-    /**
-     * Get the config value spec for the key.
-     *
-     * @param key The key to look up.
-     * @return The value.
-     * @throws KeyNotFoundException If not found.
-     */
-    public Value getValue(String key) throws KeyNotFoundException{
-        if (!map.containsKey(key)) {
-            throw new KeyNotFoundException("No such key " + key);
+    public Config mutableConfig(String key) {
+        if (!containsKey(key)) {
+            putConfig(key, new Config(this));
         }
-        return map.get(key);
+        return getValue(key).asConfig();
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (o == this) {
-            return true;
-        }
-        if (o == null || !(o instanceof Config)) {
-            return false;
-        }
-        Config other = (Config) o;
-        if (other.map.size() != map.size() || !other.map.keySet()
-                                                        .equals(map.keySet())) {
-            return false;
-        }
-
-        for (String key : map.keySet()) {
-            if (!map.get(key)
-                    .equals(other.map.get(key))) {
-                return false;
+    public Config deepMutableConfig(String key) {
+        String[] parts = key.split("[.]", 2);
+        if (parts.length == 2) {
+            if (!containsKey(parts[0])) {
+                if ("up".equals(parts[0]) && up != null) {
+                    return up.deepMutableConfig(parts[1]);
+                } else {
+                    putConfig(key, new Config(this));
+                }
             }
+            return getValue(parts[0]).asConfig().deepMutableConfig(parts[1]);
         }
-        return true;
+        return mutableConfig(key);
+    }
+
+    public Config putBoolean(String key, boolean value) throws ConfigException {
+        put(key, Value.create(value));
+        return this;
+    }
+
+    public Config putInteger(String key, int value) {
+        put(key, Value.create(value));
+        return this;
+    }
+
+    public Config putLong(String key, long value) {
+        put(key, Value.create(value));
+        return this;
+    }
+
+    public Config putDouble(String key, double value) {
+        put(key, Value.create(value));
+        return this;
+    }
+
+    public Config putString(String key, String value) {
+        if (value == null) {
+            throw new IllegalArgumentException();
+        }
+        put(key, Value.create(value));
+        return this;
+    }
+
+    public Config putSequence(String key, Sequence value) {
+        if (value == null) {
+            throw new IllegalArgumentException();
+        }
+        put(key, Value.create(value));
+        return this;
+    }
+
+    public Config putConfig(String key, Config value) {
+        if (value == null) {
+            throw new IllegalArgumentException();
+        }
+        put(key, Value.create(value));
+        return this;
+    }
+
+    public Config putValue(String key, Value value) {
+        put(key, value);
+        return this;
     }
 
     @Override
@@ -303,112 +312,13 @@ public class Config {
             }
             builder.append(key)
                    .append(":")
-                   .append(map.get(key).value.toString());
+                   .append(get(key).value.toString());
         }
 
         builder.append(')');
         return builder.toString();
     }
 
-    public Builder mutate() {
-        return new Builder(this);
-    }
-
-    public static Builder builder() {
-        return new Builder();
-    }
-
-    public static class Builder {
-        private final Map<String, Value> map;
-
-        public Builder() {
-            map = new HashMap<>();
-        }
-
-        public Builder(Config base) {
-            map = new HashMap<>();
-            map.putAll(base.map);
-        }
-
-        public void putAll(Config other) {
-            map.putAll(other.map);
-        }
-
-        public Builder putBoolean(String key, boolean value) throws ConfigException {
-            map.put(key, Value.create(value));
-            return this;
-        }
-
-        public Builder putInteger(String key, int value) {
-            map.put(key, Value.create(value));
-            return this;
-        }
-
-        public Builder putLong(String key, long value) {
-            map.put(key, Value.create(value));
-            return this;
-        }
-
-        public Builder putDouble(String key, double value) {
-            map.put(key, Value.create(value));
-            return this;
-        }
-
-        public Builder putString(String key, String value) {
-            if (value == null) {
-                throw new IllegalArgumentException();
-            }
-            map.put(key, Value.create(value));
-            return this;
-        }
-
-        public Builder putSequence(String key, Sequence value) {
-            if (value == null) {
-                throw new IllegalArgumentException();
-            }
-            map.put(key, Value.create(value));
-            return this;
-        }
-
-        public Builder putConfig(String key, Config value) {
-            if (value == null) {
-                throw new IllegalArgumentException();
-            }
-            map.put(key, Value.create(value));
-            return this;
-        }
-
-        public Builder putValue(String key, Value value) {
-            map.put(key, value);
-            return this;
-        }
-
-        public Value get(String key) {
-            return map.get(key);
-        }
-
-        public boolean containsKey(String key) {
-            return map.containsKey(key);
-        }
-
-        public Builder clear(String key) {
-            map.remove(key);
-            return this;
-        }
-
-        public Builder clear() {
-            map.clear();
-            return this;
-        }
-
-        public Config build() {
-            Config cfg = new Config();
-            cfg.map.putAll(map);
-            return cfg;
-        }
-    }
-
-    // --- PRIVATE ---
-
-    private final Map<String, Value> map;
+    // --- private
+    private final Config up;
 }

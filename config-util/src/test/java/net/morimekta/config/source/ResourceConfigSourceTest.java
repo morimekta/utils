@@ -22,15 +22,12 @@ public class ResourceConfigSourceTest {
 
         Config config = source.load();
 
-        Config expected = Config.builder()
-                                .putString("s", "string value.")
-                                .putInteger("i", 1234)
-                                .putConfig("conf", Config.builder()
-                                                         .putString("sub_str", "another string value.")
-                                                         .putDouble("real", 1234.5678)
-                                                         .build())
-                                .putSequence("sequence", Sequence.create(1.0, 2.0, 3.0))
-                                .build();
+        Config expected = new Config()
+                .putString("s", "string value.")
+                .putInteger("i", 1234)
+                .putSequence("sequence", Sequence.create(1.0, 2.0, 3.0))
+                .putConfig("conf", new Config().putString("sub_str", "another string value.")
+                                               .putDouble("real", 1234.5678));
 
         assertEquals(expected, config);
     }

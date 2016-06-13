@@ -3,7 +3,7 @@ package net.morimekta.config;
 /**
  * Created by morimekta on 2/25/16.
  */
-public class ConfigException extends Exception {
+public class ConfigException extends RuntimeException {
     public ConfigException(String message, Object... params) {
         super(String.format(message, params));
     }

@@ -17,30 +17,13 @@ import static org.junit.Assert.fail;
  * Tests for sequence objects.
  */
 public class SequenceTest {
-    @Test
-    public void testBuilder() {
-        Sequence.Builder builder = Sequence.builder(Value.Type.NUMBER);
-
-        assertEquals(0, builder.size());
-        assertEquals(Value.Type.NUMBER, builder.type());
-    }
 
     @Test
     public void testNumberSequence() {
-        Sequence sequence1 = Sequence.builder(Value.Type.NUMBER)
-                                     .add(2)
-                                     .build();
-        Sequence sequence1l = Sequence.builder(Value.Type.NUMBER)
-                                      .add(2L)
-                                      .build();
-        Sequence sequence2 = Sequence.builder(Value.Type.NUMBER)
-                                     .add(2)
-                                     .add(5)
-                                     .build();
-        Sequence sequence3 = Sequence.builder(Value.Type.NUMBER)
-                                     .add(5)
-                                     .add(2)
-                                     .build();
+        Sequence sequence1 = Sequence.create(2);
+        Sequence sequence1l = Sequence.create(2L);
+        Sequence sequence2 = Sequence.create(2, 5);
+        Sequence sequence3 = Sequence.create(5, 2);
 
         assertEquals(sequence1, sequence1);
         assertNotEquals(sequence1, null);
@@ -53,20 +36,10 @@ public class SequenceTest {
 
     @Test
     public void testStringSequence() {
-        Sequence sequence1 = Sequence.builder(Value.Type.STRING)
-                                     .add("a")
-                                     .build();
-        Sequence sequence1l = Sequence.builder(Value.Type.STRING)
-                                      .add("a")
-                                      .build();
-        Sequence sequence2 = Sequence.builder(Value.Type.STRING)
-                                     .add("a")
-                                     .add("b")
-                                     .build();
-        Sequence sequence3 = Sequence.builder(Value.Type.STRING)
-                                     .add("a")
-                                     .insert(0, "b")
-                                     .build();
+        Sequence sequence1 = Sequence.create("a");
+        Sequence sequence1l = Sequence.create("a");
+        Sequence sequence2 = Sequence.create("a", "b");
+        Sequence sequence3 = Sequence.create("a");
 
         assertEquals(sequence1, sequence1);
         assertNotEquals(sequence1, null);
@@ -79,20 +52,10 @@ public class SequenceTest {
 
     @Test
     public void testBooleanSequence() {
-        Sequence sequence1 = Sequence.builder(Value.Type.BOOLEAN)
-                                     .add(true)
-                                     .build();
-        Sequence sequence1l = Sequence.builder(Value.Type.BOOLEAN)
-                                      .add(true)
-                                      .build();
-        Sequence sequence2 = Sequence.builder(Value.Type.BOOLEAN)
-                                     .add(true)
-                                     .add(false)
-                                     .build();
-        Sequence sequence3 = Sequence.builder(Value.Type.BOOLEAN)
-                                     .add(true)
-                                     .insert(0, false)
-                                     .build();
+        Sequence sequence1 = Sequence.create(true);
+        Sequence sequence1l = Sequence.create(true);
+        Sequence sequence2 = Sequence.create(true, false);
+        Sequence sequence3 = Sequence.create(false, true);
 
         assertEquals(sequence1, sequence1);
         assertNotEquals(sequence1, null);
@@ -115,10 +78,7 @@ public class SequenceTest {
 
     @Test
     public void testIterator() {
-        Sequence sequence3 = Sequence.builder(Value.Type.STRING)
-                                     .add("a")
-                                     .insert(0, "b")
-                                     .build();
+        Sequence sequence3 = Sequence.create("b", "a");
         Iterator<?> it = sequence3.iterator();
 
         assertTrue(it.hasNext());
@@ -131,9 +91,7 @@ public class SequenceTest {
 
     @Test
     public void testGetString() throws ConfigException {
-        Sequence sequence3 = Sequence.builder(Value.Type.STRING)
-                                     .addAll("a", "b")
-                                     .build();
+        Sequence sequence3 = Sequence.create("a", "b");
 
         assertEquals("a", sequence3.getString(0));
         assertEquals("b", sequence3.getString(1));
@@ -141,9 +99,7 @@ public class SequenceTest {
 
     @Test
     public void testGetNumber() throws ConfigException {
-        Sequence sequence3 = Sequence.builder(Value.Type.NUMBER)
-                                     .addAll(1, 5L, 12.34)
-                                     .build();
+        Sequence sequence3 = Sequence.create(1, 5L, 12.34);
 
         assertEquals(1, sequence3.getInteger(0));
         assertEquals(5L, sequence3.getLong(1));
@@ -152,31 +108,27 @@ public class SequenceTest {
 
     @Test
     public void testGetBoolean() throws ConfigException {
-        Sequence sequence3 = Sequence.builder(Value.Type.BOOLEAN)
-                                     .addAll(true)
-                                     .build();
+        Sequence sequence3 = Sequence.create(true);
 
         assertTrue(sequence3.getBoolean(0));
     }
 
     @Test
     public void testBadGet() {
-        Sequence sequence3 = Sequence.builder(Value.Type.BOOLEAN)
-                                     .addAll(true)
-                                     .build();
+        Sequence sequence3 = Sequence.create(true);
 
         try {
             sequence3.get(-1);
             fail("No exception on bad get index");
-        } catch (IllegalArgumentException e) {
-            assertEquals("Invalid index -1", e.getMessage());
+        } catch (ArrayIndexOutOfBoundsException e) {
+            assertEquals("-1", e.getMessage());
         }
 
         try {
             sequence3.get(1);
             fail("No exception on bad get index");
         } catch (IndexOutOfBoundsException e) {
-            assertEquals("Index 1 outside range of sequence length 1", e.getMessage());
+            assertEquals("Index: 1, Size: 1", e.getMessage());
         }
     }
 
@@ -192,19 +144,17 @@ public class SequenceTest {
 
     @Test
     public void testBadAdd() {
-        assertBadAdd("Not a string value: Config", Value.Type.STRING, Config.builder().build());
-        assertBadAdd("Not a boolean value: String", Value.Type.BOOLEAN, "true");
-        assertBadAdd("Not a boolean value: Integer", Value.Type.BOOLEAN, 1);
-        assertBadAdd("Not a boolean value: Double", Value.Type.BOOLEAN, 1.0);
-        assertBadAdd("Not a number value: Boolean", Value.Type.NUMBER, true);
-        assertBadAdd("Not a number value: String", Value.Type.NUMBER, "1");
-        assertBadAdd("Not a number value: Object", Value.Type.NUMBER, new Object());
+        assertBadAdd("Not a string value: Config", Value.Type.STRING, new Config());
+        assertBadAdd("Not a boolean value: truth", Value.Type.BOOLEAN, "truth");
+        assertBadAdd("Not a boolean value: 1.1", Value.Type.BOOLEAN, 1.1);
+        assertBadAdd("Not a number value: true", Value.Type.NUMBER, true);
+        assertBadAdd("Not a number type: java.lang.Object", Value.Type.NUMBER, new Object());
         assertBadAdd("Not a config type: String", Value.Type.CONFIG, "{a:b}");
         assertBadAdd("Not a sequence type: String", Value.Type.SEQUENCE, "[a,b]");
     }
 
     private <T> void assertBadAdd(String message, Value.Type seqType, T value) {
-        Sequence.Builder seq = Sequence.builder(seqType);
+        Sequence seq = new Sequence(seqType);
 
         try {
             seq.add(value);
@@ -216,22 +166,21 @@ public class SequenceTest {
 
     @Test
     public void testBadInsert() {
-        assertBadInsert("Illegal insert index -1", Value.Type.BOOLEAN, -1, true);
-        assertBadInsert("Insert index 2 outside range of sequence length 1", Value.Type.BOOLEAN, 2, "true");
+        assertBadInsert("Index: -1, Size: 1", Value.Type.BOOLEAN, -1, true);
+        assertBadInsert("Index: 2, Size: 1", Value.Type.BOOLEAN, 2, "true");
 
-        assertBadInsert("Not a string value: Config", Value.Type.STRING, 0, Config.builder().build());
-        assertBadInsert("Not a boolean value: String", Value.Type.BOOLEAN, 0, "true");
-        assertBadInsert("Not a boolean value: Integer", Value.Type.BOOLEAN, 0, 1);
-        assertBadInsert("Not a boolean value: Double", Value.Type.BOOLEAN, 0, 1.0);
-        assertBadInsert("Not a number value: Boolean", Value.Type.NUMBER, 0, true);
-        assertBadInsert("Not a number value: String", Value.Type.NUMBER, 0, "1");
-        assertBadInsert("Not a number value: Object", Value.Type.NUMBER, 0, new Object());
+        assertBadInsert("Not a string value: Config", Value.Type.STRING, 0, new Config());
+        assertBadInsert("Not a boolean value: truth", Value.Type.BOOLEAN, 0, "truth");
+        assertBadInsert("Not a boolean value: -1", Value.Type.BOOLEAN, 0, -1);
+        assertBadInsert("Not a boolean value: 1.0", Value.Type.BOOLEAN, 0, 1.0);
+        assertBadInsert("Not a number value: true", Value.Type.NUMBER, 0, true);
+        assertBadInsert("Not a number type: java.lang.Object", Value.Type.NUMBER, 0, new Object());
         assertBadInsert("Not a config type: String", Value.Type.CONFIG, 0, "{a:b}");
         assertBadInsert("Not a sequence type: String", Value.Type.SEQUENCE, 0, "[a,b]");
     }
 
     private void assertBadInsert(String message, Value.Type seqType, int i, Object value) {
-        Sequence.Builder seq = Sequence.builder(seqType);
+        Sequence seq = new Sequence(seqType);
         switch (seqType) {
             case BOOLEAN:
                 seq.addValue(Value.create(true));
@@ -245,7 +194,7 @@ public class SequenceTest {
         }
 
         try {
-            seq.insert(i, value);
+            seq.add(i, value);
             fail("No exception on bad add");
         } catch (Throwable e) {
             assertEquals(message, e.getMessage());
@@ -254,68 +203,78 @@ public class SequenceTest {
 
     @Test
     public void testBuilderGetValue() {
-        Sequence.Builder seq = Sequence.builder(Value.Type.STRING).add(5);
+        Sequence seq = new Sequence(Value.Type.STRING);
+        seq.add(5);
 
         assertEquals(Value.create("5"), seq.getValue(0));
     }
 
     @Test
     public void testBuilderBadGetValue() {
-        Sequence.Builder seq = Sequence.builder(Value.Type.STRING).add(5);
+        Sequence seq = new Sequence(Value.Type.STRING);
+        seq.add(5);
 
         try {
             seq.getValue(-1);
             fail("No exception on invalid getValue index.");
-        } catch (IllegalArgumentException e) {
-            assertEquals("Invalid index -1", e.getMessage());
+        } catch (ArrayIndexOutOfBoundsException e) {
+            assertEquals("-1", e.getMessage());
         }
 
         try {
             seq.getValue(1);
             fail("No exception on invalid getValue index.");
         } catch (IndexOutOfBoundsException e) {
-            assertEquals("Index 1 outside range of sequence length 1", e.getMessage());
+            assertEquals("Index: 1, Size: 1", e.getMessage());
         }
     }
 
     @Test
     public void testBuilderRemove() {
-        Sequence.Builder seq = Sequence.builder(Value.Type.STRING).add(5).add(10);
+        Sequence seq = new Sequence(Value.Type.STRING);
+        seq.add(5);
+        seq.add(10);
 
         seq.remove(0);
 
-        assertEquals(Sequence.builder(Value.Type.STRING).add(10).build(),
-                     seq.build());
+        Sequence seq2 = new Sequence(Value.Type.STRING);
+        seq2.add(10);
+
+        assertEquals(seq, seq2);
 
 
         try {
             seq.remove(-1);
             fail("No exception on invalid getValue index.");
-        } catch (IllegalArgumentException e) {
-            assertEquals("Illegal remove index -1", e.getMessage());
+        } catch (ArrayIndexOutOfBoundsException e) {
+            assertEquals("-1", e.getMessage());
         }
 
         try {
             seq.remove(1);
             fail("No exception on invalid getValue index.");
         } catch (IndexOutOfBoundsException e) {
-            assertEquals("Remove index 1 outside range of sequence length 1", e.getMessage());
+            assertEquals("Index: 1, Size: 1", e.getMessage());
         }
     }
 
     @Test
     public void testBuilderRemoveLast() {
-        Sequence.Builder seq = Sequence.builder(Value.Type.STRING).add(5).add(10);
+        Sequence seq = new Sequence(Value.Type.STRING);
+        seq.add(5);
+        seq.add(10);
 
         seq.removeLast();
 
-        assertEquals(Sequence.builder(Value.Type.STRING).add(5).build(),
-                     seq.build());
+        Sequence seq2 = new Sequence(Value.Type.STRING);
+        seq2.add(5);
+
+        assertEquals(seq2, seq);
 
         seq.removeLast();
 
-        assertEquals(Sequence.builder(Value.Type.STRING).build(),
-                     seq.build());
+        assertEquals(new Sequence(Value.Type.STRING),
+                     seq);
 
         try {
             seq.removeLast();
@@ -327,33 +286,37 @@ public class SequenceTest {
 
     @Test
     public void testBuilderReplace() {
-        Sequence.Builder seq = Sequence.builder(Value.Type.STRING).add(5).add(10);
+        Sequence seq = new Sequence(Value.Type.STRING);
+        seq.add(5);
+        seq.add(10);
 
         seq.replaceValue(0, Value.create(100));
 
-        assertEquals(Sequence.builder(Value.Type.STRING).add(100).add(10).build(),
-                     seq.build());
+        assertEquals(new Sequence(Value.Type.STRING, 100, 10),
+                     seq);
 
         try {
             seq.replaceValue(-1, Value.create(0));
             fail("No exception from invalid index");
-        } catch (IllegalArgumentException e) {
-            assertEquals("Illegal replace index -1", e.getMessage());
+        } catch (ArrayIndexOutOfBoundsException e) {
+            assertEquals("-1", e.getMessage());
         }
 
         try {
             seq.replaceValue(2, Value.create(0));
             fail("No exception from invalid index");
         } catch (IndexOutOfBoundsException e) {
-            assertEquals("Replace index 2 outside range of sequence length 2", e.getMessage());
+            assertEquals("Index: 2, Size: 2", e.getMessage());
         }
     }
 
     @Test
     public void testBuilderAddAll() {
-        Sequence.Builder seq = Sequence.builder(Value.Type.STRING).add(5).add(10);
+        Sequence seq = new Sequence(Value.Type.STRING, 5, 10);
 
         Collection<?> coll = Collections.singletonList(15);
         seq.addAll(coll);
+
+        assertEquals(new Sequence(Value.Type.STRING, 5, 10, 15), seq);
     }
 }
