@@ -12,6 +12,8 @@ import java.util.TreeMap;
  * implementing generic entry adders (put, putAll), and type unsafe getters.
  */
 public class Config extends TreeMap<String, Value> {
+    public static final String UP = "up";
+
     public Config() {
         this.up = null;
     }
@@ -76,7 +78,7 @@ public class Config extends TreeMap<String, Value> {
         if (parts.length == 2) {
             if (super.containsKey(parts[0])) {
                 return getConfig(parts[0]).deepGetValueInternal(parts[1]);
-            } else if ("up".equals(parts[0])) {
+            } else if (UP.equals(parts[0])) {
                 if (up == null) {
                     throw new KeyNotFoundException("No way to navigate \"up\", no context found.");
                 } else {
@@ -101,7 +103,7 @@ public class Config extends TreeMap<String, Value> {
             if (super.containsKey(parts[0])) {
                 return getConfig(parts[0]).deepContainsKey(parts[1]);
             } else {
-                return "up".equals(parts[0]) && up != null && up.deepContainsKey(parts[1]);
+                return UP.equals(parts[0]) && up != null && up.deepContainsKey(parts[1]);
             }
         }
         return containsKey(parts[0]);
@@ -238,7 +240,7 @@ public class Config extends TreeMap<String, Value> {
         String[] parts = key.split("[.]", 2);
         if (parts.length == 2) {
             if (!containsKey(parts[0])) {
-                if ("up".equals(parts[0]) && up != null) {
+                if (UP.equals(parts[0]) && up != null) {
                     return up.deepMutableConfig(parts[1]);
                 } else {
                     putConfig(key, new Config(this));
