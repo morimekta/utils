@@ -46,7 +46,7 @@ public class ValueTest {
         assertBadBoolean("Unable to parse the string \"foo\" to boolean", create("foo"));
         assertBadBoolean("Unable to convert number 4 to boolean", create(4));
         assertBadBoolean("Unable to convert double value to boolean", create(4.4));
-        assertBadBoolean("Unable to convert type SEQUENCE to a boolean", create(new Sequence(Value.Type.BOOLEAN)));
+        assertBadBoolean("Unable to convert type SEQUENCE to a boolean", create(new MutableSequence(Value.Type.BOOLEAN)));
     }
 
     private void assertAsBoolean(Value value, boolean b) throws ConfigException {
@@ -140,7 +140,7 @@ public class ValueTest {
                      create(1234).asString());
 
         try {
-            create(Sequence.create("A")).asString();
+            create(ImmutableSequence.create("A")).asString();
         } catch (ConfigException e) {
             assertEquals("Unable to convert SEQUENCE to a string", e.getMessage());
         }
@@ -148,8 +148,8 @@ public class ValueTest {
 
     @Test
     public void testAsSequence() throws ConfigException {
-        assertEquals(Sequence.create("A"),
-                     create(Sequence.create("A")).asSequence());
+        assertEquals(ImmutableSequence.create("A"),
+                     create(ImmutableSequence.create("A")).asSequence());
 
         try {
             create("string").asSequence();

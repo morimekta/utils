@@ -197,7 +197,7 @@ public class Value {
     static Object fromObject(Type type, Object elem) {
         switch (type) {
             case STRING:
-                if ((elem instanceof Sequence) || (elem instanceof Config)) {
+                if ((elem instanceof ImmutableSequence) || (elem instanceof Config)) {
                     throw new IllegalArgumentException("Not a string value: " + elem.getClass()
                                                                                     .getSimpleName());
                 }
@@ -234,8 +234,7 @@ public class Value {
                     } else {
                         return Long.parseLong(val);
                     }
-                }
-                if (elem.toString().startsWith(elem.getClass().getName() + "@")) {
+                } else if (elem.toString().startsWith(elem.getClass().getName() + "@")) {
                     throw new IllegalArgumentException("Not a number type: " + elem.getClass().getName());
                 } else {
                     throw new IllegalArgumentException("Not a number value: " + elem.toString());

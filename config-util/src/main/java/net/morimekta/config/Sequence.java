@@ -1,316 +1,167 @@
 package net.morimekta.config;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.stream.Collector;
-
-import static net.morimekta.config.Value.fromObject;
-import static net.morimekta.config.Value.fromValue;
+import java.util.stream.Stream;
 
 /**
- * Immutable sequence of values of the same type. And the sequence is statically
- * annotated with the type of the values within the sequence.
+ * A sequence of values with type safe getter methods.
  */
-public class Sequence extends ArrayList<Object> {
+public interface Sequence extends Iterable<Object> {
     /**
-     * Create an immutable sequence.
-     * @param type The type of elements. Note that a sequence cannot contain
-     *             sequences.
+     * Get the types of values stored in the sequence. A sequence should
+     * only contain one type of values to be type consistent.
+     *
+     * @return The value item type.
      */
-    public Sequence(Value.Type type) {
-        super();
-        this.type = type;
-    }
+    Value.Type type();
 
     /**
-     * Create an immutable sequence.
-     * @param type The type of elements. Note that a sequence cannot contain
-     *             sequences.
-     * @param content The contained collection.
+     * The number of entries in the sequence.
+     *
+     * @return Sequence size.
      */
-    @SuppressWarnings("unchecked")
-    public Sequence(Value.Type type, Collection<?> content) {
-        super();
-        this.type = type;
-        addAll(content);
-    }
+    int size();
 
-    public Sequence(Value.Type type, Object... values) {
-        super();
-        this.type = type;
-        addAll(values);
-    }
+    /**
+     * Get an item from the sequence.
+     *
+     * @param i The item index.
+     * @param <T> The item class.
+     * @return The item.
+     * @throws IndexOutOfBoundsException If index is outside the sequence size.
+     */
+    <T> T get(int i);
 
-    public Value.Type type() {
-        return type;
-    }
+    /**
+     * Get value at index as a boolean.
+     * @param i The item index.
+     * @return The item.
+     * @throws IndexOutOfBoundsException If index is outside the sequence size.
+     */
+    boolean getBoolean(int i);
 
-    public boolean getBoolean(int i) throws ConfigException {
-        return getValue(i).asBoolean();
-    }
-    
-    public boolean[] asBooleanArray() throws ConfigException {
-        boolean[] out = new boolean[size()];
-        for (int i = 0; i < size(); ++i) {
-            out[i] = getBoolean(i);
-        }
-        return out;
-    }
+    /**
+     * Get the sequence as a boolean array.
+     *
+     * @return The boolean array.
+     * @throws IncompatibleValueException If any value could not be converted.
+     */
+    boolean[] asBooleanArray();
 
-    public int getInteger(int i) throws ConfigException {
-        return getValue(i).asInteger();
-    }
-    
-    public int[] asIntegerArray() throws ConfigException {
-        int[] out = new int[size()];
-        for (int i = 0; i < size(); ++i) {
-            out[i] = getInteger(i);
-        }
-        return out;
-    }
+    /**
+     * Get value at index as a integer.
+     * @param i The item index.
+     * @return The item.
+     * @throws IndexOutOfBoundsException If index is outside the sequence size.
+     */
+    int getInteger(int i);
 
-    public long getLong(int i) throws ConfigException {
-        return getValue(i).asLong();
-    }
+    /**
+     * Get the sequence as an integer array.
+     *
+     * @return The boolean array.
+     * @throws IncompatibleValueException If any value could not be converted.
+     */
+    int[] asIntegerArray();
 
-    public long[] asLongArray() throws ConfigException {
-        long[] out = new long[size()];
-        for (int i = 0; i < size(); ++i) {
-            out[i] = getLong(i);
-        }
-        return out;
-    }
+    /**
+     * Get value at index as a long.
+     * @param i The item index.
+     * @return The item.
+     * @throws IndexOutOfBoundsException If index is outside the sequence size.
+     */
+    long getLong(int i);
 
-    public double getDouble(int i) throws ConfigException {
-        return getValue(i).asDouble();
-    }
+    /**
+     * Get the sequence as a long array.
+     *
+     * @return The boolean array.
+     * @throws IncompatibleValueException If any value could not be converted.
+     */
+    long[] asLongArray();
 
-    public double[] asDoubleArray() throws ConfigException {
-        double[] out = new double[size()];
-        for (int i = 0; i < size(); ++i) {
-            out[i] = getDouble(i);
-        }
-        return out;
-    }
+    /**
+     * Get value at index as a double.
+     * @param i The item index.
+     * @return The item.
+     * @throws IndexOutOfBoundsException If index is outside the sequence size.
+     */
+    double getDouble(int i);
 
-    public String getString(int i) throws ConfigException {
-        return getValue(i).asString();
-    }
+    /**
+     * Get the sequence as a double array.
+     *
+     * @return The boolean array.
+     * @throws IncompatibleValueException If any value could not be converted.
+     */
+    double[] asDoubleArray();
 
-    public String[] asStringArray() throws ConfigException {
-        String[] out = new String[size()];
-        for (int i = 0; i < size(); ++i) {
-            out[i] = getString(i);
-        }
-        return out;
-    }
+    /**
+     * Get value at index as a string.
+     * @param i The item index.
+     * @return The item.
+     * @throws IndexOutOfBoundsException If index is outside the sequence size.
+     */
+    String getString(int i);
 
-    public Sequence getSequence(int i) throws ConfigException {
-        return getValue(i).asSequence();
-    }
+    /**
+     * Get the sequence as a string array.
+     *
+     * @return The boolean array.
+     * @throws IncompatibleValueException If any value could not be converted.
+     */
+    String[] asStringArray();
 
-    public Sequence[] asSequenceArray() throws ConfigException {
-        Sequence[] out = new Sequence[size()];
-        for (int i = 0; i < size(); ++i) {
-            out[i] = getSequence(i);
-        }
-        return out;
-    }
+    /**
+     * Get value at index as a sequence.
+     * @param i The item index.
+     * @return The item.
+     * @throws IndexOutOfBoundsException If index is outside the sequence size.
+     */
+    Sequence getSequence(int i);
 
-    public Config getConfig(int i) throws ConfigException {
-        return getValue(i).asConfig();
-    }
+    /**
+     * Get the sequence as a sequence array.
+     *
+     * @return The boolean array.
+     * @throws IncompatibleValueException If any value could not be converted.
+     */
+    Sequence[] asSequenceArray();
 
-    public Config[] asConfigArray() throws ConfigException {
-        Config[] out = new Config[size()];
-        for (int i = 0; i < size(); ++i) {
-            out[i] = getConfig(i);
-        }
-        return out;
-    }
+    /**
+     * Get value at index as a config.
+     * @param i The item index.
+     * @return The item.
+     * @throws IndexOutOfBoundsException If index is outside the sequence size.
+     */
+    Config getConfig(int i);
 
-    public Value getValue(int i) {
-        return new Value(type, get(i));
-    }
+    /**
+     * Get the sequence as a config array.
+     *
+     * @return The boolean array.
+     * @throws IncompatibleValueException If any value could not be converted.
+     */
+    Config[] asConfigArray();
 
-    public Value[] asValueArray() {
-        Value[] out = new Value[size()];
-        for (int i = 0; i < size(); ++i) {
-            out[i] = getValue(i);
-        }
-        return out;
-    }
+    /**
+     * Get value at index.
+     * @param i The item index.
+     * @return The item.
+     * @throws IndexOutOfBoundsException If index is outside the sequence size.
+     */
+    Value getValue(int i);
 
-    @Override
-    public boolean equals(Object o) {
-        if (o == this) {
-            return true;
-        }
-        if (o == null || !(o instanceof Sequence)) {
-            return false;
-        }
-        Sequence other = (Sequence) o;
-        if (other.type() != type || other.size() != size()) {
-            return false;
-        }
+    /**
+     * Get the sequence as a value array.
+     *
+     * @return The boolean array.
+     */
+    Value[] asValueArray();
 
-        if (type == Value.Type.NUMBER) {
-            for (int i = 0; i < size(); ++i) {
-                if (((Number) get(i)).doubleValue() != ((Number) other.get(i)).doubleValue()) {
-                    return false;
-                }
-            }
-        } else {
-            for (int i = 0; i < size(); ++i) {
-                if (!get(i).equals(other.get(i))) {
-                    return false;
-                }
-            }
-        }
-
-        return true;
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder builder = new StringBuilder(getClass().getSimpleName());
-        builder.append('(')
-               .append(type.toString().toLowerCase())
-               .append(':')
-               .append('[');
-
-        boolean first = true;
-        for (Object o : this) {
-            if (first) {
-                first = false;
-            } else {
-                builder.append(',');
-            }
-            builder.append(o.toString());
-        }
-
-        builder.append(']')
-               .append(')');
-        return builder.toString();
-    }
-
-    public static Collector<Object, Sequence, Sequence> collect(final Value.Type type) {
-        return Collector.of(() -> new Sequence(type),
-                            Sequence::add,
-                            (a, b) -> {
-                                a.addAll(b);
-                                return a;
-                            },
-                            i -> i);
-    }
-
-    public static Sequence create(String... values) {
-        Sequence builder = new Sequence(Value.Type.STRING);
-        for (String val : values) {
-            builder.add(val);
-        }
-        return builder;
-    }
-
-    public static Sequence create(int... values) {
-        Sequence builder = new Sequence(Value.Type.NUMBER);
-        for (int val : values) {
-            builder.add(val);
-        }
-        return builder;
-    }
-
-    public static Sequence create(long... values) {
-        Sequence builder = new Sequence(Value.Type.NUMBER);
-        for (long val : values) {
-            builder.add(val);
-        }
-        return builder;
-    }
-
-    public static Sequence create(double... values) {
-        Sequence builder = new Sequence(Value.Type.NUMBER);
-        for (double val : values) {
-            builder.add(val);
-        }
-        return builder;
-    }
-
-    public static Sequence create(boolean... values) {
-        Sequence builder = new Sequence(Value.Type.BOOLEAN);
-        for (boolean val : values) {
-            builder.add(val);
-        }
-        return builder;
-    }
-
-    public Object set(int i, Object elem) {
-        return super.set(i, fromObject(type, elem));
-    }
-
-    public boolean add(Object elem) {
-        return super.add(fromObject(type, elem));
-    }
-
-    public void add(int pos, Object elem) {
-        super.add(pos, fromObject(type, elem));
-    }
-
-    public Sequence setValue(int i, Value value) {
-        super.set(i, fromValue(type, value));
-        return this;
-    }
-
-    public Sequence addValue(Value value) {
-        super.add(fromValue(type, value));
-        return this;
-    }
-
-    public Sequence addValue(int i, Value value) {
-        super.add(i, fromValue(type, value));
-        return this;
-    }
-
-    @SuppressWarnings("unchecked")
-    public Sequence replaceValue(int i, Value value) {
-        set(i, fromValue(type, value));
-        return this;
-    }
-
-    public Sequence removeLast() {
-        if (size() == 0) {
-            throw new IllegalStateException("Unable to remove last of empty sequence");
-        }
-        remove(size() - 1);
-        return this;
-    }
-
-    public boolean addAll(Collection<?> coll) {
-        boolean ret = false;
-        for (Object o : coll) {
-            ret |= add(o);
-        }
-        return ret;
-    }
-
-    public boolean addAll(int pos, Collection<?> coll) {
-        boolean ret = false;
-        for (Object o : coll) {
-            add(pos++, o);
-            ret = true;
-        }
-        return ret;
-    }
-
-    public boolean addAll(Object... coll) {
-        boolean ret = false;
-        for (Object o : coll) {
-            ret |= add(o);
-        }
-        return ret;
-    }
-
-    // --- INTERNAL ---
-
-    private final Value.Type type;
+    /**
+     * Get the sequence as a stream.
+     *
+     * @return The stream.
+     */
+    Stream<Object> stream();
 }

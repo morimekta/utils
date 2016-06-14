@@ -2,7 +2,7 @@ package net.morimekta.config.source;
 
 import net.morimekta.config.Config;
 import net.morimekta.config.ConfigException;
-import net.morimekta.config.Sequence;
+import net.morimekta.config.ImmutableSequence;
 import net.morimekta.config.format.JsonConfigFormat;
 
 import org.junit.Test;
@@ -25,7 +25,7 @@ public class ResourceConfigSourceTest {
         Config expected = new Config()
                 .putString("s", "string value.")
                 .putInteger("i", 1234)
-                .putSequence("sequence", Sequence.create(1.0, 2.0, 3.0))
+                .putSequence("sequence", ImmutableSequence.create(1.0, 2.0, 3.0))
                 .putConfig("conf", new Config().putString("sub_str", "another string value.")
                                                .putDouble("real", 1234.5678));
 

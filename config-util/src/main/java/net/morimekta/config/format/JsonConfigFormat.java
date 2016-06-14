@@ -2,6 +2,7 @@ package net.morimekta.config.format;
 
 import net.morimekta.config.Config;
 import net.morimekta.config.ConfigException;
+import net.morimekta.config.MutableSequence;
 import net.morimekta.config.IncompatibleValueException;
 import net.morimekta.config.Sequence;
 import net.morimekta.config.Value;
@@ -105,7 +106,7 @@ public class JsonConfigFormat implements ConfigFormat {
     @SuppressWarnings("unchecked")
     protected Sequence parseSequence(Config context, JsonTokenizer tokenizer, JsonToken token)
             throws ConfigException, IOException, JsonException {
-        Sequence builder = null;
+        MutableSequence builder = null;
         char sep = token.charAt(0);
         while (sep != JsonToken.kListEnd) {
             token = tokenizer.expect("Array value.");
@@ -114,13 +115,13 @@ public class JsonConfigFormat implements ConfigFormat {
                     switch (token.charAt(0)) {
                         case JsonToken.kMapStart:
                             if (builder == null) {
-                                builder = new Sequence(Value.Type.CONFIG);
+                                builder = new MutableSequence(Value.Type.CONFIG);
                             }
                             builder.add(parseConfig(new Config(context), tokenizer, token));
                             break;
                         case JsonToken.kListStart:
                             if (builder == null) {
-                                builder = new Sequence(Value.Type.SEQUENCE);
+                                builder = new MutableSequence(Value.Type.SEQUENCE);
                             }
                             // Configs contained within sequences will have it's "up" context
                             // always set to the config that contains the "root" sequence.
@@ -132,13 +133,13 @@ public class JsonConfigFormat implements ConfigFormat {
                     break;
                 case LITERAL:
                     if (builder == null) {
-                        builder = new Sequence(Value.Type.STRING);
+                        builder = new MutableSequence(Value.Type.STRING);
                     }
                     builder.add(token.decodeJsonLiteral());
                     break;
                 case NUMBER:
                     if (builder == null) {
-                        builder = new Sequence(Value.Type.NUMBER);
+                        builder = new MutableSequence(Value.Type.NUMBER);
                     }
                     if (token.isInteger()) {
                         builder.add(token.longValue());
@@ -151,7 +152,7 @@ public class JsonConfigFormat implements ConfigFormat {
                         throw new IncompatibleValueException("Unrecognized value token " + token.asString());
                     }
                     if (builder == null) {
-                        builder = new Sequence(Value.Type.BOOLEAN);
+                        builder = new MutableSequence(Value.Type.BOOLEAN);
                     }
                     builder.add(token.booleanValue());
                     break;
@@ -163,7 +164,7 @@ public class JsonConfigFormat implements ConfigFormat {
         }
 
         if (builder == null) {
-            builder = new Sequence(Value.Type.STRING);
+            builder = new MutableSequence(Value.Type.STRING);
         }
 
         return builder;

@@ -16,54 +16,91 @@ import static org.junit.Assert.fail;
 /**
  * Tests for sequence objects.
  */
-public class SequenceTest {
+public class ImmutableSequenceTest {
+    @Test
+    public void testBuilder() {
+        ImmutableSequence.Builder builder = ImmutableSequence.builder(Value.Type.NUMBER);
+
+        assertEquals(0, builder.size());
+        assertEquals(Value.Type.NUMBER, builder.type());
+    }
 
     @Test
     public void testNumberSequence() {
-        Sequence sequence1 = Sequence.create(2);
-        Sequence sequence1l = Sequence.create(2L);
-        Sequence sequence2 = Sequence.create(2, 5);
-        Sequence sequence3 = Sequence.create(5, 2);
+        ImmutableSequence sequence1 = ImmutableSequence.builder(Value.Type.NUMBER)
+                                     .add(2)
+                                     .build();
+        ImmutableSequence sequence1l = ImmutableSequence.builder(Value.Type.NUMBER)
+                                      .add(2L)
+                                      .build();
+        ImmutableSequence sequence2 = ImmutableSequence.builder(Value.Type.NUMBER)
+                                     .add(2)
+                                     .add(5)
+                                     .build();
+        ImmutableSequence sequence3 = ImmutableSequence.builder(Value.Type.NUMBER)
+                                     .add(5)
+                                     .add(2)
+                                     .build();
 
         assertEquals(sequence1, sequence1);
         assertNotEquals(sequence1, null);
         assertEquals(sequence1, sequence1l);
         assertNotEquals(sequence1, sequence2);
         assertNotEquals(sequence2, sequence3);
-        assertEquals("Sequence(number:[2])", sequence1.toString());
-        assertEquals("Sequence(number:[2,5])", sequence2.toString());
+        assertEquals("ImmutableSequence(number:[2])", sequence1.toString());
+        assertEquals("ImmutableSequence(number:[2,5])", sequence2.toString());
     }
 
     @Test
     public void testStringSequence() {
-        Sequence sequence1 = Sequence.create("a");
-        Sequence sequence1l = Sequence.create("a");
-        Sequence sequence2 = Sequence.create("a", "b");
-        Sequence sequence3 = Sequence.create("a");
+        ImmutableSequence sequence1 = ImmutableSequence.builder(Value.Type.STRING)
+                                     .add("a")
+                                     .build();
+        ImmutableSequence sequence1l = ImmutableSequence.builder(Value.Type.STRING)
+                                      .add("a")
+                                      .build();
+        ImmutableSequence sequence2 = ImmutableSequence.builder(Value.Type.STRING)
+                                     .add("a")
+                                     .add("b")
+                                     .build();
+        ImmutableSequence sequence3 = ImmutableSequence.builder(Value.Type.STRING)
+                                     .add("a")
+                                     .add(0, "b")
+                                     .build();
 
         assertEquals(sequence1, sequence1);
         assertNotEquals(sequence1, null);
         assertEquals(sequence1, sequence1l);
         assertNotEquals(sequence1, sequence2);
         assertNotEquals(sequence2, sequence3);
-        assertEquals("Sequence(string:[a])", sequence1.toString());
-        assertEquals("Sequence(string:[a,b])", sequence2.toString());
+        assertEquals("ImmutableSequence(string:[a])", sequence1.toString());
+        assertEquals("ImmutableSequence(string:[a,b])", sequence2.toString());
     }
 
     @Test
     public void testBooleanSequence() {
-        Sequence sequence1 = Sequence.create(true);
-        Sequence sequence1l = Sequence.create(true);
-        Sequence sequence2 = Sequence.create(true, false);
-        Sequence sequence3 = Sequence.create(false, true);
+        ImmutableSequence sequence1 = ImmutableSequence.builder(Value.Type.BOOLEAN)
+                                     .add(true)
+                                     .build();
+        ImmutableSequence sequence1l = ImmutableSequence.builder(Value.Type.BOOLEAN)
+                                      .add(true)
+                                      .build();
+        ImmutableSequence sequence2 = ImmutableSequence.builder(Value.Type.BOOLEAN)
+                                     .add(true)
+                                     .add(false)
+                                     .build();
+        ImmutableSequence sequence3 = ImmutableSequence.builder(Value.Type.BOOLEAN)
+                                     .add(true)
+                                     .add(0, false)
+                                     .build();
 
         assertEquals(sequence1, sequence1);
         assertNotEquals(sequence1, null);
         assertEquals(sequence1, sequence1l);
         assertNotEquals(sequence1, sequence2);
         assertNotEquals(sequence2, sequence3);
-        assertEquals("Sequence(boolean:[true])", sequence1.toString());
-        assertEquals("Sequence(boolean:[true,false])", sequence2.toString());
+        assertEquals("ImmutableSequence(boolean:[true])", sequence1.toString());
+        assertEquals("ImmutableSequence(boolean:[true,false])", sequence2.toString());
     }
 
     @Test
@@ -78,7 +115,10 @@ public class SequenceTest {
 
     @Test
     public void testIterator() {
-        Sequence sequence3 = Sequence.create("b", "a");
+        ImmutableSequence sequence3 = ImmutableSequence.builder(Value.Type.STRING)
+                                     .add("a")
+                                     .add(0, "b")
+                                     .build();
         Iterator<?> it = sequence3.iterator();
 
         assertTrue(it.hasNext());
@@ -91,7 +131,9 @@ public class SequenceTest {
 
     @Test
     public void testGetString() throws ConfigException {
-        Sequence sequence3 = Sequence.create("a", "b");
+        ImmutableSequence sequence3 = ImmutableSequence.builder(Value.Type.STRING)
+                                     .addAll("a", "b")
+                                     .build();
 
         assertEquals("a", sequence3.getString(0));
         assertEquals("b", sequence3.getString(1));
@@ -99,7 +141,9 @@ public class SequenceTest {
 
     @Test
     public void testGetNumber() throws ConfigException {
-        Sequence sequence3 = Sequence.create(1, 5L, 12.34);
+        ImmutableSequence sequence3 = ImmutableSequence.builder(Value.Type.NUMBER)
+                                     .addAll(1, 5L, 12.34)
+                                     .build();
 
         assertEquals(1, sequence3.getInteger(0));
         assertEquals(5L, sequence3.getLong(1));
@@ -108,19 +152,23 @@ public class SequenceTest {
 
     @Test
     public void testGetBoolean() throws ConfigException {
-        Sequence sequence3 = Sequence.create(true);
+        ImmutableSequence sequence3 = ImmutableSequence.builder(Value.Type.BOOLEAN)
+                                     .addAll(true)
+                                     .build();
 
         assertTrue(sequence3.getBoolean(0));
     }
 
     @Test
     public void testBadGet() {
-        Sequence sequence3 = Sequence.create(true);
+        ImmutableSequence sequence3 = ImmutableSequence.builder(Value.Type.BOOLEAN)
+                                     .addAll(true)
+                                     .build();
 
         try {
             sequence3.get(-1);
             fail("No exception on bad get index");
-        } catch (ArrayIndexOutOfBoundsException e) {
+        } catch (IndexOutOfBoundsException e) {
             assertEquals("-1", e.getMessage());
         }
 
@@ -137,16 +185,17 @@ public class SequenceTest {
         Collection<Integer> coll = new LinkedList<>();
         Collections.addAll(coll, 44, 32);
 
-        Sequence seq = coll.stream().collect(Sequence.collect(Value.Type.STRING));
+        Sequence seq = coll.stream().collect(ImmutableSequence.collect(Value.Type.STRING));
 
-        assertEquals("Sequence(string:[44,32])", seq.toString());
+        assertEquals("ImmutableSequence(string:[44,32])", seq.toString());
     }
 
     @Test
     public void testBadAdd() {
         assertBadAdd("Not a string value: Config", Value.Type.STRING, new Config());
         assertBadAdd("Not a boolean value: truth", Value.Type.BOOLEAN, "truth");
-        assertBadAdd("Not a boolean value: 1.1", Value.Type.BOOLEAN, 1.1);
+        assertBadAdd("Not a boolean value: -1", Value.Type.BOOLEAN, -1);
+        assertBadAdd("Not a boolean value: 1.0", Value.Type.BOOLEAN, 1.0);
         assertBadAdd("Not a number value: true", Value.Type.NUMBER, true);
         assertBadAdd("Not a number type: java.lang.Object", Value.Type.NUMBER, new Object());
         assertBadAdd("Not a config type: String", Value.Type.CONFIG, "{a:b}");
@@ -154,7 +203,7 @@ public class SequenceTest {
     }
 
     private <T> void assertBadAdd(String message, Value.Type seqType, T value) {
-        Sequence seq = new Sequence(seqType);
+        ImmutableSequence.Builder seq = ImmutableSequence.builder(seqType);
 
         try {
             seq.add(value);
@@ -166,7 +215,7 @@ public class SequenceTest {
 
     @Test
     public void testBadInsert() {
-        assertBadInsert("Index: -1, Size: 1", Value.Type.BOOLEAN, -1, true);
+        assertBadInsert("-1", Value.Type.BOOLEAN, -1, true);
         assertBadInsert("Index: 2, Size: 1", Value.Type.BOOLEAN, 2, "true");
 
         assertBadInsert("Not a string value: Config", Value.Type.STRING, 0, new Config());
@@ -180,7 +229,7 @@ public class SequenceTest {
     }
 
     private void assertBadInsert(String message, Value.Type seqType, int i, Object value) {
-        Sequence seq = new Sequence(seqType);
+        ImmutableSequence.Builder seq = ImmutableSequence.builder(seqType);
         switch (seqType) {
             case BOOLEAN:
                 seq.addValue(Value.create(true));
@@ -203,21 +252,19 @@ public class SequenceTest {
 
     @Test
     public void testBuilderGetValue() {
-        Sequence seq = new Sequence(Value.Type.STRING);
-        seq.add(5);
+        ImmutableSequence.Builder seq = ImmutableSequence.builder(Value.Type.STRING).add(5);
 
         assertEquals(Value.create("5"), seq.getValue(0));
     }
 
     @Test
     public void testBuilderBadGetValue() {
-        Sequence seq = new Sequence(Value.Type.STRING);
-        seq.add(5);
+        ImmutableSequence.Builder seq = ImmutableSequence.builder(Value.Type.STRING).add(5);
 
         try {
             seq.getValue(-1);
             fail("No exception on invalid getValue index.");
-        } catch (ArrayIndexOutOfBoundsException e) {
+        } catch (IndexOutOfBoundsException e) {
             assertEquals("-1", e.getMessage());
         }
 
@@ -231,22 +278,18 @@ public class SequenceTest {
 
     @Test
     public void testBuilderRemove() {
-        Sequence seq = new Sequence(Value.Type.STRING);
-        seq.add(5);
-        seq.add(10);
+        ImmutableSequence.Builder seq = ImmutableSequence.builder(Value.Type.STRING).add(5).add(10);
 
         seq.remove(0);
 
-        Sequence seq2 = new Sequence(Value.Type.STRING);
-        seq2.add(10);
-
-        assertEquals(seq, seq2);
+        assertEquals(ImmutableSequence.builder(Value.Type.STRING).add(10).build(),
+                     seq.build());
 
 
         try {
             seq.remove(-1);
             fail("No exception on invalid getValue index.");
-        } catch (ArrayIndexOutOfBoundsException e) {
+        } catch (IndexOutOfBoundsException e) {
             assertEquals("-1", e.getMessage());
         }
 
@@ -260,21 +303,17 @@ public class SequenceTest {
 
     @Test
     public void testBuilderRemoveLast() {
-        Sequence seq = new Sequence(Value.Type.STRING);
-        seq.add(5);
-        seq.add(10);
+        ImmutableSequence.Builder seq = ImmutableSequence.builder(Value.Type.STRING).add(5).add(10);
 
         seq.removeLast();
 
-        Sequence seq2 = new Sequence(Value.Type.STRING);
-        seq2.add(5);
-
-        assertEquals(seq2, seq);
+        assertEquals(ImmutableSequence.builder(Value.Type.STRING).add(5).build(),
+                     seq.build());
 
         seq.removeLast();
 
-        assertEquals(new Sequence(Value.Type.STRING),
-                     seq);
+        assertEquals(ImmutableSequence.builder(Value.Type.STRING).build(),
+                     seq.build());
 
         try {
             seq.removeLast();
@@ -286,24 +325,22 @@ public class SequenceTest {
 
     @Test
     public void testBuilderReplace() {
-        Sequence seq = new Sequence(Value.Type.STRING);
-        seq.add(5);
-        seq.add(10);
+        ImmutableSequence.Builder seq = ImmutableSequence.builder(Value.Type.STRING).add(5).add(10);
 
-        seq.replaceValue(0, Value.create(100));
+        seq.setValue(0, Value.create(100));
 
-        assertEquals(new Sequence(Value.Type.STRING, 100, 10),
-                     seq);
+        assertEquals(ImmutableSequence.builder(Value.Type.STRING).add(100).add(10).build(),
+                     seq.build());
 
         try {
-            seq.replaceValue(-1, Value.create(0));
+            seq.setValue(-1, Value.create(0));
             fail("No exception from invalid index");
-        } catch (ArrayIndexOutOfBoundsException e) {
+        } catch (IndexOutOfBoundsException e) {
             assertEquals("-1", e.getMessage());
         }
 
         try {
-            seq.replaceValue(2, Value.create(0));
+            seq.setValue(2, Value.create(0));
             fail("No exception from invalid index");
         } catch (IndexOutOfBoundsException e) {
             assertEquals("Index: 2, Size: 2", e.getMessage());
@@ -312,11 +349,9 @@ public class SequenceTest {
 
     @Test
     public void testBuilderAddAll() {
-        Sequence seq = new Sequence(Value.Type.STRING, 5, 10);
+        ImmutableSequence.Builder seq = ImmutableSequence.builder(Value.Type.STRING).add(5).add(10);
 
         Collection<?> coll = Collections.singletonList(15);
         seq.addAll(coll);
-
-        assertEquals(new Sequence(Value.Type.STRING, 5, 10, 15), seq);
     }
 }
