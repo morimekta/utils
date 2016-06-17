@@ -2,12 +2,13 @@ package net.morimekta.config;
 
 import com.google.common.collect.ImmutableMap;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.Spliterator;
-import java.util.stream.Collectors;
+import java.util.TreeSet;
 
 /**
  * Immutable config container. It enforces deep immutability of all values,
@@ -22,56 +23,24 @@ public class ImmutableConfig extends Config {
         map = ImmutableMap.of();
     }
 
-    /**
-     * Create an immutable copy of a config.
-     * @param base the config to be based on.
-     */
-    private ImmutableConfig(Config base) {
-        if (base != null) {
-            ImmutableMap.Builder<String, Value> builder = ImmutableMap.builder();
-            base.entrySet()
-                .forEach(e -> {
-                    switch (e.getType()) {
-                        case CONFIG:
-                            builder.put(e.getKey(), ImmutableValue.create(copyOf(e.asConfig())));
-                            break;
-                        case SEQUENCE:
-                            builder.put(e.getKey(), ImmutableValue.create(ImmutableSequence.copyOf(e.asSequence())));
-                            break;
-                        default:
-                            builder.put(e.getKey(), ImmutableValue.copyOf(e.getValue()));
-                            break;
-                    }
-                });
-            map = builder.build();
-        } else {
-            map = ImmutableMap.of();
-        }
-    }
-
-    private ImmutableConfig(Map<String, Value> values) {
-        ImmutableMap.Builder<String, Value> builder = ImmutableMap.builder();
-        values.forEach((k, v) -> {
-            switch (v.getType()) {
-                case CONFIG:
-                    builder.put(k, ImmutableValue.create(copyOf(v.asConfig())));
-                    break;
-                case SEQUENCE:
-                    builder.put(k, ImmutableValue.create(ImmutableSequence.copyOf(v.asSequence())));
-                    break;
-                default:
-                    builder.put(k, ImmutableValue.copyOf(v));
-                    break;
-            }
-        });
+    private ImmutableConfig(Collection<Entry> entries) {
+        ImmutableMap.Builder<String, Entry> builder = ImmutableMap.builder();
+        entries.forEach(e -> builder.put(e.getKey(), e));
         map = builder.build();
     }
 
-    public static Config copyOf(Config config) {
-        if (config instanceof ImmutableConfig) {
-            return config;
+    /**
+     * Make a copy of the other config. If the other config is an ImmutableConfig
+     * the same instance will be returned.
+     *
+     * @param base The base config
+     * @return The immutable copy.
+     */
+    public static Config copyOf(Config base) {
+        if (base instanceof ImmutableConfig) {
+            return base;
         } else {
-            return new ImmutableConfig(config);
+            return new ImmutableConfig.Builder(base).build();
         }
     }
 
@@ -82,18 +51,12 @@ public class ImmutableConfig extends Config {
 
     @Override
     public Set<Entry> entrySet() {
-        return map.entrySet()
-                  .stream()
-                  .map(e -> new ImmutableEntry(e.getKey(), e.getValue()))
-                  .collect(Collectors.toSet());
+        return new TreeSet<>(map.values());
     }
 
+    @Override
     protected int spliteratorCapabilities() {
-        return Spliterator.IMMUTABLE |
-               Spliterator.DISTINCT |
-               Spliterator.NONNULL |
-               Spliterator.SIZED |
-               Spliterator.SUBSIZED;
+        return Spliterator.IMMUTABLE | super.spliteratorCapabilities();
     }
 
     @Override
@@ -111,7 +74,7 @@ public class ImmutableConfig extends Config {
         if (!map.containsKey(key)) {
             throw new KeyNotFoundException("No such key " + key);
         }
-        return map.get(key);
+        return map.get(key).getValue();
     }
 
     public Builder mutate() {
@@ -122,80 +85,40 @@ public class ImmutableConfig extends Config {
         return new Builder();
     }
 
-    public static class Builder {
-        private final Map<String, Value> map;
+    public static class Builder implements ConfigBuilder<Builder> {
+        private final Map<String, Entry> map;
 
         public Builder() {
             map = new HashMap<>();
         }
 
-        public Builder(ImmutableConfig base) {
+        public Builder(Config base) {
             map = new HashMap<>();
-            map.putAll(base.map);
+            base.entrySet().forEach(e -> putValue(e.getKey(), e.getValue()));
         }
 
-        public void putAll(ImmutableConfig other) {
-            map.putAll(other.map);
-        }
-
-        public Builder putBoolean(String key, boolean value) throws ConfigException {
-            map.put(key, ImmutableValue.create(value));
-            return this;
-        }
-
-        public Builder putInteger(String key, int value) {
-            map.put(key, ImmutableValue.create(value));
-            return this;
-        }
-
-        public Builder putLong(String key, long value) {
-            map.put(key, ImmutableValue.create(value));
-            return this;
-        }
-
-        public Builder putDouble(String key, double value) {
-            map.put(key, ImmutableValue.create(value));
-            return this;
-        }
-
-        public Builder putString(String key, String value) {
-            if (value == null) {
-                throw new IllegalArgumentException();
+        public Builder putValue(String key, Value e) {
+            switch (e.getType()) {
+                case CONFIG:
+                    map.put(key,
+                            new ImmutableEntry(key,
+                                               ImmutableValue.create(copyOf(e.asConfig()))));
+                    break;
+                case SEQUENCE:
+                    map.put(key,
+                            new ImmutableEntry(key,
+                                               ImmutableValue.create(ImmutableSequence.copyOf(e.asSequence()))));
+                    break;
+                default:
+                    map.put(key,
+                            new ImmutableEntry(key,
+                                               ImmutableValue.copyOf(e)));
+                    break;
             }
-            map.put(key, ImmutableValue.create(value));
             return this;
         }
 
-        public Builder putSequence(String key, Sequence value) {
-            if (value == null) {
-                throw new IllegalArgumentException();
-            }
-            map.put(key, ImmutableValue.create(value));
-            return this;
-        }
-
-        public Builder putConfig(String key, Config value) {
-            if (value == null) {
-                throw new IllegalArgumentException();
-            }
-            map.put(key, ImmutableValue.create(value));
-            return this;
-        }
-
-        public Builder putValue(String key, Value value) {
-            map.put(key, ImmutableValue.copyOf(value));
-            return this;
-        }
-
-        public Value get(String key) {
-            return map.get(key);
-        }
-
-        public boolean containsKey(String key) {
-            return map.containsKey(key);
-        }
-
-        public Builder clear(String key) {
+        public Builder remove(String key) {
             map.remove(key);
             return this;
         }
@@ -206,11 +129,11 @@ public class ImmutableConfig extends Config {
         }
 
         public ImmutableConfig build() {
-            return new ImmutableConfig(map);
+            return new ImmutableConfig(map.values());
         }
     }
 
     // --- PRIVATE ---
 
-    private final Map<String, Value> map;
+    private final Map<String, Entry> map;
 }

@@ -3,19 +3,16 @@ package net.morimekta.config;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.ConcurrentModificationException;
-import java.util.Iterator;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 /**
  * Immutable sequence of values of the same getType. And the sequence is statically
  * annotated with the getType of the values within the sequence.
  */
-public class ImmutableSequence implements Sequence {
+public class ImmutableSequence extends Sequence {
     private static final int characteristics =
             Spliterator.ORDERED |
             Spliterator.SIZED |
@@ -58,182 +55,6 @@ public class ImmutableSequence implements Sequence {
     public Object get(int i) {
         checkRange(i);
         return seq[i];
-    }
-
-    @Override
-    public boolean getBoolean(int i) throws ConfigException {
-        return getValue(i).asBoolean();
-    }
-    
-    @Override
-    public boolean[] asBooleanArray() throws ConfigException {
-        boolean[] out = new boolean[size()];
-        for (int i = 0; i < size(); ++i) {
-            out[i] = getBoolean(i);
-        }
-        return out;
-    }
-
-    @Override
-    public int getInteger(int i) throws ConfigException {
-        return getValue(i).asInteger();
-    }
-    
-    @Override
-    public int[] asIntegerArray() throws ConfigException {
-        int[] out = new int[size()];
-        for (int i = 0; i < size(); ++i) {
-            out[i] = getInteger(i);
-        }
-        return out;
-    }
-
-    @Override
-    public long getLong(int i) throws ConfigException {
-        return getValue(i).asLong();
-    }
-
-    @Override
-    public long[] asLongArray() throws ConfigException {
-        long[] out = new long[size()];
-        for (int i = 0; i < size(); ++i) {
-            out[i] = getLong(i);
-        }
-        return out;
-    }
-
-    @Override
-    public double getDouble(int i) throws ConfigException {
-        return getValue(i).asDouble();
-    }
-
-    @Override
-    public double[] asDoubleArray() throws ConfigException {
-        double[] out = new double[size()];
-        for (int i = 0; i < size(); ++i) {
-            out[i] = getDouble(i);
-        }
-        return out;
-    }
-
-    @Override
-    public String getString(int i) throws ConfigException {
-        return getValue(i).asString();
-    }
-
-    @Override
-    public String[] asStringArray() throws ConfigException {
-        String[] out = new String[size()];
-        for (int i = 0; i < size(); ++i) {
-            out[i] = getString(i);
-        }
-        return out;
-    }
-
-    @Override
-    public Sequence getSequence(int i) throws ConfigException {
-        return getValue(i).asSequence();
-    }
-
-    @Override
-    public Sequence[] asSequenceArray() throws ConfigException {
-        Sequence[] out = new Sequence[size()];
-        for (int i = 0; i < size(); ++i) {
-            out[i] = getSequence(i);
-        }
-        return out;
-    }
-
-    @Override
-    public Config getConfig(int i) throws ConfigException {
-        return getValue(i).asConfig();
-    }
-
-    @Override
-    public Config[] asConfigArray() throws ConfigException {
-        Config[] out = new Config[size()];
-        for (int i = 0; i < size(); ++i) {
-            out[i] = getConfig(i);
-        }
-        return out;
-    }
-
-    @Override
-    public Value getValue(int i) {
-        checkRange(i);
-        return new ImmutableValue(type, get(i));
-    }
-
-    @Override
-    public Value[] asValueArray() {
-        Value[] out = new Value[size()];
-        for (int i = 0; i < size(); ++i) {
-            out[i] = getValue(i);
-        }
-        return out;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (o == this) {
-            return true;
-        }
-        if (o == null || !(o instanceof Sequence)) {
-            return false;
-        }
-
-        Sequence other = (Sequence) o;
-        if (other.getType() != type || other.size() != size()) {
-            return false;
-        }
-
-        if (type == Value.Type.NUMBER) {
-            for (int i = 0; i < size(); ++i) {
-                if (((Number) get(i)).doubleValue() != ((Number) other.get(i)).doubleValue()) {
-                    return false;
-                }
-            }
-        } else {
-            for (int i = 0; i < size(); ++i) {
-                if (!get(i).equals(other.get(i))) {
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder builder = new StringBuilder(getClass().getSimpleName());
-        builder.append('(')
-               .append(type.toString().toLowerCase())
-               .append(':')
-               .append('[');
-
-        boolean first = true;
-        for (Object o : seq) {
-            if (first) {
-                first = false;
-            } else {
-                builder.append(',');
-            }
-            builder.append(o.toString());
-        }
-
-        builder.append(']')
-               .append(')');
-        return builder.toString();
-    }
-
-    @Override
-    public Iterator<Object> iterator() {
-        return Spliterators.iterator(spliterator());
-    }
-
-    @Override
-    public Stream<Object> stream() {
-        return StreamSupport.stream(spliterator(), true);
     }
 
     @Override
@@ -326,17 +147,6 @@ public class ImmutableSequence implements Sequence {
         }
     }
 
-    private void checkRange(int i) {
-        if (i < 0) {
-            throw new IndexOutOfBoundsException(Integer.toString(i));
-        }
-        if (i >= seq.length) {
-            throw new IndexOutOfBoundsException(
-                    "Index: " + i + ", Size: " +
-                    seq.length);
-        }
-    }
-
     public static class Builder {
         private final Value.Type        type;
         private final ArrayList<Object> seq;
@@ -410,7 +220,7 @@ public class ImmutableSequence implements Sequence {
 
         public Builder addValue(int i, Value value) {
             checkInsertRange(i);
-            seq.add(i, immutable(value));
+            seq.add(i, immutable(value.getValue()));
             return this;
         }
 

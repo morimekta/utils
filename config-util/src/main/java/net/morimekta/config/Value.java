@@ -146,6 +146,12 @@ public abstract class Value {
     }
 
     @Override
+    public int hashCode() {
+        return 32917 * getType().hashCode() ^
+               54709 * getValue().hashCode();
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (o == this) return true;
         if (o == null || !(o instanceof Value)) return false;

@@ -1,29 +1,19 @@
 package net.morimekta.config;
 
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.stream.Collectors;
+import java.util.TreeSet;
 
 /**
- * Base configuration object. Essentially a getType-safe map from a string key that
- * can look parent more than one level into the map (if referencing config objects
- * within the config object). This way, if the config contains a config object
- * on key 'b', then deepGetString('b.c') will look for key 'c' in the config 'b'.
+ * Mutable configuration object. It does not enforce type mutability, and will
+ * keep a reference to the base config if provided.
  *
- * <ul>
- *   <li>The get* and put* methods work as on the map itself.
- *   <li>The deepGet* and deepPut methods work deep into the config.
- *   <li>The mutableConfig and deepMutableConfig replaces put and
- *       deepPut for config. Note: The putConfig method is still there
- *       in case a soft reference is desired.
- * </ul>
- *
- * The map is mutable as it is there to be used for manipulating the config during
- * parsing and
+ * NOTE: Changed in values on the base config does *not* propagate to the
+ * mutable config after it's creation. The map is mutable as it is there to be
+ * used for manipulating the config during parsing or generation.
  */
-public class MutableConfig extends Config {
+public class MutableConfig extends Config implements ConfigBuilder<MutableConfig> {
     /**
      * Create an empty config instance.
      */
@@ -47,9 +37,15 @@ public class MutableConfig extends Config {
      * @param base The base config (or super-config).
      */
     public MutableConfig(MutableConfig parent, Config base) {
-        this.map = new TreeMap<>();
         this.parent = parent;
         this.base = base;
+
+        this.map = new TreeMap<>();
+        if (base != null) {
+            for (Entry entry : base.entrySet()) {
+                this.map.put(entry.getKey(), entry);
+            }
+        }
     }
 
     /**
@@ -69,90 +65,6 @@ public class MutableConfig extends Config {
     }
 
     /**
-     * Put a boolean value into the config.
-     *
-     * @param key The key to put at.
-     * @param value The value to put.
-     * @return The config.
-     */
-    public MutableConfig putBoolean(String key, boolean value) {
-        map.put(key, ImmutableValue.create(value));
-        return this;
-    }
-
-    /**
-     * Put an integer value into the config.
-     *
-     * @param key The key to put at.
-     * @param value The value to put.
-     * @return The config.
-     */
-    public MutableConfig putInteger(String key, int value) {
-        map.put(key, ImmutableValue.create(value));
-        return this;
-    }
-
-    /**
-     * Put a long value into the config.
-     *
-     * @param key The key to put at.
-     * @param value The value to put.
-     * @return The config.
-     */
-    public MutableConfig putLong(String key, long value) {
-        map.put(key, ImmutableValue.create(value));
-        return this;
-    }
-
-    /**
-     * Put a double value into the config.
-     *
-     * @param key The key to put at.
-     * @param value The value to put.
-     * @return The config.
-     */
-    public MutableConfig putDouble(String key, double value) {
-        map.put(key, ImmutableValue.create(value));
-        return this;
-    }
-
-    /**
-     * Put a string value into the config.
-     *
-     * @param key The key to put at.
-     * @param value The value to put.
-     * @return The config.
-     */
-    public MutableConfig putString(String key, String value) {
-        map.put(key, ImmutableValue.create(value));
-        return this;
-    }
-
-    /**
-     * Put a sequence value into the config.
-     *
-     * @param key The key to put at.
-     * @param value The value to put.
-     * @return The config.
-     */
-    public MutableConfig putSequence(String key, Sequence value) {
-        map.put(key, ImmutableValue.create(value));
-        return this;
-    }
-
-    /**
-     * Put a config value into the config.
-     *
-     * @param key The key to put at.
-     * @param value The value to put.
-     * @return The config.
-     */
-    public MutableConfig putConfig(String key, Config value) {
-        map.put(key, ImmutableValue.create(value));
-        return this;
-    }
-
-    /**
      * Get a mutable config value. If a config does not exists for the given
      * key, one is created. If a value that is not a config exists for the key
      * an exception is thrown.
@@ -164,21 +76,21 @@ public class MutableConfig extends Config {
      */
     public MutableConfig mutableConfig(String key) {
         MutableConfig cfg;
-        if (!map.containsKey(key)) {
-            if (base != null && base.containsKey(key)) {
-                cfg = new MutableConfig(this, base.getConfig(key));
-            } else {
-                cfg = new MutableConfig(this);
-            }
-            map.put(key, ImmutableValue.create(cfg));
-        } else {
+        if (map.containsKey(key)) {
             Config existing = map.get(key).asConfig();
             if (existing instanceof MutableConfig) {
                 cfg = (MutableConfig) existing;
+                if (cfg.getBase() != this) {
+                    cfg = new MutableConfig(this, existing);
+                    putConfig(key, cfg);
+                }
             } else {
                 cfg = new MutableConfig(this, existing);
-                map.put(key, ImmutableValue.create(cfg));
+                putConfig(key, cfg);
             }
+        } else {
+            cfg = new MutableConfig(this);
+            putConfig(key, cfg);
         }
         return cfg;
     }
@@ -191,10 +103,26 @@ public class MutableConfig extends Config {
      * @return The config.
      */
     public MutableConfig putValue(String key, Value value) {
-        map.put(key, value);
+        map.put(key, new ImmutableEntry(key, value));
         return this;
     }
 
+    /**
+     * Remove entry with the given key.
+     *
+     * @param key The key to remove.
+     * @return The config.
+     */
+    public MutableConfig remove(String key) {
+        map.remove(key);
+        return this;
+    }
+
+    /**
+     * Clear the config.
+     *
+     * @return The config.
+     */
     public MutableConfig clear() {
         map.clear();
         return this;
@@ -207,40 +135,30 @@ public class MutableConfig extends Config {
 
     @Override
     public Set<String> keySet() {
-        Set<String> ks = new HashSet<>(map.keySet());
-        if (base != null) {
-            ks.addAll(base.keySet());
-        }
-        return ks;
+        return map.keySet();
     }
 
     @Override
     public Set<Entry> entrySet() {
-        return keySet().stream()
-                       .map(k -> new ImmutableEntry(k, getValue(k)))
-                       .collect(Collectors.toSet());
+        return new TreeSet<>(map.values());
     }
 
     @Override
     public Value getValue(String key) {
         if (!map.containsKey(key)) {
-            if (base != null && base.containsKey(key)) {
-                return base.getValue(key);
-            }
             throw new KeyNotFoundException("No such key " + key);
         }
-        return map.get(key);
+        return map.get(key).getValue();
     }
 
     @Override
     public boolean containsKey(String key) {
-        return map.containsKey(key) ||
-               (base != null && base.containsKey(key));
+        return map.containsKey(key);
     }
 
     // --- private
 
-    private final Map<String, Value> map;
+    private final Map<String, Entry> map;
     private final MutableConfig parent;
     private final Config base;
 

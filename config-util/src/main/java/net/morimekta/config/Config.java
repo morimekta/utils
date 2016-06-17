@@ -121,7 +121,7 @@ public abstract class Config {
         }
     }
 
-    protected static class ImmutableEntry implements Entry {
+    public final static class ImmutableEntry implements Entry {
         private final String key;
         private final Value value;
 
@@ -138,6 +138,31 @@ public abstract class Config {
         @Override
         public Value getValue() {
             return value;
+        }
+
+        @Override
+        public int hashCode() {
+            return 44293 * getKey().hashCode() ^
+                   36109 * getValue().hashCode();
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (o == this) return true;
+            if (o == null || !(o instanceof Entry)) return false;
+
+            Entry other = (Entry) o;
+            return other.getKey().equals(getKey()) &&
+                   other.getValue().equals(getValue());
+        }
+
+        @Override
+        public String toString() {
+            return "ImmutableEntry(" +
+                   getKey() +
+                   ':' +
+                   getValue().toString() +
+                   ')';
         }
     }
 

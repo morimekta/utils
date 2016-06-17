@@ -3,7 +3,7 @@ package net.morimekta.config;
 /**
  * Immutable value that can only contain the true config types.
  */
-public class ImmutableValue extends Value {
+public final class ImmutableValue extends Value {
     private final Type   type;
     private final Object value;
 
@@ -22,7 +22,7 @@ public class ImmutableValue extends Value {
 
     public static ImmutableValue copyOf(Value value) {
         if (value == null) {
-            throw new ConfigException("Cannot instantiate null value");
+            throw new ConfigException("Cannot copy null");
         }
         if (value instanceof ImmutableValue) {
             return (ImmutableValue) value;
