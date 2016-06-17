@@ -2,8 +2,9 @@ package net.morimekta.config.format;
 
 import net.morimekta.config.Config;
 import net.morimekta.config.ConfigException;
-import net.morimekta.config.MutableSequence;
+import net.morimekta.config.ImmutableConfig;
 import net.morimekta.config.IncompatibleValueException;
+import net.morimekta.config.MutableSequence;
 import net.morimekta.config.Sequence;
 import net.morimekta.config.Value;
 import net.morimekta.util.json.JsonException;
@@ -15,7 +16,7 @@ import net.morimekta.util.json.PrettyJsonWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Map;
+import java.util.TreeSet;
 
 /**
  * Config Formatter for JSON object syntax.
@@ -50,7 +51,7 @@ public class JsonConfigFormat implements ConfigFormat {
             if (!token.isSymbol(JsonToken.kMapStart)) {
                 throw new ConfigException("");
             }
-            return parseConfig(new Config(), tokenizer, token);
+            return parseConfig(tokenizer, token);
         } catch (JsonException|IOException e) {
             throw new ConfigException("", e);
         }
@@ -58,8 +59,9 @@ public class JsonConfigFormat implements ConfigFormat {
 
     // --- INTERNAL ---
 
-    protected Config parseConfig(Config config, JsonTokenizer tokenizer, JsonToken token)
+    protected Config parseConfig(JsonTokenizer tokenizer, JsonToken token)
             throws ConfigException, IOException, JsonException {
+        ImmutableConfig.Builder config = ImmutableConfig.builder();
         char sep = token.charAt(0);
         while (sep != JsonToken.kMapEnd) {
             JsonToken jkey = tokenizer.expect("Map key.");
@@ -72,10 +74,10 @@ public class JsonConfigFormat implements ConfigFormat {
                 case SYMBOL:
                     switch (token.charAt(0)) {
                         case JsonToken.kMapStart:
-                            parseConfig(config.mutableConfig(key), tokenizer, token);
+                            config.putConfig(key, parseConfig(tokenizer, token));
                             break;
                         case JsonToken.kListStart:
-                            config.putSequence(key, parseSequence(config, tokenizer, token));
+                            config.putSequence(key, parseSequence(tokenizer, token));
                             break;
                     }
                     break;
@@ -100,11 +102,11 @@ public class JsonConfigFormat implements ConfigFormat {
             sep = tokenizer.expectSymbol("", JsonToken.kMapEnd, JsonToken.kListSep);
         }
 
-        return config;
+        return config.build();
     }
 
     @SuppressWarnings("unchecked")
-    protected Sequence parseSequence(Config context, JsonTokenizer tokenizer, JsonToken token)
+    protected Sequence parseSequence(JsonTokenizer tokenizer, JsonToken token)
             throws ConfigException, IOException, JsonException {
         MutableSequence builder = null;
         char sep = token.charAt(0);
@@ -117,7 +119,7 @@ public class JsonConfigFormat implements ConfigFormat {
                             if (builder == null) {
                                 builder = new MutableSequence(Value.Type.CONFIG);
                             }
-                            builder.add(parseConfig(new Config(context), tokenizer, token));
+                            builder.add(parseConfig(tokenizer, token));
                             break;
                         case JsonToken.kListStart:
                             if (builder == null) {
@@ -125,7 +127,7 @@ public class JsonConfigFormat implements ConfigFormat {
                             }
                             // Configs contained within sequences will have it's "up" context
                             // always set to the config that contains the "root" sequence.
-                            builder.add(parseSequence(context, tokenizer, token));
+                            builder.add(parseSequence(tokenizer, token));
                             break;
                         default:
                             throw new IllegalArgumentException();
@@ -174,14 +176,15 @@ public class JsonConfigFormat implements ConfigFormat {
             throws JsonException, ConfigException {
         writer.object();
 
-        for (Map.Entry<String, Value > entry : config.entrySet()) {
+        // Make sure entries are ordered (makes the output consistent).
+        for (Config.Entry entry : new TreeSet<>(config.entrySet())) {
             writer.key(entry.getKey());
-            switch (entry.getValue().type) {
+            switch (entry.getValue().getType()) {
                 case STRING:
                     writer.value(entry.getValue().asString());
                     break;
                 case NUMBER:
-                    if (entry.getValue().value instanceof Double) {
+                    if (entry.getValue().getValue() instanceof Double) {
                         writer.value(entry.getValue().asDouble());
                     } else {
                         writer.value(entry.getValue().asLong());
@@ -197,7 +200,7 @@ public class JsonConfigFormat implements ConfigFormat {
                     formatTo(writer, entry.getValue().asSequence());
                     break;
                 default:
-                    throw new ConfigException("Unhandled getType in formatter: " + entry.getValue().type);
+                    throw new ConfigException("Unhandled getType in formatter: " + entry.getValue().getType());
             }
         }
         writer.endObject();
@@ -207,25 +210,25 @@ public class JsonConfigFormat implements ConfigFormat {
             throws JsonException, ConfigException {
         writer.array();
         for (Value item : sequence.asValueArray()) {
-            switch (item.type) {
+            switch (item.getType()) {
                 case STRING:
-                    writer.value((String) item.value);
+                    writer.value(item.asString());
                     break;
                 case NUMBER:
-                    if (item.value instanceof Double) {
-                        writer.value((Double) item.value);
+                    if (item.getValue() instanceof Double) {
+                        writer.value(item.asDouble());
                     } else {
-                        writer.value(((Number) item.value).longValue());
+                        writer.value(item.asLong());
                     }
                     break;
                 case BOOLEAN:
-                    writer.value((Boolean) item.value);
+                    writer.value(item.asBoolean());
                     break;
                 case SEQUENCE:
-                    formatTo(writer, (Sequence) item.value);
+                    formatTo(writer, item.asSequence());
                     break;
                 case CONFIG:
-                    formatTo(writer, (Config) item.value);
+                    formatTo(writer, item.asConfig());
                     break;
             }
         }

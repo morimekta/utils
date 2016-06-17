@@ -144,13 +144,13 @@ public class MutableSequenceTest {
 
     @Test
     public void testBadAdd() {
-        assertBadAdd("Not a string value: Config", Value.Type.STRING, new Config());
+        assertBadAdd("Not a string type: ImmutableConfig", Value.Type.STRING, new ImmutableConfig());
         assertBadAdd("Not a boolean value: truth", Value.Type.BOOLEAN, "truth");
         assertBadAdd("Not a boolean value: 1.1", Value.Type.BOOLEAN, 1.1);
         assertBadAdd("Not a number value: true", Value.Type.NUMBER, true);
-        assertBadAdd("Not a number getType: java.lang.Object", Value.Type.NUMBER, new Object());
-        assertBadAdd("Not a config getType: String", Value.Type.CONFIG, "{a:b}");
-        assertBadAdd("Not a sequence getType: String", Value.Type.SEQUENCE, "[a,b]");
+        assertBadAdd("Not a number type: java.lang.Object", Value.Type.NUMBER, new Object());
+        assertBadAdd("Not a config type: String", Value.Type.CONFIG, "{a:b}");
+        assertBadAdd("Not a sequence type: String", Value.Type.SEQUENCE, "[a,b]");
     }
 
     private <T> void assertBadAdd(String message, Value.Type seqType, T value) {
@@ -169,27 +169,27 @@ public class MutableSequenceTest {
         assertBadInsert("-1", Value.Type.BOOLEAN, -1, true);
         assertBadInsert("Index: 2, Size: 1", Value.Type.BOOLEAN, 2, "true");
 
-        assertBadInsert("Not a string value: Config", Value.Type.STRING, 0, new Config());
+        assertBadInsert("Not a string type: ImmutableConfig", Value.Type.STRING, 0, new ImmutableConfig());
         assertBadInsert("Not a boolean value: truth", Value.Type.BOOLEAN, 0, "truth");
         assertBadInsert("Not a boolean value: -1", Value.Type.BOOLEAN, 0, -1);
         assertBadInsert("Not a boolean value: 1.0", Value.Type.BOOLEAN, 0, 1.0);
         assertBadInsert("Not a number value: true", Value.Type.NUMBER, 0, true);
-        assertBadInsert("Not a number getType: java.lang.Object", Value.Type.NUMBER, 0, new Object());
-        assertBadInsert("Not a config getType: String", Value.Type.CONFIG, 0, "{a:b}");
-        assertBadInsert("Not a sequence getType: String", Value.Type.SEQUENCE, 0, "[a,b]");
+        assertBadInsert("Not a number type: java.lang.Object", Value.Type.NUMBER, 0, new Object());
+        assertBadInsert("Not a config type: String", Value.Type.CONFIG, 0, "{a:b}");
+        assertBadInsert("Not a sequence type: String", Value.Type.SEQUENCE, 0, "[a,b]");
     }
 
     private void assertBadInsert(String message, Value.Type seqType, int i, Object value) {
         MutableSequence seq = new MutableSequence(seqType);
         switch (seqType) {
             case BOOLEAN:
-                seq.addValue(Value.create(true));
+                seq.addValue(ImmutableValue.create(true));
                 break;
             case NUMBER:
-                seq.addValue(Value.create(0));
+                seq.addValue(ImmutableValue.create(0));
                 break;
             case STRING:
-                seq.addValue(Value.create("a"));
+                seq.addValue(ImmutableValue.create("a"));
                 break;
         }
 
@@ -206,7 +206,7 @@ public class MutableSequenceTest {
         MutableSequence seq = new MutableSequence(Value.Type.STRING);
         seq.add(5);
 
-        assertEquals(Value.create("5"), seq.getValue(0));
+        assertEquals(ImmutableValue.create("5"), seq.getValue(0));
     }
 
     @Test
@@ -290,20 +290,20 @@ public class MutableSequenceTest {
         seq.add(5);
         seq.add(10);
 
-        seq.setValue(0, Value.create(100));
+        seq.setValue(0, ImmutableValue.create(100));
 
         assertEquals(new MutableSequence(Value.Type.STRING, 100, 10),
                      seq);
 
         try {
-            seq.setValue(-1, Value.create(0));
+            seq.setValue(-1, ImmutableValue.create(0));
             fail("No exception from invalid index");
         } catch (IndexOutOfBoundsException e) {
             assertEquals("-1", e.getMessage());
         }
 
         try {
-            seq.setValue(2, Value.create(0));
+            seq.setValue(2, ImmutableValue.create(0));
             fail("No exception from invalid index");
         } catch (IndexOutOfBoundsException e) {
             assertEquals("Index: 2, Size: 2", e.getMessage());

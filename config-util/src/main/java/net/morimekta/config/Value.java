@@ -169,11 +169,13 @@ public abstract class Value {
     // package local value helpers.
 
     static Object fromObject(Type type, Object elem) {
+        if (elem instanceof Value) {
+            throw new IllegalArgumentException("Not a valid instance type: " + elem.getClass().getSimpleName());
+        }
         switch (type) {
             case STRING:
-                if ((elem instanceof ImmutableSequence) || (elem instanceof Config)) {
-                    throw new IllegalArgumentException("Not a string value: " + elem.getClass()
-                                                                                    .getSimpleName());
+                if ((elem instanceof Sequence) || (elem instanceof Config)) {
+                    throw new IllegalArgumentException("Not a string type: " + elem.getClass().getSimpleName());
                 }
                 // Cast everything into string.
                 return elem.toString();
@@ -202,32 +204,36 @@ public abstract class Value {
                 if (elem instanceof Number) {
                     return elem;
                 } else if (elem instanceof CharSequence) {
-                    String val = elem.toString().toLowerCase();
-                    if (val.contains(".") || val.contains("e")) {
-                        return Double.parseDouble(val);
-                    } else {
-                        return Long.parseLong(val);
+                    try {
+                        String val = elem.toString().toLowerCase();
+                        if (val.contains(".") || val.contains("e")) {
+                            return Double.parseDouble(val);
+                        } else {
+                            return Long.parseLong(val);
+                        }
+                    } catch (NumberFormatException nfe) {
+                        throw new IncompatibleValueException(nfe, "Not a valid number: %s", elem);
                     }
                 } else if (elem.toString().startsWith(elem.getClass().getName() + "@")) {
-                    throw new IllegalArgumentException("Not a number getType: " + elem.getClass().getName());
+                    throw new IllegalArgumentException("Not a number type: " + elem.getClass().getName());
                 } else {
                     throw new IllegalArgumentException("Not a number value: " + elem.toString());
                 }
             case SEQUENCE:
                 if (!(elem instanceof Sequence)) {
-                    throw new IllegalArgumentException("Not a sequence getType: " + elem.getClass()
+                    throw new IllegalArgumentException("Not a sequence type: " + elem.getClass()
                                                                                      .getSimpleName());
                 }
                 return elem;
             case CONFIG:
                 if (!(elem instanceof Config)) {
-                    throw new IllegalArgumentException("Not a config getType: " + elem.getClass()
+                    throw new IllegalArgumentException("Not a config type: " + elem.getClass()
                                                                                    .getSimpleName());
                 }
                 return elem;
             default:
                 // TODO: Maybe support more element types in sequences?
-                throw new IllegalArgumentException("Not supported sequence value getType for " + type + ": " + elem.getClass());
+                throw new IllegalArgumentException("Not supported sequence value type for " + type + ": " + elem.getClass());
         }
     }
 
@@ -249,7 +255,7 @@ public abstract class Value {
                 return value.asConfig();
         }
 
-        throw new ConfigException("Unhandled value getType " + type);
+        throw new ConfigException("Unhandled value type " + type);
     }
 
 }

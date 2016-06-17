@@ -2,7 +2,7 @@ package net.morimekta.config;
 
 import org.junit.Test;
 
-import static net.morimekta.config.Value.create;
+import static net.morimekta.config.ImmutableValue.create;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.fail;
@@ -10,7 +10,7 @@ import static org.junit.Assert.fail;
 /**
  * Tests for value objects.
  */
-public class ValueTest {
+public class ImmutableValueTest {
     @Test
     public void testValue() {
         Value num = create(12.34);
@@ -160,9 +160,8 @@ public class ValueTest {
 
     @Test
     public void testAsConfig() throws ConfigException {
-
-        assertEquals(new Config().putString("a", "b"),
-                     create(new Config().putString("a", "b")).asConfig());
+        assertEquals(new MutableConfig().putString("a", "b"),
+                     create(ImmutableConfig.builder().putString("a", "b").build()).asConfig());
 
         try {
             create("string").asConfig();

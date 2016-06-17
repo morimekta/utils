@@ -9,10 +9,10 @@ import static org.junit.Assert.assertTrue;
 /**
  *
  */
-public class ConfigTest {
+public class MutableConfigTest {
     @Test
     public void testConfig() {
-        Config config = new Config();
+        Config config = new MutableConfig();
 
         assertTrue(config.isEmpty());
         assertEquals(0, config.size());
@@ -20,7 +20,7 @@ public class ConfigTest {
 
     @Test
     public void testStringValue() throws ConfigException {
-        Config builder = new Config();
+        MutableConfig builder = new MutableConfig();
 
         assertSame(builder, builder.putString("a", "b"));
         assertEquals("b", builder.getString("a"));
@@ -31,7 +31,7 @@ public class ConfigTest {
 
     @Test
     public void testLongValue() throws ConfigException {
-        Config builder = new Config();
+        MutableConfig builder = new MutableConfig();
 
         assertSame(builder, builder.putLong("a", 1234567890L));
         assertEquals(1234567890L, builder.getLong("a"));

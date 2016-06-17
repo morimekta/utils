@@ -22,7 +22,7 @@ import java.util.stream.StreamSupport;
  * implementing generic entry adders (put, putAll), and getType unsafe getters.
  */
 public abstract class Config {
-    interface Entry extends Comparable<Entry> {
+    public interface Entry extends Comparable<Entry> {
         /**
          * Get the entry key.
          *
@@ -36,7 +36,7 @@ public abstract class Config {
          * @return The value getType.
          */
         default Value.Type getType() {
-            return getValue().type;
+            return getValue().getType();
         }
 
         /**
@@ -197,7 +197,7 @@ public abstract class Config {
      * @return The value getType or null if not found.
      */
     public Value.Type typeOf(String key) {
-        return getValue(key).type;
+        return getValue(key).getType();
     }
 
     /**
@@ -357,4 +357,43 @@ public abstract class Config {
      * @throws KeyNotFoundException If not found.
      */
     public abstract Value getValue(String key);
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == this) return true;
+        if (o == null || !(o instanceof Config)) return false;
+
+        Config other = (Config) o;
+        if (size() != other.size() || !keySet().equals(other.keySet())) {
+            return false;
+        }
+        for (Entry entry : other.entrySet()) {
+            if (!entry.getValue().equals(getValue(entry.getKey()))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder(getClass().getSimpleName());
+        builder.append('(');
+
+        boolean first = true;
+        for (Entry entry : entrySet()) {
+            if (first) {
+                first = false;
+            } else {
+                builder.append(',');
+            }
+            builder.append(entry.getKey())
+                   .append(":")
+                   .append(entry.getValue().getValue().toString());
+        }
+
+        builder.append(')');
+        return builder.toString();
+    }
+
 }

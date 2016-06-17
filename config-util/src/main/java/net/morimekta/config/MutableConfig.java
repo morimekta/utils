@@ -238,28 +238,8 @@ public class MutableConfig extends Config {
                (base != null && base.containsKey(key));
     }
 
-    @Override
-    public String toString() {
-        StringBuilder builder = new StringBuilder(getClass().getSimpleName());
-        builder.append('(');
-
-        boolean first = true;
-        for (String key : keySet()) {
-            if (first) {
-                first = false;
-            } else {
-                builder.append(',');
-            }
-            builder.append(key)
-                   .append(":")
-                   .append(map.get(key).getValue().toString());
-        }
-
-        builder.append(')');
-        return builder.toString();
-    }
-
     // --- private
+
     private final Map<String, Value> map;
     private final MutableConfig parent;
     private final Config base;

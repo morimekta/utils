@@ -319,7 +319,10 @@ public class ImmutableSequence implements Sequence {
                 if (sequence instanceof ImmutableSequence) {
                     return sequence;
                 }
-                return ImmutableSequence.builder(sequence.getType()).addAll(sequence.stream().collect(Collectors.toList())).build();
+                return ImmutableSequence.builder(sequence.getType())
+                                        .addAll(sequence.stream()
+                                                        .collect(Collectors.toList()))
+                                        .build();
         }
     }
 
@@ -357,15 +360,19 @@ public class ImmutableSequence implements Sequence {
         }
 
         private Object immutable(Object o) {
+            if (o instanceof Value) {
+                throw new IllegalArgumentException("Value passed as instance.");
+            }
+
             switch (type) {
                 case CONFIG:
                     if (!(o instanceof Config)) {
-                        throw new ConfigException("");
+                        throw new ConfigException("Not a config type: %s", o.getClass().getSimpleName());
                     }
                     return ImmutableConfig.copyOf((Config) o);
                 case SEQUENCE:
                     if (!(o instanceof Sequence)) {
-                        throw new ConfigException("");
+                        throw new ConfigException("Not a sequence type: %s", o.getClass().getSimpleName());
                     }
                     return ImmutableSequence.copyOf((Sequence) o);
                 default:
@@ -380,7 +387,7 @@ public class ImmutableSequence implements Sequence {
         }
 
         public Builder addValue(Value value) {
-            seq.add(immutable(value));
+            seq.add(immutable(value.getValue()));
             return this;
         }
 
@@ -416,7 +423,7 @@ public class ImmutableSequence implements Sequence {
         @SuppressWarnings("unchecked")
         public Builder setValue(int i, Value value) {
             checkRange(i);
-            seq.set(i, immutable(value));
+            seq.set(i, immutable(value.getValue()));
             return this;
         }
 

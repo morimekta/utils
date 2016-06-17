@@ -8,7 +8,6 @@ import net.morimekta.config.Value;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -37,19 +36,19 @@ public class PropertiesConfigFormat implements ConfigFormat {
 
     // --- INTERNAL ---
     private void formatTo(String prefix, Config config, Properties properties) {
-        for (Map.Entry<String, Value> entry : config.entrySet()) {
+        for (Config.Entry entry : config.entrySet()) {
             String key = makeKey(prefix, entry.getKey());
-            switch (entry.getValue().type) {
+            switch (entry.getValue().getType()) {
                 case BOOLEAN:
                 case NUMBER:
                 case STRING:
-                    properties.setProperty(key, entry.getValue().value.toString());
+                    properties.setProperty(key, entry.getValue().getValue().toString());
                     break;
                 case SEQUENCE:
-                    formatTo(key, (Sequence) entry.getValue().value, properties);
+                    formatTo(key, entry.asSequence(), properties);
                     break;
                 case CONFIG:
-                    formatTo(key, (Config) entry.getValue().value, properties);
+                    formatTo(key, entry.asConfig(), properties);
                     break;
             }
         }
@@ -59,17 +58,17 @@ public class PropertiesConfigFormat implements ConfigFormat {
         int i = 0;
         for (Value value : sequence.asValueArray()) {
             String key = makeKey(prefix, Integer.toString(i));
-            switch (value.type) {
+            switch (value.getType()) {
                 case BOOLEAN:
                 case NUMBER:
                 case STRING:
-                    properties.setProperty(key, value.value.toString());
+                    properties.setProperty(key, value.getValue().toString());
                     break;
                 case SEQUENCE:
-                    formatTo(key, (Sequence) value.value, properties);
+                    formatTo(key, value.asSequence(), properties);
                     break;
                 case CONFIG:
-                    formatTo(key, (Config) value.value, properties);
+                    formatTo(key, value.asConfig(), properties);
                     break;
             }
             ++i;

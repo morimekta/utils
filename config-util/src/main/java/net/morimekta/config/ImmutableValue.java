@@ -21,6 +21,9 @@ public class ImmutableValue extends Value {
     }
 
     public static ImmutableValue copyOf(Value value) {
+        if (value == null) {
+            throw new ConfigException("Cannot instantiate null value");
+        }
         if (value instanceof ImmutableValue) {
             return (ImmutableValue) value;
         }

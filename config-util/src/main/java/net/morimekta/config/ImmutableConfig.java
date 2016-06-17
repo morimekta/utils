@@ -114,49 +114,6 @@ public class ImmutableConfig extends Config {
         return map.get(key);
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (o == this) {
-            return true;
-        }
-        if (o == null || !(o instanceof Config)) {
-            return false;
-        }
-        Config other = (Config) o;
-
-        if (other.size() != map.size() || !other.keySet().equals(keySet())) {
-            return false;
-        }
-
-        for (Entry entry : other.entrySet()) {
-            if (!getValue(entry.getKey()).equals(entry.getValue())) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder builder = new StringBuilder(getClass().getSimpleName());
-        builder.append('(');
-
-        boolean first = true;
-        for (String key : keySet()) {
-            if (first) {
-                first = false;
-            } else {
-                builder.append(',');
-            }
-            builder.append(key)
-                   .append(":")
-                   .append(map.get(key).getValue().toString());
-        }
-
-        builder.append(')');
-        return builder.toString();
-    }
-
     public Builder mutate() {
         return new Builder(this);
     }
