@@ -24,17 +24,15 @@ import java.util.stream.Collectors;
  * parsing and
  */
 public class MutableConfig extends Config {
-    public static final String SUPER = "super";
-
     /**
-     * Create a config instance.
+     * Create an empty config instance.
      */
     public MutableConfig() {
         this(null, null);
     }
 
     /**
-     * Create a config instance.
+     * Create an empty config instance with parent.
      *
      * @param parent The parent (parent) config.
      */
@@ -43,7 +41,7 @@ public class MutableConfig extends Config {
     }
 
     /**
-     * Create a config instance.
+     * Create an empty config instance with parent and base.
      *
      * @param parent The parent (parent) config.
      * @param base The base config (or super-config).
@@ -55,7 +53,15 @@ public class MutableConfig extends Config {
     }
 
     /**
-     * Get the base config.
+     * Get the parent config used for 'up' navigation.
+     * @return The parent config.
+     */
+    public Config getParent() {
+        return parent;
+    }
+
+    /**
+     * Get the base config used for 'super' navigation.
      * @return The base config.
      */
     public Config getBase() {
@@ -63,8 +69,93 @@ public class MutableConfig extends Config {
     }
 
     /**
-     * Get a config value with deep lookup. If any of the keys are missing,
-     * the config will be created.
+     * Put a boolean value into the config.
+     *
+     * @param key The key to put at.
+     * @param value The value to put.
+     * @return The config.
+     */
+    public MutableConfig putBoolean(String key, boolean value) {
+        map.put(key, Value.create(value));
+        return this;
+    }
+
+    /**
+     * Put an integer value into the config.
+     *
+     * @param key The key to put at.
+     * @param value The value to put.
+     * @return The config.
+     */
+    public MutableConfig putInteger(String key, int value) {
+        map.put(key, Value.create(value));
+        return this;
+    }
+
+    /**
+     * Put a long value into the config.
+     *
+     * @param key The key to put at.
+     * @param value The value to put.
+     * @return The config.
+     */
+    public MutableConfig putLong(String key, long value) {
+        map.put(key, Value.create(value));
+        return this;
+    }
+
+    /**
+     * Put a double value into the config.
+     *
+     * @param key The key to put at.
+     * @param value The value to put.
+     * @return The config.
+     */
+    public MutableConfig putDouble(String key, double value) {
+        map.put(key, Value.create(value));
+        return this;
+    }
+
+    /**
+     * Put a string value into the config.
+     *
+     * @param key The key to put at.
+     * @param value The value to put.
+     * @return The config.
+     */
+    public MutableConfig putString(String key, String value) {
+        map.put(key, Value.create(value));
+        return this;
+    }
+
+    /**
+     * Put a sequence value into the config.
+     *
+     * @param key The key to put at.
+     * @param value The value to put.
+     * @return The config.
+     */
+    public MutableConfig putSequence(String key, Sequence value) {
+        map.put(key, Value.create(value));
+        return this;
+    }
+
+    /**
+     * Put a config value into the config.
+     *
+     * @param key The key to put at.
+     * @param value The value to put.
+     * @return The config.
+     */
+    public MutableConfig putConfig(String key, Config value) {
+        map.put(key, Value.create(value));
+        return this;
+    }
+
+    /**
+     * Get a mutable config value. If a config does not exists for the given
+     * key, one is created. If a value that is not a config exists for the key
+     * an exception is thrown.
      *
      * @param key The recursive key to look parent.
      * @return The config value.
@@ -72,142 +163,24 @@ public class MutableConfig extends Config {
      *         requested type.
      */
     public MutableConfig mutableConfig(String key) {
-        String[] parts = key.split("[.]", 2);
-        if (parts.length == 2) {
-            return localMutableConfig(parts[0]).mutableConfig(parts[1]);
-        }
-        return localMutableConfig(key);
-    }
-
-    /**
-     * Put a boolean value deep into the config.
-     *
-     * @param key The recursive key to put at.
-     * @param value The value to put.
-     * @return The config.
-     * @throws IncompatibleValueException If an intermediate step was not a
-     *         config.
-     */
-    public MutableConfig putBoolean(String key, boolean value) {
-        String[] parts = key.split("[.]", 2);
-        if (parts.length == 2) {
-            localMutableConfig(parts[0]).putBoolean(parts[1], value);
+        MutableConfig cfg;
+        if (!map.containsKey(key)) {
+            if (base != null && base.containsKey(key)) {
+                cfg = new MutableConfig(this, base.getConfig(key));
+            } else {
+                cfg = new MutableConfig(this);
+            }
+            map.put(key, Value.create(cfg));
         } else {
-            map.put(key, Value.create(value));
+            Config existing = map.get(key).asConfig();
+            if (existing instanceof MutableConfig) {
+                cfg = (MutableConfig) existing;
+            } else {
+                cfg = new MutableConfig(this, existing);
+                map.put(key, Value.create(cfg));
+            }
         }
-        return this;
-    }
-
-    /**
-     * Put an integer value deep into the config.
-     *
-     * @param key The recursive key to put at.
-     * @param value The value to put.
-     * @return The config.
-     * @throws IncompatibleValueException If an intermediate step was not a
-     *         config.
-     */
-    public MutableConfig putInteger(String key, int value) {
-        String[] parts = key.split("[.]", 2);
-        if (parts.length == 2) {
-            localMutableConfig(parts[0]).putInteger(parts[1], value);
-        } else {
-            map.put(key, Value.create(value));
-        }
-        return this;
-    }
-
-    /**
-     * Put a long value deep into the config.
-     *
-     * @param key The recursive key to put at.
-     * @param value The value to put.
-     * @return The config.
-     * @throws IncompatibleValueException If an intermediate step was not a
-     *         config.
-     */
-    public MutableConfig putLong(String key, long value) {
-        String[] parts = key.split("[.]", 2);
-        if (parts.length == 2) {
-            localMutableConfig(parts[0]).putLong(parts[1], value);
-        } else {
-            map.put(key, Value.create(value));
-        }
-        return this;
-    }
-
-    /**
-     * Put a double value deep into the config.
-     *
-     * @param key The recursive key to put at.
-     * @param value The value to put.
-     * @return The config.
-     * @throws IncompatibleValueException If an intermediate step was not a
-     *         config.
-     */
-    public MutableConfig putDouble(String key, double value) {
-        String[] parts = key.split("[.]", 2);
-        if (parts.length == 2) {
-            localMutableConfig(parts[0]).putDouble(parts[1], value);
-        } else {
-            map.put(key, Value.create(value));
-        }
-        return this;
-    }
-
-    /**
-     * Put a string value deep into the config.
-     *
-     * @param key The recursive key to put at.
-     * @param value The value to put.
-     * @return The config.
-     * @throws IncompatibleValueException If an intermediate step was not a
-     *         config.
-     */
-    public MutableConfig putString(String key, String value) {
-        String[] parts = key.split("[.]", 2);
-        if (parts.length == 2) {
-            localMutableConfig(parts[0]).putString(parts[1], value);
-        } else {
-            map.put(key, Value.create(value));
-        }
-        return this;
-    }
-
-    /**
-     * Put a sequence value deep into the config.
-     *
-     * @param key The recursive key to put at.
-     * @param value The value to put.
-     * @return The config.
-     * @throws IncompatibleValueException If an intermediate step was not a
-     *         config.
-     */
-    public MutableConfig putSequence(String key, Sequence value) {
-        String[] parts = key.split("[.]", 2);
-        if (parts.length == 2) {
-            localMutableConfig(parts[0]).putSequence(parts[1], value);
-        } else {
-            map.put(key, Value.create(value));
-        }
-        return this;
-    }
-
-    /**
-     * Put a config value into the config.
-     *
-     * @param key The simple key to put at.
-     * @param value The value to put.
-     * @return The config.
-     */
-    private MutableConfig putConfig(String key, Config value) {
-        String[] parts = key.split("[.]", 2);
-        if (parts.length == 2) {
-            localMutableConfig(parts[0]).putConfig(parts[1], value);
-        } else {
-            map.put(key, Value.create(value));
-        }
-        return this;
+        return cfg;
     }
 
     /**
@@ -218,18 +191,13 @@ public class MutableConfig extends Config {
      * @return The config.
      */
     public MutableConfig putValue(String key, Value value) {
-        String[] parts = key.split("[.]", 2);
-        if (parts.length == 2) {
-            localMutableConfig(parts[0]).putValue(parts[1], value);
-        } else {
-            map.put(key, value);
-        }
+        map.put(key, value);
         return this;
     }
 
-    @Override
-    public MutableConfig getParent() {
-        return parent;
+    public MutableConfig clear() {
+        map.clear();
+        return this;
     }
 
     @Override
@@ -255,20 +223,19 @@ public class MutableConfig extends Config {
 
     @Override
     public Value getValue(String key) {
-        String[] parts = key.split("[.]", 2);
-        if (parts.length == 2) {
-            return localGetConfig(parts[0]).getValue(parts[1]);
+        if (!map.containsKey(key)) {
+            if (base != null && base.containsKey(key)) {
+                return base.getValue(key);
+            }
+            throw new KeyNotFoundException("No such key " + key);
         }
-        return localGetValue(key);
+        return map.get(key);
     }
 
     @Override
     public boolean containsKey(String key) {
-        String[] parts = key.split("[.]", 2);
-        if (parts.length == 2) {
-            return localContainsKey(parts[0]) && localGetConfig(parts[0]).containsKey(parts[1]);
-        }
-        return localContainsKey(key);
+        return map.containsKey(key) ||
+               (base != null && base.containsKey(key));
     }
 
     @Override
@@ -297,59 +264,4 @@ public class MutableConfig extends Config {
     private final MutableConfig parent;
     private final Config base;
 
-    private Value localGetValue(String key) {
-        if (UP.equals(key)) {
-            if (parent == null) {
-                throw new KeyNotFoundException("");
-            }
-            return Value.create(parent);
-        } else if (SUPER.equals(key)) {
-            if (base == null) {
-                throw new KeyNotFoundException("");
-            }
-            return Value.create(base);
-        } else if (!map.containsKey(key)) {
-            if (base != null && base.containsKey(key)) {
-                return base.getValue(key);
-            }
-            throw new KeyNotFoundException("No such key " + key);
-        }
-        return map.get(key);
-    }
-
-    private Config localGetConfig(String key) {
-        return localGetValue(key).asConfig();
-    }
-
-    private boolean localContainsKey(String key) {
-        if (map.containsKey(key)) {
-            return true;
-        } else if (UP.equals(key) && parent != null) {
-            return true;
-        } else if (SUPER.equals(key) && base != null) {
-            return true;
-        }
-        return false;
-    }
-
-    private MutableConfig localMutableConfig(String key) {
-        MutableConfig cfg;
-        if (!map.containsKey(key)) {
-            if (base != null && base.containsKey(key)) {
-                cfg = new MutableConfig(this, base.getConfig(key));
-            } else {
-                cfg = new MutableConfig(this);
-            }
-            putConfig(key, cfg);
-        } else {
-            Config existing = map.get(key).asConfig();
-            if (existing instanceof MutableConfig) {
-                cfg = (MutableConfig) existing;
-            } else {
-                cfg = new MutableConfig(this, existing);
-                putConfig(key, cfg);
-            }
-        }
-        return cfg;
-    }
 }

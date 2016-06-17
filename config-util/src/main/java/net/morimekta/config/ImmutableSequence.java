@@ -8,6 +8,7 @@ import java.util.Iterator;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.stream.Collector;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -297,6 +298,30 @@ public class ImmutableSequence implements Sequence {
             builder.add(val);
         }
         return builder.build();
+    }
+
+    public static Sequence copyOf(Sequence sequence) {
+        switch (sequence.type()) {
+            case SEQUENCE: {
+                ImmutableSequence.Builder builder = ImmutableSequence.builder(Value.Type.SEQUENCE);
+                for (Sequence subSequence : sequence.asSequenceArray()) {
+                    builder.add(copyOf(subSequence));
+                }
+                return builder.build();
+            }
+            case CONFIG: {
+                ImmutableSequence.Builder builder = ImmutableSequence.builder(Value.Type.CONFIG);
+                for (Config config : sequence.asConfigArray()) {
+                    builder.add(ImmutableConfig.copyOf(config));
+                }
+                return builder.build();
+            }
+            default:
+                if (sequence instanceof ImmutableSequence) {
+                    return sequence;
+                }
+                return ImmutableSequence.builder(sequence.type()).addAll(sequence.stream().collect(Collectors.toList())).build();
+        }
     }
 
     private void checkRange(int i) {

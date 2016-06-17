@@ -10,44 +10,33 @@ import java.util.Spliterator;
 import java.util.stream.Collectors;
 
 /**
- * Base configuration object. Essentially a type-safe map from a string key that
- * can look up more than one level into the map (if referencing config objects
- * within the config object). This way, if the config contains a config object
- * on key 'b', then getString('b.c') will look for key 'c' in the config 'b'.
- *
- * It is not implementing the Map base class since it would require also
- * implementing generic entry adders (put, putAll), and type unsafe getters.
+ * Immutable config container. It enforces deep immutability of all values,
+ * and does not keep track of "parent", "base" or similar relations. It is
+ * simply a config map.
  */
-public class ImmutableConfig implements Config {
+public class ImmutableConfig extends Config {
+    /**
+     * Create an empty config instance. Handy for testing.
+     */
     public ImmutableConfig() {
-        this(null, null);
+        map = ImmutableMap.of();
     }
 
-    public ImmutableConfig(Config parent) {
-
-    }
-
-    public ImmutableConfig(Config parent, Config base) {
-        this.parent = parent;
+    /**
+     * Create an immutable copy of a config.
+     * @param base the config to be based on.
+     */
+    private ImmutableConfig(Config base) {
         if (base != null) {
             ImmutableMap.Builder<String, Value> builder = ImmutableMap.builder();
             base.entrySet()
                 .forEach(e -> {
                     switch (e.getType()) {
                         case CONFIG:
-                            if (e.getValue().value instanceof ImmutableConfig) {
-                                builder.put(e.getKey(), e.getValue());
-                            } else {
-                                builder.put(e.getKey(), Value.create(new ImmutableConfig(this, e.asConfig())));
-                            }
+                            builder.put(e.getKey(), Value.create(copyOf(e.asConfig())));
                             break;
                         case SEQUENCE:
-                            if (e.getValue().value instanceof ImmutableSequence) {
-                                builder.put(e.getKey(), e.getValue());
-                            } else {
-                                Sequence bs = e.asSequence();
-                                builder.put(e.getKey(), Value.create(ImmutableSequence.builder(this, bs.type(), bs)));
-                            }
+                            builder.put(e.getKey(), Value.create(ImmutableSequence.copyOf(e.asSequence())));
                             break;
                         default:
                             builder.put(e.getKey(), e.getValue());
@@ -57,6 +46,32 @@ public class ImmutableConfig implements Config {
             map = builder.build();
         } else {
             map = ImmutableMap.of();
+        }
+    }
+
+    private ImmutableConfig(Map<String, Value> values) {
+        ImmutableMap.Builder<String, Value> builder = ImmutableMap.builder();
+        values.forEach((k, v) -> {
+            switch (v.type) {
+                case CONFIG:
+                    builder.put(k, Value.create(copyOf(v.asConfig())));
+                    break;
+                case SEQUENCE:
+                    builder.put(k, Value.create(ImmutableSequence.copyOf(v.asSequence())));
+                    break;
+                default:
+                    builder.put(k, v);
+                    break;
+            }
+        });
+        map = builder.build();
+    }
+
+    public static Config copyOf(Config config) {
+        if (config instanceof ImmutableConfig) {
+            return config;
+        } else {
+            return new ImmutableConfig(config);
         }
     }
 
@@ -81,24 +96,17 @@ public class ImmutableConfig implements Config {
                Spliterator.SUBSIZED;
     }
 
+    @Override
     public boolean containsKey(String key) {
         return map.containsKey(key);
     }
 
-    /**
-     * @return The number of entries in the config.
-     */
+    @Override
     public int size() {
         return map.size();
     }
 
-    /**
-     * Get the config value spec for the key.
-     *
-     * @param key The key to look up.
-     * @return The value.
-     * @throws KeyNotFoundException If not found.
-     */
+    @Override
     public Value getValue(String key) throws KeyNotFoundException{
         if (!map.containsKey(key)) {
             throw new KeyNotFoundException("No such key " + key);
@@ -111,18 +119,17 @@ public class ImmutableConfig implements Config {
         if (o == this) {
             return true;
         }
-        if (o == null || !(o instanceof ImmutableConfig)) {
+        if (o == null || !(o instanceof Config)) {
             return false;
         }
-        ImmutableConfig other = (ImmutableConfig) o;
-        if (other.map.size() != map.size() || !other.map.keySet()
-                                                        .equals(map.keySet())) {
+        Config other = (Config) o;
+
+        if (other.size() != map.size() || !other.keySet().equals(keySet())) {
             return false;
         }
 
-        for (String key : map.keySet()) {
-            if (!map.get(key)
-                    .equals(other.map.get(key))) {
+        for (Entry entry : other.entrySet()) {
+            if (!getValue(entry.getKey()).equals(entry.getValue())) {
                 return false;
             }
         }
@@ -210,7 +217,7 @@ public class ImmutableConfig implements Config {
             return this;
         }
 
-        public Builder putConfig(String key, ImmutableConfig value) {
+        public Builder putConfig(String key, Config value) {
             if (value == null) {
                 throw new IllegalArgumentException();
             }
@@ -242,14 +249,11 @@ public class ImmutableConfig implements Config {
         }
 
         public ImmutableConfig build() {
-            ImmutableConfig cfg = new ImmutableConfig();
-            cfg.map.putAll(map);
-            return cfg;
+            return new ImmutableConfig(map);
         }
     }
 
     // --- PRIVATE ---
 
-    private final Config parent;
     private final Map<String, Value> map;
 }

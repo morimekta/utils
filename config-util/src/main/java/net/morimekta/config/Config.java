@@ -7,31 +7,21 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 /**
- * Base configuration object. Essentially a type-safe map from a string key that
- * can look up more than one level into the map (if referencing config objects
- * within the config object). This way, if the config contains a config object
- * on key 'b', then getString('b.c') will look for key 'c' in the config 'b'. E.g.:
+ * Base configuration container. Essentially a type-safe map that group
+ * values into a few basic types:
  *
- * <code>
- * Value v = getValue("up.args");
- * </code>
- *
- * Will first navigate one step "up", then try to find the value "args".
- * Otherwise looking up a key is equivalent to a series of
- * {@link #getConfig(String)} and ${@link #getValue(String)} at the end.
- * E.g. these two calls are equivalent.
- *
- * <code>
- * Value v = getValue("arg1.arg2.arg3");
- * Value v = getConfig("arg1").getConfig("arg2").getValue("arg3");
- * </code>
+ * <ul>
+ *     <li>NUMBER: integer, longs and doubles</li>
+ *     <li>STRING: literal string values</li>
+ *     <li>BOOLEAN: boolean true or false</li>
+ *     <li>SEQUENCE: a sequence ov values from this list</li>
+ *     <li>CONFIG: a contained config (map-in-map)</li>
+ * </ul>
  *
  * It is not implementing the Map base class since it would require also
  * implementing generic entry adders (put, putAll), and type unsafe getters.
  */
 public abstract class Config {
-    public static final String UP = "up";
-
     interface Entry extends Comparable<Entry> {
         /**
          * Get the entry key.
@@ -162,8 +152,6 @@ public abstract class Config {
      * @return The number of entries in the config.
      */
     public abstract int size();
-
-    public abstract Config getParent();
 
     public abstract Set<String> keySet();
 
