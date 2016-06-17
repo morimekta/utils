@@ -18,8 +18,6 @@
  */
 package android.util;
 
-import java.io.IOException;
-
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
@@ -39,7 +37,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  *         per RFC 2045, not only when requested as per RFC 3548.
  *     </li>
  *     <li>
- *         Even {@link URL_SAFE} encoding will both pad and wrap lines per default,
+ *         Even {@link #URL_SAFE} encoding will both pad and wrap lines per default,
  *         which frankly makes it neither safe for URLs nor filenames.
  *     </li>
  *     <li>
