@@ -6,10 +6,10 @@ import java.util.Objects;
 
 /**
  * Config value holder class. This is primarily an internal class, but may be
- * exposed so various iterators can iterate with both type and value from the
+ * exposed so various iterators can iterate with both getType and value from the
  * config entry.
  */
-public class Value {
+public abstract class Value {
     /**
      * Type of value stored in the config entry.
      */
@@ -22,16 +22,13 @@ public class Value {
         SEQUENCE,
     }
 
-    public final Type   type;
-    public final Object value;
+    public abstract Type getType();
 
-    public Value(Type type, Object value) {
-        this.type = type;
-        this.value = value;
-    }
+    public abstract Object getValue();
 
     public boolean asBoolean() {
-        switch (type) {
+        Object value = getValue();
+        switch (getType()) {
             case BOOLEAN:
                 return (Boolean) value;
             case NUMBER:
@@ -63,12 +60,13 @@ public class Value {
                 }
             default:
                 throw new IncompatibleValueException(
-                        "Unable to convert type " + type + " to a boolean");
+                        "Unable to convert getType " + getType() + " to a boolean");
         }
     }
 
     public int asInteger() {
-        switch (type) {
+        Object value = getValue();
+        switch (getType()) {
             case NUMBER:
                 return ((Number) value).intValue();
             case STRING:
@@ -81,12 +79,13 @@ public class Value {
                 }
             default:
                 throw new IncompatibleValueException(
-                        "Unable to convert type " + type + " to an int");
+                        "Unable to convert getType " + getType() + " to an int");
         }
     }
 
     public long asLong() {
-        switch (type) {
+        Object value = getValue();
+        switch (getType()) {
             case NUMBER:
                 return ((Number) value).longValue();
             case STRING:
@@ -99,12 +98,13 @@ public class Value {
                 }
             default:
                 throw new IncompatibleValueException(
-                        "Unable to convert type " + type + " to a long");
+                        "Unable to convert getType " + getType() + " to a long");
         }
     }
 
     public double asDouble() {
-        switch (type) {
+        Object value = getValue();
+        switch (getType()) {
             case NUMBER:
                 return ((Number) value).doubleValue();
             case STRING:
@@ -117,32 +117,32 @@ public class Value {
                 }
             default:
                 throw new IncompatibleValueException(
-                        "Unable to convert type " + type + " to a double");
+                        "Unable to convert getType " + getType() + " to a double");
         }
     }
 
     public String asString() {
-        if (type == Type.SEQUENCE || type == Type.CONFIG) {
+        if (getType() == Type.SEQUENCE || getType() == Type.CONFIG) {
             throw new IncompatibleValueException(
-                    "Unable to convert " + type + " to a string");
+                    "Unable to convert " + getType() + " to a string");
         }
-        return value.toString();
+        return getValue().toString();
     }
 
     public Sequence asSequence() {
-        if (type != Type.SEQUENCE) {
+        if (getType() != Type.SEQUENCE) {
             throw new IncompatibleValueException(
-                    "Unable to convert " + type + " to a sequence");
+                    "Unable to convert " + getType() + " to a sequence");
         }
-        return (Sequence) value;
+        return (Sequence) getValue();
     }
 
     public Config asConfig() {
-        if (type != Type.CONFIG) {
+        if (getType() != Type.CONFIG) {
             throw new IncompatibleValueException(
-                    "Unable to convert " + type + " to a config");
+                    "Unable to convert " + getType() + " to a config");
         }
-        return (Config) value;
+        return (Config) getValue();
     }
 
     @Override
@@ -150,46 +150,20 @@ public class Value {
         if (o == this) return true;
         if (o == null || !(o instanceof Value)) return false;
 
+        Object value = getValue();
+        Type type = getType();
         Value other = (Value) o;
-        return type == other.type &&
+        return type == other.getType() &&
                type == Type.NUMBER ?
-               ((Number) value).doubleValue() == ((Number) other.value).doubleValue() :
-               Objects.equals(value, other.value);
+               ((Number) value).doubleValue() == ((Number) other.getValue()).doubleValue() :
+               Objects.equals(value, other.getValue());
     }
 
     @Override
     public String toString() {
         return String.format("Value(%s,%s)",
-                             type.toString().toLowerCase(),
-                             Objects.toString(value));
-    }
-
-    public static Value create(boolean value) {
-        return new Value(Type.BOOLEAN, value);
-    }
-
-    public static Value create(int value) {
-        return new Value(Type.NUMBER, value);
-    }
-
-    public static Value create(long value) {
-        return new Value(Type.NUMBER, value);
-    }
-
-    public static Value create(double value) {
-        return new Value(Type.NUMBER, value);
-    }
-
-    public static Value create(String value) {
-        return new Value(Type.STRING, value);
-    }
-
-    public static Value create(Config value) {
-        return new Value(Type.CONFIG, value);
-    }
-
-    public static Value create(Sequence value) {
-        return new Value(Type.SEQUENCE, value);
+                             getType().toString().toLowerCase(),
+                             Objects.toString(getValue()));
     }
 
     // package local value helpers.
@@ -235,25 +209,25 @@ public class Value {
                         return Long.parseLong(val);
                     }
                 } else if (elem.toString().startsWith(elem.getClass().getName() + "@")) {
-                    throw new IllegalArgumentException("Not a number type: " + elem.getClass().getName());
+                    throw new IllegalArgumentException("Not a number getType: " + elem.getClass().getName());
                 } else {
                     throw new IllegalArgumentException("Not a number value: " + elem.toString());
                 }
             case SEQUENCE:
                 if (!(elem instanceof Sequence)) {
-                    throw new IllegalArgumentException("Not a sequence type: " + elem.getClass()
+                    throw new IllegalArgumentException("Not a sequence getType: " + elem.getClass()
                                                                                      .getSimpleName());
                 }
                 return elem;
             case CONFIG:
                 if (!(elem instanceof Config)) {
-                    throw new IllegalArgumentException("Not a config type: " + elem.getClass()
+                    throw new IllegalArgumentException("Not a config getType: " + elem.getClass()
                                                                                    .getSimpleName());
                 }
                 return elem;
             default:
                 // TODO: Maybe support more element types in sequences?
-                throw new IllegalArgumentException("Not supported sequence value type for " + type + ": " + elem.getClass());
+                throw new IllegalArgumentException("Not supported sequence value getType for " + type + ": " + elem.getClass());
         }
     }
 
@@ -275,7 +249,7 @@ public class Value {
                 return value.asConfig();
         }
 
-        throw new ConfigException("Unhandled value type " + type);
+        throw new ConfigException("Unhandled value getType " + type);
     }
 
 }

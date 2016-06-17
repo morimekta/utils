@@ -197,7 +197,7 @@ public class JsonConfigFormat implements ConfigFormat {
                     formatTo(writer, entry.getValue().asSequence());
                     break;
                 default:
-                    throw new ConfigException("Unhandled type in formatter: " + entry.getValue().type);
+                    throw new ConfigException("Unhandled getType in formatter: " + entry.getValue().type);
             }
         }
         writer.endObject();

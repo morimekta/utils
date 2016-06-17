@@ -148,9 +148,9 @@ public class MutableSequenceTest {
         assertBadAdd("Not a boolean value: truth", Value.Type.BOOLEAN, "truth");
         assertBadAdd("Not a boolean value: 1.1", Value.Type.BOOLEAN, 1.1);
         assertBadAdd("Not a number value: true", Value.Type.NUMBER, true);
-        assertBadAdd("Not a number type: java.lang.Object", Value.Type.NUMBER, new Object());
-        assertBadAdd("Not a config type: String", Value.Type.CONFIG, "{a:b}");
-        assertBadAdd("Not a sequence type: String", Value.Type.SEQUENCE, "[a,b]");
+        assertBadAdd("Not a number getType: java.lang.Object", Value.Type.NUMBER, new Object());
+        assertBadAdd("Not a config getType: String", Value.Type.CONFIG, "{a:b}");
+        assertBadAdd("Not a sequence getType: String", Value.Type.SEQUENCE, "[a,b]");
     }
 
     private <T> void assertBadAdd(String message, Value.Type seqType, T value) {
@@ -174,9 +174,9 @@ public class MutableSequenceTest {
         assertBadInsert("Not a boolean value: -1", Value.Type.BOOLEAN, 0, -1);
         assertBadInsert("Not a boolean value: 1.0", Value.Type.BOOLEAN, 0, 1.0);
         assertBadInsert("Not a number value: true", Value.Type.NUMBER, 0, true);
-        assertBadInsert("Not a number type: java.lang.Object", Value.Type.NUMBER, 0, new Object());
-        assertBadInsert("Not a config type: String", Value.Type.CONFIG, 0, "{a:b}");
-        assertBadInsert("Not a sequence type: String", Value.Type.SEQUENCE, 0, "[a,b]");
+        assertBadInsert("Not a number getType: java.lang.Object", Value.Type.NUMBER, 0, new Object());
+        assertBadInsert("Not a config getType: String", Value.Type.CONFIG, 0, "{a:b}");
+        assertBadInsert("Not a sequence getType: String", Value.Type.SEQUENCE, 0, "[a,b]");
     }
 
     private void assertBadInsert(String message, Value.Type seqType, int i, Object value) {

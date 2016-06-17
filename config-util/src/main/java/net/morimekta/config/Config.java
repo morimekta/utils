@@ -7,7 +7,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 /**
- * Base configuration container. Essentially a type-safe map that group
+ * Base configuration container. Essentially a getType-safe map that group
  * values into a few basic types:
  *
  * <ul>
@@ -19,7 +19,7 @@ import java.util.stream.StreamSupport;
  * </ul>
  *
  * It is not implementing the Map base class since it would require also
- * implementing generic entry adders (put, putAll), and type unsafe getters.
+ * implementing generic entry adders (put, putAll), and getType unsafe getters.
  */
 public abstract class Config {
     interface Entry extends Comparable<Entry> {
@@ -31,9 +31,9 @@ public abstract class Config {
         String getKey();
 
         /**
-         * Get the type of value in the entry.
+         * Get the getType of value in the entry.
          *
-         * @return The value type.
+         * @return The value getType.
          */
         default Value.Type getType() {
             return getValue().type;
@@ -191,10 +191,10 @@ public abstract class Config {
     public abstract boolean containsKey(String key);
 
     /**
-     * Get the value type of the value for the key.
+     * Get the value getType of the value for the key.
      *
      * @param key The key to look up.
-     * @return The value type or null if not found.
+     * @return The value getType or null if not found.
      */
     public Value.Type typeOf(String key) {
         return getValue(key).type;
@@ -205,7 +205,7 @@ public abstract class Config {
      * @return The string value.
      * @throws KeyNotFoundException When the key does not exist.
      * @throws IncompatibleValueException When a value cannot be converted to
-     *         requested type.
+     *         requested getType.
      */
     public String getString(String key) {
         return getValue(key).asString();
@@ -216,7 +216,7 @@ public abstract class Config {
      * @param def The default value if not found.
      * @return The string value.
      * @throws IncompatibleValueException When a value cannot be converted to
-     *         requested type.
+     *         requested getType.
      */
     public String getString(String key, String def) {
         if (containsKey(key)) {
@@ -230,7 +230,7 @@ public abstract class Config {
      * @return The boolean value.
      * @throws KeyNotFoundException When the key does not exist.
      * @throws IncompatibleValueException When a value cannot be converted to
-     *         requested type.
+     *         requested getType.
      */
     public boolean getBoolean(String key) {
         return getValue(key).asBoolean();
@@ -241,7 +241,7 @@ public abstract class Config {
      * @param def The default value if not found.
      * @return The boolean value.
      * @throws IncompatibleValueException When a value cannot be converted to
-     *         requested type.
+     *         requested getType.
      */
     public boolean getBoolean(String key, boolean def) {
         if (containsKey(key)) {
@@ -255,7 +255,7 @@ public abstract class Config {
      * @return The integer value.
      * @throws KeyNotFoundException When the key does not exist.
      * @throws IncompatibleValueException When a value cannot be converted to
-     *         requested type.
+     *         requested getType.
      */
     public int getInteger(String key) {
         return getValue(key).asInteger();
@@ -266,7 +266,7 @@ public abstract class Config {
      * @param def The default value if not found.
      * @return The integer value.
      * @throws IncompatibleValueException When a value cannot be converted to
-     *         requested type.
+     *         requested getType.
      */
     public int getInteger(String key, int def) {
         if (containsKey(key)) {
@@ -280,7 +280,7 @@ public abstract class Config {
      * @return The long value.
      * @throws KeyNotFoundException When the key does not exist.
      * @throws IncompatibleValueException When a value cannot be converted to
-     *         requested type.
+     *         requested getType.
      */
     public long getLong(String key) {
         return getValue(key).asLong();
@@ -291,7 +291,7 @@ public abstract class Config {
      * @param def The default value if not found.
      * @return The long value.
      * @throws IncompatibleValueException When a value cannot be converted to
-     *         requested type.
+     *         requested getType.
      */
     public long getLong(String key, long def) {
         if (containsKey(key)) {
@@ -305,7 +305,7 @@ public abstract class Config {
      * @return The double value.
      * @throws KeyNotFoundException When the key does not exist.
      * @throws IncompatibleValueException When a value cannot be converted to
-     *         requested type.
+     *         requested getType.
      */
     public double getDouble(String key) {
         return getValue(key).asDouble();
@@ -316,7 +316,7 @@ public abstract class Config {
      * @param def The default value if not found.
      * @return The double value.
      * @throws IncompatibleValueException When a value cannot be converted to
-     *         requested type.
+     *         requested getType.
      */
     public double getDouble(String key, double def) {
         if (containsKey(key)) {
@@ -330,7 +330,7 @@ public abstract class Config {
      * @return The sequence value.
      * @throws KeyNotFoundException When the key does not exist.
      * @throws IncompatibleValueException When a value cannot be converted to
-     *         requested type.
+     *         requested getType.
      */
     public Sequence getSequence(String key) {
         return getValue(key).asSequence();
@@ -341,7 +341,7 @@ public abstract class Config {
      * @return The config value.
      * @throws KeyNotFoundException When the key does not exist.
      * @throws IncompatibleValueException When a value cannot be converted to
-     *         requested type.
+     *         requested getType.
      */
     public Config getConfig(String key) {
         return getValue(key).asConfig();

@@ -2,7 +2,6 @@ package net.morimekta.config;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.Spliterator;
@@ -13,8 +12,8 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 /**
- * Immutable sequence of values of the same type. And the sequence is statically
- * annotated with the type of the values within the sequence.
+ * Immutable sequence of values of the same getType. And the sequence is statically
+ * annotated with the getType of the values within the sequence.
  */
 public class ImmutableSequence implements Sequence {
     private static final int characteristics =
@@ -25,7 +24,7 @@ public class ImmutableSequence implements Sequence {
 
     /**
      * Create an immutable sequence.
-     * @param type The type of elements. Note that a sequence cannot contain
+     * @param type The getType of elements. Note that a sequence cannot contain
      *             sequences.
      * @param content The contained collection.
      */
@@ -46,7 +45,7 @@ public class ImmutableSequence implements Sequence {
     }
 
     @Override
-    public Value.Type type() {
+    public Value.Type getType() {
         return type;
     }
 
@@ -162,7 +161,7 @@ public class ImmutableSequence implements Sequence {
     @Override
     public Value getValue(int i) {
         checkRange(i);
-        return new Value(type, get(i));
+        return new ImmutableValue(type, get(i));
     }
 
     @Override
@@ -184,7 +183,7 @@ public class ImmutableSequence implements Sequence {
         }
 
         Sequence other = (Sequence) o;
-        if (other.type() != type || other.size() != size()) {
+        if (other.getType() != type || other.size() != size()) {
             return false;
         }
 
@@ -301,7 +300,7 @@ public class ImmutableSequence implements Sequence {
     }
 
     public static Sequence copyOf(Sequence sequence) {
-        switch (sequence.type()) {
+        switch (sequence.getType()) {
             case SEQUENCE: {
                 ImmutableSequence.Builder builder = ImmutableSequence.builder(Value.Type.SEQUENCE);
                 for (Sequence subSequence : sequence.asSequenceArray()) {
@@ -320,7 +319,7 @@ public class ImmutableSequence implements Sequence {
                 if (sequence instanceof ImmutableSequence) {
                     return sequence;
                 }
-                return ImmutableSequence.builder(sequence.type()).addAll(sequence.stream().collect(Collectors.toList())).build();
+                return ImmutableSequence.builder(sequence.getType()).addAll(sequence.stream().collect(Collectors.toList())).build();
         }
     }
 
@@ -344,26 +343,44 @@ public class ImmutableSequence implements Sequence {
             this.seq = new ArrayList<>();
         }
 
-        public Builder(ImmutableSequence base) {
-            this(base.type);
-            Collections.addAll(seq, base.seq);
+        public Builder(Sequence base) {
+            this(base.getType());
+            base.stream().forEachOrdered(this::add);
         }
 
         public int size() {
             return seq.size();
         }
 
-        public Value.Type type() {
+        public Value.Type getType() {
             return type;
         }
 
+        private Object immutable(Object o) {
+            switch (type) {
+                case CONFIG:
+                    if (!(o instanceof Config)) {
+                        throw new ConfigException("");
+                    }
+                    return ImmutableConfig.copyOf((Config) o);
+                case SEQUENCE:
+                    if (!(o instanceof Sequence)) {
+                        throw new ConfigException("");
+                    }
+                    return ImmutableSequence.copyOf((Sequence) o);
+                default:
+                    // All other base values are immutable.
+                    return Value.fromObject(type, o);
+            }
+        }
+
         public Builder add(Object elem) {
-            seq.add(Value.fromObject(type, elem));
+            seq.add(immutable(elem));
             return this;
         }
 
         public Builder addValue(Value value) {
-            seq.add(Value.fromValue(type, value));
+            seq.add(immutable(value));
             return this;
         }
 
@@ -375,31 +392,31 @@ public class ImmutableSequence implements Sequence {
 
         public Value getValue(int i) {
             checkRange(i);
-            return new Value(type, seq.get(i));
+            return new ImmutableValue(type, seq.get(i));
         }
 
         public Builder add(int i, Object elem) {
             checkInsertRange(i);
-            seq.add(i, Value.fromObject(type, elem));
+            seq.add(i, immutable(elem));
             return this;
         }
 
         public Builder addValue(int i, Value value) {
             checkInsertRange(i);
-            seq.add(i, Value.fromValue(type, value));
+            seq.add(i, immutable(value));
             return this;
         }
 
         public Builder set(int i, Object value) {
             checkRange(i);
-            seq.set(i, Value.fromObject(type, value));
+            seq.set(i, immutable(value));
             return this;
         }
 
         @SuppressWarnings("unchecked")
         public Builder setValue(int i, Value value) {
             checkRange(i);
-            seq.set(i, Value.fromValue(type, value));
+            seq.set(i, immutable(value));
             return this;
         }
 

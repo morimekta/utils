@@ -12,13 +12,13 @@ import static net.morimekta.config.Value.fromObject;
 import static net.morimekta.config.Value.fromValue;
 
 /**
- * A mutable sequence of values of the same type. And the sequence is statically
- * annotated with the type of the values within the sequence.
+ * A mutable sequence of values of the same getType. And the sequence is statically
+ * annotated with the getType of the values within the sequence.
  */
 public class MutableSequence implements Sequence {
     /**
      * Create an immutable sequence.
-     * @param type The type of elements. Note that a sequence cannot contain
+     * @param type The getType of elements. Note that a sequence cannot contain
      *             sequences.
      */
     public MutableSequence(Value.Type type) {
@@ -28,7 +28,7 @@ public class MutableSequence implements Sequence {
 
     /**
      * Create an immutable sequence.
-     * @param type The type of elements. Note that a sequence cannot contain
+     * @param type The getType of elements. Note that a sequence cannot contain
      *             sequences.
      * @param content The contained collection.
      */
@@ -42,7 +42,7 @@ public class MutableSequence implements Sequence {
         addAll(values);
     }
 
-    public Value.Type type() {
+    public Value.Type getType() {
         return type;
     }
 
@@ -157,7 +157,7 @@ public class MutableSequence implements Sequence {
 
     @Override
     public Value getValue(int i) {
-        return new Value(type, get(i));
+        return new ImmutableValue(type, get(i));
     }
 
     @Override
@@ -195,7 +195,7 @@ public class MutableSequence implements Sequence {
             return false;
         }
         Sequence other = (Sequence) o;
-        if (other.type() != type || other.size() != size()) {
+        if (other.getType() != type || other.size() != size()) {
             return false;
         }
 

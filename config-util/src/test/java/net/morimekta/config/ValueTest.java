@@ -46,7 +46,7 @@ public class ValueTest {
         assertBadBoolean("Unable to parse the string \"foo\" to boolean", create("foo"));
         assertBadBoolean("Unable to convert number 4 to boolean", create(4));
         assertBadBoolean("Unable to convert double value to boolean", create(4.4));
-        assertBadBoolean("Unable to convert type SEQUENCE to a boolean", create(new MutableSequence(Value.Type.BOOLEAN)));
+        assertBadBoolean("Unable to convert getType SEQUENCE to a boolean", create(new MutableSequence(Value.Type.BOOLEAN)));
     }
 
     private void assertAsBoolean(Value value, boolean b) throws ConfigException {
@@ -68,7 +68,7 @@ public class ValueTest {
         assertAsInteger(create(-1234567890), -1234567890);
         assertAsInteger(create("-1234567890"), -1234567890);
 
-        assertBadInteger("Unable to convert type BOOLEAN to an int", create(false));
+        assertBadInteger("Unable to convert getType BOOLEAN to an int", create(false));
         assertBadInteger("Unable to parse string \"false\" to an int", create("false"));
     }
 
@@ -91,7 +91,7 @@ public class ValueTest {
         assertAsLong(create(-1234567890L), -1234567890L);
         assertAsLong(create("-1234567890"), -1234567890L);
 
-        assertBadLong("Unable to convert type BOOLEAN to a long", create(false));
+        assertBadLong("Unable to convert getType BOOLEAN to a long", create(false));
         assertBadLong("Unable to parse string \"false\" to a long", create("false"));
     }
 
@@ -115,7 +115,7 @@ public class ValueTest {
         assertAsDouble(create(-12345.67890), -12345.67890);
         assertAsDouble(create("-12345.67890"), -12345.67890);
 
-        assertBadDouble("Unable to convert type BOOLEAN to a double", create(false));
+        assertBadDouble("Unable to convert getType BOOLEAN to a double", create(false));
         assertBadDouble("Unable to parse string \"false\" to a double", create("false"));
     }
 

@@ -7,7 +7,7 @@ import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 /**
- * Base configuration object. Essentially a type-safe map from a string key that
+ * Base configuration object. Essentially a getType-safe map from a string key that
  * can look parent more than one level into the map (if referencing config objects
  * within the config object). This way, if the config contains a config object
  * on key 'b', then deepGetString('b.c') will look for key 'c' in the config 'b'.
@@ -76,7 +76,7 @@ public class MutableConfig extends Config {
      * @return The config.
      */
     public MutableConfig putBoolean(String key, boolean value) {
-        map.put(key, Value.create(value));
+        map.put(key, ImmutableValue.create(value));
         return this;
     }
 
@@ -88,7 +88,7 @@ public class MutableConfig extends Config {
      * @return The config.
      */
     public MutableConfig putInteger(String key, int value) {
-        map.put(key, Value.create(value));
+        map.put(key, ImmutableValue.create(value));
         return this;
     }
 
@@ -100,7 +100,7 @@ public class MutableConfig extends Config {
      * @return The config.
      */
     public MutableConfig putLong(String key, long value) {
-        map.put(key, Value.create(value));
+        map.put(key, ImmutableValue.create(value));
         return this;
     }
 
@@ -112,7 +112,7 @@ public class MutableConfig extends Config {
      * @return The config.
      */
     public MutableConfig putDouble(String key, double value) {
-        map.put(key, Value.create(value));
+        map.put(key, ImmutableValue.create(value));
         return this;
     }
 
@@ -124,7 +124,7 @@ public class MutableConfig extends Config {
      * @return The config.
      */
     public MutableConfig putString(String key, String value) {
-        map.put(key, Value.create(value));
+        map.put(key, ImmutableValue.create(value));
         return this;
     }
 
@@ -136,7 +136,7 @@ public class MutableConfig extends Config {
      * @return The config.
      */
     public MutableConfig putSequence(String key, Sequence value) {
-        map.put(key, Value.create(value));
+        map.put(key, ImmutableValue.create(value));
         return this;
     }
 
@@ -148,7 +148,7 @@ public class MutableConfig extends Config {
      * @return The config.
      */
     public MutableConfig putConfig(String key, Config value) {
-        map.put(key, Value.create(value));
+        map.put(key, ImmutableValue.create(value));
         return this;
     }
 
@@ -160,7 +160,7 @@ public class MutableConfig extends Config {
      * @param key The recursive key to look parent.
      * @return The config value.
      * @throws IncompatibleValueException When a value cannot be converted to
-     *         requested type.
+     *         requested getType.
      */
     public MutableConfig mutableConfig(String key) {
         MutableConfig cfg;
@@ -170,14 +170,14 @@ public class MutableConfig extends Config {
             } else {
                 cfg = new MutableConfig(this);
             }
-            map.put(key, Value.create(cfg));
+            map.put(key, ImmutableValue.create(cfg));
         } else {
             Config existing = map.get(key).asConfig();
             if (existing instanceof MutableConfig) {
                 cfg = (MutableConfig) existing;
             } else {
                 cfg = new MutableConfig(this, existing);
-                map.put(key, Value.create(cfg));
+                map.put(key, ImmutableValue.create(cfg));
             }
         }
         return cfg;
@@ -252,7 +252,7 @@ public class MutableConfig extends Config {
             }
             builder.append(key)
                    .append(":")
-                   .append(map.get(key).value.toString());
+                   .append(map.get(key).getValue().toString());
         }
 
         builder.append(')');

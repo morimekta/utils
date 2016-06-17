@@ -33,13 +33,13 @@ public class ImmutableConfig extends Config {
                 .forEach(e -> {
                     switch (e.getType()) {
                         case CONFIG:
-                            builder.put(e.getKey(), Value.create(copyOf(e.asConfig())));
+                            builder.put(e.getKey(), ImmutableValue.create(copyOf(e.asConfig())));
                             break;
                         case SEQUENCE:
-                            builder.put(e.getKey(), Value.create(ImmutableSequence.copyOf(e.asSequence())));
+                            builder.put(e.getKey(), ImmutableValue.create(ImmutableSequence.copyOf(e.asSequence())));
                             break;
                         default:
-                            builder.put(e.getKey(), e.getValue());
+                            builder.put(e.getKey(), ImmutableValue.copyOf(e.getValue()));
                             break;
                     }
                 });
@@ -52,15 +52,15 @@ public class ImmutableConfig extends Config {
     private ImmutableConfig(Map<String, Value> values) {
         ImmutableMap.Builder<String, Value> builder = ImmutableMap.builder();
         values.forEach((k, v) -> {
-            switch (v.type) {
+            switch (v.getType()) {
                 case CONFIG:
-                    builder.put(k, Value.create(copyOf(v.asConfig())));
+                    builder.put(k, ImmutableValue.create(copyOf(v.asConfig())));
                     break;
                 case SEQUENCE:
-                    builder.put(k, Value.create(ImmutableSequence.copyOf(v.asSequence())));
+                    builder.put(k, ImmutableValue.create(ImmutableSequence.copyOf(v.asSequence())));
                     break;
                 default:
-                    builder.put(k, v);
+                    builder.put(k, ImmutableValue.copyOf(v));
                     break;
             }
         });
@@ -150,7 +150,7 @@ public class ImmutableConfig extends Config {
             }
             builder.append(key)
                    .append(":")
-                   .append(map.get(key).value.toString());
+                   .append(map.get(key).getValue().toString());
         }
 
         builder.append(')');
@@ -182,22 +182,22 @@ public class ImmutableConfig extends Config {
         }
 
         public Builder putBoolean(String key, boolean value) throws ConfigException {
-            map.put(key, Value.create(value));
+            map.put(key, ImmutableValue.create(value));
             return this;
         }
 
         public Builder putInteger(String key, int value) {
-            map.put(key, Value.create(value));
+            map.put(key, ImmutableValue.create(value));
             return this;
         }
 
         public Builder putLong(String key, long value) {
-            map.put(key, Value.create(value));
+            map.put(key, ImmutableValue.create(value));
             return this;
         }
 
         public Builder putDouble(String key, double value) {
-            map.put(key, Value.create(value));
+            map.put(key, ImmutableValue.create(value));
             return this;
         }
 
@@ -205,7 +205,7 @@ public class ImmutableConfig extends Config {
             if (value == null) {
                 throw new IllegalArgumentException();
             }
-            map.put(key, Value.create(value));
+            map.put(key, ImmutableValue.create(value));
             return this;
         }
 
@@ -213,7 +213,7 @@ public class ImmutableConfig extends Config {
             if (value == null) {
                 throw new IllegalArgumentException();
             }
-            map.put(key, Value.create(value));
+            map.put(key, ImmutableValue.create(value));
             return this;
         }
 
@@ -221,12 +221,12 @@ public class ImmutableConfig extends Config {
             if (value == null) {
                 throw new IllegalArgumentException();
             }
-            map.put(key, Value.create(value));
+            map.put(key, ImmutableValue.create(value));
             return this;
         }
 
         public Builder putValue(String key, Value value) {
-            map.put(key, value);
+            map.put(key, ImmutableValue.copyOf(value));
             return this;
         }
 

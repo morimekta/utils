@@ -3,16 +3,16 @@ package net.morimekta.config;
 import java.util.stream.Stream;
 
 /**
- * A sequence of values with type safe getter methods.
+ * A sequence of values with getType safe getter methods.
  */
 public interface Sequence extends Iterable<Object> {
     /**
      * Get the types of values stored in the sequence. A sequence should
-     * only contain one type of values to be type consistent.
+     * only contain one getType of values to be getType consistent.
      *
-     * @return The value item type.
+     * @return The value item getType.
      */
-    Value.Type type();
+    Value.Type getType();
 
     /**
      * The number of entries in the sequence.
