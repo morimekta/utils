@@ -18,7 +18,6 @@ import java.nio.charset.StandardCharsets;
  * from the input, and writes lines dependent on terminal mode.
  */
 public class Terminal extends CharReader implements Closeable, LinePrinter {
-
     /**
      * Construct a default RAW terminal.
      * @throws UncheckedIOException If unable to set TTY mode.
@@ -53,7 +52,7 @@ public class Terminal extends CharReader implements Closeable, LinePrinter {
      * @throws UncheckedIOException If unable to set TTY mode.
      */
     public Terminal(STTYMode mode, LinePrinter lp) {
-        this(System.in, System.out, mode, lp);
+        this(System.in, System.out, lp, makeSwitcher(mode));
     }
 
     /**
@@ -61,16 +60,17 @@ public class Terminal extends CharReader implements Closeable, LinePrinter {
      *
      * @param in The input stream.
      * @param out The output stream.
-     * @param mode The TTY mode.
      * @param lp The line printer or null.
+     * @param switcher The TTY mode switcher.
      * @throws UncheckedIOException If unable to set TTY mode.
      */
-    protected Terminal(InputStream in, OutputStream out, STTYMode mode, LinePrinter lp) {
+    protected Terminal(InputStream in, OutputStream out, LinePrinter lp, STTYModeSwitcher switcher) {
         super(in);
         this.lp = lp == null ? this::printlnInternal : lp;
         this.out = out;
+        this.switcher = switcher;
+        this.lineCount = 0;
         try {
-            this.switcher = new STTYModeSwitcher(mode);
             if (switcher.didChangeMode() && switcher.getBefore() == STTYMode.RAW) {
                 this.out.write('\n');
                 this.out.flush();
@@ -78,7 +78,6 @@ public class Terminal extends CharReader implements Closeable, LinePrinter {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
-        this.lineCount = 0;
     }
 
     /**
@@ -189,7 +188,7 @@ public class Terminal extends CharReader implements Closeable, LinePrinter {
 
     private void printlnInternal(String message) {
         try {
-            if (STTYModeSwitcher.getCurrentMode() == STTYMode.RAW) {
+            if (switcher.getCurrentMode() == STTYMode.RAW) {
                 lnBefore(message);
             } else {
                 lnAfter(message);
@@ -222,6 +221,14 @@ public class Terminal extends CharReader implements Closeable, LinePrinter {
         out.flush();
 
         ++lineCount;
+    }
+
+    private static STTYModeSwitcher makeSwitcher(STTYMode mode) {
+        try {
+            return new STTYModeSwitcher(mode);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     private final STTYModeSwitcher switcher;

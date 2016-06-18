@@ -9,17 +9,17 @@ import java.io.UncheckedIOException;
  * Column and row count for the current terminal.
  */
 public class TerminalSize {
-    public final int cols;
     public final int rows;
+    public final int cols;
 
-    private TerminalSize(int cols, int rows) {
-        this.cols = cols;
+    private TerminalSize(int rows, int cols) {
         this.rows = rows;
+        this.cols = cols;
     }
 
     @Override
     public String toString() {
-        return String.format("tty(cols:%d, rows:%d)", cols, rows);
+        return String.format("tty(rows:%d, cols:%d)", rows, cols);
     }
 
     /**
@@ -64,9 +64,9 @@ public class TerminalSize {
             if (out != null) {
                 String[] parts = out.trim().split("[ ]");
                 if (parts.length == 2) {
-                    int cols = Integer.parseInt(parts[0]);
-                    int rows = Integer.parseInt(parts[1]);
-                    return new TerminalSize(cols, rows);
+                    int rows = Integer.parseInt(parts[0]);
+                    int cols = Integer.parseInt(parts[1]);
+                    return new TerminalSize(rows, cols);
                 }
                 throw new IOException("Unknown 'stty size' output: " + out);
             }

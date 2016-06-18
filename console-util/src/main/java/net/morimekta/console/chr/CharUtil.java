@@ -1,6 +1,4 @@
-package net.morimekta.console.util;
-
-import net.morimekta.console.chr.CharStream;
+package net.morimekta.console.chr;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -10,7 +8,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * methods related to  calculating visible string length, that takes into
  * account control sequences, non-width characters and double width characters.
  */
-public class ConsoleUtil {
+public class CharUtil {
     public static final int TAB_WIDTH = 4;
 
     /**
@@ -30,14 +28,35 @@ public class ConsoleUtil {
         return width.get();
     }
 
+    /**
+     * Expand tabs in string.
+     *
+     * @param string The string to expand.
+     * @return The expanded string.
+     */
     public static String expandTabs(CharSequence string) {
         return expandTabs(string, TAB_WIDTH);
     }
 
+    /**
+     * Expand tabs in string.
+     *
+     * @param string The string to expand.
+     * @param tabWidth The tab width.
+     * @return The expanded string.
+     */
     public static String expandTabs(CharSequence string, int tabWidth) {
         return expandTabs(string, tabWidth, 0);
     }
 
+    /**
+     * Expand tabs in string.
+     *
+     * @param string The string to expand.
+     * @param tabWidth The tab width.
+     * @param offset The initial offset.
+     * @return The expanded string.
+     */
     public static String expandTabs(CharSequence string, int tabWidth, int offset) {
         StringBuilder builder = new StringBuilder();
         AtomicInteger off = new AtomicInteger(offset);
@@ -56,5 +75,21 @@ public class ConsoleUtil {
         return builder.toString();
     }
 
-    private ConsoleUtil() {}
+    /**
+     * Strip string of all non-printable characters.
+     *
+     * @param string The source string.
+     * @return The result without non-printable chars.
+     */
+    public static String stripNonPrintable(CharSequence string) {
+        StringBuilder builder = new StringBuilder();
+        CharStream.stream(string).forEachOrdered(c -> {
+            if (c.printableWidth() > 0) {
+                builder.append(c.toString());
+            }
+        });
+        return builder.toString();
+    }
+
+    private CharUtil() {}
 }

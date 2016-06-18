@@ -1,6 +1,4 @@
-package net.morimekta.console.util;
-
-import net.morimekta.console.util.ConsoleUtil;
+package net.morimekta.console.chr;
 
 import org.junit.Test;
 
@@ -13,22 +11,27 @@ import static org.junit.Assert.assertFalse;
 /**
  * Tests for console util static methods.
  */
-public class ConsoleUtilTest {
+public class CharUtilTest {
     @Test
     public void testPrintableWidth() {
-        assertEquals(0, ConsoleUtil.printableWidth(""));
-        assertEquals(6, ConsoleUtil.printableWidth("\033[32mAbcdef\033[0m"));
+        assertEquals(0, CharUtil.printableWidth(""));
+        assertEquals(6, CharUtil.printableWidth("\033[32mAbcdef\033[0m"));
+    }
+
+    @Test
+    public void testStripNonPrintable() {
+        assertEquals("Abcdef", CharUtil.stripNonPrintable("\033[32mAbcdef\033[0m"));
     }
 
     @Test
     public void testExpandTabs() {
-        assertEquals("a   b", ConsoleUtil.expandTabs("a\tb"));
+        assertEquals("a   b", CharUtil.expandTabs("a\tb"));
     }
 
     @Test
     public void testConstructor()
             throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
-        Constructor constructor = ConsoleUtil.class.getDeclaredConstructor();
+        Constructor constructor = CharUtil.class.getDeclaredConstructor();
         assertFalse(constructor.isAccessible());
         constructor.setAccessible(true);
         constructor.newInstance();

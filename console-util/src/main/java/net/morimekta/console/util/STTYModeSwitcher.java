@@ -67,6 +67,17 @@ public class STTYModeSwitcher implements Closeable {
     }
 
     /**
+     * Get the current TTY mode.
+     *
+     * @return The tty mode.
+     */
+    public STTYMode getCurrentMode() {
+        synchronized (STTYModeSwitcher.class) {
+            return current_mode;
+        }
+    }
+
+    /**
      * @return True if the mode switcher changed the tty mode.
      */
     public boolean didChangeMode() {
@@ -78,7 +89,7 @@ public class STTYModeSwitcher implements Closeable {
      *
      * @return The tty mode.
      */
-    public static STTYMode getCurrentMode() {
+    public static STTYMode currentMode() {
         synchronized (STTYModeSwitcher.class) {
             return current_mode;
         }

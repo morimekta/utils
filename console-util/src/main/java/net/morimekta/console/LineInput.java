@@ -33,7 +33,26 @@ public class LineInput {
         String complete(String before, LinePrinter errorPrinter);
     }
 
+    /**
+     * Constructor for simple line-input.
+     *
+     * @param terminal Terminal to use.
+     * @param message Message to print.
+     */
+    public LineInput(Terminal terminal,
+                     String message) {
+        this(terminal, message, null, null, null);
+    }
 
+    /**
+     * Constructor for complete line-input.
+     *
+     * @param terminal Terminal to use.
+     * @param message Message to print.
+     * @param charValidator The character validcator or null.
+     * @param lineValidator The line validator or null.
+     * @param tabCompletion The tab expander or null.
+     */
     public LineInput(Terminal terminal,
                      String message,
                      CharValidator charValidator,
@@ -68,10 +87,20 @@ public class LineInput {
         this.tabCompletion = tabCompletion;
     }
 
+    /**
+     * Read line from terminal.
+     *
+     * @return The resulting line.
+     */
     public String readLine() {
         return readLine(null);
     }
 
+    /**
+     * Read line from terminal.
+     * @param initial The initial (default) value.
+     * @return The resulting line.
+     */
     public String readLine(String initial) {
         this.before = initial == null ? "" : initial;
         this.after = "";

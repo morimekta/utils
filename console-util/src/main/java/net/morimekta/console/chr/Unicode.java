@@ -55,7 +55,7 @@ public class Unicode implements Char {
                 builder.append('\\').append((char) cp);
                 break;
             default:
-                if (cp < 32 || cp == 127) {
+                if (cp < 32) {
                     builder.append(String.format("\\%03o", (int) cp));
                 } else if ((127 < cp && cp < 160) || (8192 <= cp && cp < 8448) || !Character.isDefined(cp)) {
                     if (Character.isBmpCodePoint(cp)) {
@@ -65,7 +65,12 @@ public class Unicode implements Char {
                         builder.append(String.format("\\u%04x", (int) Character.lowSurrogate(cp)));
                     }
                 } else {
-                    builder.append((char) cp);
+                    if (Character.isBmpCodePoint(cp)) {
+                        builder.append((char) cp);
+                    } else {
+                        builder.append(Character.highSurrogate(cp));
+                        builder.append(Character.lowSurrogate(cp));
+                    }
                 }
                 break;
         }
