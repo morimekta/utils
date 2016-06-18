@@ -1,7 +1,9 @@
 package net.morimekta.console.util;
 
+import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.InputStreamReader;
 
 /**
  * Switch terminal mode and make it return on close. Basic usage is:
@@ -61,13 +63,28 @@ public class STTYModeSwitcher implements Closeable {
     private synchronized STTYMode setSttyMode(STTYMode mode) throws IOException {
         STTYMode old = current_mode;
         if (mode != current_mode) {
+            String[] cmd;
             if (mode == STTYMode.COOKED) {
-                String[] cmd = {"/bin/sh", "-c", "stty -raw </dev/tty"};
-                runtime.exec(cmd);
+                cmd = new String[]{"/bin/sh", "-c", "stty -raw </dev/tty"};
             } else {
-                String[] cmd = {"/bin/sh", "-c", "stty raw </dev/tty"};
-                runtime.exec(cmd);
+                cmd = new String[]{"/bin/sh", "-c", "stty raw </dev/tty"};
             }
+
+            Process p = runtime.exec(cmd);
+
+            try {
+                p.waitFor();
+            } catch (InterruptedException ie) {
+                throw new IOException(ie.getMessage(), ie);
+            }
+
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(p.getErrorStream()))) {
+                String err = reader.readLine();
+                if (err != null) {
+                    throw new IOException(err);
+                }
+            }
+
             current_mode = mode;
         }
         return old;
