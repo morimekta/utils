@@ -18,7 +18,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package net.morimekta.console;
+package net.morimekta.console.args;
+
+import net.morimekta.console.args.FormatString;
 
 import org.junit.Test;
 import org.kohsuke.args4j.CmdLineException;
