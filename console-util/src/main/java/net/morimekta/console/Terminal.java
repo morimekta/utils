@@ -17,17 +17,7 @@ import java.nio.charset.StandardCharsets;
  * Terminal interface. It sets proper TTY mode and reads complex characters
  * from the input, and writes lines dependent on terminal mode.
  */
-public class Terminal extends CharReader implements Closeable {
-    /**
-     * LinePrinter interface.
-     */
-    public interface LinePrinter {
-        /**
-         * Print a new line to the terminal.
-         * @param message The message to write.
-         */
-        void println(String message);
-    }
+public class Terminal extends CharReader implements Closeable, LinePrinter {
 
     /**
      * Construct a default RAW terminal.
@@ -158,31 +148,33 @@ public class Terminal extends CharReader implements Closeable {
         }
     }
 
-    public Terminal format(String format, Object... args) {
-        return print(String.format(format, args));
+    public void format(String format, Object... args) {
+        print(String.format(format, args));
     }
 
-    public Terminal formatln(String format, Object... args) {
-        return println(String.format(format, args));
+    public void formatln(String format, Object... args) {
+        println(String.format(format, args));
     }
 
-    public Terminal print(Char ch) {
-        return print(ch.toString());
+    public void print(Char ch) {
+        print(ch.toString());
     }
 
-    public Terminal print(String message) {
+    public void print(String message) {
         try {
             out.write(message.getBytes(StandardCharsets.UTF_8));
             out.flush();
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
-        return this;
     }
 
-    public Terminal println(String message) {
+    public void println(String message) {
         lp.println(message);
-        return this;
+    }
+
+    public void println() {
+        lp.println(null);
     }
 
     @Override

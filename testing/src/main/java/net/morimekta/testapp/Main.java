@@ -1,7 +1,8 @@
 package net.morimekta.testapp;
 
+import net.morimekta.console.LineInput;
 import net.morimekta.console.Terminal;
-import net.morimekta.util.io.IndentedPrintWriter;
+import net.morimekta.util.Strings;
 
 import java.io.IOException;
 
@@ -12,10 +13,12 @@ import java.io.IOException;
  */
 public class Main {
     public static void main(String[] args) throws IOException {
-        IndentedPrintWriter console = new IndentedPrintWriter(System.out, "    ", "\r\n");
-
         try (Terminal term = new Terminal()) {
-            if (term.confirm("Do you o'Really?")) {
+            LineInput input = new LineInput(term, "Test Input", null, null, null);
+            String line = input.readLine();
+            if (line != null) {
+                term.formatln(" -- Got: \"%s\"", Strings.escape(line));
+            } else if (term.confirm("Do you o'Really?")) {
                 term.println("No way!!!");
             }
         }
