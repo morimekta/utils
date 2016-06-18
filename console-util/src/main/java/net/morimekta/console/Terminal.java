@@ -122,7 +122,7 @@ public class Terminal extends CharReader implements Closeable {
      */
     public boolean confirm(String what, boolean def) {
         String yn = def ? "Y/n" : "y/N";
-        formatln("%s [%s]: ", what, yn);
+        formatln("%s [%s]:", what, yn);
 
         try {
             for (;;) {
@@ -131,13 +131,16 @@ public class Terminal extends CharReader implements Closeable {
                     throw new IOException("End of stream.");
                 }
                 int cp = c.asInteger();
-                if (cp == Char.LF || cp == Char.CR) {
+                if (cp == Char.CR) {
+                    print(def ? " Yes." : " No.");
                     return def;
                 }
                 if (cp == 'y' || cp == 'Y') {
+                    print(" Yes.");
                     return true;
                 }
-                if (cp == 'n' || cp == 'N' || cp == Char.BS) {
+                if (cp == 'n' || cp == 'N' || cp == Char.DEL) {
+                    print(" No.");
                     return false;
                 }
                 if (cp == Char.ESC || cp == Char.ABR || cp == Char.EOF) {
