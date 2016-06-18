@@ -14,21 +14,23 @@ import java.io.Reader;
 public class CharReader {
     private final Reader in;
 
-    public CharReader() throws IOException {
+    public CharReader() {
         this(System.in);
     }
 
-    public CharReader(InputStream in) throws IOException {
+    public CharReader(InputStream in) {
         this(new Utf8StreamReader(in));
     }
 
-    public CharReader(Reader in) throws IOException {
+    public CharReader(Reader in) {
         this.in = in;
     }
 
     /**
-     * read the next char.
+     * Read the next char.
+     *
      * @return The next char, or null of input stream is closed.
+     * @throws IOException If unable to read a char.
      */
     public Char read() throws IOException {
         int cp = in.read();

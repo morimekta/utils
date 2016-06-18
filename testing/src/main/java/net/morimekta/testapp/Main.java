@@ -1,8 +1,6 @@
 package net.morimekta.testapp;
 
-import net.morimekta.console.util.STTYMode;
-import net.morimekta.console.util.STTYModeSwitcher;
-import net.morimekta.console.util.TerminalSize;
+import net.morimekta.console.Terminal;
 import net.morimekta.util.io.IndentedPrintWriter;
 
 import java.io.IOException;
@@ -16,18 +14,10 @@ public class Main {
     public static void main(String[] args) throws IOException {
         IndentedPrintWriter console = new IndentedPrintWriter(System.out, "    ", "\r\n");
 
-        try (STTYModeSwitcher ms = new STTYModeSwitcher(STTYMode.RAW)) {
-            console.append("Term: ")
-                   .append(TerminalSize.get()
-                                       .toString())
-                   .begin()
-                   .appendln("Test 2\rA")
-                   .appendln("Test 3")
-                   .end()
-                   .newline()
-                   .flush();
-        } catch (Exception e) {
-            e.printStackTrace();
+        try (Terminal term = new Terminal()) {
+            if (term.confirm("Do you o'Really?")) {
+                term.println("No way!!!");
+            }
         }
     }
 }

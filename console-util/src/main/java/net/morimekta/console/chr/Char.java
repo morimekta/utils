@@ -10,6 +10,40 @@ import net.morimekta.util.Stringable;
  * the application runs in.
  */
 public interface Char extends Stringable, Numeric {
+    /** Null. */
+    char NUL = '\0';
+    /** Abort - [Control c] */
+    char ABORT = '\003';
+    /** Abort - [Control d] */
+    char EOF = '\004';
+    /** Bell. */
+    char BEL = '\b';
+    /** Backspace. */
+    char BS  = '\010';
+    /** Horizontal Tab. */
+    char TAB = '\t';
+    /** Line Feed (newline). */
+    char LF  = '\n';
+    /** Vertical Tab. */
+    char VT  = '\013';
+    /** Form Feed. */
+    char FF  = '\f';
+    /** Carriage Return. */
+    char CR  = '\r';
+    /** Escape. */
+    char ESC = '\033';
+
+    /** File Separator. */
+    char FS  = '\034';
+    /** Group Separator. */
+    char GS  = '\035';
+    /** Record Separator. */
+    char RS  = '\036';
+    /** Unit Separator. */
+    char US  = '\037';
+    /** Delete */
+    char DEL = '\177';
+
     /**
      * Unicode codepoint representing this character.
      *

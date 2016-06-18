@@ -35,6 +35,7 @@ public class STTYModeSwitcher implements Closeable {
      */
     public STTYModeSwitcher(STTYMode mode, Runtime runtime) throws IOException {
         this.runtime = runtime;
+        this.mode = mode;
         this.before = setSttyMode(mode);
     }
 
@@ -46,6 +47,30 @@ public class STTYModeSwitcher implements Closeable {
      */
     public void close() throws IOException {
         setSttyMode(before);
+    }
+
+    /**
+     * Get the mode set by the seitcher.
+     * @return The tty mode.
+     */
+    public STTYMode getMode() {
+        return mode;
+    }
+
+    /**
+     * Get the mode that was replaced by the switcher.
+     *
+     * @return the tty mode.
+     */
+    public STTYMode getBefore() {
+        return before;
+    }
+
+    /**
+     * @return True if the mode switcher changed the tty mode.
+     */
+    public boolean didChangeMode() {
+        return getMode() != getBefore();
     }
 
     /**
@@ -64,6 +89,7 @@ public class STTYModeSwitcher implements Closeable {
 
     private final Runtime  runtime;
     private final STTYMode before;
+    private final STTYMode mode;
 
     /**
      * Set terminal mode.
@@ -77,9 +103,9 @@ public class STTYModeSwitcher implements Closeable {
             if (mode != current_mode) {
                 String[] cmd;
                 if (mode == STTYMode.COOKED) {
-                    cmd = new String[]{"/bin/sh", "-c", "stty -raw </dev/tty"};
+                    cmd = new String[]{"/bin/sh", "-c", "stty -raw echo </dev/tty"};
                 } else {
-                    cmd = new String[]{"/bin/sh", "-c", "stty raw </dev/tty"};
+                    cmd = new String[]{"/bin/sh", "-c", "stty raw -echo </dev/tty"};
                 }
 
                 Process p = runtime.exec(cmd);

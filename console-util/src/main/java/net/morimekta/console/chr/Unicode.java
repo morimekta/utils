@@ -11,6 +11,10 @@ public class Unicode implements Char {
         this.cp = cp;
     }
 
+    public Unicode(char ch) {
+        this.cp = (int) ch;
+    }
+
     @Override
     public int asInteger() {
         return cp;
@@ -18,13 +22,46 @@ public class Unicode implements Char {
 
     @Override
     public String asString() {
-        if (cp < 0x100) {
-            return String.format("\\0%o", cp);
-        } else if (cp < 0x1000) {
-            return String.format("\\u%04x", cp);
-        } else {
-            return String.format("\\U%08x", cp);
+        StringBuilder builder = new StringBuilder();
+        builder.append('\'');
+        switch (cp) {
+            case '\b':
+                builder.append('\\').append('b');
+                break;
+            case '\t':
+                builder.append('\\').append('t');
+                break;
+            case '\n':
+                builder.append('\\').append('n');
+                break;
+            case '\f':
+                builder.append('\\').append('f');
+                break;
+            case '\r':
+                builder.append('\\').append('r');
+                break;
+            case '"':
+            case '\'':
+            case '\\':
+                builder.append('\\').append((char) cp);
+                break;
+            default:
+                if (cp < 32 || cp == 127) {
+                    builder.append(String.format("\\%03o", (int) cp));
+                } else if ((127 < cp && cp < 160) || (8192 <= cp && cp < 8448) || !Character.isDefined(cp)) {
+                    if (Character.isBmpCodePoint(cp)) {
+                        builder.append(String.format("\\u%04x", cp));
+                    } else {
+                        builder.append(String.format("\\u%04x", (int) Character.highSurrogate(cp)));
+                        builder.append(String.format("\\u%04x", (int) Character.lowSurrogate(cp)));
+                    }
+                } else {
+                    builder.append((char) cp);
+                }
+                break;
         }
+        builder.append('\'');
+        return builder.toString();
     }
 
     @Override

@@ -46,6 +46,30 @@ public class Control implements Char {
         this.str = str.toString();
     }
 
+    public static Control cursorSetPos(int line) {
+        return cursorSetPos(line, 0);
+    }
+
+    public static Control cursorSetPos(int line, int col) {
+        return new Control(String.format("\033[%d;%dH", line, col));
+    }
+
+    public static Control cursorUp(int num) {
+        return new Control(String.format("\033[%dA", num));
+    }
+
+    public static Control cursorDown(int num) {
+        return new Control(String.format("\033[%dB", num));
+    }
+
+    public static Control cursorLeft(int num) {
+        return new Control(String.format("\033[%dC", num));
+    }
+
+    public static Control cursorRight(int num) {
+        return new Control(String.format("\033[%dD", num));
+    }
+
     @Override
     public int asInteger() {
         return -1;
