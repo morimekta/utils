@@ -155,16 +155,53 @@ public class LineInput {
                             after = "" + before.charAt(before.length() - 1) + after;
                             before = before.substring(0, before.length() - 1);
                         }
-                    } else if (c.equals(Control.CTRL_LEFT)) {
+                    } else if (c.equals(Control.HOME)) {
                         after = before + after;
                         before = "";
+                    } else if (c.equals(Control.CTRL_LEFT)) {
+                        if (before.length() > 0) {
+                            // Skip all ending spaces.
+                            int lastSpace = before.length() - 1;
+                            while (lastSpace > 0 && before.charAt(lastSpace) == ' ') {
+                                --lastSpace;
+                            }
+                            lastSpace = before.lastIndexOf(" ", lastSpace);
+                            if (lastSpace > 0) {
+                                after = before.substring(lastSpace) + after;
+                                before = before.substring(0, lastSpace);
+                            } else {
+                                after = before + after;
+                                before = "";
+                            }
+                        } else {
+                            after = before + after;
+                            before = "";
+                        }
                     } else if (c.equals(Control.RIGHT)) {
                         if (after.length() > 0) {
                             before = before + after.charAt(0);
                             after = after.substring(1);
                         }
-                    } else if (c.equals(Control.CTRL_RIGHT)) {
+                    } else if (c.equals(Control.END)) {
                         before = before + after;
+                        after = "";
+                    } else if (c.equals(Control.CTRL_RIGHT)) {
+                        if (after.length() > 0) {
+                            int firstSpace = 0;
+                            while (firstSpace < after.length() && after.charAt(firstSpace) == ' ') {
+                                ++firstSpace;
+                            }
+                            firstSpace = after.indexOf(" ", firstSpace);
+                            if (firstSpace > 0) {
+                                before = before + after.substring(0, firstSpace);
+                                after = after.substring(firstSpace);
+                            } else {
+                                before = before + after;
+                                after = "";
+                            }
+                        }
+                    } else if (c.equals(ALT_D)) {
+                        // delete everything after the corsor.
                         after = "";
                     } else {
                         printAbove("Invalid control: " + c.asString());
@@ -211,6 +248,9 @@ public class LineInput {
             terminal.format("%s%s", after, Control.cursorLeft(after.length()));
         }
     }
+
+    private static final Char ALT_D = new Control("\033d");
+    private static final Char ALT_W = new Control("\033w");
 
     private final Terminal terminal;
     private final String message;

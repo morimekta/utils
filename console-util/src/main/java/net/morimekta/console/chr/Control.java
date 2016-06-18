@@ -137,6 +137,10 @@ public class Control implements Char {
             return "<F8>";
         } else if (str.equals(F9.str)) {
             return "<F9>";
+        } else if (str.length() == 2 &&
+                   str.charAt(1) >= 'a' &&
+                   str.charAt(1) <= 'z') {
+            return "<M-" + str.charAt(1) + '>';
         }
         return Strings.escape(str);
     }
