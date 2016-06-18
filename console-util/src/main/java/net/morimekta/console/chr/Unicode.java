@@ -351,7 +351,7 @@ public class Unicode implements Char {
                 return new Unicode(0x256C);
         }
 
-        return null;
+        throw new IllegalArgumentException(String.format("No border for (u:%d,r:%d,d:%d,l:%d).", u, r, d, l));
     }
 
     /**
@@ -371,7 +371,7 @@ public class Unicode implements Char {
                 return new Unicode(0x32b0 - 35 + num);
             }
         }
-        return null;
+        throw new IllegalArgumentException("No circled numeric for " + num);
     }
 
 }

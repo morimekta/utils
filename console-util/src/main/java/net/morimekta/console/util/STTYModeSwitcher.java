@@ -48,6 +48,17 @@ public class STTYModeSwitcher implements Closeable {
         setSttyMode(before);
     }
 
+    /**
+     * Get the current TTY mode.
+     *
+     * @return The tty mode.
+     */
+    public static STTYMode getCurrentMode() {
+        synchronized (STTYModeSwitcher.class) {
+            return current_mode;
+        }
+    }
+
     // Default input mode is COOKED.
     private static STTYMode current_mode = STTYMode.COOKED;
 
@@ -60,33 +71,35 @@ public class STTYModeSwitcher implements Closeable {
      * @param mode The mode to set.
      * @return The mode before the call.
      */
-    private synchronized STTYMode setSttyMode(STTYMode mode) throws IOException {
-        STTYMode old = current_mode;
-        if (mode != current_mode) {
-            String[] cmd;
-            if (mode == STTYMode.COOKED) {
-                cmd = new String[]{"/bin/sh", "-c", "stty -raw </dev/tty"};
-            } else {
-                cmd = new String[]{"/bin/sh", "-c", "stty raw </dev/tty"};
-            }
-
-            Process p = runtime.exec(cmd);
-
-            try {
-                p.waitFor();
-            } catch (InterruptedException ie) {
-                throw new IOException(ie.getMessage(), ie);
-            }
-
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(p.getErrorStream()))) {
-                String err = reader.readLine();
-                if (err != null) {
-                    throw new IOException(err);
+    private STTYMode setSttyMode(STTYMode mode) throws IOException {
+        synchronized (STTYModeSwitcher.class) {
+            STTYMode old = current_mode;
+            if (mode != current_mode) {
+                String[] cmd;
+                if (mode == STTYMode.COOKED) {
+                    cmd = new String[]{"/bin/sh", "-c", "stty -raw </dev/tty"};
+                } else {
+                    cmd = new String[]{"/bin/sh", "-c", "stty raw </dev/tty"};
                 }
-            }
 
-            current_mode = mode;
+                Process p = runtime.exec(cmd);
+
+                try {
+                    p.waitFor();
+                } catch (InterruptedException ie) {
+                    throw new IOException(ie.getMessage(), ie);
+                }
+
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(p.getErrorStream()))) {
+                    String err = reader.readLine();
+                    if (err != null) {
+                        throw new IOException(err);
+                    }
+                }
+
+                current_mode = mode;
+            }
+            return old;
         }
-        return old;
     }
 }
