@@ -7,19 +7,19 @@ import java.io.IOException;
  * Switch terminal mode and make it return on close. Basic usage is:
  *
  * <code>
- * try (new SttyModeSwitcher(SttyMode.RAW)) {
+ * try (STTYModeSwitcher tty = new STTYModeSwitcher(STTYMode.RAW)) {
  *     // do stuff in raw mode.
  * }
  * </code>
  */
-public class SttyModeSwitcher implements Closeable {
+public class STTYModeSwitcher implements Closeable {
     /**
      * Switch to the requested mode until closed.
      *
      * @param mode The mode to switch to.
      * @throws IOException If unable to switch.
      */
-    public SttyModeSwitcher(SttyMode mode) throws IOException {
+    public STTYModeSwitcher(STTYMode mode) throws IOException {
         this(mode, Runtime.getRuntime());
     }
 
@@ -31,7 +31,7 @@ public class SttyModeSwitcher implements Closeable {
      * @throws IOException If unable to switch.
 
      */
-    public SttyModeSwitcher(SttyMode mode, Runtime runtime) throws IOException {
+    public STTYModeSwitcher(STTYMode mode, Runtime runtime) throws IOException {
         this.runtime = runtime;
         this.before = setSttyMode(mode);
     }
@@ -47,10 +47,10 @@ public class SttyModeSwitcher implements Closeable {
     }
 
     // Default input mode is COOKED.
-    private static SttyMode current_mode = SttyMode.COOKED;
+    private static STTYMode current_mode = STTYMode.COOKED;
 
-    private final Runtime runtime;
-    private final SttyMode before;
+    private final Runtime  runtime;
+    private final STTYMode before;
 
     /**
      * Set terminal mode.
@@ -58,16 +58,17 @@ public class SttyModeSwitcher implements Closeable {
      * @param mode The mode to set.
      * @return The mode before the call.
      */
-    private SttyMode setSttyMode(SttyMode mode) throws IOException {
-        SttyMode old = current_mode;
+    private synchronized STTYMode setSttyMode(STTYMode mode) throws IOException {
+        STTYMode old = current_mode;
         if (mode != current_mode) {
-            if (mode == SttyMode.COOKED) {
+            if (mode == STTYMode.COOKED) {
                 String[] cmd = {"/bin/sh", "-c", "stty -raw </dev/tty"};
                 runtime.exec(cmd);
             } else {
                 String[] cmd = {"/bin/sh", "-c", "stty raw </dev/tty"};
                 runtime.exec(cmd);
             }
+            current_mode = mode;
         }
         return old;
     }

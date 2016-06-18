@@ -27,6 +27,7 @@ out
 !.idea/codeStyleSettings.xml
 *.iml
 
+dependency-reduced-pom.xml
 pom.xml.versionsBackup
 pom.xml.releaseBackup
 release.properties

@@ -3,7 +3,7 @@ package net.morimekta.console.util;
 /**
  * Which IO mode the TTY is in.
  */
-public enum SttyMode {
+public enum STTYMode {
     /**
      * Raw mode only moves the cursor according to the print and control
      * characters given.
