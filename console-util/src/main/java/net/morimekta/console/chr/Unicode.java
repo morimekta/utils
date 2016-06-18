@@ -25,19 +25,28 @@ public class Unicode implements Char {
         StringBuilder builder = new StringBuilder();
         builder.append('\'');
         switch (cp) {
-            case '\b':
-                builder.append('\\').append('b');
-                break;
-            case '\t':
+            case NUL: return "<NUL>";
+            case ABR: return "<ABR>";
+            case EOF: return "<EOF>";
+            case BEL: return "<BEL>";
+            case BS:  return "<BS>";  // Not using '\b'. It conflicts with C definition of BEL.
+            case VT:  return "<VT>";
+            case ESC: return "<ESC>";
+            case FS:  return "<FS>";
+            case GS:  return "<GS>";
+            case RS:  return "<RS>";
+            case US:  return "<US>";
+            case DEL: return "<DEL>";
+            case TAB:
                 builder.append('\\').append('t');
                 break;
-            case '\n':
+            case LF:
                 builder.append('\\').append('n');
                 break;
-            case '\f':
+            case FF:
                 builder.append('\\').append('f');
                 break;
-            case '\r':
+            case CR:
                 builder.append('\\').append('r');
                 break;
             case '"':

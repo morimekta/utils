@@ -13,11 +13,11 @@ public interface Char extends Stringable, Numeric {
     /** Null. */
     char NUL = '\0';
     /** Abort - [Control c] */
-    char ABORT = '\003';
+    char ABR = '\003';
     /** Abort - [Control d] */
     char EOF = '\004';
     /** Bell. */
-    char BEL = '\b';
+    char BEL = '\007';
     /** Backspace. */
     char BS  = '\010';
     /** Horizontal Tab. */

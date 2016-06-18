@@ -43,7 +43,13 @@ public class Control implements Char {
     private final String str;
 
     public Control(CharSequence str) {
-        this.str = str.toString();
+        if (str.equals("\033OH")) {
+            this.str = HOME.str;
+        } else if (str.equals("\033OF")) {
+            this.str = END.str;
+        } else {
+            this.str = str.toString();
+        }
     }
 
     public static Control cursorSetPos(int line) {
@@ -62,11 +68,11 @@ public class Control implements Char {
         return new Control(String.format("\033[%dB", num));
     }
 
-    public static Control cursorLeft(int num) {
+    public static Control cursorRight(int num) {
         return new Control(String.format("\033[%dC", num));
     }
 
-    public static Control cursorRight(int num) {
+    public static Control cursorLeft(int num) {
         return new Control(String.format("\033[%dD", num));
     }
 
@@ -77,6 +83,61 @@ public class Control implements Char {
 
     @Override
     public String asString() {
+        /*--*/ if (str.equals(UP.str)) {
+            return "<up>";
+        } else if (str.equals(DOWN.str)) {
+            return "<down>";
+        } else if (str.equals(RIGHT.str)) {
+            return "<right>";
+        } else if (str.equals(LEFT.str)) {
+            return "<left>";
+        } else if (str.equals(CTRL_UP.str)) {
+            return "<C-up>";
+        } else if (str.equals(CTRL_DOWN.str)) {
+            return "<C-down>";
+        } else if (str.equals(CTRL_RIGHT.str)) {
+            return "<C-right>";
+        } else if (str.equals(CTRL_LEFT.str)) {
+            return "<C-left>";
+        } else if (str.equals(CURSOR_ERASE.str)) {
+            return "<cursor-erase>";
+        } else if (str.equals(CURSOR_SAVE.str)) {
+            return "<cursor-save>";
+        } else if (str.equals(CURSOR_RESTORE.str)) {
+            return "<cursor-restore>";
+        } else if (str.equals(DPAD_MID.str)) {
+            return "<dpa-mid>";
+        } else if (str.equals(INSERT.str)) {
+            return "<insert>";
+        } else if (str.equals(DELETE.str)) {
+            return "<delete>";
+        } else if (str.equals(HOME.str)) {
+            return "<home>";
+        } else if (str.equals(END.str)) {
+            return "<end>";
+        } else if (str.equals(PAGE_UP.str)) {
+            return "<pg-up>";
+        } else if (str.equals(PAGE_DOWN.str)) {
+            return "<pg-down>";
+        } else if (str.equals(F1.str)) {
+            return "<F1>";
+        } else if (str.equals(F2.str)) {
+            return "<F2>";
+        } else if (str.equals(F3.str)) {
+            return "<F3>";
+        } else if (str.equals(F4.str)) {
+            return "<F4>";
+        } else if (str.equals(F5.str)) {
+            return "<F5>";
+        } else if (str.equals(F6.str)) {
+            return "<F6>";
+        } else if (str.equals(F7.str)) {
+            return "<F7>";
+        } else if (str.equals(F8.str)) {
+            return "<F8>";
+        } else if (str.equals(F9.str)) {
+            return "<F9>";
+        }
         return Strings.escape(str);
     }
 

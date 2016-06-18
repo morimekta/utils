@@ -2,7 +2,7 @@ package net.morimekta.console;
 
 import net.morimekta.console.chr.Char;
 import net.morimekta.console.chr.CharReader;
-import net.morimekta.console.chr.Unicode;
+import net.morimekta.console.chr.Control;
 import net.morimekta.console.util.STTYMode;
 import net.morimekta.console.util.STTYModeSwitcher;
 
@@ -97,8 +97,8 @@ public class Terminal extends CharReader implements Closeable {
      * <code>boolean really = term.confirm("Do you o'Really?");</code>
      *
      * Will print out "<code>Do you o'Really? [Y/n]: </code>". If the user press
-     * 'y' or 'enter' will pass (return true), if 'n' and 'backspace' will return
-     * false.
+     * 'y' and 'enter' will pass (return true), if 'n', and 'backspace' will return
+     * false. Invalid characters will print a short error message.
      *
      * @param what What to confirm. Basically the message before '[Y/n]'.
      * @return Confirmation result.
@@ -114,7 +114,7 @@ public class Terminal extends CharReader implements Closeable {
      *
      * Will print out "<code>Do you o'Really? [y/N]: </code>". If the user press
      * 'y' will pass (return true), if 'n', 'enter' and 'backspace' will return
-     * false.
+     * false. Invalid characters will print a short error message.
      *
      * @param what What to confirm. Basically the message before '[Y/n]'.
      * @param def the default response on 'enter'.
@@ -123,8 +123,6 @@ public class Terminal extends CharReader implements Closeable {
     public boolean confirm(String what, boolean def) {
         String yn = def ? "Y/n" : "y/N";
         formatln("%s [%s]: ", what, yn);
-
-        boolean error = false;
 
         try {
             for (;;) {
@@ -142,17 +140,14 @@ public class Terminal extends CharReader implements Closeable {
                 if (cp == 'n' || cp == 'N' || cp == Char.BS) {
                     return false;
                 }
-                if (cp == Char.DEL || cp == Char.ABORT || cp == Char.EOF) {
-                    throw new IOException("User interrupted");
+                if (cp == Char.ESC || cp == Char.ABR || cp == Char.EOF) {
+                    throw new IOException("User interrupted: " + c.asString());
                 }
                 if (cp == ' ' || cp == '\t') {
                     continue;
                 }
-                if (error) {
-                    print("        ");
-                }
-                error = true;
-                format("\r%s [%s]: %s is not valid input.",
+                format("\r%s%s [%s]: %s is not valid input.",
+                       Control.CURSOR_ERASE,
                        what, yn, c.asString());
             }
         } catch (IOException e) {
