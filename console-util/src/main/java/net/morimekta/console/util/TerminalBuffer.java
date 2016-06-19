@@ -115,7 +115,8 @@ public class TerminalBuffer {
         }
 
         if (count() > 0) {
-            terminal.format("\r%s",
+            terminal.format("\r%s%s",
+                            UP,
                             cursorRight(printableWidth(lastLine())));
         }
     }
