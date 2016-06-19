@@ -177,4 +177,12 @@ public class Control implements Char {
     public int hashCode() {
         return str.hashCode();
     }
+
+    @Override
+    public int compareTo(Char o) {
+        if (o instanceof Control) {
+            return str.compareTo(((Control) o).str);
+        }
+        return Integer.compare(asInteger(), o.asInteger());
+    }
 }

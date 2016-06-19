@@ -9,7 +9,7 @@ import net.morimekta.util.Stringable;
  * (Control, Color) that can alter the look or behaviour of the console
  * the application runs in.
  */
-public interface Char extends Stringable, Numeric {
+public interface Char extends Stringable, Numeric, Comparable<Char> {
     /** Null. */
     char NUL = '\0';
     /** Abort - [Control c] */

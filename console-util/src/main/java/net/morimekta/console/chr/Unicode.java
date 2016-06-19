@@ -114,6 +114,14 @@ public class Unicode implements Char {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (o == this) return true;
+        if (o == null || !(o instanceof Unicode)) return false;
+
+        return asInteger() == ((Unicode) o).asInteger();
+    }
+
+    @Override
     public String toString() {
         if (!Character.isBmpCodePoint(cp)) {
             return new String(new char[]{
@@ -425,4 +433,8 @@ public class Unicode implements Char {
         throw new IllegalArgumentException("No circled numeric for " + num);
     }
 
+    @Override
+    public int compareTo(Char o) {
+        return Integer.compare(asInteger(), o.asInteger());
+    }
 }
