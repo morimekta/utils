@@ -122,5 +122,13 @@ public class CharUtil {
         return string;
     }
 
+    public static String rightJust(String string, int width) {
+        int pw = printableWidth(string);
+        if (pw < width) {
+            return Strings.times(" ", width - pw) + string;
+        }
+        return string;
+    }
+
     private CharUtil() {}
 }
