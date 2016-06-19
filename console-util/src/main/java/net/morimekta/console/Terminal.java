@@ -168,6 +168,7 @@ public class Terminal extends CharReader implements Closeable, LinePrinter {
         }
     }
 
+    @Override
     public void println(String message) {
         lp.println(message);
     }
@@ -176,12 +177,30 @@ public class Terminal extends CharReader implements Closeable, LinePrinter {
         lp.println(null);
     }
 
+    /**
+     * Finish the current set of lines and continue below.
+     */
+    public void finish() {
+        try {
+            if (switcher.getCurrentMode() == STTYMode.RAW && lineCount > 0) {
+                out.write('\r');
+                out.write('\n');
+                out.flush();
+            }
+            lineCount = 0;
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
     @Override
     public void close() throws IOException {
-        if (switcher.didChangeMode() && switcher.getBefore() == STTYMode.COOKED) {
-            out.write('\r');
-            out.write('\n');
-            out.flush();
+        try {
+            if (switcher.didChangeMode() && switcher.getBefore() == STTYMode.COOKED) {
+                finish();
+            }
+        } catch (UncheckedIOException e) {
+            // Ignore.
         }
         switcher.close();
     }

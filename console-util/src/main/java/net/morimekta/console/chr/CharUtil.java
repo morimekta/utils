@@ -1,5 +1,7 @@
 package net.morimekta.console.chr;
 
+import net.morimekta.util.Strings;
+
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -22,7 +24,7 @@ public class CharUtil {
      * @param string The string to measure.
      * @return The printed width.
      */
-    public static int printableWidth(CharSequence string) {
+    public static int printableWidth(String string) {
         AtomicInteger width = new AtomicInteger(0);
         CharStream.stream(string).forEach(c -> width.addAndGet(c.printableWidth()));
         return width.get();
@@ -34,7 +36,7 @@ public class CharUtil {
      * @param string The string to expand.
      * @return The expanded string.
      */
-    public static String expandTabs(CharSequence string) {
+    public static String expandTabs(String string) {
         return expandTabs(string, TAB_WIDTH);
     }
 
@@ -45,7 +47,7 @@ public class CharUtil {
      * @param tabWidth The tab width.
      * @return The expanded string.
      */
-    public static String expandTabs(CharSequence string, int tabWidth) {
+    public static String expandTabs(String string, int tabWidth) {
         return expandTabs(string, tabWidth, 0);
     }
 
@@ -57,7 +59,7 @@ public class CharUtil {
      * @param offset The initial offset.
      * @return The expanded string.
      */
-    public static String expandTabs(CharSequence string, int tabWidth, int offset) {
+    public static String expandTabs(String string, int tabWidth, int offset) {
         StringBuilder builder = new StringBuilder();
         AtomicInteger off = new AtomicInteger(offset);
         CharStream.stream(string).forEachOrdered(c -> {
@@ -81,7 +83,7 @@ public class CharUtil {
      * @param string The source string.
      * @return The result without non-printable chars.
      */
-    public static String stripNonPrintable(CharSequence string) {
+    public static String stripNonPrintable(String string) {
         StringBuilder builder = new StringBuilder();
         CharStream.stream(string).forEachOrdered(c -> {
             if (c.printableWidth() > 0) {
@@ -89,6 +91,35 @@ public class CharUtil {
             }
         });
         return builder.toString();
+    }
+
+    /**
+     * Remove all printable characters after 'width' characters have been
+     * filled. All control chars will be left in place.
+     *
+     * @param string The base string.
+     * @param width The printed width.
+     * @return
+     */
+    public static String clipWidth(String string, int width) {
+        AtomicInteger remaining = new AtomicInteger(width);
+        StringBuilder builder = new StringBuilder();
+        CharStream.stream(string).forEachOrdered(c -> {
+            int pw = c.printableWidth();
+            if (pw <= remaining.get()) {
+                builder.append(c.toString());
+                remaining.addAndGet(-pw);
+            }
+        });
+        return builder.toString();
+    }
+
+    public static String leftJust(String string, int width) {
+        int pw = printableWidth(string);
+        if (pw < width) {
+            return string + Strings.times(" ", width - pw);
+        }
+        return string;
     }
 
     private CharUtil() {}

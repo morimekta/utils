@@ -24,7 +24,7 @@ import static org.mockito.Mockito.when;
 /**
  * Testing the line input.
  */
-public class LineInputTest {
+public class InputLineTest {
     @Test
     public void testReadLine() throws IOException {
         STTYModeSwitcher switcher = mock(STTYModeSwitcher.class);
@@ -37,7 +37,7 @@ public class LineInputTest {
 
         Terminal terminal = new Terminal(in, out, null, switcher);
 
-        LineInput li = new LineInput(terminal, "Test");
+        InputLine li = new InputLine(terminal, "Test");
 
         verifyZeroInteractions(in);
         reset(in);

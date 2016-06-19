@@ -10,7 +10,7 @@ import java.io.UncheckedIOException;
  * Class that handled reading a line from terminal input with
  * character and line validators, and optional tab completion.
  */
-public class LineInput {
+public class InputLine {
     public interface LineValidator {
         boolean validate(String line, LinePrinter errorPrinter);
     }
@@ -39,7 +39,7 @@ public class LineInput {
      * @param terminal Terminal to use.
      * @param message Message to print.
      */
-    public LineInput(Terminal terminal,
+    public InputLine(Terminal terminal,
                      String message) {
         this(terminal, message, null, null, null);
     }
@@ -53,7 +53,7 @@ public class LineInput {
      * @param lineValidator The line validator or null.
      * @param tabCompletion The tab expander or null.
      */
-    public LineInput(Terminal terminal,
+    public InputLine(Terminal terminal,
                      String message,
                      CharValidator charValidator,
                      LineValidator lineValidator,
