@@ -25,6 +25,7 @@ import net.morimekta.console.chr.Control;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.regex.Pattern;
 
 /**
  * Class that handled reading a line from terminal input with
@@ -78,6 +79,27 @@ public class InputLine {
                      CharValidator charValidator,
                      LineValidator lineValidator,
                      TabCompletion tabCompletion) {
+        this(terminal, message, charValidator, lineValidator, tabCompletion, Pattern.compile("[-/.\\s\\\\]"));
+    }
+
+    /**
+     * Constructor for complete line-input.
+     *
+     * @param terminal Terminal to use.
+     * @param message Message to print.
+     * @param charValidator The character validcator or null.
+     * @param lineValidator The line validator or null.
+     * @param tabCompletion The tab expander or null.
+     * @param delimiterPattern Pattern matching a character that delimit 'words' that
+     *                      are skipped or deleted with [ctrl-left], [ctrl-right],
+     *                      [alt-w] and [alt-d].
+     */
+    public InputLine(Terminal terminal,
+                     String message,
+                     CharValidator charValidator,
+                     LineValidator lineValidator,
+                     TabCompletion tabCompletion,
+                     Pattern delimiterPattern) {
         if (charValidator == null) {
             charValidator = (c, o) -> {
                 int ch = c.asInteger();
@@ -102,6 +124,7 @@ public class InputLine {
 
         this.terminal = terminal;
         this.message = message;
+        this.delimiterPattern = delimiterPattern;
         this.charValidator = charValidator;
         this.lineValidator = lineValidator;
         this.tabCompletion = tabCompletion;
@@ -158,10 +181,12 @@ public class InputLine {
                     continue;
                 }
 
-                if (ch == Char.DEL) {
+                if (ch == Char.DEL || ch == Char.BS) {
                     // backspace...
-                    before = before.substring(0, before.length() - 1);
-                    printInputLine();
+                    if (before.length() > 0) {
+                        before = before.substring(0, before.length() - 1);
+                        printInputLine();
+                    }
                     continue;
                 }
 
@@ -179,20 +204,10 @@ public class InputLine {
                         after = before + after;
                         before = "";
                     } else if (c.equals(Control.CTRL_LEFT)) {
-                        if (before.length() > 0) {
-                            // Skip all ending spaces.
-                            int lastSpace = before.length() - 1;
-                            while (lastSpace > 0 && before.charAt(lastSpace) == ' ') {
-                                --lastSpace;
-                            }
-                            lastSpace = before.lastIndexOf(" ", lastSpace);
-                            if (lastSpace > 0) {
-                                after = before.substring(lastSpace) + after;
-                                before = before.substring(0, lastSpace);
-                            } else {
-                                after = before + after;
-                                before = "";
-                            }
+                        int cut = cutWordBefore();
+                        if (cut > 0) {
+                            after = before.substring(cut) + after;
+                            before = before.substring(0, cut);
                         } else {
                             after = before + after;
                             before = "";
@@ -206,23 +221,36 @@ public class InputLine {
                         before = before + after;
                         after = "";
                     } else if (c.equals(Control.CTRL_RIGHT)) {
-                        if (after.length() > 0) {
-                            int firstSpace = 0;
-                            while (firstSpace < after.length() && after.charAt(firstSpace) == ' ') {
-                                ++firstSpace;
-                            }
-                            firstSpace = after.indexOf(" ", firstSpace);
-                            if (firstSpace > 0) {
-                                before = before + after.substring(0, firstSpace);
-                                after = after.substring(firstSpace);
-                            } else {
-                                before = before + after;
-                                after = "";
-                            }
+                        int cut = cutWordAfter();
+                        if (cut > 0) {
+                            before = before + after.substring(0, cut);
+                            after = after.substring(cut);
+                        } else {
+                            before = before + after;
+                            after = "";
+                        }
+                    } else if (c.equals(ALT_W)) {
+                        // delete word before the cursor.
+                        int cut = cutWordBefore();
+                        if (cut > 0) {
+                            before = before.substring(0, cut);
+                        } else {
+                            before = "";
                         }
                     } else if (c.equals(ALT_D)) {
+                        // delete word after the cursor.
+                        int cut = cutWordAfter();
+                        if (cut > 0) {
+                            after = after.substring(cut);
+                        } else {
+                            after = "";
+                        }
+                    } else if (c.equals(ALT_K)) {
                         // delete everything after the corsor.
                         after = "";
+                    } else if (c.equals(ALT_U)) {
+                        // delete everything before the corsor.
+                        before = "";
                     } else {
                         printAbove("Invalid control: " + c.asString());
                         continue;
@@ -243,6 +271,54 @@ public class InputLine {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    /**
+     * Find the position of the first character of the last word before
+     * the cursor that is preceded by a delimiter.
+     *
+     * @return The word position or -1.
+     */
+    private int cutWordBefore() {
+        if (before.length() > 0) {
+            int cut = before.length() - 1;
+            while (cut >= 0 && isDelimiter(before.charAt(cut))) {
+                --cut;
+            }
+            // We know the 'cut' position character is not a
+            // delimiter. Also cut all characters that is not
+            // preceded by a delimiter.
+            while (cut > 0) {
+                if (isDelimiter(before.charAt(cut - 1))) {
+                    return cut;
+                }
+                --cut;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * Find the position of the first delimiter character after the first word
+     * after the cursor.
+     *
+     * @return The delimiter position or -1.
+     */
+    private int cutWordAfter() {
+        if (after.length() > 0) {
+            int cut = 0;
+            while (cut < after.length() && isDelimiter(after.charAt(cut))) {
+                ++cut;
+            }
+            final int last = after.length() - 1;
+            while (cut <= last) {
+                if (isDelimiter(after.charAt(cut))) {
+                    return cut;
+                }
+                ++cut;
+            }
+        }
+        return -1;
     }
 
     private void printAbove(String error) {
@@ -269,14 +345,21 @@ public class InputLine {
         }
     }
 
-    private static final Char ALT_D = new Control("\033d");
-    private static final Char ALT_W = new Control("\033w");
+    private boolean isDelimiter(char c) {
+        return delimiterPattern.matcher(String.valueOf(c)).matches();
+    }
+
+    private static final Char ALT_D = new Control("\033d");  // delete word after
+    private static final Char ALT_W = new Control("\033w");  // delete word before
+    private static final Char ALT_K = new Control("\033k");  // delete line after
+    private static final Char ALT_U = new Control("\033u");  // delete line before
 
     private final Terminal terminal;
     private final String message;
     private final CharValidator charValidator;
     private final LineValidator lineValidator;
     private final TabCompletion tabCompletion;
+    private final Pattern delimiterPattern;
 
     private String before;
     private String after;
