@@ -66,7 +66,6 @@ public class InputPassword {
     public String readPassword() {
         this.before = "";
         this.after = "";
-        this.printedError = null;
 
         terminal.formatln("%s: ", message);
 
@@ -85,8 +84,10 @@ public class InputPassword {
 
                 if (ch == Char.DEL || ch == Char.BS) {
                     // backspace...
-                    before = before.substring(0, before.length() - 1);
-                    printInputLine();
+                    if (before.length() > 0) {
+                        before = before.substring(0, before.length() - 1);
+                        printInputLine();
+                    }
                     continue;
                 }
 
@@ -103,25 +104,6 @@ public class InputPassword {
                     } else if (c.equals(Control.HOME)) {
                         after = before + after;
                         before = "";
-                    } else if (c.equals(Control.CTRL_LEFT)) {
-                        if (before.length() > 0) {
-                            // Skip all ending spaces.
-                            int lastSpace = before.length() - 1;
-                            while (lastSpace > 0 && before.charAt(lastSpace) == ' ') {
-                                --lastSpace;
-                            }
-                            lastSpace = before.lastIndexOf(" ", lastSpace);
-                            if (lastSpace > 0) {
-                                after = before.substring(lastSpace) + after;
-                                before = before.substring(0, lastSpace);
-                            } else {
-                                after = before + after;
-                                before = "";
-                            }
-                        } else {
-                            after = before + after;
-                            before = "";
-                        }
                     } else if (c.equals(Control.RIGHT)) {
                         if (after.length() > 0) {
                             before = before + after.charAt(0);
@@ -130,23 +112,8 @@ public class InputPassword {
                     } else if (c.equals(Control.END)) {
                         before = before + after;
                         after = "";
-                    } else if (c.equals(Control.CTRL_RIGHT)) {
-                        if (after.length() > 0) {
-                            int firstSpace = 0;
-                            while (firstSpace < after.length() && after.charAt(firstSpace) == ' ') {
-                                ++firstSpace;
-                            }
-                            firstSpace = after.indexOf(" ", firstSpace);
-                            if (firstSpace > 0) {
-                                before = before + after.substring(0, firstSpace);
-                                after = after.substring(firstSpace);
-                            } else {
-                                before = before + after;
-                                after = "";
-                            }
-                        }
                     } else {
-                        printAbove("Invalid control: " + c.asString());
+                        // Silently ignore unknown control chars.
                         continue;
                     }
                     printInputLine();
@@ -157,26 +124,17 @@ public class InputPassword {
                     throw new IOException("User interrupted: " + c.asString());
                 }
 
+                if (ch < 0x20) {
+                    // Silently ignore unknown ASCII control characters.
+                    continue;
+                }
+
                 before = before + c.toString();
                 printInputLine();
             }
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
-    }
-
-    private void printAbove(String error) {
-        if (printedError != null) {
-            terminal.format("\r%s%s",
-                            Control.UP,
-                            Control.CURSOR_ERASE);
-        } else {
-            terminal.format("\r%s", Control.CURSOR_ERASE);
-        }
-        printedError = error;
-        terminal.print(error);
-        terminal.println();
-        printInputLine();
     }
 
     private void printInputLine() {
@@ -196,5 +154,4 @@ public class InputPassword {
 
     private String before;
     private String after;
-    private String printedError;
 }
