@@ -246,10 +246,10 @@ public class InputLine {
                             after = "";
                         }
                     } else if (c.equals(ALT_K)) {
-                        // delete everything after the corsor.
+                        // delete everything after the cursor.
                         after = "";
                     } else if (c.equals(ALT_U)) {
-                        // delete everything before the corsor.
+                        // delete everything before the cursor.
                         before = "";
                     } else {
                         printAbove("Invalid control: " + c.asString());

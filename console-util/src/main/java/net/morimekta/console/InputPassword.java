@@ -28,8 +28,10 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 
 /**
- * Class that handled reading a line from terminal input with
- * character and line validators, and optional tab completion.
+ * Class that handled reading a password (hidden string) from terminal
+ * input with an optional character replacement char. If the replacement
+ * string is empty, no input or output will show from entering the
+ * password.
  */
 public class InputPassword {
     /**
