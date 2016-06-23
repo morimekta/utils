@@ -28,7 +28,7 @@ public class Main {
             commands.add(new InputSelection.Command<>(Char.CR, "select", (e, p) -> InputSelection.Reaction.SELECT, true));
             commands.add(new InputSelection.Command<>('r', "reverse", (e, p) -> {
                 Collections.reverse(entries);
-                return InputSelection.Reaction.UPDATE;
+                return InputSelection.Reaction.UPDATE_KEEP_ITEM;
             }));
             commands.add(new InputSelection.Command<>('q', "quit", (e, p) -> InputSelection.Reaction.EXIT));
 

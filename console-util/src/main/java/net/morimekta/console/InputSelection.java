@@ -101,9 +101,17 @@ public class InputSelection<E> {
 
         /**
          * Stay in the selection and update entries (clear draw cache and
-         * redraw all visible entries).
+         * redraw all visible entries). Keeps the same selected item regardless
+         * of position.
          */
-        UPDATE,
+        UPDATE_KEEP_ITEM,
+
+        /**
+         * Stay in the selection and update entries (clear draw cache and
+         * redraw all visible entries). Keeps the same selected position
+         * regardless of the underlying item.
+         */
+        UPDATE_KEEP_POSITION,
     }
 
     public interface Action<E> {
@@ -130,6 +138,10 @@ public class InputSelection<E> {
             this(new Unicode(key), name, action, hidden);
         }
 
+        public Command(Char key, String name, Action<E> action) {
+            this(key, name, action, false);
+        }
+
         public Command(Char key, String name, Action<E> action, boolean hidden) {
             this.key = key;
             this.name = name;
@@ -137,10 +149,10 @@ public class InputSelection<E> {
             this.hidden = hidden;
         }
 
-        protected final Char      key;
-        protected final String    name;
-        protected final Action<E> action;
-        protected final boolean   hidden;
+        private final Char      key;
+        private final String    name;
+        private final Action<E> action;
+        private final boolean   hidden;
     }
 
     /**
@@ -269,7 +281,7 @@ public class InputSelection<E> {
                             terminalBuffer.update(off + index, makeEntryLine(index));
                             break;
                         }
-                        case UPDATE: {
+                        case UPDATE_KEEP_ITEM: {
                             // E.g. updated sorting. Number of entries must
                             // remain the same.
                             updateSelectionIndex(current);
@@ -278,6 +290,9 @@ public class InputSelection<E> {
                                 terminalBuffer.update(1, makeMoreEntriesLine());
                                 terminalBuffer.update(shownEntries + 2, makeMoreEntriesLine());
                             }
+                            // continue to next.
+                        }
+                        case UPDATE_KEEP_POSITION: {
                             int off = paged ? 2 : 1;
                             for (int i = 0; i < shownEntries; ++i) {
                                 terminalBuffer.update(off + i, makeEntryLine(i));
@@ -335,10 +350,10 @@ public class InputSelection<E> {
                 updateSelection(last);
             } else if (c.equals(Control.UP)) {
                 updateSelection(max(0, currentIndex + currentOffset - 1));
-            } else if (c.equals(Control.LEFT)) {
-                updateSelection(max(0, currentIndex + currentOffset - shownEntries));
             } else if (c.equals(Control.DOWN)) {
                 updateSelection(min(last, currentIndex + currentOffset + 1));
+            } else if (c.equals(Control.LEFT)) {
+                updateSelection(max(0, currentIndex + currentOffset - shownEntries));
             } else if (c.equals(Control.RIGHT)) {
                 updateSelection(min(last, currentIndex + currentOffset + shownEntries));
             } else {
