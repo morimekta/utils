@@ -35,11 +35,6 @@
             <artifactId>io-util</artifactId>
             <version>0.3.0-SNAPSHOT</version>
         </dependency>
-        <dependency>
-            <groupId>args4j</groupId>
-            <artifactId>args4j</artifactId>
-            <version>${arg4j.version}</version>
-        </dependency>
 
         <dependency>
             <groupId>org.hamcrest</groupId>
