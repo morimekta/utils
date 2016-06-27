@@ -32,7 +32,7 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 /**
- * Value converter interface. It converts from a string value (usually the
+ * Value parser interface. It converts from a string value (usually the
  * CLI argument value) and converts it into a specific value type. Essentially
  * this interface is meant to bridge two {@link Consumer}s, the target consumer
  * (usually the value setter or adder), and the string consumer that the
@@ -62,7 +62,7 @@ public interface Parser<T> {
      * @param consumer The consumer to wrap.
      * @return The string consumer.
      */
-    default Consumer<String> into(Consumer<T> consumer) {
+    default Consumer<String> then(Consumer<T> consumer) {
         return s -> consumer.accept(parse(s));
     }
 
@@ -73,7 +73,7 @@ public interface Parser<T> {
      * @return The consumer wrapper.
      */
     static Consumer<String> i32(Consumer<Integer> consumer) {
-        return new IntegerParser().into(consumer);
+        return new IntegerParser().then(consumer);
     }
 
     /**
@@ -83,7 +83,7 @@ public interface Parser<T> {
      * @return The consumer wrapper.
      */
     static Consumer<String> i64(Consumer<Long> consumer) {
-        return new LongParser().into(consumer);
+        return new LongParser().then(consumer);
     }
 
     /**
@@ -93,7 +93,7 @@ public interface Parser<T> {
      * @return The consumer wrapper.
      */
     static Consumer<String> dbl(Consumer<Double> consumer) {
-        return new DoubleParser().into(consumer);
+        return new DoubleParser().then(consumer);
     }
 
     /**
@@ -105,7 +105,7 @@ public interface Parser<T> {
      * @param <E> The enum type.
      */
     static <E extends Enum<E>> Consumer<String> oneOf(Class<E> klass, Consumer<E> consumer) {
-        return new EnumParser<>(klass).into(consumer);
+        return new EnumParser<>(klass).then(consumer);
     }
 
     /**
@@ -116,7 +116,7 @@ public interface Parser<T> {
      */
     static Consumer<String> file(Consumer<File> consumer) {
         return new FileParser(f -> f.exists() && f.isFile(),
-                              "%s is not a file.").into(consumer);
+                              "%s is not a file.").then(consumer);
     }
 
     /**
@@ -127,7 +127,7 @@ public interface Parser<T> {
      */
     static Consumer<String> dir(Consumer<File> consumer) {
         return new FileParser(f -> f.exists() && f.isDirectory(),
-                              "%s is not a directory.").into(consumer);
+                              "%s is not a directory.").then(consumer);
     }
 
     /**
@@ -139,7 +139,7 @@ public interface Parser<T> {
      */
     static Consumer<String> outputFile(Consumer<File> consumer) {
         return new FileParser(f -> !f.exists() || f.isFile(),
-                              "%s must be file or not created yet.").into(consumer);
+                              "%s must be file or not created yet.").then(consumer);
     }
 
 
@@ -152,7 +152,7 @@ public interface Parser<T> {
      */
     static Consumer<String> outputDir(Consumer<File> consumer) {
         return new FileParser(f -> !f.exists() || f.isDirectory(),
-                              "%s must be directory or not created yet.").into(consumer);
+                              "%s must be directory or not created yet.").then(consumer);
     }
 
     /**
@@ -162,7 +162,7 @@ public interface Parser<T> {
      * @return The consumer wrapper.
      */
     static Consumer<String> path(Consumer<Path> consumer) {
-        return new PathParser().into(consumer);
+        return new PathParser().then(consumer);
     }
 
     /**
