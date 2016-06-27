@@ -24,6 +24,8 @@ package net.morimekta.util;
 public interface Stringable {
     /**
      * Make a string representation of the instance value.
+     *
+     * @return The string representation.
      */
     String asString();
 }

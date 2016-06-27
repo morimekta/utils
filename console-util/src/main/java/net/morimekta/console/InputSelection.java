@@ -127,7 +127,7 @@ public class InputSelection<E> {
     /**
      * Command. The command works on an entry.
      *
-     * @param <E>
+     * @param <E> Value type.
      */
     public static class Command<E> {
         public Command(char key, String name, Action<E> action) {
@@ -159,6 +159,7 @@ public class InputSelection<E> {
      * Create a selection instance.
      *
      * @param terminal The terminal to print to.
+     * @param prompt The prompt to introduce the selection with.
      * @param entries The list of entries.
      * @param commands The list of commands.
      * @param printer The entry printer.
@@ -175,10 +176,12 @@ public class InputSelection<E> {
      * Create a selection instance.
      *
      * @param terminal The terminal to print to.
+     * @param prompt The prompt to introduce the selection with.
      * @param entries The list of entries.
      * @param commands The list of commands.
      * @param printer The entry printer.
      * @param pageSize The max number of entries per page.
+     * @param pageMargin The number of entries above page size needed to trigger paging.
      * @param lineWidth The number of columns to print on.
      */
     public InputSelection(Terminal terminal,

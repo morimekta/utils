@@ -119,7 +119,7 @@ public class CharUtil {
      *
      * @param string The base string.
      * @param width The printed width.
-     * @return
+     * @return The clipped string.
      */
     public static String clipWidth(String string, int width) {
         AtomicInteger remaining = new AtomicInteger(width);

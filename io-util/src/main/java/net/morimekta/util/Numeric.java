@@ -24,6 +24,8 @@ package net.morimekta.util;
 public interface Numeric {
     /**
      * Make an integer representation of the instance value.
+     *
+     * @return The numeric value.
      */
     int asInteger();
 }
