@@ -38,17 +38,6 @@ import java.util.Map;
  * the appropriate fields.
  */
 public class ArgumentParser {
-    private final String                 program;
-    private final String                 version;
-    private final String                 description;
-    private final ArgumentOptions        argumentOptions;
-
-    private final LinkedList<BaseOption>     options;
-    private final LinkedList<BaseArgument>   arguments;
-
-    private final Map<String, BaseOption>    longNameOptions;
-    private final Map<Character, BaseOption> shortOptions;
-
     /**
      * Create an argument argumentParser instance.
      *
@@ -78,6 +67,36 @@ public class ArgumentParser {
         this.arguments = new LinkedList<>();
         this.longNameOptions = new HashMap<>();
         this.shortOptions = new HashMap<>();
+    }
+
+    /**
+     * The name of the program. Should be essentially what the user types on
+     * the command line to invoke the program.
+     *
+     * @return The program name.
+     */
+    public String getProgram() {
+        return program;
+    }
+
+    /**
+     * The program version string.
+     *
+     * @return The program version.
+     */
+    public String getVersion() {
+        return version;
+    }
+
+    /**
+     * Short description of the program. Should be the string that is shown
+     * on the top of the program usage help, usually just a few words. Should
+     * be capitalized.
+     *
+     * @return The program description.
+     */
+    public String getDescription() {
+        return description;
     }
 
     /**
@@ -251,13 +270,24 @@ public class ArgumentParser {
         printUsage(new IndentedPrintWriter(writer), showHidden);
     }
 
-    private static final int USAGE_EXTRA_CHARS = 4;
-
-    public void printSingleLineUsage(OutputStream out) {
-        printSingleLineUsage(new PrintWriter(out));
+    /**
+     * Get the program description line. Contains essentially the line
+     * "description - version".
+     *
+     * @return The program description.
+     */
+    public String getProgramDescription() {
+        return description + " - " + version;
     }
 
-    public void printSingleLineUsage(PrintWriter writer) {
+    /**
+     * Get the single line usage string for the parser. Contains essentially
+     * the line "program options args".
+     *
+     * @return The single line usage.
+     */
+    public String getSingleLineUsage() {
+        StringBuilder writer = new StringBuilder();
         writer.append(program);
 
         // first just list up all the unary short opts.
@@ -289,7 +319,7 @@ public class ArgumentParser {
             }
         }
 
-        writer.flush();
+        return writer.toString();
     }
 
     public void printUsage(IndentedPrintWriter writer, boolean showHidden) {
@@ -392,4 +422,17 @@ public class ArgumentParser {
             writer.appendln(descLines[i]);
         }
     }
+
+    private static final int USAGE_EXTRA_CHARS = 4;
+
+    private final String                 program;
+    private final String                 version;
+    private final String                 description;
+    private final ArgumentOptions        argumentOptions;
+
+    private final LinkedList<BaseOption>     options;
+    private final LinkedList<BaseArgument>   arguments;
+
+    private final Map<String, BaseOption>    longNameOptions;
+    private final Map<Character, BaseOption> shortOptions;
 }

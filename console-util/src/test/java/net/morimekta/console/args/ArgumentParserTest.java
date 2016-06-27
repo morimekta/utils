@@ -23,7 +23,6 @@ package net.morimekta.console.args;
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
-import java.io.PrintWriter;
 import java.util.LinkedList;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -238,16 +237,8 @@ public class ArgumentParserTest {
         parser.add(new Argument("type", "Some type", "no-type", type::set, s -> !s.startsWith("/"), false, false, false));
         parser.add(new Argument("file", "Extra files", null, args::add, null, true, true, false));
 
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        parser.printSingleLineUsage(baos);
-
         assertEquals("gt [-a I] [-Dkey=val ...] [--arg2] [type] file...",
-                     baos.toString());
-    }
-
-    private interface Subbing {
-        ArgumentParser parser();
-        void run(PrintWriter out);
+                     parser.getSingleLineUsage());
     }
 
     private static class Sub {
@@ -255,15 +246,6 @@ public class ArgumentParserTest {
 
         public void setI(int i) {
             this.i = i;
-        }
-
-        public ArgumentParser parser() {
-            return new ArgumentParser("gt sub", "0.2.5", "Git Tools")
-                    .add(new Option("--int", "i", "I", "Integer", i32(this::setI), "12", false, true, false));
-        }
-
-        public void run(PrintWriter out) {
-            out.append("" + i);
         }
     }
 
@@ -306,9 +288,6 @@ public class ArgumentParserTest {
 
         parser.add(subs);
 
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        parser.printSingleLineUsage(baos);
-
-        assertEquals("gt [-a I] [-Dkey=val ...] [--arg2] [type] [sub1 | sub2] [...]", baos.toString());
+        assertEquals("gt [-a I] [-Dkey=val ...] [--arg2] [type] [sub1 | sub2] [...]", parser.getSingleLineUsage());
     }
 }
