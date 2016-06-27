@@ -25,6 +25,7 @@ import net.morimekta.console.chr.Color;
 /**
  * LinePrinter interface.
  */
+@FunctionalInterface
 public interface LinePrinter {
     /**
      * Print a new line to the terminal.

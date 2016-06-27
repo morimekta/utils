@@ -59,6 +59,7 @@ public class InputSelection<E> {
      *
      * @param <E> The entry type.
      */
+    @FunctionalInterface
     public interface EntryPrinter<E> {
         /**
          * Print the entry line.
@@ -114,6 +115,12 @@ public class InputSelection<E> {
         UPDATE_KEEP_POSITION,
     }
 
+    /**
+     * The command action interface.
+     *
+     * @param <E> The entry value type.
+     */
+    @FunctionalInterface
     public interface Action<E> {
         /**
          * Call the command with the given entry.

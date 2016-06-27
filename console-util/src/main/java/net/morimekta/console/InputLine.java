@@ -32,17 +32,40 @@ import java.util.regex.Pattern;
  * character and line validators, and optional tab completion.
  */
 public class InputLine {
+    /**
+     * Line validator interface.
+     */
+    @FunctionalInterface
     public interface LineValidator {
+        /**
+         * Validate the full line.
+         *
+         * @param line The line to validate.
+         * @param errorPrinter Printer to print out error messages.
+         * @return True if valid, false otherwise.
+         */
         boolean validate(String line, LinePrinter errorPrinter);
     }
 
+    /**
+     * Character validator interface.
+     */
+    @FunctionalInterface
     public interface CharValidator {
+        /**
+         * Validate the given char.
+         *
+         * @param ch The char to validate.
+         * @param errorPrinter Printer to print out error messages.
+         * @return True if valid, false otherwise.
+         */
         boolean validate(Char ch, LinePrinter errorPrinter);
     }
 
     /**
      * Tab completion interface.
      */
+    @FunctionalInterface
     public interface TabCompletion {
         /**
          * Try to complete the given string.
@@ -141,6 +164,7 @@ public class InputLine {
 
     /**
      * Read line from terminal.
+     *
      * @param initial The initial (default) value.
      * @return The resulting line.
      */
@@ -164,16 +188,8 @@ public class InputLine {
                 }
 
                 int ch = c.asInteger();
-                if (ch == Char.TAB && tabCompletion != null) {
-                    String completed = tabCompletion.complete(before, this::printAbove);
-                    if (completed != null) {
-                        before = completed;
-                        printInputLine();
-                    }
-                    continue;
-                }
 
-                if (ch == Char.CR) {
+                if (ch == Char.CR || ch == Char.LF) {
                     String line = before + after;
                     if (lineValidator.validate(line, this::printAbove)) {
                         return line;
@@ -181,86 +197,12 @@ public class InputLine {
                     continue;
                 }
 
-                if (ch == Char.DEL || ch == Char.BS) {
-                    // backspace...
-                    if (before.length() > 0) {
-                        before = before.substring(0, before.length() - 1);
-                        printInputLine();
-                    }
-                    continue;
-                }
+                handleInterrupt(ch, c);
 
-                if (c instanceof Control) {
-                    if (c.equals(Control.DELETE)) {
-                        if (after.length() > 0) {
-                            after = after.substring(1);
-                        }
-                    } else if (c.equals(Control.LEFT)) {
-                        if (before.length() > 0) {
-                            after = "" + before.charAt(before.length() - 1) + after;
-                            before = before.substring(0, before.length() - 1);
-                        }
-                    } else if (c.equals(Control.HOME)) {
-                        after = before + after;
-                        before = "";
-                    } else if (c.equals(Control.CTRL_LEFT)) {
-                        int cut = cutWordBefore();
-                        if (cut > 0) {
-                            after = before.substring(cut) + after;
-                            before = before.substring(0, cut);
-                        } else {
-                            after = before + after;
-                            before = "";
-                        }
-                    } else if (c.equals(Control.RIGHT)) {
-                        if (after.length() > 0) {
-                            before = before + after.charAt(0);
-                            after = after.substring(1);
-                        }
-                    } else if (c.equals(Control.END)) {
-                        before = before + after;
-                        after = "";
-                    } else if (c.equals(Control.CTRL_RIGHT)) {
-                        int cut = cutWordAfter();
-                        if (cut > 0) {
-                            before = before + after.substring(0, cut);
-                            after = after.substring(cut);
-                        } else {
-                            before = before + after;
-                            after = "";
-                        }
-                    } else if (c.equals(ALT_W)) {
-                        // delete word before the cursor.
-                        int cut = cutWordBefore();
-                        if (cut > 0) {
-                            before = before.substring(0, cut);
-                        } else {
-                            before = "";
-                        }
-                    } else if (c.equals(ALT_D)) {
-                        // delete word after the cursor.
-                        int cut = cutWordAfter();
-                        if (cut > 0) {
-                            after = after.substring(cut);
-                        } else {
-                            after = "";
-                        }
-                    } else if (c.equals(ALT_K)) {
-                        // delete everything after the cursor.
-                        after = "";
-                    } else if (c.equals(ALT_U)) {
-                        // delete everything before the cursor.
-                        before = "";
-                    } else {
-                        printAbove("Invalid control: " + c.asString());
-                        continue;
-                    }
-                    printInputLine();
+                if (handleTab(ch) ||
+                    handleBackSpace(ch) ||
+                    handleControl(c)) {
                     continue;
-                }
-
-                if (ch == Char.ESC || ch == Char.ABR || ch == Char.EOF) {
-                    throw new IOException("User interrupted: " + c.asString());
                 }
 
                 if (charValidator.validate(c, this::printAbove)) {
@@ -271,6 +213,135 @@ public class InputLine {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    /**
+     * Handle tab and tab completion.
+     *
+     * @param ch The character code point.
+     * @return True if handled.
+     */
+    private boolean handleTab(int ch) {
+        if (ch == Char.TAB && tabCompletion != null) {
+            String completed = tabCompletion.complete(before, this::printAbove);
+            if (completed != null) {
+                before = completed;
+                printInputLine();
+            }
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Handle backspace. These are not control sequences, so must be handled separately
+     * from those.
+     *
+     * @param ch The character code point.
+     * @return True if handled.
+     */
+    private boolean handleBackSpace(int ch) {
+        if (ch == Char.DEL || ch == Char.BS) {
+            // backspace...
+            if (before.length() > 0) {
+                before = before.substring(0, before.length() - 1);
+                printInputLine();
+            }
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Handle user interrupts.
+     * @param ch The character code point.
+     * @param c The char instance.
+     * @throws IOException
+     */
+    private void handleInterrupt(int ch, Char c) throws IOException {
+        if (ch == Char.ESC || ch == Char.ABR || ch == Char.EOF) {
+            throw new IOException("User interrupted: " + c.asString());
+        }
+    }
+
+    /**
+     * Handle control sequence chars.
+     *
+     * @param c The control char.
+     * @return If the char was handled.
+     */
+    private boolean handleControl(Char c) {
+        if (c instanceof Control) {
+            if (c.equals(Control.DELETE)) {
+                if (after.length() > 0) {
+                    after = after.substring(1);
+                }
+            } else if (c.equals(Control.LEFT)) {
+                if (before.length() > 0) {
+                    after = "" + before.charAt(before.length() - 1) + after;
+                    before = before.substring(0, before.length() - 1);
+                }
+            } else if (c.equals(Control.HOME)) {
+                after = before + after;
+                before = "";
+            } else if (c.equals(Control.CTRL_LEFT)) {
+                int cut = cutWordBefore();
+                if (cut > 0) {
+                    after = before.substring(cut) + after;
+                    before = before.substring(0, cut);
+                } else {
+                    after = before + after;
+                    before = "";
+                }
+            } else if (c.equals(Control.RIGHT)) {
+                if (after.length() > 0) {
+                    before = before + after.charAt(0);
+                    after = after.substring(1);
+                }
+            } else if (c.equals(Control.END)) {
+                before = before + after;
+                after = "";
+            } else if (c.equals(Control.CTRL_RIGHT)) {
+                int cut = cutWordAfter();
+                if (cut > 0) {
+                    before = before + after.substring(0, cut);
+                    after = after.substring(cut);
+                } else {
+                    before = before + after;
+                    after = "";
+                }
+            } else if (c.equals(ALT_W)) {
+                // delete word before the cursor.
+                int cut = cutWordBefore();
+                if (cut > 0) {
+                    before = before.substring(0, cut);
+                } else {
+                    before = "";
+                }
+            } else if (c.equals(ALT_D)) {
+                // delete word after the cursor.
+                int cut = cutWordAfter();
+                if (cut > 0) {
+                    after = after.substring(cut);
+                } else {
+                    after = "";
+                }
+            } else if (c.equals(ALT_K)) {
+                // delete everything after the cursor.
+                after = "";
+            } else if (c.equals(ALT_U)) {
+                // delete everything before the cursor.
+                before = "";
+            } else {
+                printAbove("Invalid control: " + c.asString());
+                return true;
+            }
+            printInputLine();
+            return true;
+        }
+        return false;
     }
 
     /**
