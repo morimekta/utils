@@ -365,7 +365,7 @@ public class ArgumentParser {
         writer.append(" ");
 
         if (prefix.length() > prefixLen) {
-            writer.append(CharUtil.leftJust(prefix, prefixLen));
+            writer.append(prefix);
             if (prefix.length() > (prefixLen * 1.7)) {
                 descLines = WordUtils.wrap(usage, usageWidth - prefixLen - USAGE_EXTRA_CHARS).split("[\\n]");
             } else {
