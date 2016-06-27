@@ -130,9 +130,6 @@
                                         <fileset dir="${build.directory.android-util}">
                                             <include name="jacoco.exec" />
                                         </fileset>
-                                        <fileset dir="${build.directory.config-util}">
-                                            <include name="jacoco.exec" />
-                                        </fileset>
                                         <fileset dir="${build.directory.console-util}">
                                             <include name="jacoco.exec" />
                                         </fileset>
@@ -147,14 +144,12 @@
                                         <group name="jacoco-multi">
                                             <classfiles>
                                                 <fileset dir="${classes.directory.android-util}" />
-                                                <fileset dir="${classes.directory.config-util}" />
                                                 <fileset dir="${classes.directory.console-util}" />
                                                 <fileset dir="${classes.directory.io-util}" />
                                                 <fileset dir="${classes.directory.testing-util}" />
                                             </classfiles>
                                             <sourcefiles encoding="UTF-8">
                                                 <fileset dir="${sources.directory.android-util}" />
-                                                <fileset dir="${sources.directory.config-util}" />
                                                 <fileset dir="${sources.directory.console-util}" />
                                                 <fileset dir="${sources.directory.io-util}" />
                                                 <fileset dir="${sources.directory.testing-util}" />
@@ -182,19 +177,16 @@
 
     <properties>
         <sources.directory.android-util>../android-util/src/main/java</sources.directory.android-util>
-        <sources.directory.config-util>../config-util/src/main/java</sources.directory.config-util>
         <sources.directory.console-util>../console-util/src/main/java</sources.directory.console-util>
         <sources.directory.io-util>../io-util/src/main/java</sources.directory.io-util>
         <sources.directory.testing-util>../testing-util/src/main/java</sources.directory.testing-util>
 
         <classes.directory.android-util>../android-util/target/classes</classes.directory.android-util>
-        <classes.directory.config-util>../config-util/target/classes</classes.directory.config-util>
         <classes.directory.console-util>../console-util/target/classes</classes.directory.console-util>
         <classes.directory.io-util>../io-util/target/classes</classes.directory.io-util>
         <classes.directory.testing-util>../testing-util/target/classes</classes.directory.testing-util>
 
         <build.directory.android-util>../android-util/target</build.directory.android-util>
-        <build.directory.config-util>../config-util/target</build.directory.config-util>
         <build.directory.console-util>../console-util/target</build.directory.console-util>
         <build.directory.io-util>../io-util/target</build.directory.io-util>
         <build.directory.testing-util>../testing-util/target</build.directory.testing-util>

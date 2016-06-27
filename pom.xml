@@ -81,7 +81,6 @@
 
     <modules>
         <module>android-util</module>
-        <module>config-util</module>
         <module>console-util</module>
         <module>io-util</module>
         <module>testing-util</module>
