@@ -20,13 +20,15 @@
  */
 package net.morimekta.console.args;
 
+import java.util.Comparator;
+
 /**
  * Options for configuring the argument parser.
  */
 public class ArgumentOptions {
     private boolean defaultsShown = true;
     private int usageWidth = 80;
-    private boolean defaultHelp = false;
+    private Comparator<BaseOption> optionComparator = null;
 
     public static ArgumentOptions defaults() {
         return new ArgumentOptions();
@@ -66,21 +68,12 @@ public class ArgumentOptions {
         return usageWidth;
     }
 
-    /**
-     * Add the default "--help" | "-h" | "-?" option for showing usage on std
-     * out.
-     *
-     * @return The argument options.
-     */
-    public ArgumentOptions withDefaultHelp() {
-        this.defaultHelp = true;
+    public ArgumentOptions withOptionComparator(Comparator<BaseOption> comparator) {
+        this.optionComparator = comparator;
         return this;
     }
 
-    /**
-     * @return True if the default help option should be added.
-     */
-    public boolean getDefaultHelp() {
-        return defaultHelp;
+    public Comparator<BaseOption> getOptionComparator() {
+        return optionComparator;
     }
 }

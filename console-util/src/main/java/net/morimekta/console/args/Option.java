@@ -64,14 +64,14 @@ public class Option extends BaseOption {
 
     @Override
     public int applyShort(String opts, ArgumentList args) {
-        if (applied && !isRepeated()) {
-            throw new ArgumentException(getName() + " already applied.");
-        }
-        applied = true;
-
         if (opts.length() == 1) {
             return apply(args);
         } else {
+            if (applied && !isRepeated()) {
+                throw new ArgumentException("Option " + nameOrShort() + " used more than once");
+            }
+            applied = true;
+
             String value = opts.substring(1);
             setter.accept(value);
             return 1;
@@ -81,14 +81,14 @@ public class Option extends BaseOption {
     @Override
     public void validate() throws ArgumentException {
         if (isRequired() && !applied) {
-            throw new ArgumentException(nameOrShort() + " is required.");
+            throw new ArgumentException("Option " + nameOrShort() + " is required");
         }
     }
 
     @Override
     public int apply(ArgumentList args) throws ArgumentException {
         if (applied && !isRepeated()) {
-            throw new ArgumentException(getName() + " already applied.");
+            throw new ArgumentException("Option " + nameOrShort() + " used more than once");
         }
         applied = true;
 

@@ -137,24 +137,24 @@ public class ArgumentParserTest {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         parser.printUsage(baos);
 
-        assertEquals(" --arg1 (-a) I          : Integer value [default: 55]\n" +
+        assertEquals(" --arg1 (-a) I          : Integer value (default: 55)\n" +
                      " -Dkey=val              : System property\n" +
                      " --arg2                 : Another boolean\n" +
                      " -A I                   : Integer value (#2), This one has a really long\n" +
                      "                          description, that should be wrapped at some point.\n" +
                      "                          This extra text is just to make sure it actually\n" +
-                     "                          wraps... [default: 55]\n" +
+                     "                          wraps... (default: 55)\n" +
                      " --this-is-somewhat-long-long-option V : ANOTHER Integer value (#3), This one\n" +
                      "                          has a really long description, that should be wrapped\n" +
                      "                          at some point. This extra text is just to make sure it\n" +
                      "                          actually wraps... This one should also be side-shifted\n" +
-                     "                          on the first line. [default: 55]\n" +
+                     "                          on the first line. (default: 55)\n" +
                      " --this-is-a-really-long-long-option (-c, -d, -e, -f, -g, -h) true-value\n" +
                      "                          ANOTHER Integer value (#2), This one has a really long\n" +
                      "                          description, that should be wrapped at some point.\n" +
                      "                          This extra text is just to make sure it actually\n" +
                      "                          wraps... Though this one should be shifted entirely to\n" +
-                     "                          the next line. [default: 55]\n", baos.toString());
+                     "                          the next line. (default: 55)\n", baos.toString());
     }
 
     @Test
@@ -211,8 +211,6 @@ public class ArgumentParserTest {
         assertEquals(" --arg1 (-a) I : Integer value\n" +
                      " -Dkey=val     : System property\n" +
                      " --arg2        : Another boolean\n" +
-                     "\n" +
-                     "Available arguments:\n" +
                      " type          : Some type\n" +
                      " file          : Extra files\n",
                      baos.toString());

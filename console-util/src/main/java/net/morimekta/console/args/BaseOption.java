@@ -38,6 +38,13 @@ public abstract class BaseOption extends BaseArgument {
         super(name, usage, defaultValue, repeated, required, hidden);
         this.shortNames = shortNames == null ? "" : shortNames;
         this.metaVar = metaVar;
+
+        if (getName() == null && getShortNames().length() == 0) {
+            throw new IllegalArgumentException("Option must have name or short name");
+        }
+        if (getName() != null && !getName().startsWith("--")) {
+            throw new IllegalArgumentException("Option name does not start with '--'");
+        }
     }
 
     /**

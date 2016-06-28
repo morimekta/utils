@@ -46,6 +46,7 @@ import static net.morimekta.console.util.Parser.outputDir;
 import static net.morimekta.console.util.Parser.outputFile;
 import static net.morimekta.console.util.Parser.path;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.startsWith;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
@@ -153,7 +154,7 @@ public class ParserTest {
             file(f::set).accept(not.getAbsolutePath());
             fail("No exception on invalid value.");
         } catch (ArgumentException e) {
-            assertThat(e.getMessage(), containsString(" is not a file."));
+            assertThat(e.getMessage(), startsWith("No such file "));
         }
     }
 
@@ -172,7 +173,7 @@ public class ParserTest {
             dir(f::set).accept(not.getAbsolutePath());
             fail("No exception on invalid value.");
         } catch (ArgumentException e) {
-            assertThat(e.getMessage(), containsString(" is not a directory."));
+            assertThat(e.getMessage(), startsWith("No such directory "));
         }
     }
 
@@ -193,7 +194,7 @@ public class ParserTest {
             outputFile(f::set).accept(tempDir.getAbsolutePath());
             fail("No exception on invalid value.");
         } catch (ArgumentException e) {
-            assertThat(e.getMessage(), containsString(" must be file or not created yet."));
+            assertThat(e.getMessage(), containsString(" exists and is not a file"));
         }
     }
 
@@ -214,7 +215,7 @@ public class ParserTest {
             outputDir(f::set).accept(tempFile.getAbsolutePath());
             fail("No exception on invalid value.");
         } catch (ArgumentException e) {
-            assertThat(e.getMessage(), containsString(" must be directory or not created yet."));
+            assertThat(e.getMessage(), containsString(" exists and is not a directory"));
         }
     }
 

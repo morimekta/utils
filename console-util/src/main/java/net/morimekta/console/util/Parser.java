@@ -29,7 +29,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
 
 /**
  * Value parser interface. It converts from a string value (usually the
@@ -115,8 +114,7 @@ public interface Parser<T> {
      * @return The consumer wrapper.
      */
     static Consumer<String> file(Consumer<File> consumer) {
-        return new FileParser(f -> f.exists() && f.isFile(),
-                              "%s is not a file.").then(consumer);
+        return new FileParser().then(consumer);
     }
 
     /**
@@ -126,8 +124,7 @@ public interface Parser<T> {
      * @return The consumer wrapper.
      */
     static Consumer<String> dir(Consumer<File> consumer) {
-        return new FileParser(f -> f.exists() && f.isDirectory(),
-                              "%s is not a directory.").then(consumer);
+        return new DirParser().then(consumer);
     }
 
     /**
@@ -138,8 +135,7 @@ public interface Parser<T> {
      * @return The consumer wrapper.
      */
     static Consumer<String> outputFile(Consumer<File> consumer) {
-        return new FileParser(f -> !f.exists() || f.isFile(),
-                              "%s must be file or not created yet.").then(consumer);
+        return new OutputFileParser().then(consumer);
     }
 
 
@@ -151,8 +147,7 @@ public interface Parser<T> {
      * @return The consumer wrapper.
      */
     static Consumer<String> outputDir(Consumer<File> consumer) {
-        return new FileParser(f -> !f.exists() || f.isDirectory(),
-                              "%s must be directory or not created yet.").then(consumer);
+        return new OutputDirParser().then(consumer);
     }
 
     /**
@@ -207,25 +202,59 @@ public interface Parser<T> {
      * A converter to file instances, with validator &amp; error message.
      */
     class FileParser implements Parser<File> {
-        private final Predicate<File> validator;
-        private final String          message;
-
-        /**
-         * Create a file converter with a validator and a custom error message.
-         *
-         * @param validator The file validator.
-         * @param message The error message if validation fails.
-         */
-        public FileParser(Predicate<File> validator, String message) {
-            this.validator = validator;
-            this.message = message;
-        }
-
         @Override
         public File parse(String s) {
             File result = new File(s);
-            if (!validator.test(result)) {
-                throw new ArgumentException(String.format(message, result.getPath()));
+            if (!result.exists()) {
+                throw new ArgumentException("No such file " + s);
+            }
+            if (!result.isFile()) {
+                throw new ArgumentException(s + " is not a file");
+            }
+            return result;
+        }
+    }
+
+    /**
+     * A converter to file instances, with validator &amp; error message.
+     */
+    class DirParser implements Parser<File> {
+        @Override
+        public File parse(String s) {
+            File result = new File(s);
+            if (!result.exists()) {
+                throw new ArgumentException("No such directory " + s);
+            }
+            if (!result.isDirectory()) {
+                throw new ArgumentException(s + " is not a directory");
+            }
+            return result;
+        }
+    }
+
+    /**
+     * A converter to file instances, with validator &amp; error message.
+     */
+    class OutputFileParser implements Parser<File> {
+        @Override
+        public File parse(String s) {
+            File result = new File(s);
+            if (result.exists() && !result.isFile()) {
+                throw new ArgumentException(s + " exists and is not a file");
+            }
+            return result;
+        }
+    }
+
+    /**
+     * A converter to file instances, with validator &amp; error message.
+     */
+    class OutputDirParser implements Parser<File> {
+        @Override
+        public File parse(String s) {
+            File result = new File(s);
+            if (result.exists() && !result.isDirectory()) {
+                throw new ArgumentException(s + " exists and is not a directory");
             }
             return result;
         }

@@ -337,11 +337,20 @@ public class ArgumentParser {
 
         if (options.size() > 0) {
             boolean first = true;
+
+            if (argumentOptions.getOptionComparator() != null) {
+                options.sort(argumentOptions.getOptionComparator());
+            }
+
             for (BaseOption opt : options) {
+                if (opt.isHidden() && !showHidden) {
+                    continue;
+                }
+
                 String prefix = opt.getPrefix();
                 String usage = opt.getUsage();
                 if (argumentOptions.getDefaultsShown() && opt.getDefaultValue() != null) {
-                    usage = usage + " [default: " + opt.getDefaultValue() + "]";
+                    usage = usage + " (default: " + opt.getDefaultValue() + ")";
                 }
 
                 if (first) {
@@ -358,17 +367,15 @@ public class ArgumentParser {
         }
 
         if (arguments.size() > 0) {
-            if (options.size() > 0) {
-                writer.newline()
-                      .appendln();
-            }
-            writer.append("Available arguments:");
-
             for (BaseArgument arg : arguments) {
+                if (arg.isHidden() && !showHidden) {
+                    continue;
+                }
+
                 String prefix = arg.getPrefix();
                 String usage = arg.getUsage();
                 if (argumentOptions.getDefaultsShown() && arg.getDefaultValue() != null) {
-                    usage = usage + " [default: " + arg.getDefaultValue() + "]";
+                    usage = usage + " (default: " + arg.getDefaultValue() + ")";
                 }
 
                 writer.appendln();

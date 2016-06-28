@@ -75,6 +75,13 @@ public class TerminalSize {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(p.getErrorStream()))) {
             String err = reader.readLine();
             if (err != null) {
+                if (err.equals("/bin/sh: 1: cannot open /dev/tty: No such device or address")) {
+                    // We are in a non-interactive shell, e.g. running inside a
+                    // java GUI application like IDEA. We cannot completely
+                    // guard against it, so return a small but standard
+                    // terminal size in this case.
+                    return new TerminalSize(40, 100);
+                }
                 throw new IOException(err);
             }
         }
