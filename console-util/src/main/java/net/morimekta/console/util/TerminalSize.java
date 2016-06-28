@@ -20,6 +20,8 @@
  */
 package net.morimekta.console.util;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -32,7 +34,8 @@ public class TerminalSize {
     public final int rows;
     public final int cols;
 
-    private TerminalSize(int rows, int cols) {
+    @VisibleForTesting
+    public TerminalSize(int rows, int cols) {
         this.rows = rows;
         this.cols = cols;
     }
