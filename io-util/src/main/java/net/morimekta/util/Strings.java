@@ -23,6 +23,7 @@ package net.morimekta.util;
 import java.text.DecimalFormat;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 /**
@@ -78,23 +79,41 @@ public class Strings {
     }
 
     /**
-     * Join set of strings with delimiter.
+     * Join set of arbitrary values with delimiter.
      *
      * @param delimiter The delimiter.
-     * @param strings   The strings to join.
+     * @param values    The values to join.
      * @return The joined string.
      */
-    public static String join(String delimiter, String... strings) {
+    public static String join(String delimiter, Object... values) {
+        // Since primitive arrays does not pass as a values array, but as it's
+        // single first element.
+        if (values.length == 1) {
+            Class<?> type = values[0].getClass();
+            if (char[].class.equals(type)) {
+                return joinP(delimiter, (char[]) values[0]);
+            } else if (int[].class.equals(type)) {
+                return joinP(delimiter, (int[]) values[0]);
+            } else if (long[].class.equals(type)) {
+                return joinP(delimiter, (long[]) values[0]);
+            } else if (double[].class.equals(type)) {
+                return joinP(delimiter, (double[]) values[0]);
+            } else if (boolean[].class.equals(type)) {
+                return joinP(delimiter, (boolean[]) values[0]);
+            }
+        }
+
         StringBuilder builder = new StringBuilder();
         boolean first = true;
-        for (String string : strings) {
+        for (Object value : values) {
             if (first) {
                 first = false;
             } else {
                 builder.append(delimiter);
             }
-            builder.append(string);
+            builder.append(Objects.toString(value));
         }
+
         return builder.toString();
     }
 
@@ -105,16 +124,100 @@ public class Strings {
      * @param chars     The char array to join.
      * @return The joined string.
      */
-    public static String join(String delimiter, char... chars) {
+    public static String joinP(String delimiter, char... chars) {
         StringBuilder builder = new StringBuilder(chars.length + (delimiter.length() * chars.length));
         boolean first = true;
-        for (char string : chars) {
+        for (char c : chars) {
             if (first) {
                 first = false;
             } else {
                 builder.append(delimiter);
             }
-            builder.append(string);
+            builder.append(c);
+        }
+        return builder.toString();
+    }
+
+    /**
+     * Join array with delimiter.
+     *
+     * @param delimiter The delimiter.
+     * @param values    The int array to join.
+     * @return The joined string.
+     */
+    public static String joinP(String delimiter, int... values) {
+        StringBuilder builder = new StringBuilder(values.length + (delimiter.length() * values.length));
+        boolean first = true;
+        for (int i : values) {
+            if (first) {
+                first = false;
+            } else {
+                builder.append(delimiter);
+            }
+            builder.append(Integer.toString(i));
+        }
+        return builder.toString();
+    }
+
+    /**
+     * Join array with delimiter.
+     *
+     * @param delimiter The delimiter.
+     * @param values    The int array to join.
+     * @return The joined string.
+     */
+    public static String joinP(String delimiter, long... values) {
+        StringBuilder builder = new StringBuilder(values.length + (delimiter.length() * values.length));
+        boolean first = true;
+        for (long i : values) {
+            if (first) {
+                first = false;
+            } else {
+                builder.append(delimiter);
+            }
+            builder.append(Long.toString(i));
+        }
+        return builder.toString();
+    }
+
+    /**
+     * Join array with delimiter.
+     *
+     * @param delimiter The delimiter.
+     * @param values    The double array to join.
+     * @return The joined string.
+     */
+    public static String joinP(String delimiter, double... values) {
+        StringBuilder builder = new StringBuilder(values.length + (delimiter.length() * values.length));
+        boolean first = true;
+        for (double d : values) {
+            if (first) {
+                first = false;
+            } else {
+                builder.append(delimiter);
+            }
+            builder.append(asString(d));
+        }
+        return builder.toString();
+    }
+
+    /**
+     * Join array with delimiter.
+     *
+     * @param delimiter The delimiter.
+     * @param values    The double array to join.
+     * @return The joined string.
+     */
+    public static String joinP(String delimiter, boolean... values) {
+        StringBuilder builder = new StringBuilder(values.length + (delimiter.length() * values.length));
+        boolean first = true;
+        for (boolean d : values) {
+            if (first) {
+                first = false;
+            } else {
+                builder.append(delimiter);
+            }
+            builder.append(d);
         }
         return builder.toString();
     }
@@ -136,7 +239,7 @@ public class Strings {
             } else {
                 builder.append(delimiter);
             }
-            builder.append(o.toString());
+            builder.append(Objects.toString(o));
         }
         return builder.toString();
     }
@@ -341,6 +444,110 @@ public class Strings {
             return o.toString();
         }
     }
+
+    /*
+     * The following functions are copied from the java version of
+     * http://code.google.com/p/google-diff-match-patch/
+     *
+     * Copyright 2006 Google Inc.
+     *
+     * Licensed under the Apache License, Version 2.0 (the "License");
+     * you may not use this file except in compliance with the License.
+     * You may obtain a copy of the License at
+     *
+     *   http://www.apache.org/licenses/LICENSE-2.0
+     *
+     * Unless required by applicable law or agreed to in writing, software
+     * distributed under the License is distributed on an "AS IS" BASIS,
+     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     * See the License for the specific language governing permissions and
+     * limitations under the License.
+     */
+
+    /**
+     * Determine the common prefix of two strings
+     * @param text1 First string.
+     * @param text2 Second string.
+     * @return The number of characters common to the start of each string.
+     */
+    public static int commonPrefix(String text1, String text2) {
+        // Performance analysis: http://neil.fraser.name/news/2007/10/09/
+        int n = Math.min(text1.length(), text2.length());
+        for (int i = 0; i < n; i++) {
+            if (text1.charAt(i) != text2.charAt(i)) {
+                return i;
+            }
+        }
+        return n;
+    }
+
+    /**
+     * Determine the common suffix of two strings
+     * @param text1 First string.
+     * @param text2 Second string.
+     * @return The number of characters common to the end of each string.
+     */
+    public static int commonSuffix(String text1, String text2) {
+        // Performance analysis: http://neil.fraser.name/news/2007/10/09/
+        int text1_length = text1.length();
+        int text2_length = text2.length();
+        int n = Math.min(text1_length, text2_length);
+        for (int i = 1; i <= n; i++) {
+            if (text1.charAt(text1_length - i) != text2.charAt(text2_length - i)) {
+                return i - 1;
+            }
+        }
+        return n;
+    }
+
+    /**
+     * Determine if the suffix of one string is the prefix of another.
+     * @param text1 First string.
+     * @param text2 Second string.
+     * @return The number of characters common to the end of the first
+     *         string and the start of the second string.
+     */
+    public static int commonOverlap(String text1, String text2) {
+        // Cache the text lengths to prevent multiple calls.
+        int text1_length = text1.length();
+        int text2_length = text2.length();
+        // Eliminate the null case.
+        if (text1_length == 0 || text2_length == 0) {
+            return 0;
+        }
+        // Truncate the longer string.
+        if (text1_length > text2_length) {
+            text1 = text1.substring(text1_length - text2_length);
+        } else if (text1_length < text2_length) {
+            text2 = text2.substring(0, text1_length);
+        }
+        int text_length = Math.min(text1_length, text2_length);
+        // Quick check for the worst case.
+        if (text1.equals(text2)) {
+            return text_length;
+        }
+
+        // Start by looking for a single character match
+        // and increase length until no match is found.
+        // Performance analysis: http://neil.fraser.name/news/2010/11/04/
+        int best = 0;
+        int length = 1;
+        while (true) {
+            String pattern = text1.substring(text_length - length);
+            int found = text2.indexOf(pattern);
+            if (found == -1) {
+                return best;
+            }
+            length += found;
+            if (found == 0 || text1.substring(text_length - length).equals(
+                    text2.substring(0, length))) {
+                best = length;
+                length++;
+            }
+        }
+    }
+
+    // --- constants and helpers.
 
     // defeat instantiation.
     private Strings() {}

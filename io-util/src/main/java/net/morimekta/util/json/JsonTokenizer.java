@@ -171,7 +171,7 @@ public class JsonTokenizer {
             }
 
             throw newMismatchException("Expected one of \"%s\", but found \"%s\" while %s",
-                                       Strings.join("", symbols),
+                                       Strings.joinP("", symbols),
                                        unreadToken.toString(),
                                        message);
         }

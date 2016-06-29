@@ -20,6 +20,7 @@
  */
 package net.morimekta.util;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import org.junit.Test;
@@ -28,8 +29,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
@@ -54,9 +53,16 @@ public class StringsTest {
     public void testJoin() {
         assertEquals("a,b", Strings.join(",", 'a', 'b'));
         assertEquals("a,b", Strings.join(",", "a", "b"));
-        List<String> tmp = new LinkedList<>();
-        Collections.addAll(tmp, "a", "b");
-        assertEquals("a;b", Strings.join(";", tmp));
+        assertEquals("a;b", Strings.join(";", ImmutableList.of("a", "b")));
+    }
+
+    @Test
+    public void testJoin_arrays() {
+        assertEquals("a,b", Strings.join(",", new char[]{'a', 'b'}));
+        assertEquals("1,2", Strings.join(",", new int[]{1, 2}));
+        assertEquals("1;2", Strings.join(";", new long[]{1L, 2L}));
+        assertEquals("1.1,2.2", Strings.join(",", new double[]{1.1, 2.2}));
+        assertEquals("true,false", Strings.join(",", new boolean[]{true, false}));
     }
 
     @Test
@@ -144,6 +150,43 @@ public class StringsTest {
         assertAsString("5", new IsNumeric());
         assertAsString("tmp", new IsStringable());
     }
+
+    @Test
+    public void testDiffCommonPrefix() {
+        // Detect any common prefix.
+        assertEquals("diff_commonPrefix: Null case.", 0, Strings.commonPrefix("abc", "xyz"));
+
+        assertEquals("diff_commonPrefix: Non-null case.", 4, Strings.commonPrefix("1234abcdef", "1234xyz"));
+
+        assertEquals("diff_commonPrefix: Whole case.", 4, Strings.commonPrefix("1234", "1234xyz"));
+    }
+
+    @Test
+    public void testDiffCommonSuffix() {
+        // Detect any common suffix.
+        assertEquals("diff_commonSuffix: Null case.", 0, Strings.commonSuffix("abc", "xyz"));
+
+        assertEquals("diff_commonSuffix: Non-null case.", 4, Strings.commonSuffix("abcdef1234", "xyz1234"));
+
+        assertEquals("diff_commonSuffix: Whole case.", 4, Strings.commonSuffix("1234", "xyz1234"));
+    }
+
+    @Test
+    public void testDiffCommonOverlap() {
+        // Detect any suffix/prefix overlap.
+        assertEquals("diff_commonOverlap: Null case.", 0, Strings.commonOverlap("", "abcd"));
+
+        assertEquals("diff_commonOverlap: Whole case.", 3, Strings.commonOverlap("abc", "abcd"));
+
+        assertEquals("diff_commonOverlap: No overlap.", 0, Strings.commonOverlap("123456", "abcd"));
+
+        assertEquals("diff_commonOverlap: Overlap.", 3, Strings.commonOverlap("123456xxx", "xxxabcd"));
+
+        // Some overly clever languages (C#) may treat ligatures as equal to their
+        // component letters.  E.g. U+FB01 == 'fi'
+        assertEquals("diff_commonOverlap: Unicode.", 0, Strings.commonOverlap("fi", "\ufb01i"));
+    }
+
 
     private static class IsStringable implements Stringable {
         @Override
