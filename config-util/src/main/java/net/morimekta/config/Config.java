@@ -93,7 +93,7 @@ public interface Config {
      */
     default String getString(String key, String def) {
         if (containsKey(key)) {
-            return asString(getValue(key));
+            return asString(get(key));
         }
         return def;
     }
@@ -118,7 +118,7 @@ public interface Config {
      */
     default boolean getBoolean(String key, boolean def) {
         if (containsKey(key)) {
-            return asBoolean(getValue(key));
+            return asBoolean(get(key));
         }
         return def;
     }
@@ -143,7 +143,7 @@ public interface Config {
      */
     default int getInteger(String key, int def) {
         if (containsKey(key)) {
-            return asInteger(getValue(key));
+            return asInteger(get(key));
         }
         return def;
     }
@@ -168,7 +168,7 @@ public interface Config {
      */
     default long getLong(String key, long def) {
         if (containsKey(key)) {
-            return asLong(getValue(key));
+            return asLong(get(key));
         }
         return def;
     }
@@ -193,7 +193,7 @@ public interface Config {
      */
     default double getDouble(String key, double def) {
         if (containsKey(key)) {
-            return asDouble(getValue(key));
+            return asDouble(get(key));
         }
         return def;
     }
