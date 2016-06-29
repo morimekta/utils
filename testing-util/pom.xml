@@ -53,6 +53,11 @@
             <version>${mockito.version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>net.morimekta.utils</groupId>
+            <artifactId>io-util</artifactId>
+            <version>0.3.0-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 
     <build>
