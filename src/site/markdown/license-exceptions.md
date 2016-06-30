@@ -21,3 +21,6 @@ From Android OSS project (Apache 2.0 licensed):
 
 * `android.util.Base64Test`: Mainly unmodified from original, from old android
   open sourced code (2010).
+* `net.morimekta.diff.*`: Comes from diff-match-patch, `(c) Google 2012`, a
+  pretty old but useful library for diffing files. Repackaged since the library
+  is almost un-usable without some refactoring.
