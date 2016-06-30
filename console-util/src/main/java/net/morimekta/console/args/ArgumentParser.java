@@ -26,11 +26,18 @@ import net.morimekta.util.io.IndentedPrintWriter;
 
 import org.apache.commons.lang3.text.WordUtils;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Argument argumentParser class. This is the actual argumentParser that is initialized with
@@ -210,6 +217,29 @@ public class ArgumentParser {
                     }
                 }
             } else {
+                if (cur.startsWith("@")) {
+                    File f = new File(cur.substring(1));
+                    if (f.exists() && f.isFile()) {
+                        try (FileInputStream fis = new FileInputStream(f);
+                             BufferedReader reader = new BufferedReader(new InputStreamReader(fis))) {
+                            List<String> lines = reader.lines()
+                                                       .map(String::trim)
+                                                       .filter(l -> !(l.isEmpty() || l.startsWith("#")))
+                                                       .collect(Collectors.toList());
+                            if (lines.size() > 0) {
+                                ArgumentList list = new ArgumentList(lines.toArray(new String[lines.size()]));
+                                parse(list);
+                            }
+                        } catch (ArgumentException e) {
+                            throw new ArgumentException(e, "Argument file " + f.getName() + ": " + e.getMessage());
+                        } catch (IOException e) {
+                            throw new ArgumentException(e, e.getMessage());
+                        }
+                        args.consume(1);
+                        continue;
+                    }
+                }
+
                 // Argument / sub-command.
                 int consumed = 0;
                 for (BaseArgument arg : arguments) {
