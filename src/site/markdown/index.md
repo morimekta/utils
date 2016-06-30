@@ -24,6 +24,10 @@ Library for handling advanced console (TTY) input and output. It is designed
 for unix style terminals with interactive keyboard interface, not web or
 GUI interface.
 
+## Diff Util
+
+Utility classes for diffing text.
+
 ## IO Util
 
 Libraries for handling binary, JSON and human readable input and output. Only

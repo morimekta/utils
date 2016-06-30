@@ -19,6 +19,7 @@
             <item href="android-util/index.html" name="Android Utilities" />
             <item href="config-util/index.html" name="Config Utilities" />
             <item href="console-util/index.html" name="Console Utilities" />
+            <item href="diff-util/index.html" name="Diff Utilities" />
             <item href="io-util/index.html" name="IO Utilities" />
             <item href="testing-util/index.html" name="Testing Utilities" />
 
