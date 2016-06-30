@@ -26,9 +26,11 @@ import com.google.common.base.MoreObjects;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Config value utility.
@@ -168,6 +170,19 @@ public class ConfigUtil {
         }
         throw new IncompatibleValueException(
                 "Unable to convert " + value.getClass().getSimpleName() + " to a collection");
+    }
+
+    /**
+     * Make collection into a string array.
+     *
+     * @param value The value instance.
+     * @return The array.
+     */
+    public static String[] asStringArray(Object value) {
+        List<String> collection = asCollection(value).stream()
+                                                     .map(ConfigUtil::asString)
+                                                     .collect(Collectors.toList());
+        return collection.toArray(new String[collection.size()]);
     }
 
     /**

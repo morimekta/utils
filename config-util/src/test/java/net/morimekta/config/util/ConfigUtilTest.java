@@ -35,6 +35,8 @@ import static net.morimekta.config.util.ConfigUtil.asDouble;
 import static net.morimekta.config.util.ConfigUtil.asInteger;
 import static net.morimekta.config.util.ConfigUtil.asLong;
 import static net.morimekta.config.util.ConfigUtil.asString;
+import static net.morimekta.config.util.ConfigUtil.asStringArray;
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -111,6 +113,14 @@ public class ConfigUtilTest {
                      asCollection(Collections.singletonList("a")));
 
         assertException("Unable to convert String to a collection", "not a list", ConfigUtil::asCollection);
+    }
+
+    @Test
+    public void testAsStringArray() {
+        String[] a = asStringArray(ImmutableList.of(1, 2, 3));
+        assertArrayEquals(new String[]{"1", "2", "3"}, a);
+
+        assertException("Unable to convert String to a collection", "not a list", ConfigUtil::asStringArray);
     }
 
     void assertException(String message, Object value, Function<Object, Object> func) {
