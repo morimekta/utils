@@ -5,19 +5,19 @@ import java.net.URLDecoder;
 import java.util.LinkedList;
 
 /**
- * Diff.
+ * Bisect
  */
-public class Diff extends DiffBase {
+public class Bisect extends DiffBase {
 
-    public Diff(String text1, String text2) {
+    public Bisect(String text1, String text2) {
         this(text1, text2, DiffOptions.defaults());
     }
 
-    public Diff(String text1, String text2, DiffOptions options) {
+    public Bisect(String text1, String text2, DiffOptions options) {
         this(text1, text2, options, getDeadline(options));
     }
 
-    public Diff(String text1, String text2, DiffOptions options, long deadline) {
+    Bisect(String text1, String text2, DiffOptions options, long deadline) {
         super(options, deadline);
 
         // Check for null inputs.
@@ -25,13 +25,14 @@ public class Diff extends DiffBase {
             throw new IllegalArgumentException("Null inputs. (diff_main)");
         }
 
-        this.changeList = main(text1, text2, options.getCheckLines());
+        this.changeList = bisect(text1, text2);
     }
 
-    Diff(LinkedList<Change> changeList, DiffOptions options) {
-        super(options, getDeadline(options));
+    Bisect(LinkedList<Change> changeList, DiffOptions options, long deadline) {
+        super(options, deadline);
         this.changeList = changeList;
     }
+
 
     @Override
     public LinkedList<Change> getChangeList() {
@@ -41,13 +42,12 @@ public class Diff extends DiffBase {
     /**
      * Given the original text1, and an encoded string which describes the
      * operations required to transform text1 into text2, compute the full diff.
-     *
      * @param text1 Source string for the diff.
      * @param delta Delta text.
-     * @return Diff object.
+     * @return Array of DiffBase objects or null if invalid.
      * @throws IllegalArgumentException If invalid input.
      */
-    public static Diff fromDelta(String text1, String delta)
+    public static DiffBase fromDelta(String text1, String delta)
             throws IllegalArgumentException {
         LinkedList<Change> diffs = new LinkedList<>();
         int pointer = 0;  // Cursor in text1
@@ -115,7 +115,7 @@ public class Diff extends DiffBase {
                                                + ") smaller than source text length (" + text1.length() + ").");
         }
 
-        return new Diff(diffs, DiffOptions.defaults());
+        return new Bisect(diffs, DiffOptions.defaults(), 0);
     }
 
     private final LinkedList<Change> changeList;

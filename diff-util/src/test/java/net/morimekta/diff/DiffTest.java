@@ -27,23 +27,18 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
 public class DiffTest {
     private Diff dmp;
-    private Diff.Operation DELETE = Diff.Operation.DELETE;
-    private Diff.Operation EQUAL  = Diff.Operation.EQUAL;
-    private Diff.Operation INSERT = Diff.Operation.INSERT;
+    private Operation DELETE = Operation.DELETE;
+    private Operation EQUAL  = Operation.EQUAL;
+    private Operation INSERT = Operation.INSERT;
 
     @Before
     public void setUp() {
         // Create an instance of the match_patch object.
-        dmp = new Diff("", "", Diff.Options.defaults()
-                                           .withTimeout(1)
-                                           .withEditCost(4));
+        dmp = new Diff("", "", DiffOptions.defaults()
+                                              .withTimeout(1)
+                                              .withEditCost(4));
     }
 
     //  DIFF TEST FUNCTIONS
@@ -72,7 +67,7 @@ public class DiffTest {
         // Optimal diff would be -q+x=H-i+e=lloHe+Hu=llo-Hew+y not -qHillo+x=HelloHe-w+Hulloy
         assertArrayEquals("halfMatch: Non-optimal halfmatch.", new String[]{"qHillo", "w", "x", "Hulloy", "HelloHe"}, dmp.halfMatch("qHilloHelloHew", "xHelloHeHulloy"));
 
-        dmp = new Diff("", "", Diff.Options.defaults().withTimeout(0));
+        dmp = new Diff("", "", DiffOptions.defaults().withTimeout(0));
         Assert.assertNull("halfMatch: Optimal no halfmatch.", dmp.halfMatch("qHilloHelloHew", "xHelloHeHulloy"));
     }
 
@@ -83,20 +78,20 @@ public class DiffTest {
         tmpVector.add("");
         tmpVector.add("alpha\n");
         tmpVector.add("beta\n");
-        assertLinesToCharsResultEquals("linesToChars: Shared lines.", new Diff.LinesToCharsResult("\u0001\u0002\u0001", "\u0002\u0001\u0002", tmpVector), dmp.linesToChars("alpha\nbeta\nalpha\n", "beta\nalpha\nbeta\n"));
+        assertLinesToCharsResultEquals("linesToChars: Shared lines.", new LinesToCharsResult("\u0001\u0002\u0001", "\u0002\u0001\u0002", tmpVector), dmp.linesToChars("alpha\nbeta\nalpha\n", "beta\nalpha\nbeta\n"));
 
         tmpVector.clear();
         tmpVector.add("");
         tmpVector.add("alpha\r\n");
         tmpVector.add("beta\r\n");
         tmpVector.add("\r\n");
-        assertLinesToCharsResultEquals("linesToChars: Empty string and blank lines.", new Diff.LinesToCharsResult("", "\u0001\u0002\u0003\u0003", tmpVector), dmp.linesToChars("", "alpha\r\nbeta\r\n\r\n\r\n"));
+        assertLinesToCharsResultEquals("linesToChars: Empty string and blank lines.", new LinesToCharsResult("", "\u0001\u0002\u0003\u0003", tmpVector), dmp.linesToChars("", "alpha\r\nbeta\r\n\r\n\r\n"));
 
         tmpVector.clear();
         tmpVector.add("");
         tmpVector.add("a");
         tmpVector.add("b");
-        assertLinesToCharsResultEquals("linesToChars: No linebreaks.", new Diff.LinesToCharsResult("\u0001", "\u0002", tmpVector), dmp.linesToChars("a", "b"));
+        assertLinesToCharsResultEquals("linesToChars: No linebreaks.", new LinesToCharsResult("\u0001", "\u0002", tmpVector), dmp.linesToChars("a", "b"));
 
         // More than 256 to reveal any 8-bit limitations.
         int n = 300;
@@ -113,24 +108,24 @@ public class DiffTest {
         String chars = charList.toString();
         Assert.assertEquals(n, chars.length());
         tmpVector.add(0, "");
-        assertLinesToCharsResultEquals("linesToChars: More than 256.", new Diff.LinesToCharsResult(chars, "", tmpVector), dmp.linesToChars(lines, ""));
+        assertLinesToCharsResultEquals("linesToChars: More than 256.", new LinesToCharsResult(chars, "", tmpVector), dmp.linesToChars(lines, ""));
     }
 
     @Test
     public void testDiffCharsToLines() {
         // First check that Diff equality works.
-        Assert.assertTrue("charsToLines: Equality #1.", new Diff.Change(EQUAL, "a").equals(new Diff.Change(EQUAL, "a")));
+        Assert.assertTrue("charsToLines: Equality #1.", new Change(EQUAL, "a").equals(new Change(EQUAL, "a")));
 
-        Assert.assertEquals("charsToLines: Equality #2.", new Diff.Change(EQUAL, "a"), new Diff.Change(EQUAL, "a"));
+        Assert.assertEquals("charsToLines: Equality #2.", new Change(EQUAL, "a"), new Change(EQUAL, "a"));
 
         // Convert chars up to lines.
-        LinkedList<Diff.Change> diffs = diffList(new Diff.Change(EQUAL, "\u0001\u0002\u0001"), new Diff.Change(INSERT, "\u0002\u0001\u0002"));
+        LinkedList<Change> diffs = diffList(new Change(EQUAL, "\u0001\u0002\u0001"), new Change(INSERT, "\u0002\u0001\u0002"));
         ArrayList<String> tmpVector = new ArrayList<String>();
         tmpVector.add("");
         tmpVector.add("alpha\n");
         tmpVector.add("beta\n");
         dmp.charsToLines(diffs, tmpVector);
-        Assert.assertEquals("charsToLines: Shared lines.", diffList(new Diff.Change(EQUAL, "alpha\nbeta\nalpha\n"), new Diff.Change(INSERT, "beta\nalpha\nbeta\n")), diffs);
+        Assert.assertEquals("charsToLines: Shared lines.", diffList(new Change(EQUAL, "alpha\nbeta\nalpha\n"), new Change(INSERT, "beta\nalpha\nbeta\n")), diffs);
 
         // More than 256 to reveal any 8-bit limitations.
         int n = 300;
@@ -147,188 +142,188 @@ public class DiffTest {
         String chars = charList.toString();
         Assert.assertEquals(n, chars.length());
         tmpVector.add(0, "");
-        diffs = diffList(new Diff.Change(DELETE, chars));
+        diffs = diffList(new Change(DELETE, chars));
         dmp.charsToLines(diffs, tmpVector);
-        Assert.assertEquals("charsToLines: More than 256.", diffList(new Diff.Change(DELETE, lines)), diffs);
+        Assert.assertEquals("charsToLines: More than 256.", diffList(new Change(DELETE, lines)), diffs);
     }
 
     @Test
     public void testDiffCleanupMerge() {
         // Cleanup a messy diff.
-        LinkedList<Diff.Change> diffs = diffList();
+        LinkedList<Change> diffs = diffList();
         dmp.cleanupMerge(diffs);
         Assert.assertEquals("cleanupMerge: Null case.", diffList(), diffs);
 
-        diffs = diffList(new Diff.Change(EQUAL, "a"), new Diff.Change(DELETE, "b"), new Diff.Change(INSERT, "c"));
+        diffs = diffList(new Change(EQUAL, "a"), new Change(DELETE, "b"), new Change(INSERT, "c"));
         dmp.cleanupMerge(diffs);
-        Assert.assertEquals("cleanupMerge: No change case.", diffList(new Diff.Change(EQUAL, "a"), new Diff.Change(DELETE, "b"), new Diff.Change(INSERT, "c")), diffs);
+        Assert.assertEquals("cleanupMerge: No change case.", diffList(new Change(EQUAL, "a"), new Change(DELETE, "b"), new Change(INSERT, "c")), diffs);
 
-        diffs = diffList(new Diff.Change(EQUAL, "a"), new Diff.Change(EQUAL, "b"), new Diff.Change(EQUAL, "c"));
+        diffs = diffList(new Change(EQUAL, "a"), new Change(EQUAL, "b"), new Change(EQUAL, "c"));
         dmp.cleanupMerge(diffs);
-        Assert.assertEquals("cleanupMerge: Merge equalities.", diffList(new Diff.Change(EQUAL, "abc")), diffs);
+        Assert.assertEquals("cleanupMerge: Merge equalities.", diffList(new Change(EQUAL, "abc")), diffs);
 
-        diffs = diffList(new Diff.Change(DELETE, "a"), new Diff.Change(DELETE, "b"), new Diff.Change(DELETE, "c"));
+        diffs = diffList(new Change(DELETE, "a"), new Change(DELETE, "b"), new Change(DELETE, "c"));
         dmp.cleanupMerge(diffs);
-        Assert.assertEquals("cleanupMerge: Merge deletions.", diffList(new Diff.Change(DELETE, "abc")), diffs);
+        Assert.assertEquals("cleanupMerge: Merge deletions.", diffList(new Change(DELETE, "abc")), diffs);
 
-        diffs = diffList(new Diff.Change(INSERT, "a"), new Diff.Change(INSERT, "b"), new Diff.Change(INSERT, "c"));
+        diffs = diffList(new Change(INSERT, "a"), new Change(INSERT, "b"), new Change(INSERT, "c"));
         dmp.cleanupMerge(diffs);
-        Assert.assertEquals("cleanupMerge: Merge insertions.", diffList(new Diff.Change(INSERT, "abc")), diffs);
+        Assert.assertEquals("cleanupMerge: Merge insertions.", diffList(new Change(INSERT, "abc")), diffs);
 
-        diffs = diffList(new Diff.Change(DELETE, "a"), new Diff.Change(INSERT, "b"), new Diff.Change(DELETE, "c"), new Diff.Change(INSERT, "d"), new Diff.Change(EQUAL, "e"), new Diff.Change(EQUAL, "f"));
+        diffs = diffList(new Change(DELETE, "a"), new Change(INSERT, "b"), new Change(DELETE, "c"), new Change(INSERT, "d"), new Change(EQUAL, "e"), new Change(EQUAL, "f"));
         dmp.cleanupMerge(diffs);
-        Assert.assertEquals("cleanupMerge: Merge interweave.", diffList(new Diff.Change(DELETE, "ac"), new Diff.Change(INSERT, "bd"), new Diff.Change(EQUAL, "ef")), diffs);
+        Assert.assertEquals("cleanupMerge: Merge interweave.", diffList(new Change(DELETE, "ac"), new Change(INSERT, "bd"), new Change(EQUAL, "ef")), diffs);
 
-        diffs = diffList(new Diff.Change(DELETE, "a"), new Diff.Change(INSERT, "abc"), new Diff.Change(DELETE, "dc"));
+        diffs = diffList(new Change(DELETE, "a"), new Change(INSERT, "abc"), new Change(DELETE, "dc"));
         dmp.cleanupMerge(diffs);
-        Assert.assertEquals("cleanupMerge: Prefix and suffix detection.", diffList(new Diff.Change(EQUAL, "a"), new Diff.Change(DELETE, "d"), new Diff.Change(INSERT, "b"), new Diff.Change(EQUAL, "c")), diffs);
+        Assert.assertEquals("cleanupMerge: Prefix and suffix detection.", diffList(new Change(EQUAL, "a"), new Change(DELETE, "d"), new Change(INSERT, "b"), new Change(EQUAL, "c")), diffs);
 
-        diffs = diffList(new Diff.Change(EQUAL, "x"), new Diff.Change(DELETE, "a"), new Diff.Change(INSERT, "abc"), new Diff.Change(DELETE, "dc"), new Diff.Change(EQUAL, "y"));
+        diffs = diffList(new Change(EQUAL, "x"), new Change(DELETE, "a"), new Change(INSERT, "abc"), new Change(DELETE, "dc"), new Change(EQUAL, "y"));
         dmp.cleanupMerge(diffs);
-        Assert.assertEquals("cleanupMerge: Prefix and suffix detection with equalities.", diffList(new Diff.Change(EQUAL, "xa"), new Diff.Change(DELETE, "d"), new Diff.Change(INSERT, "b"), new Diff.Change(EQUAL, "cy")), diffs);
+        Assert.assertEquals("cleanupMerge: Prefix and suffix detection with equalities.", diffList(new Change(EQUAL, "xa"), new Change(DELETE, "d"), new Change(INSERT, "b"), new Change(EQUAL, "cy")), diffs);
 
-        diffs = diffList(new Diff.Change(EQUAL, "a"), new Diff.Change(INSERT, "ba"), new Diff.Change(EQUAL, "c"));
+        diffs = diffList(new Change(EQUAL, "a"), new Change(INSERT, "ba"), new Change(EQUAL, "c"));
         dmp.cleanupMerge(diffs);
-        Assert.assertEquals("cleanupMerge: Slide edit left.", diffList(new Diff.Change(INSERT, "ab"), new Diff.Change(EQUAL, "ac")), diffs);
+        Assert.assertEquals("cleanupMerge: Slide edit left.", diffList(new Change(INSERT, "ab"), new Change(EQUAL, "ac")), diffs);
 
-        diffs = diffList(new Diff.Change(EQUAL, "c"), new Diff.Change(INSERT, "ab"), new Diff.Change(EQUAL, "a"));
+        diffs = diffList(new Change(EQUAL, "c"), new Change(INSERT, "ab"), new Change(EQUAL, "a"));
         dmp.cleanupMerge(diffs);
-        Assert.assertEquals("cleanupMerge: Slide edit right.", diffList(new Diff.Change(EQUAL, "ca"), new Diff.Change(INSERT, "ba")), diffs);
+        Assert.assertEquals("cleanupMerge: Slide edit right.", diffList(new Change(EQUAL, "ca"), new Change(INSERT, "ba")), diffs);
 
-        diffs = diffList(new Diff.Change(EQUAL, "a"), new Diff.Change(DELETE, "b"), new Diff.Change(EQUAL, "c"), new Diff.Change(DELETE, "ac"), new Diff.Change(EQUAL, "x"));
+        diffs = diffList(new Change(EQUAL, "a"), new Change(DELETE, "b"), new Change(EQUAL, "c"), new Change(DELETE, "ac"), new Change(EQUAL, "x"));
         dmp.cleanupMerge(diffs);
-        Assert.assertEquals("cleanupMerge: Slide edit left recursive.", diffList(new Diff.Change(DELETE, "abc"), new Diff.Change(EQUAL, "acx")), diffs);
+        Assert.assertEquals("cleanupMerge: Slide edit left recursive.", diffList(new Change(DELETE, "abc"), new Change(EQUAL, "acx")), diffs);
 
-        diffs = diffList(new Diff.Change(EQUAL, "x"), new Diff.Change(DELETE, "ca"), new Diff.Change(EQUAL, "c"), new Diff.Change(DELETE, "b"), new Diff.Change(EQUAL, "a"));
+        diffs = diffList(new Change(EQUAL, "x"), new Change(DELETE, "ca"), new Change(EQUAL, "c"), new Change(DELETE, "b"), new Change(EQUAL, "a"));
         dmp.cleanupMerge(diffs);
-        Assert.assertEquals("cleanupMerge: Slide edit right recursive.", diffList(new Diff.Change(EQUAL, "xca"), new Diff.Change(DELETE, "cba")), diffs);
+        Assert.assertEquals("cleanupMerge: Slide edit right recursive.", diffList(new Change(EQUAL, "xca"), new Change(DELETE, "cba")), diffs);
     }
 
     @Test
     public void testDiffCleanupSemanticLossless() {
         // Slide diffs to match logical boundaries.
-        LinkedList<Diff.Change> diffs = diffList();
+        LinkedList<Change> diffs = diffList();
         dmp.cleanupSemanticLossless(diffs);
         Assert.assertEquals("cleanupSemanticLossless: Null case.", diffList(), diffs);
 
-        diffs = diffList(new Diff.Change(EQUAL, "AAA\r\n\r\nBBB"), new Diff.Change(INSERT, "\r\nDDD\r\n\r\nBBB"), new Diff.Change(EQUAL, "\r\nEEE"));
+        diffs = diffList(new Change(EQUAL, "AAA\r\n\r\nBBB"), new Change(INSERT, "\r\nDDD\r\n\r\nBBB"), new Change(EQUAL, "\r\nEEE"));
         dmp.cleanupSemanticLossless(diffs);
-        Assert.assertEquals("cleanupSemanticLossless: Blank lines.", diffList(new Diff.Change(EQUAL, "AAA\r\n\r\n"), new Diff.Change(INSERT, "BBB\r\nDDD\r\n\r\n"), new Diff.Change(EQUAL, "BBB\r\nEEE")), diffs);
+        Assert.assertEquals("cleanupSemanticLossless: Blank lines.", diffList(new Change(EQUAL, "AAA\r\n\r\n"), new Change(INSERT, "BBB\r\nDDD\r\n\r\n"), new Change(EQUAL, "BBB\r\nEEE")), diffs);
 
-        diffs = diffList(new Diff.Change(EQUAL, "AAA\r\nBBB"), new Diff.Change(INSERT, " DDD\r\nBBB"), new Diff.Change(EQUAL, " EEE"));
+        diffs = diffList(new Change(EQUAL, "AAA\r\nBBB"), new Change(INSERT, " DDD\r\nBBB"), new Change(EQUAL, " EEE"));
         dmp.cleanupSemanticLossless(diffs);
-        Assert.assertEquals("cleanupSemanticLossless: Line boundaries.", diffList(new Diff.Change(EQUAL, "AAA\r\n"), new Diff.Change(INSERT, "BBB DDD\r\n"), new Diff.Change(EQUAL, "BBB EEE")), diffs);
+        Assert.assertEquals("cleanupSemanticLossless: Line boundaries.", diffList(new Change(EQUAL, "AAA\r\n"), new Change(INSERT, "BBB DDD\r\n"), new Change(EQUAL, "BBB EEE")), diffs);
 
-        diffs = diffList(new Diff.Change(EQUAL, "The c"), new Diff.Change(INSERT, "ow and the c"), new Diff.Change(EQUAL, "at."));
+        diffs = diffList(new Change(EQUAL, "The c"), new Change(INSERT, "ow and the c"), new Change(EQUAL, "at."));
         dmp.cleanupSemanticLossless(diffs);
-        Assert.assertEquals("cleanupSemanticLossless: Word boundaries.", diffList(new Diff.Change(EQUAL, "The "), new Diff.Change(INSERT, "cow and the "), new Diff.Change(EQUAL, "cat.")), diffs);
+        Assert.assertEquals("cleanupSemanticLossless: Word boundaries.", diffList(new Change(EQUAL, "The "), new Change(INSERT, "cow and the "), new Change(EQUAL, "cat.")), diffs);
 
-        diffs = diffList(new Diff.Change(EQUAL, "The-c"), new Diff.Change(INSERT, "ow-and-the-c"), new Diff.Change(EQUAL, "at."));
+        diffs = diffList(new Change(EQUAL, "The-c"), new Change(INSERT, "ow-and-the-c"), new Change(EQUAL, "at."));
         dmp.cleanupSemanticLossless(diffs);
-        Assert.assertEquals("cleanupSemanticLossless: Alphanumeric boundaries.", diffList(new Diff.Change(EQUAL, "The-"), new Diff.Change(INSERT, "cow-and-the-"), new Diff.Change(EQUAL, "cat.")), diffs);
+        Assert.assertEquals("cleanupSemanticLossless: Alphanumeric boundaries.", diffList(new Change(EQUAL, "The-"), new Change(INSERT, "cow-and-the-"), new Change(EQUAL, "cat.")), diffs);
 
-        diffs = diffList(new Diff.Change(EQUAL, "a"), new Diff.Change(DELETE, "a"), new Diff.Change(EQUAL, "ax"));
+        diffs = diffList(new Change(EQUAL, "a"), new Change(DELETE, "a"), new Change(EQUAL, "ax"));
         dmp.cleanupSemanticLossless(diffs);
-        Assert.assertEquals("cleanupSemanticLossless: Hitting the start.", diffList(new Diff.Change(DELETE, "a"), new Diff.Change(EQUAL, "aax")), diffs);
+        Assert.assertEquals("cleanupSemanticLossless: Hitting the start.", diffList(new Change(DELETE, "a"), new Change(EQUAL, "aax")), diffs);
 
-        diffs = diffList(new Diff.Change(EQUAL, "xa"), new Diff.Change(DELETE, "a"), new Diff.Change(EQUAL, "a"));
+        diffs = diffList(new Change(EQUAL, "xa"), new Change(DELETE, "a"), new Change(EQUAL, "a"));
         dmp.cleanupSemanticLossless(diffs);
-        Assert.assertEquals("cleanupSemanticLossless: Hitting the end.", diffList(new Diff.Change(EQUAL, "xaa"), new Diff.Change(DELETE, "a")), diffs);
+        Assert.assertEquals("cleanupSemanticLossless: Hitting the end.", diffList(new Change(EQUAL, "xaa"), new Change(DELETE, "a")), diffs);
 
-        diffs = diffList(new Diff.Change(EQUAL, "The xxx. The "), new Diff.Change(INSERT, "zzz. The "), new Diff.Change(EQUAL, "yyy."));
+        diffs = diffList(new Change(EQUAL, "The xxx. The "), new Change(INSERT, "zzz. The "), new Change(EQUAL, "yyy."));
         dmp.cleanupSemanticLossless(diffs);
-        Assert.assertEquals("cleanupSemanticLossless: Sentence boundaries.", diffList(new Diff.Change(EQUAL, "The xxx."), new Diff.Change(INSERT, " The zzz."), new Diff.Change(EQUAL, " The yyy.")), diffs);
+        Assert.assertEquals("cleanupSemanticLossless: Sentence boundaries.", diffList(new Change(EQUAL, "The xxx."), new Change(INSERT, " The zzz."), new Change(EQUAL, " The yyy.")), diffs);
     }
 
     @Test
     public void testDiffCleanupSemantic() {
         // Cleanup semantically trivial equalities.
-        LinkedList<Diff.Change> diffs = diffList();
+        LinkedList<Change> diffs = diffList();
         dmp.cleanupSemantic(diffs);
         Assert.assertEquals("cleanupSemantic: Null case.", diffList(), diffs);
 
-        diffs = diffList(new Diff.Change(DELETE, "ab"), new Diff.Change(INSERT, "cd"), new Diff.Change(EQUAL, "12"), new Diff.Change(DELETE, "e"));
+        diffs = diffList(new Change(DELETE, "ab"), new Change(INSERT, "cd"), new Change(EQUAL, "12"), new Change(DELETE, "e"));
         dmp.cleanupSemantic(diffs);
-        Assert.assertEquals("cleanupSemantic: No elimination #1.", diffList(new Diff.Change(DELETE, "ab"), new Diff.Change(INSERT, "cd"), new Diff.Change(EQUAL, "12"), new Diff.Change(DELETE, "e")), diffs);
+        Assert.assertEquals("cleanupSemantic: No elimination #1.", diffList(new Change(DELETE, "ab"), new Change(INSERT, "cd"), new Change(EQUAL, "12"), new Change(DELETE, "e")), diffs);
 
-        diffs = diffList(new Diff.Change(DELETE, "abc"), new Diff.Change(INSERT, "ABC"), new Diff.Change(EQUAL, "1234"), new Diff.Change(DELETE, "wxyz"));
+        diffs = diffList(new Change(DELETE, "abc"), new Change(INSERT, "ABC"), new Change(EQUAL, "1234"), new Change(DELETE, "wxyz"));
         dmp.cleanupSemantic(diffs);
-        Assert.assertEquals("cleanupSemantic: No elimination #2.", diffList(new Diff.Change(DELETE, "abc"), new Diff.Change(INSERT, "ABC"), new Diff.Change(EQUAL, "1234"), new Diff.Change(DELETE, "wxyz")), diffs);
+        Assert.assertEquals("cleanupSemantic: No elimination #2.", diffList(new Change(DELETE, "abc"), new Change(INSERT, "ABC"), new Change(EQUAL, "1234"), new Change(DELETE, "wxyz")), diffs);
 
-        diffs = diffList(new Diff.Change(DELETE, "a"), new Diff.Change(EQUAL, "b"), new Diff.Change(DELETE, "c"));
+        diffs = diffList(new Change(DELETE, "a"), new Change(EQUAL, "b"), new Change(DELETE, "c"));
         dmp.cleanupSemantic(diffs);
-        Assert.assertEquals("cleanupSemantic: Simple elimination.", diffList(new Diff.Change(DELETE, "abc"), new Diff.Change(INSERT, "b")), diffs);
+        Assert.assertEquals("cleanupSemantic: Simple elimination.", diffList(new Change(DELETE, "abc"), new Change(INSERT, "b")), diffs);
 
-        diffs = diffList(new Diff.Change(DELETE, "ab"), new Diff.Change(EQUAL, "cd"), new Diff.Change(DELETE, "e"), new Diff.Change(EQUAL, "f"), new Diff.Change(INSERT, "g"));
+        diffs = diffList(new Change(DELETE, "ab"), new Change(EQUAL, "cd"), new Change(DELETE, "e"), new Change(EQUAL, "f"), new Change(INSERT, "g"));
         dmp.cleanupSemantic(diffs);
-        Assert.assertEquals("cleanupSemantic: Backpass elimination.", diffList(new Diff.Change(DELETE, "abcdef"), new Diff.Change(INSERT, "cdfg")), diffs);
+        Assert.assertEquals("cleanupSemantic: Backpass elimination.", diffList(new Change(DELETE, "abcdef"), new Change(INSERT, "cdfg")), diffs);
 
-        diffs = diffList(new Diff.Change(INSERT, "1"), new Diff.Change(EQUAL, "A"), new Diff.Change(DELETE, "B"), new Diff.Change(INSERT, "2"), new Diff.Change(EQUAL, "_"), new Diff.Change(INSERT, "1"), new Diff.Change(EQUAL, "A"), new Diff.Change(DELETE, "B"), new Diff.Change(INSERT, "2"));
+        diffs = diffList(new Change(INSERT, "1"), new Change(EQUAL, "A"), new Change(DELETE, "B"), new Change(INSERT, "2"), new Change(EQUAL, "_"), new Change(INSERT, "1"), new Change(EQUAL, "A"), new Change(DELETE, "B"), new Change(INSERT, "2"));
         dmp.cleanupSemantic(diffs);
-        Assert.assertEquals("cleanupSemantic: Multiple elimination.", diffList(new Diff.Change(DELETE, "AB_AB"), new Diff.Change(INSERT, "1A2_1A2")), diffs);
+        Assert.assertEquals("cleanupSemantic: Multiple elimination.", diffList(new Change(DELETE, "AB_AB"), new Change(INSERT, "1A2_1A2")), diffs);
 
-        diffs = diffList(new Diff.Change(EQUAL, "The c"), new Diff.Change(DELETE, "ow and the c"), new Diff.Change(EQUAL, "at."));
+        diffs = diffList(new Change(EQUAL, "The c"), new Change(DELETE, "ow and the c"), new Change(EQUAL, "at."));
         dmp.cleanupSemantic(diffs);
-        Assert.assertEquals("cleanupSemantic: Word boundaries.", diffList(new Diff.Change(EQUAL, "The "), new Diff.Change(DELETE, "cow and the "), new Diff.Change(EQUAL, "cat.")), diffs);
+        Assert.assertEquals("cleanupSemantic: Word boundaries.", diffList(new Change(EQUAL, "The "), new Change(DELETE, "cow and the "), new Change(EQUAL, "cat.")), diffs);
 
-        diffs = diffList(new Diff.Change(DELETE, "abcxx"), new Diff.Change(INSERT, "xxdef"));
+        diffs = diffList(new Change(DELETE, "abcxx"), new Change(INSERT, "xxdef"));
         dmp.cleanupSemantic(diffs);
-        Assert.assertEquals("cleanupSemantic: No overlap elimination.", diffList(new Diff.Change(DELETE, "abcxx"), new Diff.Change(INSERT, "xxdef")), diffs);
+        Assert.assertEquals("cleanupSemantic: No overlap elimination.", diffList(new Change(DELETE, "abcxx"), new Change(INSERT, "xxdef")), diffs);
 
-        diffs = diffList(new Diff.Change(DELETE, "abcxxx"), new Diff.Change(INSERT, "xxxdef"));
+        diffs = diffList(new Change(DELETE, "abcxxx"), new Change(INSERT, "xxxdef"));
         dmp.cleanupSemantic(diffs);
-        Assert.assertEquals("cleanupSemantic: Overlap elimination.", diffList(new Diff.Change(DELETE, "abc"), new Diff.Change(EQUAL, "xxx"), new Diff.Change(INSERT, "def")), diffs);
+        Assert.assertEquals("cleanupSemantic: Overlap elimination.", diffList(new Change(DELETE, "abc"), new Change(EQUAL, "xxx"), new Change(INSERT, "def")), diffs);
 
-        diffs = diffList(new Diff.Change(DELETE, "xxxabc"), new Diff.Change(INSERT, "defxxx"));
+        diffs = diffList(new Change(DELETE, "xxxabc"), new Change(INSERT, "defxxx"));
         dmp.cleanupSemantic(diffs);
-        Assert.assertEquals("cleanupSemantic: Reverse overlap elimination.", diffList(new Diff.Change(INSERT, "def"), new Diff.Change(EQUAL, "xxx"), new Diff.Change(DELETE, "abc")), diffs);
+        Assert.assertEquals("cleanupSemantic: Reverse overlap elimination.", diffList(new Change(INSERT, "def"), new Change(EQUAL, "xxx"), new Change(DELETE, "abc")), diffs);
 
-        diffs = diffList(new Diff.Change(DELETE, "abcd1212"), new Diff.Change(INSERT, "1212efghi"), new Diff.Change(EQUAL, "----"), new Diff.Change(DELETE, "A3"), new Diff.Change(INSERT, "3BC"));
+        diffs = diffList(new Change(DELETE, "abcd1212"), new Change(INSERT, "1212efghi"), new Change(EQUAL, "----"), new Change(DELETE, "A3"), new Change(INSERT, "3BC"));
         dmp.cleanupSemantic(diffs);
-        Assert.assertEquals("cleanupSemantic: Two overlap eliminations.", diffList(new Diff.Change(DELETE, "abcd"), new Diff.Change(EQUAL, "1212"), new Diff.Change(INSERT, "efghi"), new Diff.Change(EQUAL, "----"), new Diff.Change(DELETE, "A"), new Diff.Change(EQUAL, "3"), new Diff.Change(INSERT, "BC")), diffs);
+        Assert.assertEquals("cleanupSemantic: Two overlap eliminations.", diffList(new Change(DELETE, "abcd"), new Change(EQUAL, "1212"), new Change(INSERT, "efghi"), new Change(EQUAL, "----"), new Change(DELETE, "A"), new Change(EQUAL, "3"), new Change(INSERT, "BC")), diffs);
     }
 
     @Test
     public void testDiffCleanupEfficiency() {
         // Cleanup operationally trivial equalities.
         dmp.getOptions().withEditCost(4);
-        LinkedList<Diff.Change> diffs = diffList();
+        LinkedList<Change> diffs = diffList();
         dmp.cleanupEfficiency(diffs);
         Assert.assertEquals("cleanupEfficiency: Null case.", diffList(), diffs);
 
-        diffs = diffList(new Diff.Change(DELETE, "ab"), new Diff.Change(INSERT, "12"), new Diff.Change(EQUAL, "wxyz"), new Diff.Change(DELETE, "cd"), new Diff.Change(INSERT, "34"));
+        diffs = diffList(new Change(DELETE, "ab"), new Change(INSERT, "12"), new Change(EQUAL, "wxyz"), new Change(DELETE, "cd"), new Change(INSERT, "34"));
         dmp.cleanupEfficiency(diffs);
-        Assert.assertEquals("cleanupEfficiency: No elimination.", diffList(new Diff.Change(DELETE, "ab"), new Diff.Change(INSERT, "12"), new Diff.Change(EQUAL, "wxyz"), new Diff.Change(DELETE, "cd"), new Diff.Change(INSERT, "34")), diffs);
+        Assert.assertEquals("cleanupEfficiency: No elimination.", diffList(new Change(DELETE, "ab"), new Change(INSERT, "12"), new Change(EQUAL, "wxyz"), new Change(DELETE, "cd"), new Change(INSERT, "34")), diffs);
 
-        diffs = diffList(new Diff.Change(DELETE, "ab"), new Diff.Change(INSERT, "12"), new Diff.Change(EQUAL, "xyz"), new Diff.Change(DELETE, "cd"), new Diff.Change(INSERT, "34"));
+        diffs = diffList(new Change(DELETE, "ab"), new Change(INSERT, "12"), new Change(EQUAL, "xyz"), new Change(DELETE, "cd"), new Change(INSERT, "34"));
         dmp.cleanupEfficiency(diffs);
-        Assert.assertEquals("cleanupEfficiency: Four-edit elimination.", diffList(new Diff.Change(DELETE, "abxyzcd"), new Diff.Change(INSERT, "12xyz34")), diffs);
+        Assert.assertEquals("cleanupEfficiency: Four-edit elimination.", diffList(new Change(DELETE, "abxyzcd"), new Change(INSERT, "12xyz34")), diffs);
 
-        diffs = diffList(new Diff.Change(INSERT, "12"), new Diff.Change(EQUAL, "x"), new Diff.Change(DELETE, "cd"), new Diff.Change(INSERT, "34"));
+        diffs = diffList(new Change(INSERT, "12"), new Change(EQUAL, "x"), new Change(DELETE, "cd"), new Change(INSERT, "34"));
         dmp.cleanupEfficiency(diffs);
-        Assert.assertEquals("cleanupEfficiency: Three-edit elimination.", diffList(new Diff.Change(DELETE, "xcd"), new Diff.Change(INSERT, "12x34")), diffs);
+        Assert.assertEquals("cleanupEfficiency: Three-edit elimination.", diffList(new Change(DELETE, "xcd"), new Change(INSERT, "12x34")), diffs);
 
-        diffs = diffList(new Diff.Change(DELETE, "ab"), new Diff.Change(INSERT, "12"), new Diff.Change(EQUAL, "xy"), new Diff.Change(INSERT, "34"), new Diff.Change(EQUAL, "z"), new Diff.Change(DELETE, "cd"), new Diff.Change(INSERT, "56"));
+        diffs = diffList(new Change(DELETE, "ab"), new Change(INSERT, "12"), new Change(EQUAL, "xy"), new Change(INSERT, "34"), new Change(EQUAL, "z"), new Change(DELETE, "cd"), new Change(INSERT, "56"));
         dmp.cleanupEfficiency(diffs);
-        Assert.assertEquals("cleanupEfficiency: Backpass elimination.", diffList(new Diff.Change(DELETE, "abxyzcd"), new Diff.Change(INSERT, "12xy34z56")), diffs);
+        Assert.assertEquals("cleanupEfficiency: Backpass elimination.", diffList(new Change(DELETE, "abxyzcd"), new Change(INSERT, "12xy34z56")), diffs);
 
         dmp.getOptions().withEditCost( 5 );
-        diffs = diffList(new Diff.Change(DELETE, "ab"), new Diff.Change(INSERT, "12"), new Diff.Change(EQUAL, "wxyz"), new Diff.Change(DELETE, "cd"), new Diff.Change(INSERT, "34"));
+        diffs = diffList(new Change(DELETE, "ab"), new Change(INSERT, "12"), new Change(EQUAL, "wxyz"), new Change(DELETE, "cd"), new Change(INSERT, "34"));
         dmp.cleanupEfficiency(diffs);
-        Assert.assertEquals("cleanupEfficiency: High cost elimination.", diffList(new Diff.Change(DELETE, "abwxyzcd"), new Diff.Change(INSERT, "12wxyz34")), diffs);
+        Assert.assertEquals("cleanupEfficiency: High cost elimination.", diffList(new Change(DELETE, "abwxyzcd"), new Change(INSERT, "12wxyz34")), diffs);
     }
 
     @Test
     public void testDiffPrettyHtml() {
         // Pretty print.
-        dmp = diff(new Diff.Change(EQUAL, "a\n"), new Diff.Change(DELETE, "<B>b</B>"), new Diff.Change(INSERT, "c&d"));
+        dmp = diff(new Change(EQUAL, "a\n"), new Change(DELETE, "<B>b</B>"), new Change(INSERT, "c&d"));
         Assert.assertEquals("prettyHtml:", "<span>a&para;<br></span><del style=\"background:#ffe6e6;\">&lt;B&gt;b&lt;/B&gt;</del><ins style=\"background:#e6ffe6;\">c&amp;d</ins>", dmp.prettyHtml());
     }
 
     @Test
     public void testDiffText() {
         // Compute the source and destination texts.
-        dmp = diff(new Diff.Change(EQUAL, "jump"), new Diff.Change(DELETE, "s"), new Diff.Change(INSERT, "ed"), new Diff.Change(EQUAL, " over "), new Diff.Change(DELETE, "the"), new Diff.Change(INSERT, "a"), new Diff.Change(EQUAL, " lazy"));
+        dmp = diff(new Change(EQUAL, "jump"), new Change(DELETE, "s"), new Change(INSERT, "ed"), new Change(EQUAL, " over "), new Change(DELETE, "the"), new Change(INSERT, "a"), new Change(EQUAL, " lazy"));
 
         Assert.assertEquals("text1:", "jumps over the lazy", dmp.text1());
         Assert.assertEquals("text2:", "jumped over a lazy", dmp.text2());
@@ -337,7 +332,7 @@ public class DiffTest {
     @Test
     public void testDiffDelta() {
         // Convert a diff into delta string.
-        dmp = diff(new Diff.Change(EQUAL, "jump"), new Diff.Change(DELETE, "s"), new Diff.Change(INSERT, "ed"), new Diff.Change(EQUAL, " over "), new Diff.Change(DELETE, "the"), new Diff.Change(INSERT, "a"), new Diff.Change(EQUAL, " lazy"), new Diff.Change(INSERT, "old dog"));
+        dmp = diff(new Change(EQUAL, "jump"), new Change(DELETE, "s"), new Change(INSERT, "ed"), new Change(EQUAL, " over "), new Change(DELETE, "the"), new Change(INSERT, "a"), new Change(EQUAL, " lazy"), new Change(INSERT, "old dog"));
 
         String text1 = dmp.text1();
         Assert.assertEquals("text1: Base text.", "jumps over the lazy", text1);
@@ -373,7 +368,7 @@ public class DiffTest {
         }
 
         // Test deltas with special characters.
-        dmp = diff(new Diff.Change(EQUAL, "\u0680 \000 \t %"), new Diff.Change(DELETE, "\u0681 \001 \n ^"), new Diff.Change(INSERT, "\u0682 \002 \\ |"));
+        dmp = diff(new Change(EQUAL, "\u0680 \000 \t %"), new Change(DELETE, "\u0681 \001 \n ^"), new Change(INSERT, "\u0682 \002 \\ |"));
         text1 = dmp.text1();
         Assert.assertEquals("text1: Unicode text.", "\u0680 \000 \t %\u0681 \001 \n ^", text1);
 
@@ -383,7 +378,7 @@ public class DiffTest {
         Assert.assertEquals("fromDelta: Unicode.", dmp, Diff.fromDelta(text1, delta));
 
         // Verify pool of unchanged characters.
-        dmp = diff(new Diff.Change(INSERT, "A-Z a-z 0-9 - _ . ! ~ * ' ( ) ; / ? : @ & = + $ , # "));
+        dmp = diff(new Change(INSERT, "A-Z a-z 0-9 - _ . ! ~ * ' ( ) ; / ? : @ & = + $ , # "));
         String text2 = dmp.text2();
         Assert.assertEquals("text2: Unchanged characters.", "A-Z a-z 0-9 - _ . ! ~ * \' ( ) ; / ? : @ & = + $ , # ", text2);
 
@@ -397,22 +392,22 @@ public class DiffTest {
     @Test
     public void testDiffXIndex() {
         // Translate a location in text1 to text2.
-        dmp = diff(new Diff.Change(DELETE, "a"), new Diff.Change(INSERT, "1234"), new Diff.Change(EQUAL, "xyz"));
+        dmp = diff(new Change(DELETE, "a"), new Change(INSERT, "1234"), new Change(EQUAL, "xyz"));
         Assert.assertEquals("xIndex: Translation on equality.", 5, dmp.xIndex(2));
 
-        dmp = diff(new Diff.Change(EQUAL, "a"), new Diff.Change(DELETE, "1234"), new Diff.Change(EQUAL, "xyz"));
+        dmp = diff(new Change(EQUAL, "a"), new Change(DELETE, "1234"), new Change(EQUAL, "xyz"));
         Assert.assertEquals("xIndex: Translation on deletion.", 1, dmp.xIndex(3));
     }
 
     @Test
     public void testDiffLevenshtein() {
-        dmp = diff(new Diff.Change(DELETE, "abc"), new Diff.Change(INSERT, "1234"), new Diff.Change(EQUAL, "xyz"));
+        dmp = diff(new Change(DELETE, "abc"), new Change(INSERT, "1234"), new Change(EQUAL, "xyz"));
         Assert.assertEquals("Levenshtein with trailing equality.", 4, dmp.levenshtein());
 
-        dmp = diff(new Diff.Change(EQUAL, "xyz"), new Diff.Change(DELETE, "abc"), new Diff.Change(INSERT, "1234"));
+        dmp = diff(new Change(EQUAL, "xyz"), new Change(DELETE, "abc"), new Change(INSERT, "1234"));
         Assert.assertEquals("Levenshtein with leading equality.", 4, dmp.levenshtein());
 
-        dmp = diff(new Diff.Change(DELETE, "abc"), new Diff.Change(EQUAL, "xyz"), new Diff.Change(INSERT, "1234"));
+        dmp = diff(new Change(DELETE, "abc"), new Change(EQUAL, "xyz"), new Change(INSERT, "1234"));
         Assert.assertEquals("Levenshtein with middle equality.", 7, dmp.levenshtein());
     }
 
@@ -424,62 +419,62 @@ public class DiffTest {
         // Since the resulting diff hasn't been normalized, it would be ok if
         // the insertion and deletion pairs are swapped.
         // If the order changes, tweak this test as required.
-        Diff diffs = diff(new Diff.Change(DELETE, "c"), new Diff.Change(INSERT, "m"), new Diff.Change(EQUAL, "a"), new Diff.Change(DELETE, "t"), new Diff.Change(INSERT, "p"));
-        Assert.assertEquals("bisect: Normal.", diffs, new Diff(dmp.bisect(a, b), dmp.getOptions()));
+        Bisect diffs = new Bisect(diffList(new Change(DELETE, "c"), new Change(INSERT, "m"), new Change(EQUAL, "a"), new Change(DELETE, "t"), new Change(INSERT, "p")), DiffOptions.defaults(), 0);
+        Assert.assertEquals("bisect: Normal.", diffs, new Bisect(a, b));
 
         dmp.getOptions()
            .withTimeout(0.000000001);
         // timeout.
-        diffs = new Diff(diffList(new Diff.Change(DELETE, "cat"), new Diff.Change(INSERT, "map")), dmp.getOptions(), 0);
+        diffs = new Bisect(diffList(new Change(DELETE, "cat"), new Change(INSERT, "map")), dmp.getOptions(), 0L);
 
-        Assert.assertEquals("bisect: Timeout.", diffs, new Diff(diffs.bisect(a, b), dmp.getOptions(), 0));
+        Assert.assertEquals("bisect: Timeout.", diffs, new Bisect(a, b, dmp.getOptions(), 0L));
     }
 
     @Test
     public void testDiffMain() {
-        Diff.Options opts = Diff.Options.defaults().withChangeLines(false);
+        DiffOptions opts = DiffOptions.defaults().withChangeLines(false);
 
         // Perform a trivial diff.
         Diff diffs = diff();
         Assert.assertEquals("main: Null case.", diffs, new Diff("", "", opts));
 
-        diffs = diff(new Diff.Change(EQUAL, "abc"));
+        diffs = diff(new Change(EQUAL, "abc"));
         Assert.assertEquals("main: Equality.", diffs, new Diff("abc", "abc", opts));
 
-        diffs = diff(new Diff.Change(EQUAL, "ab"), new Diff.Change(INSERT, "123"), new Diff.Change(EQUAL, "c"));
+        diffs = diff(new Change(EQUAL, "ab"), new Change(INSERT, "123"), new Change(EQUAL, "c"));
         Assert.assertEquals("main: Simple insertion.", diffs, new Diff("abc", "ab123c", opts));
 
-        diffs = diff(new Diff.Change(EQUAL, "a"), new Diff.Change(DELETE, "123"), new Diff.Change(EQUAL, "bc"));
+        diffs = diff(new Change(EQUAL, "a"), new Change(DELETE, "123"), new Change(EQUAL, "bc"));
         Assert.assertEquals("main: Simple deletion.", diffs, new Diff("a123bc", "abc", opts));
 
-        diffs = diff(new Diff.Change(EQUAL, "a"), new Diff.Change(INSERT, "123"), new Diff.Change(EQUAL, "b"), new Diff.Change(INSERT, "456"), new Diff.Change(EQUAL, "c"));
+        diffs = diff(new Change(EQUAL, "a"), new Change(INSERT, "123"), new Change(EQUAL, "b"), new Change(INSERT, "456"), new Change(EQUAL, "c"));
         Assert.assertEquals("main: Two insertions.", diffs, new Diff("abc", "a123b456c", opts));
 
-        diffs = diff(new Diff.Change(EQUAL, "a"), new Diff.Change(DELETE, "123"), new Diff.Change(EQUAL, "b"), new Diff.Change(DELETE, "456"), new Diff.Change(EQUAL, "c"));
+        diffs = diff(new Change(EQUAL, "a"), new Change(DELETE, "123"), new Change(EQUAL, "b"), new Change(DELETE, "456"), new Change(EQUAL, "c"));
         Assert.assertEquals("main: Two deletions.", diffs, new Diff("a123b456c", "abc", opts));
 
         // Perform a real diff.
         // Switch off the timeout.
         opts = opts.withTimeout(0);
-        diffs = diff(new Diff.Change(DELETE, "a"), new Diff.Change(INSERT, "b"));
+        diffs = diff(new Change(DELETE, "a"), new Change(INSERT, "b"));
         Assert.assertEquals("main: Simple case #1.", diffs, new Diff("a", "b", opts));
 
-        diffs = diff(new Diff.Change(DELETE, "Apple"), new Diff.Change(INSERT, "Banana"), new Diff.Change(EQUAL, "s are a"), new Diff.Change(INSERT, "lso"), new Diff.Change(EQUAL, " fruit."));
+        diffs = diff(new Change(DELETE, "Apple"), new Change(INSERT, "Banana"), new Change(EQUAL, "s are a"), new Change(INSERT, "lso"), new Change(EQUAL, " fruit."));
         Assert.assertEquals("main: Simple case #2.", diffs, new Diff("Apples are a fruit.", "Bananas are also fruit.", opts));
 
-        diffs = diff(new Diff.Change(DELETE, "a"), new Diff.Change(INSERT, "\u0680"), new Diff.Change(EQUAL, "x"), new Diff.Change(DELETE, "\t"), new Diff.Change(INSERT, "\000"));
+        diffs = diff(new Change(DELETE, "a"), new Change(INSERT, "\u0680"), new Change(EQUAL, "x"), new Change(DELETE, "\t"), new Change(INSERT, "\000"));
         Assert.assertEquals("main: Simple case #3.", diffs, new Diff("ax\t", "\u0680x\000", opts));
 
-        diffs = diff(new Diff.Change(DELETE, "1"), new Diff.Change(EQUAL, "a"), new Diff.Change(DELETE, "y"), new Diff.Change(EQUAL, "b"), new Diff.Change(DELETE, "2"), new Diff.Change(INSERT, "xab"));
+        diffs = diff(new Change(DELETE, "1"), new Change(EQUAL, "a"), new Change(DELETE, "y"), new Change(EQUAL, "b"), new Change(DELETE, "2"), new Change(INSERT, "xab"));
         Assert.assertEquals("main: Overlap #1.", diffs, new Diff("1ayb2", "abxab", opts));
 
-        diffs = diff(new Diff.Change(INSERT, "xaxcx"), new Diff.Change(EQUAL, "abc"), new Diff.Change(DELETE, "y"));
+        diffs = diff(new Change(INSERT, "xaxcx"), new Change(EQUAL, "abc"), new Change(DELETE, "y"));
         Assert.assertEquals("main: Overlap #2.", diffs, new Diff("abcy", "xaxcxabc", opts));
 
-        diffs = diff(new Diff.Change(DELETE, "ABCD"), new Diff.Change(EQUAL, "a"), new Diff.Change(DELETE, "="), new Diff.Change(INSERT, "-"), new Diff.Change(EQUAL, "bcd"), new Diff.Change(DELETE, "="), new Diff.Change(INSERT, "-"), new Diff.Change(EQUAL, "efghijklmnopqrs"), new Diff.Change(DELETE, "EFGHIJKLMNOefg"));
+        diffs = diff(new Change(DELETE, "ABCD"), new Change(EQUAL, "a"), new Change(DELETE, "="), new Change(INSERT, "-"), new Change(EQUAL, "bcd"), new Change(DELETE, "="), new Change(INSERT, "-"), new Change(EQUAL, "efghijklmnopqrs"), new Change(DELETE, "EFGHIJKLMNOefg"));
         Assert.assertEquals("main: Overlap #3.", diffs, new Diff("ABCDa=bcd=efghijklmnopqrsEFGHIJKLMNOefg", "a-bcd-efghijklmnopqrs", opts));
 
-        diffs = diff(new Diff.Change(INSERT, " "), new Diff.Change(EQUAL, "a"), new Diff.Change(INSERT, "nd"), new Diff.Change(EQUAL, " [[Pennsylvania]]"), new Diff.Change(DELETE, " and [[New"));
+        diffs = diff(new Change(INSERT, " "), new Change(EQUAL, "a"), new Change(INSERT, "nd"), new Change(EQUAL, " [[Pennsylvania]]"), new Change(DELETE, " and [[New"));
         Assert.assertEquals("main: Large equality.", diffs, new Diff("a [[Pennsylvania]] and [[New", " and [[Pennsylvania]]", opts));
 
         opts = opts.withTimeout(0.1);  // 100 ms
@@ -524,7 +519,7 @@ public class DiffTest {
 
         // Test null inputs.
         try {
-            new Diff((String) null, (String) null);
+            new Diff(null, null, DiffOptions.defaults());
             Assert.fail("main: Null inputs.");
         } catch (IllegalArgumentException ex) {
             // Error expected.
@@ -538,7 +533,7 @@ public class DiffTest {
     }
 
     private void assertLinesToCharsResultEquals(String error_msg,
-                                                Diff.LinesToCharsResult a, Diff.LinesToCharsResult b) {
+                                                LinesToCharsResult a, LinesToCharsResult b) {
         Assert.assertEquals(error_msg, a.chars1, b.chars1);
         Assert.assertEquals(error_msg, a.chars2, b.chars2);
         Assert.assertEquals(error_msg, a.lineArray, b.lineArray);
@@ -547,11 +542,11 @@ public class DiffTest {
     // Construct the two texts which made up the diff originally.
     private static String[] rebuildtexts(Diff diffs) {
         String[] text = {"", ""};
-        for (Diff.Change myDiff : diffs.getChangeList()) {
-            if (myDiff.operation != Diff.Operation.INSERT) {
+        for (Change myDiff : diffs.getChangeList()) {
+            if (myDiff.operation != Operation.INSERT) {
                 text[0] += myDiff.text;
             }
-            if (myDiff.operation != Diff.Operation.DELETE) {
+            if (myDiff.operation != Operation.DELETE) {
                 text[1] += myDiff.text;
             }
         }
@@ -559,15 +554,15 @@ public class DiffTest {
     }
 
     // Private function for quickly building lists of diffs.
-    private static LinkedList<Diff.Change> diffList(Diff.Change... diffs) {
-        LinkedList<Diff.Change> myDiffList = new LinkedList<Diff.Change>();
-        for (Diff.Change myDiff : diffs) {
+    private static LinkedList<Change> diffList(Change... diffs) {
+        LinkedList<Change> myDiffList = new LinkedList<Change>();
+        for (Change myDiff : diffs) {
             myDiffList.add(myDiff);
         }
         return myDiffList;
     }
 
-    private static Diff diff(Diff.Change... diffs) {
-        return new Diff(diffList(diffs), Diff.Options.defaults());
+    private static Diff diff(Change... diffs) {
+        return new Diff(diffList(diffs), DiffOptions.defaults());
     }
 }
