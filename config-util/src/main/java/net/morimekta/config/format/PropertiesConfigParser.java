@@ -1,8 +1,10 @@
 package net.morimekta.config.format;
 
 import net.morimekta.config.Config;
+import net.morimekta.config.ConfigBuilder;
 import net.morimekta.config.ConfigException;
-import net.morimekta.config.SimpleConfig;
+import net.morimekta.config.impl.ImmutableConfig;
+import net.morimekta.config.impl.SimpleConfig;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,7 +34,7 @@ public class PropertiesConfigParser implements ConfigParser {
      * @return The config instance.
      */
     public Config parse(Properties properties) {
-        SimpleConfig config = new SimpleConfig();
+        ConfigBuilder config = new SimpleConfig();
         for (Object o : new TreeSet<>(properties.keySet())) {
             String key = o.toString();
             if (isPositional(key)) {
@@ -48,7 +50,7 @@ public class PropertiesConfigParser implements ConfigParser {
                 config.put(key, properties.getProperty(key));
             }
         }
-        return config;
+        return new ImmutableConfig(config);
     }
 
     private boolean isPositional(String key) {

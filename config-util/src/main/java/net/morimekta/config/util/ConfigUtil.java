@@ -16,14 +16,19 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package net.morimekta.config;
+package net.morimekta.config.util;
 
+import net.morimekta.config.Config;
+import net.morimekta.config.IncompatibleValueException;
 import net.morimekta.util.Strings;
+
+import com.google.common.base.MoreObjects;
 
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * Config value utility.
@@ -166,6 +171,32 @@ public class ConfigUtil {
     }
 
     /**
+     * Proper equality between configs.
+     *
+     * @param first The first config.
+     * @param second The second config.
+     * @return True if the two configs are equal.
+     */
+    public static boolean equals(Config first, Config second) {
+        if (first == second) {
+            return true;
+        } else if (first == null || second == null) {
+            return false;
+        }
+
+        Set<String> keys = first.keySet();
+        if (!keys.equals(second.keySet())) {
+            return false;
+        }
+        for (String key : keys) {
+            if (!equals(first.get(key), second.get(key))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
      * Proper value equality checker.
      *
      * @param first The first value.
@@ -174,10 +205,12 @@ public class ConfigUtil {
      */
     public static boolean equals(Object first, Object second) {
         try {
-            if (first == second)
+            if (first == second) {
                 return true;
-            if (first == null || second == null)
+            } else if (first == null || second == null) {
                 return false;
+            }
+
             // if any of the two are *not* a char sequence, try to use that type
             // to compare.
             if (first instanceof Double || first instanceof Float ||
@@ -210,6 +243,20 @@ public class ConfigUtil {
         } catch (IncompatibleValueException e) {
             return false;
         }
+    }
+
+    /**
+     * Make a proper toString value for the config.
+     *
+     * @param config The config to make toString for.
+     * @return The toString value.
+     */
+    public static String toString(Config config) {
+        MoreObjects.ToStringHelper helper = MoreObjects.toStringHelper(config);
+        for (String key : config.keySet()) {
+            helper.add(key, config.get(key));
+        }
+        return helper.toString();
     }
 
     // -- defeat instantiation

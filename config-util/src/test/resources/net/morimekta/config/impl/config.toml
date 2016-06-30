@@ -1,0 +1,21 @@
+# comment at the beginning.
+i = 1234
+s = "string value."
+b = true # comment on same line as full k/v pair.
+# comments can be on the line before the key. And after the value.
+seq_i = [
+       # allow comments inside values.
+       1, # and even on the same line.
+       2.2,
+       3.7,
+       -4
+]
+seq_s = ["a", "b", "c"]
+seq_b = [false, false, false, true]
+
+# comment before section.
+[conf]  # comment after section
+sub_str = "another string value."
+real    = 1234.5678
+
+# comment at the end of the file

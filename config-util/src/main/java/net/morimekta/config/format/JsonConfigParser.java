@@ -1,9 +1,11 @@
 package net.morimekta.config.format;
 
 import net.morimekta.config.Config;
+import net.morimekta.config.ConfigBuilder;
 import net.morimekta.config.ConfigException;
 import net.morimekta.config.IncompatibleValueException;
-import net.morimekta.config.SimpleConfig;
+import net.morimekta.config.impl.ImmutableConfig;
+import net.morimekta.config.impl.SimpleConfig;
 import net.morimekta.util.json.JsonException;
 import net.morimekta.util.json.JsonToken;
 import net.morimekta.util.json.JsonTokenizer;
@@ -34,7 +36,7 @@ public class JsonConfigParser implements ConfigParser {
 
     private Config parseConfig(JsonTokenizer tokenizer, JsonToken token)
             throws ConfigException, IOException, JsonException {
-        SimpleConfig config = new SimpleConfig();
+        ConfigBuilder config = new SimpleConfig();
         char sep = token.charAt(0);
         while (sep != JsonToken.kMapEnd) {
             JsonToken jkey = tokenizer.expect("Map key.");
@@ -74,7 +76,7 @@ public class JsonConfigParser implements ConfigParser {
             sep = tokenizer.expectSymbol("", JsonToken.kMapEnd, JsonToken.kListSep);
         }
 
-        return config;
+        return new ImmutableConfig(config);
     }
 
     @SuppressWarnings("unchecked")

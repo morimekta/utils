@@ -23,7 +23,8 @@ package net.morimekta.config.format;
 import net.morimekta.config.Config;
 import net.morimekta.config.ConfigBuilder;
 import net.morimekta.config.ConfigException;
-import net.morimekta.config.SimpleConfig;
+import net.morimekta.config.impl.ImmutableConfig;
+import net.morimekta.config.impl.SimpleConfig;
 import net.morimekta.util.Strings;
 import net.morimekta.util.io.IOUtils;
 import net.morimekta.util.json.JsonException;
@@ -123,7 +124,7 @@ public class TomlConfigParser implements ConfigParser {
                 token = tokenizer.next();
             }
 
-            return config;
+            return new ImmutableConfig(config);
         } catch (JsonException | IOException e) {
             throw new ConfigException(e, e.getMessage());
         }

@@ -18,7 +18,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package net.morimekta.config;
+package net.morimekta.config.util;
 
 import net.morimekta.util.Strings;
 
@@ -29,12 +29,12 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.function.Function;
 
-import static net.morimekta.config.ConfigUtil.asBoolean;
-import static net.morimekta.config.ConfigUtil.asCollection;
-import static net.morimekta.config.ConfigUtil.asDouble;
-import static net.morimekta.config.ConfigUtil.asInteger;
-import static net.morimekta.config.ConfigUtil.asLong;
-import static net.morimekta.config.ConfigUtil.asString;
+import static net.morimekta.config.util.ConfigUtil.asBoolean;
+import static net.morimekta.config.util.ConfigUtil.asCollection;
+import static net.morimekta.config.util.ConfigUtil.asDouble;
+import static net.morimekta.config.util.ConfigUtil.asInteger;
+import static net.morimekta.config.util.ConfigUtil.asLong;
+import static net.morimekta.config.util.ConfigUtil.asString;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;

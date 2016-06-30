@@ -16,7 +16,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package net.morimekta.config;
+package net.morimekta.config.impl;
+
+import net.morimekta.config.Config;
+import net.morimekta.config.ConfigBuilder;
+import net.morimekta.config.util.ConfigUtil;
 
 import java.util.TreeMap;
 
@@ -54,20 +58,14 @@ public class SimpleConfig extends TreeMap<String,Object> implements ConfigBuilde
     public boolean equals(Object o) {
         if (o == this) {
             return true;
-        }
-        if (o == null || !(o instanceof Config)) {
+        } else if (o == null || !(o instanceof Config)) {
             return false;
         }
-        Config other = (Config) o;
-        if (!keySet().equals(other.keySet())) {
-            return false;
-        }
+        return ConfigUtil.equals(this, (Config) o);
+    }
 
-        for (String key : keySet()) {
-            if (!ConfigUtil.equals(get(key), other.get(key))) {
-                return false;
-            }
-        }
-        return true;
+    @Override
+    public String toString() {
+        return ConfigUtil.toString(this);
     }
 }

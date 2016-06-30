@@ -4,6 +4,8 @@ import net.morimekta.config.Config;
 import net.morimekta.config.ConfigException;
 import net.morimekta.config.format.ConfigParser;
 
+import com.google.common.base.MoreObjects;
+
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -15,8 +17,6 @@ import java.util.function.Supplier;
  * File source for config objects.
  */
 public class FileConfigSupplier implements Supplier<Config> {
-    private static final long UPDATE_CHECK_INTERVAL_MS = 1000;
-
     private final File         configFile;
     private final ConfigParser parser;
     private final AtomicReference<Config> config;
@@ -30,6 +30,13 @@ public class FileConfigSupplier implements Supplier<Config> {
     @Override
     public Config get() {
         return config.get();
+    }
+
+    @Override
+    public String toString() {
+        return MoreObjects.toStringHelper(this)
+                          .add("file", configFile)
+                          .toString();
     }
 
     /**

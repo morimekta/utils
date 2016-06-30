@@ -4,6 +4,8 @@ import net.morimekta.config.Config;
 import net.morimekta.config.ConfigException;
 import net.morimekta.config.format.ConfigParser;
 
+import com.google.common.base.MoreObjects;
+
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -61,6 +63,13 @@ public class RefreshingFileConfigSupplier implements Supplier<Config> {
         }
 
         return config;
+    }
+
+    @Override
+    public String toString() {
+        return MoreObjects.toStringHelper(this)
+                          .add("file", configFile)
+                          .toString();
     }
 
     private void loadInternal() throws IOException, ConfigException {

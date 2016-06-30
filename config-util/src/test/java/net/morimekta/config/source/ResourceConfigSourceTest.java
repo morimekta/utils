@@ -2,7 +2,7 @@ package net.morimekta.config.source;
 
 import net.morimekta.config.Config;
 import net.morimekta.config.ConfigException;
-import net.morimekta.config.SimpleConfig;
+import net.morimekta.config.impl.SimpleConfig;
 import net.morimekta.config.format.JsonConfigParser;
 
 import com.google.common.collect.ImmutableList;

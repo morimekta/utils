@@ -16,7 +16,12 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package net.morimekta.config;
+package net.morimekta.config.impl;
+
+import net.morimekta.config.Config;
+import net.morimekta.config.ConfigBuilder;
+import net.morimekta.config.ConfigException;
+import net.morimekta.config.KeyNotFoundException;
 
 import org.junit.Test;
 
@@ -29,7 +34,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 /**
- *
+ * Tests for simple config and common config methods.
  */
 public class SimpleConfigTest {
     @Test
@@ -112,6 +117,14 @@ public class SimpleConfigTest {
         assertNotFound(config::getLong);
         assertNotFound(config::getSequence);
         assertNotFound(config::getString);
+    }
+
+    @Test
+    public void testToString() {
+        ConfigBuilder config = new SimpleConfig();
+        config.putString("a", "b");
+
+        assertEquals("SimpleConfig{a=b}", config.toString());
     }
 
     private void assertNotFound(Function<String, Object> func) {

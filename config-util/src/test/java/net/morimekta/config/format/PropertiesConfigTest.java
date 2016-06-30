@@ -2,7 +2,6 @@ package net.morimekta.config.format;
 
 import net.morimekta.config.Config;
 import net.morimekta.config.ConfigException;
-import net.morimekta.util.Strings;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -69,7 +68,7 @@ public class PropertiesConfigTest {
                      "seq_i.3=-4\n" +
                      "seq_s.0=a\n" +
                      "seq_s.1=b\n" +
-                     "seq_s.2=c", Strings.join("\n", result));
+                     "seq_s.2=c", String.join("\n", (CharSequence[]) result));
 
         assertEquals("1", pf.getProperty("seq_i.0"));
         assertEquals("another string value.", pf.getProperty("conf.sub_str"));
@@ -96,6 +95,6 @@ public class PropertiesConfigTest {
                                                             "seq_s.1=b\n" +
                                                             "seq_s.2=c").getBytes()));
 
-        assertEquals(config.toString(), cfg.toString());
+        assertEquals(config, cfg);
     }
 }

@@ -35,6 +35,19 @@ public interface ConfigBuilder extends Config {
     Object put(String key, Object value);
 
     /**
+     * Put all values from the 'other' config into this.
+     *
+     * @param other The other config.
+     * @return The config.
+     */
+    default ConfigBuilder putAll(Config other) {
+        for (String key : other.keySet()) {
+            put(key, other.get(key));
+        }
+        return this;
+    }
+
+    /**
      * Put a boolean value into the config.
      *
      * @param key The key to put at.
