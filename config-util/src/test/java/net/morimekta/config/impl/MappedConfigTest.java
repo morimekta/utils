@@ -25,7 +25,7 @@ public class MappedConfigTest {
                 .putInteger("type", 5)
                 .putSequence("seq", ImmutableList.of("a", "b"));
 
-        MappedConfig mapped = new MappedConfig(simple, ImmutableMap.of(
+        MappedConfig mapped = new MappedConfig(() -> simple, ImmutableMap.of(
                 "not.just.seq", "seq",
                 "not.found", "not"
         ));

@@ -7,6 +7,7 @@ import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -14,9 +15,9 @@ import java.util.stream.Collectors;
  */
 public class MappedConfig implements Config {
     private final ImmutableMap<String, String> mapping;
-    private final Config contained;
+    private final Supplier<Config> contained;
 
-    public MappedConfig(Config contained, Map<String, String> mapping) {
+    public MappedConfig(Supplier<Config> contained, Map<String, String> mapping) {
         this.contained = contained;
         this.mapping = ImmutableMap.copyOf(mapping);
     }
@@ -26,7 +27,7 @@ public class MappedConfig implements Config {
         if (!mapping.containsKey(key)) {
             return null;
         }
-        return contained.get(mapping.get(key));
+        return contained.get().get(mapping.get(key));
     }
 
     @Override
@@ -34,7 +35,7 @@ public class MappedConfig implements Config {
         if (!mapping.containsKey(key)) {
             return false;
         }
-        return contained.containsKey(mapping.get(key));
+        return contained.get().containsKey(mapping.get(key));
     }
 
     @Override
