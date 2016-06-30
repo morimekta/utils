@@ -26,6 +26,8 @@ import net.morimekta.console.chr.Control;
 import net.morimekta.console.util.STTYMode;
 import net.morimekta.console.util.STTYModeSwitcher;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
@@ -84,7 +86,8 @@ public class Terminal extends CharReader implements Closeable, LinePrinter {
      * @param switcher The TTY mode switcher.
      * @throws UncheckedIOException If unable to set TTY mode.
      */
-    protected Terminal(InputStream in, OutputStream out, LinePrinter lp, STTYModeSwitcher switcher) {
+    @VisibleForTesting
+    public Terminal(InputStream in, OutputStream out, LinePrinter lp, STTYModeSwitcher switcher) {
         super(in);
         this.lp = lp == null ? this::printlnInternal : lp;
         this.out = out;

@@ -3,23 +3,23 @@ package net.morimekta.console;
 import net.morimekta.console.chr.Char;
 import net.morimekta.console.chr.Control;
 import net.morimekta.console.chr.Unicode;
-import net.morimekta.console.util.STTYMode;
-import net.morimekta.console.util.STTYModeSwitcher;
+import net.morimekta.console.test_utils.TerminalTestUtils;
 import net.morimekta.util.Strings;
 
 import org.junit.Test;
-import org.mockito.stubbing.OngoingStubbing;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 
+import static net.morimekta.console.test_utils.TerminalTestUtils.mockInput;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verifyZeroInteractions;
-import static org.mockito.Mockito.when;
 
 /**
  * Testing the line input.
@@ -27,15 +27,10 @@ import static org.mockito.Mockito.when;
 public class InputLineTest {
     @Test
     public void testReadLine() throws IOException {
-        STTYModeSwitcher switcher = mock(STTYModeSwitcher.class);
         InputStream in = mock(InputStream.class);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-        when(switcher.didChangeMode()).thenReturn(true);
-        when(switcher.getCurrentMode()).thenReturn(STTYMode.RAW);
-        when(switcher.getBefore()).thenReturn(STTYMode.COOKED);
-
-        Terminal terminal = new Terminal(in, out, null, switcher);
+        Terminal terminal = TerminalTestUtils.getTerminal(out, in);
 
         InputLine li = new InputLine(terminal, "Test");
 
@@ -44,11 +39,11 @@ public class InputLineTest {
 
         assertArrayEquals(new byte[]{}, out.toByteArray());
 
-        input(in,
-              new Unicode('a'),
-              Control.LEFT,
-              new Unicode('b'),
-              new Unicode(Char.CR));
+        mockInput(in,
+                  new Unicode('a'),
+                  Control.LEFT,
+                  new Unicode('b'),
+                  new Unicode(Char.CR));
 
         assertEquals("ba", li.readLine());
 
@@ -59,16 +54,15 @@ public class InputLineTest {
                      Strings.escape(new String(out.toByteArray())));
     }
 
-    private void input(InputStream in, Char ... chars) throws IOException {
-        // Always continue reading.
-        when(in.available()).thenReturn(1);
+    @Test
+    public void testEOF() throws IOException {
+        Terminal terminal = TerminalTestUtils.getTerminal();
 
-        OngoingStubbing<Integer> os = when(in.read());
-        for (Char ch : chars) {
-            for (char c : ch.toString().toCharArray()) {
-                os = os.thenReturn((int) c);
-            }
+        try {
+            new InputLine(terminal, "test").readLine();
+            fail("No exception");
+        } catch (UncheckedIOException e) {
+            assertEquals("java.io.IOException: End of input.", e.getMessage());
         }
-        os.thenReturn(-1);
     }
 }
