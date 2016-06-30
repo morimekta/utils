@@ -28,7 +28,7 @@ import java.util.Objects;
 /**
  * Config value utility.
  */
-public class ValueUtil {
+public class ConfigUtil {
     /**
      * Convert the value to a boolean.
      *
@@ -165,6 +165,13 @@ public class ValueUtil {
                 "Unable to convert " + value.getClass().getSimpleName() + " to a collection");
     }
 
+    /**
+     * Proper value equality checker.
+     *
+     * @param first The first value.
+     * @param second The second value.
+     * @return True if the two values are equal.
+     */
     public static boolean equals(Object first, Object second) {
         try {
             if (first == second)
@@ -206,5 +213,5 @@ public class ValueUtil {
     }
 
     // -- defeat instantiation
-    private ValueUtil() {}
+    private ConfigUtil() {}
 }

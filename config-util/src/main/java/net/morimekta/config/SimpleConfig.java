@@ -52,8 +52,9 @@ public class SimpleConfig extends TreeMap<String,Object> implements ConfigBuilde
 
     @Override
     public boolean equals(Object o) {
-        if (o == this)
+        if (o == this) {
             return true;
+        }
         if (o == null || !(o instanceof Config)) {
             return false;
         }
@@ -63,7 +64,7 @@ public class SimpleConfig extends TreeMap<String,Object> implements ConfigBuilde
         }
 
         for (String key : keySet()) {
-            if (!ValueUtil.equals(get(key), other.get(key))) {
+            if (!ConfigUtil.equals(get(key), other.get(key))) {
                 return false;
             }
         }

@@ -29,21 +29,21 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.function.Function;
 
-import static net.morimekta.config.ValueUtil.asBoolean;
-import static net.morimekta.config.ValueUtil.asCollection;
-import static net.morimekta.config.ValueUtil.asDouble;
-import static net.morimekta.config.ValueUtil.asInteger;
-import static net.morimekta.config.ValueUtil.asLong;
-import static net.morimekta.config.ValueUtil.asString;
+import static net.morimekta.config.ConfigUtil.asBoolean;
+import static net.morimekta.config.ConfigUtil.asCollection;
+import static net.morimekta.config.ConfigUtil.asDouble;
+import static net.morimekta.config.ConfigUtil.asInteger;
+import static net.morimekta.config.ConfigUtil.asLong;
+import static net.morimekta.config.ConfigUtil.asString;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 /**
- * Tests for ValueUtil
+ * Tests for ConfigUtil
  */
-public class ValueUtilTest {
+public class ConfigUtilTest {
     @Test
     public void testAsBoolean() {
         assertTrue(asBoolean(true));
@@ -57,10 +57,10 @@ public class ValueUtilTest {
         assertFalse(asBoolean("n"));
         assertFalse(asBoolean("FALSE"));
 
-        assertException("Unable to parse the string \"foo\" to boolean", "foo", ValueUtil::asBoolean);
-        assertException("Unable to convert LinkedList to a boolean", new LinkedList<>(), ValueUtil::asBoolean);
-        assertException("Unable to convert double value to boolean", 12.34, ValueUtil::asBoolean);
-        assertException("Unable to convert number 3 to boolean", 3, ValueUtil::asBoolean);
+        assertException("Unable to parse the string \"foo\" to boolean", "foo", ConfigUtil::asBoolean);
+        assertException("Unable to convert LinkedList to a boolean", new LinkedList<>(), ConfigUtil::asBoolean);
+        assertException("Unable to convert double value to boolean", 12.34, ConfigUtil::asBoolean);
+        assertException("Unable to convert number 3 to boolean", 3, ConfigUtil::asBoolean);
     }
 
     @Test
@@ -70,8 +70,8 @@ public class ValueUtilTest {
         assertEquals(1, asInteger(true));
         assertEquals(1, asInteger("1"));
 
-        assertException("Unable to parse string \"foo\" to an int", "foo", ValueUtil::asInteger);
-        assertException("Unable to convert LinkedList to an int", new LinkedList<>(), ValueUtil::asInteger);
+        assertException("Unable to parse string \"foo\" to an int", "foo", ConfigUtil::asInteger);
+        assertException("Unable to convert LinkedList to an int", new LinkedList<>(), ConfigUtil::asInteger);
     }
 
     @Test
@@ -81,8 +81,8 @@ public class ValueUtilTest {
         assertEquals(1L, asLong(true));
         assertEquals(1L, asLong("1"));
 
-        assertException("Unable to parse string \"foo\" to a long", "foo", ValueUtil::asLong);
-        assertException("Unable to convert LinkedList to a long", new LinkedList<>(), ValueUtil::asLong);
+        assertException("Unable to parse string \"foo\" to a long", "foo", ConfigUtil::asLong);
+        assertException("Unable to convert LinkedList to a long", new LinkedList<>(), ConfigUtil::asLong);
     }
 
     @Test
@@ -92,8 +92,8 @@ public class ValueUtilTest {
         assertEquals(1.1, asDouble(1.1), 0.001);
         assertEquals(1.1, asDouble("1.1"), 0.001);
 
-        assertException("Unable to parse string \"foo\" to a double", "foo", ValueUtil::asDouble);
-        assertException("Unable to convert LinkedList to a double", new LinkedList<>(), ValueUtil::asDouble);
+        assertException("Unable to parse string \"foo\" to a double", "foo", ConfigUtil::asDouble);
+        assertException("Unable to convert LinkedList to a double", new LinkedList<>(), ConfigUtil::asDouble);
     }
 
     @Test
@@ -102,7 +102,7 @@ public class ValueUtilTest {
         assertEquals("1.1", asString(1.1));
         assertEquals("foo", asString("foo"));
 
-        assertException("Unable to convert LinkedList to a string", new LinkedList<>(), ValueUtil::asString);
+        assertException("Unable to convert LinkedList to a string", new LinkedList<>(), ConfigUtil::asString);
     }
 
     @Test
@@ -110,7 +110,7 @@ public class ValueUtilTest {
         assertEquals(ImmutableList.of("a"),
                      asCollection(Collections.singletonList("a")));
 
-        assertException("Unable to convert String to a collection", "not a list", ValueUtil::asCollection);
+        assertException("Unable to convert String to a collection", "not a list", ConfigUtil::asCollection);
     }
 
     void assertException(String message, Object value, Function<Object, Object> func) {

@@ -21,12 +21,12 @@ package net.morimekta.config;
 import java.util.Collection;
 import java.util.Set;
 
-import static net.morimekta.config.ValueUtil.asBoolean;
-import static net.morimekta.config.ValueUtil.asCollection;
-import static net.morimekta.config.ValueUtil.asDouble;
-import static net.morimekta.config.ValueUtil.asInteger;
-import static net.morimekta.config.ValueUtil.asLong;
-import static net.morimekta.config.ValueUtil.asString;
+import static net.morimekta.config.ConfigUtil.asBoolean;
+import static net.morimekta.config.ConfigUtil.asCollection;
+import static net.morimekta.config.ConfigUtil.asDouble;
+import static net.morimekta.config.ConfigUtil.asInteger;
+import static net.morimekta.config.ConfigUtil.asLong;
+import static net.morimekta.config.ConfigUtil.asString;
 
 /**
  * Base configuration container. Essentially a type-safe map.
