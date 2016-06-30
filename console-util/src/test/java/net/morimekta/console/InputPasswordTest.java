@@ -24,7 +24,7 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 /**
  * Testing the line input.
  */
-public class InputLineTest {
+public class InputPasswordTest {
     @Test
     public void testReadLine() throws IOException {
         InputStream in = mock(InputStream.class);
@@ -32,7 +32,7 @@ public class InputLineTest {
 
         Terminal terminal = TerminalTestUtils.getTerminal(out, in);
 
-        InputLine li = new InputLine(terminal, "Test");
+        InputPassword li = new InputPassword(terminal, "Test");
 
         verifyZeroInteractions(in);
         reset(in);
@@ -45,12 +45,12 @@ public class InputLineTest {
                   new Unicode('b'),
                   new Unicode(Char.CR));
 
-        assertEquals("ba", li.readLine());
+        assertEquals("ba", li.readPassword());
 
         assertEquals("Test: " +
-                     "\\r\\033[KTest: a" +
-                     "\\r\\033[KTest: a\\033[1D" +
-                     "\\r\\033[KTest: ba\\033[1D",
+                     "\\r\\033[KTest: *" +
+                     "\\r\\033[KTest: *\\033[1D" +
+                     "\\r\\033[KTest: **\\033[1D",
                      Strings.escape(new String(out.toByteArray())));
     }
 
@@ -59,7 +59,7 @@ public class InputLineTest {
         Terminal terminal = TerminalTestUtils.getTerminal();
 
         try {
-            new InputLine(terminal, "test").readLine();
+            new InputPassword(terminal, "test").readPassword();
             fail("No exception");
         } catch (UncheckedIOException e) {
             assertEquals("java.io.IOException: End of input.", e.getMessage());
@@ -81,6 +81,6 @@ public class InputLineTest {
                                                           "g",
                                                           Char.CR);
 
-        assertEquals("eafcdbag", new InputLine(terminal, "test").readLine());
+        assertEquals("acebfga", new InputPassword(terminal, "test").readPassword());
     }
 }
