@@ -25,7 +25,7 @@ import java.util.TreeMap;
 /**
  * Mutable configuration object backed by a tree map.
  */
-public class SimpleConfig extends TreeMap<String,Object> implements Config {
+public class SimpleConfig extends TreeMap<String,Object> implements ConfigBuilder {
     /**
      * Create an empty config instance.
      */
@@ -68,11 +68,11 @@ public class SimpleConfig extends TreeMap<String,Object> implements Config {
             for (String key : keySet()) {
                 Object value = get(key);
                 if (value instanceof Double) {
-                    if (Value.asDouble(value) != other.getDouble(key)) {
+                    if (ValueUtil.asDouble(value) != other.getDouble(key)) {
                         return false;
                     }
                 } else if (value instanceof Number) {
-                    if (Value.asLong(value) != other.getLong(key)) {
+                    if (ValueUtil.asLong(value) != other.getLong(key)) {
                         return false;
                     }
                 } else if (value instanceof Collection) {
@@ -87,11 +87,11 @@ public class SimpleConfig extends TreeMap<String,Object> implements Config {
                         Object ov = outIt.next();
                         Object tv = theirIt.next();
                         if (ov instanceof Double) {
-                            if (Value.asDouble(ov) != Value.asDouble(tv)) {
+                            if (ValueUtil.asDouble(ov) != ValueUtil.asDouble(tv)) {
                                 return false;
                             }
                         } else if (ov instanceof Number) {
-                            if (Value.asLong(ov) != Value.asLong(tv)) {
+                            if (ValueUtil.asLong(ov) != ValueUtil.asLong(tv)) {
                                 return false;
                             }
                         } else {

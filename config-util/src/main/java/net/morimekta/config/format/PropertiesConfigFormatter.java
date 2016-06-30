@@ -25,12 +25,17 @@ public class PropertiesConfigFormatter implements ConfigFormatter {
         }
     }
 
-    public Properties format(Config config) throws IOException, ConfigException {
+    /**
+     * Format a config into a properties instance.
+     *
+     * @param config The config to put into the properties instance.
+     * @return The properties instance.
+     */
+    public Properties format(Config config) {
         Properties properties = new Properties();
         writeConfig("", config, properties);
         return properties;
     }
-
 
     // --- INTERNAL ---
     private void writeConfig(String prefix, Config config, Properties properties) {

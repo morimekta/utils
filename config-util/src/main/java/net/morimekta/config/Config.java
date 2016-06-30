@@ -21,23 +21,15 @@ package net.morimekta.config;
 import java.util.Collection;
 import java.util.Set;
 
-import static net.morimekta.config.Value.asBoolean;
-import static net.morimekta.config.Value.asCollection;
-import static net.morimekta.config.Value.asDouble;
-import static net.morimekta.config.Value.asInteger;
-import static net.morimekta.config.Value.asLong;
-import static net.morimekta.config.Value.asString;
+import static net.morimekta.config.ValueUtil.asBoolean;
+import static net.morimekta.config.ValueUtil.asCollection;
+import static net.morimekta.config.ValueUtil.asDouble;
+import static net.morimekta.config.ValueUtil.asInteger;
+import static net.morimekta.config.ValueUtil.asLong;
+import static net.morimekta.config.ValueUtil.asString;
 
 /**
- * Base configuration container. Essentially a type-safe map that group
- * values into a few basic types:
- *
- * <ul>
- *     <li>NUMBER: integer, longs and doubles</li>
- *     <li>STRING: literal string values</li>
- *     <li>BOOLEAN: boolean true or false</li>
- *     <li>SEQUENCE: a sequence of values from this list</li>
- * </ul>
+ * Base configuration container. Essentially a type-safe map.
  *
  * It is not implementing the Map base class since it would require also
  * implementing generic entry adders (put, putAll), and getType unsafe getters.
@@ -47,15 +39,6 @@ public interface Config {
      * Look up a single value from the config.
      */
     Object get(String key);
-
-    /**
-     * Put a value into the config.
-     *
-     * @param key The config to put.
-     * @param value The value to put.
-     * @return The value replaced if the key was already present.
-     */
-    Object put(String key, Object value);
 
     /**
      * Checks if the key prefix exists deeply in the config. Also supports 'up'
@@ -219,87 +202,8 @@ public interface Config {
     @SuppressWarnings("unchecked")
     default <T> T getValue(String key) {
         if (!containsKey(key)) {
-            throw new ConfigException("No such key " + key);
+            throw new KeyNotFoundException("No such config entry \"" + key + "\"");
         }
         return (T) get(key);
     }
-
-    /**
-     * Put a boolean value into the config.
-     *
-     * @param key The key to put at.
-     * @param value The value to put.
-     * @return The config.
-     */
-    @SuppressWarnings("unchecked")
-    default Config putBoolean(String key, boolean value) {
-        put(key, value);
-        return this;
-    }
-
-    /**
-     * Put an integer value into the config.
-     *
-     * @param key The key to put at.
-     * @param value The value to put.
-     * @return The config.
-     */
-    @SuppressWarnings("unchecked")
-    default Config putInteger(String key, int value) {
-        put(key, value);
-        return this;
-    }
-
-    /**
-     * Put a long value into the config.
-     *
-     * @param key The key to put at.
-     * @param value The value to put.
-     * @return The config.
-     */
-    @SuppressWarnings("unchecked")
-    default Config putLong(String key, long value) {
-        put(key, value);
-        return this;
-    }
-
-    /**
-     * Put a double value into the config.
-     *
-     * @param key The key to put at.
-     * @param value The value to put.
-     * @return The config.
-     */
-    @SuppressWarnings("unchecked")
-    default Config putDouble(String key, double value) {
-        put(key, value);
-        return this;
-    }
-
-    /**
-     * Put a string value into the config.
-     *
-     * @param key The key to put at.
-     * @param value The value to put.
-     * @return The config.
-     */
-    @SuppressWarnings("unchecked")
-    default Config putString(String key, String value) {
-        put(key, value);
-        return this;
-    }
-
-    /**
-     * Put a sequence value into the config.
-     *
-     * @param key The key to put at.
-     * @param value The value to put.
-     * @return The config.
-     */
-    @SuppressWarnings("unchecked")
-    default <T> Config putSequence(String key, Collection<T> value) {
-        put(key, value);
-        return this;
-    }
-
 }

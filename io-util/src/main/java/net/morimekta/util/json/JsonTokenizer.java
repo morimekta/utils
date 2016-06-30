@@ -276,7 +276,8 @@ public class JsonTokenizer {
                        lastByte == JsonToken.kMapStart ||
                        lastByte == JsonToken.kMapEnd ||
                        lastByte == JsonToken.kKeyValSep ||
-                       lastByte == JsonToken.kListSep) {
+                       lastByte == JsonToken.kListSep ||
+                       lastByte == '=') {
                 return nextSymbol();
             } else if (lastByte < 0x20 || lastByte >= 0x7F) {
                 // UTF-8 characters are only allowed inside JSON string literals.

@@ -18,22 +18,26 @@
  */
 package net.morimekta.config;
 
-import net.morimekta.util.Numeric;
 import net.morimekta.util.Strings;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Objects;
 
 /**
- * Config value holder class. This is primarily an internal class, but may be
- * exposed so various iterators can iterate with both getType and value from the
- * config entry.
+ * Config value utility.
  */
-public abstract class Value {
+public class ValueUtil {
+    /**
+     * Convert the value to a boolean.
+     *
+     * @param value The value instance.
+     * @return The boolean value.
+     */
     public static boolean asBoolean(Object value) {
         if (value instanceof Boolean) {
             return (Boolean) value;
-        } else if (value instanceof Double) {
+        } else if (value instanceof Double || value instanceof Float) {
             throw new IncompatibleValueException("Unable to convert double value to boolean");
         } else if (value instanceof Number) {
             long l = ((Number) value).longValue();
@@ -63,8 +67,14 @@ public abstract class Value {
         throw new IncompatibleValueException("Unable to convert " + value.getClass().getSimpleName() + " to a boolean");
     }
 
+    /**
+     * Convert the value to an integer.
+     *
+     * @param value The value instance.
+     * @return The integer value.
+     */
     public static int asInteger(Object value) {
-        if (value instanceof Numeric) {
+        if (value instanceof Number) {
             return ((Number) value).intValue();
         } else if (value instanceof Boolean) {
             return ((Boolean) value) ? 1 : 0;
@@ -80,6 +90,12 @@ public abstract class Value {
         throw new IncompatibleValueException("Unable to convert " + value.getClass().getSimpleName() + " to an int");
     }
 
+    /**
+     * Convert the value to a long.
+     *
+     * @param value The value instance.
+     * @return The long value.
+     */
     public static long asLong(Object value) {
         if (value instanceof Number) {
             return ((Number) value).longValue();
@@ -97,6 +113,12 @@ public abstract class Value {
 
     }
 
+    /**
+     * Convert the value to a souble.
+     *
+     * @param value The value instance.
+     * @return The double value.
+     */
     public static double asDouble(Object value) {
         if (value instanceof Number) {
             return ((Number) value).doubleValue();
@@ -112,10 +134,27 @@ public abstract class Value {
                 "Unable to convert " + value.getClass().getSimpleName() + " to a double");
     }
 
+    /**
+     * Convert the value to a string.
+     *
+     * @param value The value instance.
+     * @return The string value.
+     */
     public static String asString(Object value) {
+        if (value instanceof Collection || value instanceof Map || value instanceof Config) {
+            throw new IncompatibleValueException(
+                    "Unable to convert " + value.getClass().getSimpleName() + " to a string");
+        }
         return Objects.toString(value);
     }
 
+    /**
+     * Convert the value to a collection.
+     *
+     * @param value The value instance.
+     * @param <T> The collection item type.
+     * @return The collection value.
+     */
     @SuppressWarnings("unchecked")
     public static <T> Collection<T> asCollection(Object value) {
         if (value instanceof Collection) {
@@ -124,4 +163,7 @@ public abstract class Value {
         throw new IncompatibleValueException(
                 "Unable to convert " + value.getClass().getSimpleName() + " to a collection");
     }
+
+    // -- defeat instantiation
+    private ValueUtil() {}
 }

@@ -20,9 +20,13 @@ package net.morimekta.config;
 
 import org.junit.Test;
 
+import java.util.function.Function;
+
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  *
@@ -56,5 +60,66 @@ public class SimpleConfigTest {
 
         assertSame(builder, builder.putLong("b.c", 9876543210L));
         assertEquals(9876543210L, builder.getLong("b.c"));
+    }
+
+    @Test
+    public void testGetDefault() {
+        Config config = new SimpleConfig()
+                .putBoolean("bool", false)
+                .putInteger("int", 3)
+                .putLong("long", 3L)
+                .putDouble("double", 3.3)
+                .putString("str", "not default");
+
+        assertEquals(true, config.getBoolean("not.found", true));
+        assertEquals(1, config.getInteger("not.found", 1));
+        assertEquals(1L, config.getLong("not.found", 1));
+        assertEquals(1.1, config.getDouble("not.found", 1.1), 0.001);
+        assertEquals("default", config.getString("not.found", "default"));
+
+        assertEquals(false, config.getBoolean("bool", true));
+        assertEquals(3, config.getInteger("int", 1));
+        assertEquals(3L, config.getLong("long", 1));
+        assertEquals(3.3, config.getDouble("double", 1.1), 0.001);
+        assertEquals("not default", config.getString("str", "default"));
+    }
+
+    @Test
+    public void testConstructor() {
+        Config config = new SimpleConfig()
+                .putBoolean("bool", false)
+                .putInteger("int", 3)
+                .putLong("long", 3L)
+                .putDouble("double", 3.3)
+                .putString("str", "not default");
+
+        SimpleConfig copy = new SimpleConfig(config);
+
+        assertEquals(config, copy);
+
+        copy.remove("bool");
+
+        assertNotEquals(config, copy);
+    }
+
+    @Test
+    public void testNotFound() {
+        Config config = new SimpleConfig();
+
+        assertNotFound(config::getBoolean);
+        assertNotFound(config::getDouble);
+        assertNotFound(config::getInteger);
+        assertNotFound(config::getLong);
+        assertNotFound(config::getSequence);
+        assertNotFound(config::getString);
+    }
+
+    private void assertNotFound(Function<String, Object> func) {
+        try {
+            func.apply("not.found");
+            fail("No exception on not found");
+        } catch (KeyNotFoundException ke) {
+            // pass.
+        }
     }
 }

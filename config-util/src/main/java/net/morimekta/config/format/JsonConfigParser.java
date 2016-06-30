@@ -34,7 +34,7 @@ public class JsonConfigParser implements ConfigParser {
 
     private Config parseConfig(JsonTokenizer tokenizer, JsonToken token)
             throws ConfigException, IOException, JsonException {
-        Config config = new SimpleConfig();
+        SimpleConfig config = new SimpleConfig();
         char sep = token.charAt(0);
         while (sep != JsonToken.kMapEnd) {
             JsonToken jkey = tokenizer.expect("Map key.");
