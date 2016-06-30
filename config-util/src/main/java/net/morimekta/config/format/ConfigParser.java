@@ -27,6 +27,7 @@ import java.io.InputStream;
 /**
  * A config parser interface.
  */
+@FunctionalInterface
 public interface ConfigParser {
     /**
      * Read config and parse from input stream.

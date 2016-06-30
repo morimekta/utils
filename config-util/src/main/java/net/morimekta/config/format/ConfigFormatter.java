@@ -27,6 +27,7 @@ import java.io.OutputStream;
 /**
  * Config formatter interface.
  */
+@FunctionalInterface
 public interface ConfigFormatter {
     /**
      * Format config and write to output stream.
