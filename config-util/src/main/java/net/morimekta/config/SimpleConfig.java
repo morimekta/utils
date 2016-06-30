@@ -18,8 +18,6 @@
  */
 package net.morimekta.config;
 
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.TreeMap;
 
 /**
@@ -54,61 +52,20 @@ public class SimpleConfig extends TreeMap<String,Object> implements ConfigBuilde
 
     @Override
     public boolean equals(Object o) {
-        if (o == this) return true;
+        if (o == this)
+            return true;
         if (o == null || !(o instanceof Config)) {
             return false;
         }
         Config other = (Config) o;
-
         if (!keySet().equals(other.keySet())) {
             return false;
         }
 
-        try {
-            for (String key : keySet()) {
-                Object value = get(key);
-                if (value instanceof Double) {
-                    if (ValueUtil.asDouble(value) != other.getDouble(key)) {
-                        return false;
-                    }
-                } else if (value instanceof Number) {
-                    if (ValueUtil.asLong(value) != other.getLong(key)) {
-                        return false;
-                    }
-                } else if (value instanceof Collection) {
-                    Collection our = getSequence(key);
-                    Collection their = other.getSequence(key);
-                    if (our.size() != their.size()) return false;
-
-                    Iterator outIt = our.iterator();
-                    Iterator theirIt = their.iterator();
-
-                    while (outIt.hasNext() && theirIt.hasNext()) {
-                        Object ov = outIt.next();
-                        Object tv = theirIt.next();
-                        if (ov instanceof Double) {
-                            if (ValueUtil.asDouble(ov) != ValueUtil.asDouble(tv)) {
-                                return false;
-                            }
-                        } else if (ov instanceof Number) {
-                            if (ValueUtil.asLong(ov) != ValueUtil.asLong(tv)) {
-                                return false;
-                            }
-                        } else {
-                            if (!value.equals(other.get(key))) {
-                                return false;
-                            }
-                        }
-
-                    }
-                } else {
-                    if (!value.equals(other.get(key))) {
-                        return false;
-                    }
-                }
+        for (String key : keySet()) {
+            if (!ValueUtil.equals(get(key), other.get(key))) {
+                return false;
             }
-        } catch (ConfigException e) {
-            return false;
         }
         return true;
     }

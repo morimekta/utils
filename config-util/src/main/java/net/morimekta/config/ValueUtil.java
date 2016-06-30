@@ -21,6 +21,7 @@ package net.morimekta.config;
 import net.morimekta.util.Strings;
 
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
 
@@ -162,6 +163,46 @@ public class ValueUtil {
         }
         throw new IncompatibleValueException(
                 "Unable to convert " + value.getClass().getSimpleName() + " to a collection");
+    }
+
+    public static boolean equals(Object first, Object second) {
+        try {
+            if (first == second)
+                return true;
+            if (first == null || second == null)
+                return false;
+            // if any of the two are *not* a char sequence, try to use that type
+            // to compare.
+            if (first instanceof Double || first instanceof Float ||
+                second instanceof Double || second instanceof Float) {
+                return asDouble(first) == asDouble(second);
+            } else if (first instanceof Number || second instanceof Number) {
+                return asLong(first) == asLong(second);
+            } else if (first instanceof Boolean || second instanceof Boolean) {
+                return asBoolean(first) == asBoolean(second);
+            } else if (first instanceof Collection || second instanceof Collection) {
+                Collection f = asCollection(first);
+                Collection s = asCollection(second);
+
+                if (f.size() != s.size()) {
+                    return false;
+                }
+
+                Iterator fi = f.iterator();
+                Iterator si = s.iterator();
+
+                while (fi.hasNext() || si.hasNext()) {
+                    if (!equals(fi.next(), si.next())) {
+                        return false;
+                    }
+                }
+                return !(fi.hasNext() || si.hasNext());
+            } else {
+                return asString(first).equals(asString(second));
+            }
+        } catch (IncompatibleValueException e) {
+            return false;
+        }
     }
 
     // -- defeat instantiation
