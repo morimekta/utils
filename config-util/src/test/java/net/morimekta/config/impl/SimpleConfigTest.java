@@ -25,6 +25,7 @@ import net.morimekta.config.KeyNotFoundException;
 
 import org.junit.Test;
 
+import java.util.Date;
 import java.util.function.Function;
 
 import static org.junit.Assert.assertEquals;
@@ -65,6 +66,27 @@ public class SimpleConfigTest {
 
         assertSame(builder, builder.putLong("b.c", 9876543210L));
         assertEquals(9876543210L, builder.getLong("b.c"));
+    }
+
+    @Test
+    public void testDateValue() {
+        Date now = new Date();
+        String str = now.toInstant().toString();
+
+        SimpleConfig builder = new SimpleConfig();
+        builder.putDate("d1", now);
+        builder.putString("d2", str);
+
+        assertEquals(str, builder.getString("d1"));
+        assertEquals(now, builder.getDate("d2"));
+        assertSame(now, builder.getDate("d3", now));
+
+        try {
+            builder.getDate("d3");
+            fail("no exception");
+        } catch (ConfigException e) {
+            assertEquals("No such config entry \"d3\"", e.getMessage());
+        }
     }
 
     @Test

@@ -19,12 +19,18 @@
 package net.morimekta.config.util;
 
 import net.morimekta.config.Config;
+import net.morimekta.config.ConfigException;
 import net.morimekta.config.IncompatibleValueException;
 import net.morimekta.util.Strings;
 
 import com.google.common.base.MoreObjects;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Collection;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -94,6 +100,9 @@ public class ConfigUtil {
                         "Unable to parse string \"" + Strings.escape(value.toString()) +
                         "\" to an int", nfe);
             }
+        } else if (value instanceof Date) {
+            // Convert date timestamp to seconds since epoch.
+            return (int) (((Date) value).getTime() / 1000);
         }
         throw new IncompatibleValueException("Unable to convert " + value.getClass().getSimpleName() + " to an int");
     }
@@ -116,6 +125,9 @@ public class ConfigUtil {
                 throw new IncompatibleValueException("Unable to parse string \"" + Strings.escape(value.toString()) +
                                                      "\" to a long", nfe);
             }
+        } else if (value instanceof Date) {
+            // Return date timestamp.
+            return ((Date) value).getTime();
         }
         throw new IncompatibleValueException("Unable to convert " + value.getClass().getSimpleName() + " to a long");
 
@@ -152,8 +164,47 @@ public class ConfigUtil {
         if (value instanceof Collection || value instanceof Map || value instanceof Config) {
             throw new IncompatibleValueException(
                     "Unable to convert " + value.getClass().getSimpleName() + " to a string");
+        } else if (value instanceof Date) {
+            Instant instant = ((Date) value).toInstant();
+            return DateTimeFormatter.ISO_INSTANT.format(instant);
         }
         return Objects.toString(value);
+    }
+
+    /**
+     * Convert the value to a date.
+     *
+     * @param value The value instance.
+     * @return The string value.
+     */
+    public static Date asDate(Object value) {
+        if (value instanceof Date) {
+            return (Date) value;
+        } else if (value instanceof CharSequence) {
+            String date = value.toString().trim();
+            try {
+                LocalDateTime time;
+                if (date.endsWith("Z")) {
+                    time = LocalDateTime.parse((CharSequence) value,
+                                               DateTimeFormatter.ISO_INSTANT.withZone(Clock.systemUTC().getZone()));
+                } else {
+                    time = LocalDateTime.parse((CharSequence) value,
+                                               DateTimeFormatter.ISO_OFFSET_DATE_TIME.withZone(Clock.systemUTC().getZone()));
+                }
+                return new Date(time.atZone(Clock.systemUTC()
+                                                 .getZone()).toInstant().toEpochMilli());
+            } catch (RuntimeException e) {
+                throw new ConfigException(e, "Unable to parse date: \"" + date + "\": " + e.getMessage());
+            }
+        } else if (value instanceof Long) {
+            // Longs are assumed to be java time (millis since epoch).
+            return new Date((Long) value);
+        } else if (value instanceof Integer) {
+            // Integers are assumed to be unix time (seconds since epoch).
+            return new Date(((Integer) value).longValue() * 1000L);
+        } else {
+            throw new IncompatibleValueException("Unable to convert " + value.getClass().getSimpleName() + " to a date");
+        }
     }
 
     /**

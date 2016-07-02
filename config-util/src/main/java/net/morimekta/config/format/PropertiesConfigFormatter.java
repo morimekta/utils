@@ -7,9 +7,10 @@ import net.morimekta.config.IncompatibleValueException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Collection;
-import java.util.Objects;
 import java.util.Properties;
 import java.util.TreeSet;
+
+import static net.morimekta.config.util.ConfigUtil.asString;
 
 /**
  * Format config into properties objects or files.
@@ -46,7 +47,7 @@ public class PropertiesConfigFormatter implements ConfigFormatter {
             if (value instanceof Collection) {
                 writeCollection(entryKey, (Collection) value, properties);
             } else {
-                properties.setProperty(entryKey, Objects.toString(value));
+                properties.setProperty(entryKey, asString(value));
             }
         }
     }
@@ -56,9 +57,9 @@ public class PropertiesConfigFormatter implements ConfigFormatter {
         for (Object value : collection) {
             String key = makeKey(prefix, Integer.toString(i));
             if (value instanceof Collection) {
-                throw new IncompatibleValueException("");
+                throw new IncompatibleValueException("Properties not allowed to have collection in collection");
             } else {
-                properties.setProperty(key, Objects.toString(value));
+                properties.setProperty(key, asString(value));
             }
             ++i;
         }

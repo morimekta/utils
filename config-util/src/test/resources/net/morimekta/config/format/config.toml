@@ -12,6 +12,7 @@ seq_i = [
 ]
 seq_s = ["a", "b", "c"]
 seq_b = [false, false, false, true]
+date  = 2016-07-02T16:01:02.055Z
 
 # comment before section.
 [conf]  # comment after section

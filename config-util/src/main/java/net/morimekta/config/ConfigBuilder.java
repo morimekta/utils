@@ -19,6 +19,7 @@
 package net.morimekta.config;
 
 import java.util.Collection;
+import java.util.Date;
 
 /**
  * Base configuration container. Essentially a type-safe map that group
@@ -108,6 +109,18 @@ public interface ConfigBuilder extends Config {
      */
     @SuppressWarnings("unchecked")
     default ConfigBuilder putString(String key, String value) {
+        put(key, value);
+        return this;
+    }
+
+    /**
+     * Put a date value into the config.
+     *
+     * @param key The key to put at.
+     * @param value The value to put.
+     * @return The config.
+     */
+    default ConfigBuilder putDate(String key, Date value) {
         put(key, value);
         return this;
     }

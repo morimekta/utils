@@ -36,6 +36,10 @@ import com.google.common.collect.ImmutableList;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.Clock;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Date;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -116,10 +120,47 @@ public class TomlConfigParser implements ConfigParser {
 
                 String key = entryKey(currentSection, token.asString());
                 tokenizer.expectSymbol("key/value separator", ':', '=');
-                config.put(key, parseValue(tokenizer));
-                String rest = IOUtils.readString(bais, "\n").trim();
-                if (rest.length() > 0) {
-                    throw new ConfigException("Garbage after value: " + Strings.escape(rest));
+                try {
+                    config.put(key, parseValue(tokenizer));
+                    String rest = IOUtils.readString(bais, "\n").trim();
+                    if (rest.length() > 0) {
+                        throw new ConfigException("Garbage after value: " + Strings.escape(rest));
+                    }
+                } catch (JsonException je) {
+                    // TOML dates are invalid JSON, but if we pick up a
+                    // JsonException which has detected the year-mm-dd
+                    // separator char, we can manage to parse this
+                    // correctly.
+                    if (je.getMessage().endsWith("Wrongly terminated JSON number: -.")) {
+                        IOUtils.readString(bais, "\n");
+                        // Since the tokenizer is in a bad state (unconsumed
+                        // token char that should be ignored) it has to be
+                        // reset.
+                        tokenizer = new JsonTokenizer(bais);
+
+                        // Hack out the value part of the line.
+                        String date = je.getLine().split("[=]", 2)[1].trim();
+                        try {
+                            LocalDateTime time;
+                            if (date.endsWith("Z")) {
+                                time = LocalDateTime.parse(date,
+                                                           DateTimeFormatter.ISO_INSTANT.withZone(Clock.systemUTC()
+                                                                                                       .getZone()));
+                            } else {
+                                time = LocalDateTime.parse(date,
+                                                           DateTimeFormatter.ISO_OFFSET_DATE_TIME.withZone(Clock.systemUTC()
+                                                                                                                .getZone()));
+                            }
+                            config.put(key,
+                                       new Date(time.atZone(Clock.systemUTC().getZone())
+                                                    .toInstant()
+                                                    .toEpochMilli()));
+                        } catch (RuntimeException e) {
+                            throw new ConfigException("Value type not recognized: " + Strings.escape(date));
+                        }
+                    } else {
+                        throw new ConfigException(je, je.getMessage());
+                    }
                 }
                 token = tokenizer.next();
             }

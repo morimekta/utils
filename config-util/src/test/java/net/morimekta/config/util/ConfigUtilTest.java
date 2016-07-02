@@ -26,11 +26,13 @@ import com.google.common.collect.ImmutableList;
 import org.junit.Test;
 
 import java.util.Collections;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.function.Function;
 
 import static net.morimekta.config.util.ConfigUtil.asBoolean;
 import static net.morimekta.config.util.ConfigUtil.asCollection;
+import static net.morimekta.config.util.ConfigUtil.asDate;
 import static net.morimekta.config.util.ConfigUtil.asDouble;
 import static net.morimekta.config.util.ConfigUtil.asInteger;
 import static net.morimekta.config.util.ConfigUtil.asLong;
@@ -113,6 +115,16 @@ public class ConfigUtilTest {
                      asCollection(Collections.singletonList("a")));
 
         assertException("Unable to convert String to a collection", "not a list", ConfigUtil::asCollection);
+    }
+
+    @Test
+    public void testAsDate() {
+        Date date = new Date();
+
+        String str = asString(date);
+        Date parsed = asDate(str);
+
+        assertEquals(date, parsed);
     }
 
     @Test

@@ -19,10 +19,12 @@
 package net.morimekta.config;
 
 import java.util.Collection;
+import java.util.Date;
 import java.util.Set;
 
 import static net.morimekta.config.util.ConfigUtil.asBoolean;
 import static net.morimekta.config.util.ConfigUtil.asCollection;
+import static net.morimekta.config.util.ConfigUtil.asDate;
 import static net.morimekta.config.util.ConfigUtil.asDouble;
 import static net.morimekta.config.util.ConfigUtil.asInteger;
 import static net.morimekta.config.util.ConfigUtil.asLong;
@@ -61,7 +63,7 @@ public interface Config {
      * @param key The key to look for.
      * @return The string value.
      * @throws IncompatibleValueException When a value cannot be converted to
-     *         requested getType.
+     *         requested type.
      */
     default String getString(String key) {
         return asString(getValue(key));
@@ -72,7 +74,7 @@ public interface Config {
      * @param def The default value if not found.
      * @return The string value.
      * @throws IncompatibleValueException When a value cannot be converted to
-     *         requested getType.
+     *         requested type.
      */
     default String getString(String key, String def) {
         if (containsKey(key)) {
@@ -86,7 +88,7 @@ public interface Config {
      * @return The boolean value.
      * @throws KeyNotFoundException When the key does not exist.
      * @throws IncompatibleValueException When a value cannot be converted to
-     *         requested getType.
+     *         requested type.
      */
     default boolean getBoolean(String key) {
         return asBoolean(getValue(key));
@@ -97,7 +99,7 @@ public interface Config {
      * @param def The default value if not found.
      * @return The boolean value.
      * @throws IncompatibleValueException When a value cannot be converted to
-     *         requested getType.
+     *         requested type.
      */
     default boolean getBoolean(String key, boolean def) {
         if (containsKey(key)) {
@@ -111,7 +113,7 @@ public interface Config {
      * @return The integer value.
      * @throws KeyNotFoundException When the key does not exist.
      * @throws IncompatibleValueException When a value cannot be converted to
-     *         requested getType.
+     *         requested type.
      */
     default int getInteger(String key) {
         return asInteger(getValue(key));
@@ -122,7 +124,7 @@ public interface Config {
      * @param def The default value if not found.
      * @return The integer value.
      * @throws IncompatibleValueException When a value cannot be converted to
-     *         requested getType.
+     *         requested type.
      */
     default int getInteger(String key, int def) {
         if (containsKey(key)) {
@@ -147,7 +149,7 @@ public interface Config {
      * @param def The default value if not found.
      * @return The long value.
      * @throws IncompatibleValueException When a value cannot be converted to
-     *         requested getType.
+     *         requested type.
      */
     default long getLong(String key, long def) {
         if (containsKey(key)) {
@@ -172,11 +174,36 @@ public interface Config {
      * @param def The default value if not found.
      * @return The double value.
      * @throws IncompatibleValueException When a value cannot be converted to
-     *         requested getType.
+     *         requested type.
      */
     default double getDouble(String key, double def) {
         if (containsKey(key)) {
             return asDouble(get(key));
+        }
+        return def;
+    }
+
+    /**
+     * @param key The key to look for.
+     * @return The date value.
+     * @throws KeyNotFoundException When the key does not exist.
+     * @throws IncompatibleValueException When a value cannot be converted to
+     *         requested type.
+     */
+    default Date getDate(String key) {
+        return asDate(getValue(key));
+    }
+
+    /**
+     * @param key The key to look for.
+     * @param def The default value if not found.
+     * @return The date value.
+     * @throws IncompatibleValueException When a value cannot be converted to
+     *         requested type.
+     */
+    default Date getDate(String key, Date def) {
+        if (containsKey(key)) {
+            return asDate(get(key));
         }
         return def;
     }

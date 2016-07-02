@@ -8,7 +8,10 @@ import net.morimekta.util.json.PrettyJsonWriter;
 
 import java.io.OutputStream;
 import java.util.Collection;
+import java.util.Date;
 import java.util.TreeSet;
+
+import static net.morimekta.config.util.ConfigUtil.asString;
 
 /**
  * Config formatter for JSON object syntax.
@@ -49,8 +52,8 @@ public class JsonConfigFormatter implements ConfigFormatter {
             writer.value((Double) value);
         } else if (value instanceof Number) {
             writer.value(((Number) value).longValue());
-        } else if (value instanceof CharSequence) {
-            writer.value((CharSequence) value);
+        } else if (value instanceof CharSequence || value instanceof Date) {
+            writer.value(asString(value));
         } else if (value instanceof Collection) {
             Collection collection = (Collection) value;
             writer.array();
