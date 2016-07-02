@@ -113,14 +113,14 @@ public interface ConfigBuilder extends Config {
     }
 
     /**
-     * Put a sequence value into the config.
+     * Put a collection value into the config.
      *
      * @param key The key to put at.
      * @param value The value to put.
      * @return The config.
      */
     @SuppressWarnings("unchecked")
-    default <T> ConfigBuilder putSequence(String key, Collection<T> value) {
+    default <T> ConfigBuilder putCollection(String key, Collection<T> value) {
         put(key, value);
         return this;
     }

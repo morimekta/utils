@@ -115,7 +115,7 @@ public class SimpleConfigTest {
         assertNotFound(config::getDouble);
         assertNotFound(config::getInteger);
         assertNotFound(config::getLong);
-        assertNotFound(config::getSequence);
+        assertNotFound(config::getCollection);
         assertNotFound(config::getString);
     }
 

@@ -28,7 +28,7 @@ public class ResourceConfigSourceTest {
         Config expected = new SimpleConfig()
                 .putString("s", "string value.")
                 .putInteger("i", 1234)
-                .putSequence("sequence", ImmutableList.of(1.0, 2.0, 3.0))
+                .putCollection("sequence", ImmutableList.of(1.0, 2.0, 3.0))
                 .putString("conf.sub_str", "another string value.")
                 .putDouble("conf.real", 1234.5678);
 

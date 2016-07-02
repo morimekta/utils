@@ -31,14 +31,14 @@ public class PropertiesConfigFormatter implements ConfigFormatter {
      * @param config The config to put into the properties instance.
      * @return The properties instance.
      */
-    public Properties format(Config config) {
+    public static Properties format(Config config) {
         Properties properties = new Properties();
         writeConfig("", config, properties);
         return properties;
     }
 
     // --- INTERNAL ---
-    private void writeConfig(String prefix, Config config, Properties properties) {
+    private static void writeConfig(String prefix, Config config, Properties properties) {
         for (String key : new TreeSet<>(config.keySet())) {
             Object value = config.get(key);
 
@@ -51,9 +51,9 @@ public class PropertiesConfigFormatter implements ConfigFormatter {
         }
     }
 
-    private <T> void writeCollection(String prefix, Collection<T> sequence, Properties properties) {
+    private static <T> void writeCollection(String prefix, Collection<T> collection, Properties properties) {
         int i = 0;
-        for (Object value : sequence) {
+        for (Object value : collection) {
             String key = makeKey(prefix, Integer.toString(i));
             if (value instanceof Collection) {
                 throw new IncompatibleValueException("");
@@ -64,7 +64,7 @@ public class PropertiesConfigFormatter implements ConfigFormatter {
         }
     }
 
-    private String makeKey(String prefix, String key) {
+    private static String makeKey(String prefix, String key) {
         if (prefix.length() > 0) {
             return String.format("%s.%s", prefix, key);
         }

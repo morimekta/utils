@@ -186,7 +186,7 @@ public interface Config {
      * @param <T> The collection entry type.
      * @return The collection.
      */
-    default <T> Collection<T> getSequence(String key) {
+    default <T> Collection<T> getCollection(String key) {
         return asCollection(getValue(key));
     }
 

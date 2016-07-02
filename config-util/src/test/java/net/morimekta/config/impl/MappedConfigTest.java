@@ -23,7 +23,7 @@ public class MappedConfigTest {
     public void testMappedConfig() {
         Config simple = new SimpleConfig()
                 .putInteger("type", 5)
-                .putSequence("seq", ImmutableList.of("a", "b"));
+                .putCollection("seq", ImmutableList.of("a", "b"));
 
         MappedConfig mapped = new MappedConfig(() -> simple, ImmutableMap.of(
                 "not.just.seq", "seq",
@@ -31,14 +31,14 @@ public class MappedConfigTest {
         ));
 
         assertEquals(ImmutableSet.of("not.just.seq"), mapped.keySet());
-        assertEquals(ImmutableList.of("a", "b"), mapped.getSequence("not.just.seq"));
+        assertEquals(ImmutableList.of("a", "b"), mapped.getCollection("not.just.seq"));
         assertFalse(mapped.containsKey("not.found"));
         assertFalse(mapped.containsKey("really.not.found"));
         assertNull(mapped.get("not.found"));
         assertNull(mapped.get("really.not.found"));
 
         Config other = new SimpleConfig()
-                .putSequence("not.just.seq", ImmutableList.of("a", "b"));
+                .putCollection("not.just.seq", ImmutableList.of("a", "b"));
 
         assertTrue(mapped.equals(other));
         assertFalse(mapped.equals(simple));

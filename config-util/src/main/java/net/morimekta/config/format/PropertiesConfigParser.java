@@ -33,18 +33,18 @@ public class PropertiesConfigParser implements ConfigParser {
      * @param properties The properties to parse.
      * @return The config instance.
      */
-    public Config parse(Properties properties) {
+    public static Config parse(Properties properties) {
         ConfigBuilder config = new SimpleConfig();
         for (Object o : new TreeSet<>(properties.keySet())) {
             String key = o.toString();
             if (isPositional(key)) {
                 String entryKey = entryKey(key);
                 if (config.containsKey(entryKey)) {
-                    config.getSequence(entryKey).add(properties.getProperty(key));
+                    config.getCollection(entryKey).add(properties.getProperty(key));
                 } else {
                     LinkedList<Object> sequence = new LinkedList<>();
                     sequence.add(properties.getProperty(key));
-                    config.putSequence(entryKey, sequence);
+                    config.putCollection(entryKey, sequence);
                 }
             } else {
                 config.put(key, properties.getProperty(key));
@@ -53,7 +53,7 @@ public class PropertiesConfigParser implements ConfigParser {
         return new ImmutableConfig(config);
     }
 
-    private boolean isPositional(String key) {
+    private static boolean isPositional(String key) {
         try {
             String[] parts = key.split("[.]");
             String last = parts[parts.length - 1];
@@ -66,7 +66,7 @@ public class PropertiesConfigParser implements ConfigParser {
         return false;
     }
 
-    private String entryKey(String positional) {
+    private static String entryKey(String positional) {
         return positional.substring(0, positional.lastIndexOf("."));
     }
 }

@@ -49,7 +49,7 @@ public class JsonConfigParser implements ConfigParser {
                 case SYMBOL:
                     switch (token.charAt(0)) {
                         case JsonToken.kListStart:
-                            config.putSequence(key, parseSequence(tokenizer, token));
+                            config.putCollection(key, parseCollection(tokenizer, token));
                             break;
                         default:
                             throw new IncompatibleValueException("No supported value type for " + token);
@@ -80,7 +80,7 @@ public class JsonConfigParser implements ConfigParser {
     }
 
     @SuppressWarnings("unchecked")
-    private <T> Collection<T> parseSequence(JsonTokenizer tokenizer, JsonToken token)
+    private <T> Collection<T> parseCollection(JsonTokenizer tokenizer, JsonToken token)
             throws ConfigException, IOException, JsonException {
         List<T> builder = new LinkedList<>();
         char sep = token.charAt(0);

@@ -57,7 +57,7 @@ public class FileConfigSupplierTest {
 
         final long[] array = new long[3];
         AtomicInteger pos = new AtomicInteger(0);
-        config.getSequence("sequence").stream().forEachOrdered(l -> {
+        config.getCollection("sequence").stream().forEachOrdered(l -> {
             int i = pos.getAndIncrement();
             array[i] = ((Number) l).longValue();
         });
