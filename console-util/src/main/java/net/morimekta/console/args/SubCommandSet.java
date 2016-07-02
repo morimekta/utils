@@ -20,26 +20,82 @@
  */
 package net.morimekta.console.args;
 
+import net.morimekta.util.Strings;
+import net.morimekta.util.io.IndentedPrintWriter;
+
+import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import static net.morimekta.console.args.ArgumentParser.USAGE_EXTRA_CHARS;
+import static net.morimekta.console.args.ArgumentParser.printSingleUsageEntry;
+
 /**
- * TODO(morimekta): Make a real class description.
+ * The argument part of the sub-command. The sub-command set is
+ * a collection of sub-commands that react to CLI arguments. It will
+ * <b>always</b> trigger (and throw {@link ArgumentException} if
+ * not valid), so the sub-command <b>must</b> be added last.
+ *
+ * @param <SubCommandDef> The sub-command interface.
  */
 public class SubCommandSet<SubCommandDef> extends BaseArgument {
-    private final List<SubCommand<SubCommandDef>> subCommands;
-    private final Consumer<SubCommandDef> consumer;
+    private final List<SubCommand<SubCommandDef>>        subCommands;
+    private final Map<String, SubCommand<SubCommandDef>> subCommandMap;
+    private final Consumer<SubCommandDef>                consumer;
+    private final ArgumentOptions                        argumentOptions;
 
     private boolean                   applied;
     private ArgumentParser            parser;
 
+    /**
+     * Create a sub-command set.
+     *
+     * @param name The name of the sub-command.
+     * @param usage The usage description.
+     * @param consumer The sub-command consumer.
+     */
     public SubCommandSet(String name, String usage,
                          Consumer<SubCommandDef> consumer) {
-        super(name, usage, null, false, true, false);
+        this(name, usage, consumer, null, true, ArgumentOptions.defaults());
+    }
 
+    /**
+     * Create an optional sub-command set.
+     *
+     * @param name The name of the sub-command.
+     * @param usage The usage description.
+     * @param consumer The sub-command consumer.
+     * @param defaultValue The default sub-command.
+     */
+    public SubCommandSet(String name, String usage,
+                         Consumer<SubCommandDef> consumer,
+                         String defaultValue) {
+        this(name, usage, consumer, defaultValue, false, ArgumentOptions.defaults());
+    }
+
+    /**
+     * Create an optional sub-command set.
+     *
+     * @param name The name of the sub-command.
+     * @param usage The usage description.
+     * @param consumer The sub-command consumer.
+     * @param defaultValue The default sub-command.
+     */
+    public SubCommandSet(String name, String usage,
+                         Consumer<SubCommandDef> consumer,
+                         String defaultValue,
+                         boolean required,
+                         ArgumentOptions options) {
+        super(name, usage, defaultValue, false, required, false);
+
+        this.argumentOptions = options;
         this.subCommands = new LinkedList<>();
+        this.subCommandMap = new HashMap<>();
         this.consumer = consumer;
     }
 
@@ -50,19 +106,124 @@ public class SubCommandSet<SubCommandDef> extends BaseArgument {
      * @return The sub-command-set.
      */
     public SubCommandSet add(SubCommand<SubCommandDef> subCommand) {
+        if (subCommandMap.containsKey(subCommand.getName())) {
+            throw new IllegalArgumentException("SubCommand with name " + subCommand.getName() + " already exists");
+        }
         this.subCommands.add(subCommand);
+        this.subCommandMap.put(subCommand.getName(), subCommand);
+        for (String alias : subCommand.getAliases()) {
+            if (subCommandMap.containsKey(alias)) {
+                throw new IllegalArgumentException("SubCommand (" + subCommand.getName() + ") alias " + alias + " already exists");
+            }
+            this.subCommandMap.put(alias, subCommand);
+        }
         return this;
+    }
+
+    /**
+     * Add a set of sub-commands to the sub-command-set.
+     *
+     * @param subCommands The sub-commands to add.
+     * @return The sub-command-set.
+     */
+    public SubCommandSet addAll(SubCommand<SubCommandDef>... subCommands) {
+        for (SubCommand<SubCommandDef> subCommand : subCommands) {
+            add(subCommand);
+        }
+        return this;
+    }
+
+    public void printUsage(OutputStream out) {
+        printUsage(out, false);
+    }
+
+    public void printUsage(OutputStream out, boolean showHidden) {
+        printUsage(new PrintWriter(out), showHidden);
+    }
+
+    /**
+     * Print the sub-command list.
+     *
+     * @param writer The output printer.
+     * @param showHidden Whether to show hidden options.
+     */
+    public void printUsage(PrintWriter writer, boolean showHidden) {
+        printUsageInternal(new IndentedPrintWriter(writer), showHidden);
+    }
+
+    /**
+     * Print the option usage list for the command.
+     *
+     * @param out The output stream.
+     * @param name The sub-command to print help for.
+     */
+    public void printUsage(OutputStream out, String name) {
+        printUsage(new PrintWriter(out), name);
+    }
+
+    /**
+     * Print the option usage list for the command.
+     *
+     * @param out The output stream.
+     * @param name The sub-command to print help for.
+     */
+    public void printUsage(OutputStream out, String name, boolean showHidden) {
+        printUsage(new PrintWriter(out), name, showHidden);
+    }
+
+    /**
+     * Print the option usage list for the command.
+     *
+     * @param writer The output printer.
+     * @param name The sub-command to print help for.
+     */
+    public void printUsage(PrintWriter writer, String name) {
+        printUsage(writer, name, false);
+    }
+
+    /**
+     * Print the option usage list. Essentially printed as a list of options
+     * with the description indented where it overflows the available line
+     * width.
+     *
+     * @param writer The output printer.
+     * @param name The sub-command to print help for.
+     * @param showHidden Whether to show hidden options.
+     */
+    public void printUsage(PrintWriter writer, String name, boolean showHidden) {
+        for (SubCommand<SubCommandDef> cmd : subCommands) {
+            if (name.equals(cmd.getName())) {
+                cmd.getArgumentParser(cmd.newInstance()).printUsage(writer, showHidden);
+                return;
+            }
+        }
+        throw new ArgumentException("No such " + getName() + " " + name);
     }
 
     @Override
     public String getSingleLineUsage() {
         StringBuilder sb = new StringBuilder();
-        sb.append("[");
-        sb.append(String.join(" | ", subCommands.stream()
-                                                .filter(s -> !s.isHidden())
-                                                .map(SubCommand::getName)
-                                                .collect(Collectors.toList())));
-        sb.append("] [...]");
+        if (!isRequired()) {
+            sb.append('[');
+        }
+        List<String> visible =
+                subCommands.stream()
+                           .filter(s -> !s.isHidden())
+                           .map(SubCommand::getName)
+                           .collect(Collectors.toList());
+        // TODO(morimekta): Figure out a smarter (or more controlled) way of
+        // choosing name vs command listing.
+        if (visible.size() > 4 || visible.size() == 0) {
+            sb.append(getName());
+        } else {
+            sb.append('[');
+            sb.append(String.join(" | ", visible));
+            sb.append(']');
+        }
+        sb.append(" [...]");
+        if (!isRequired()) {
+            sb.append(']');
+        }
 
         return sb.toString();
     }
@@ -74,8 +235,8 @@ public class SubCommandSet<SubCommandDef> extends BaseArgument {
 
     @Override
     public void validate() throws ArgumentException {
-        if (!applied) {
-            throw new ArgumentException(getName() + " not chosen.");
+        if (isRequired() && !applied) {
+            throw new ArgumentException(getName() + " not chosen");
         }
         parser.validate();
     }
@@ -83,30 +244,63 @@ public class SubCommandSet<SubCommandDef> extends BaseArgument {
     @Override
     public int apply(ArgumentList args) {
         if (applied) {
-            throw new ArgumentException(getName() + " already selected.");
+            throw new ArgumentException(getName() + " already selected");
         }
 
         String name = args.get(0);
-        for (SubCommand<SubCommandDef> cmd : subCommands) {
-            if (cmd.getName().equals(name) || cmd.getAliases().contains(name)) {
-                SubCommandDef instance = cmd.newInstance();
-                parser = cmd.getArgumentParser(instance);
-                applied = true;
-                break;
-            }
-        }
-
-        if (!applied) {
-            throw new ArgumentException("No such " + getName() + " " + name);
+        SubCommand<SubCommandDef> cmd = subCommandMap.get(name);
+        if (cmd == null) {
+            throw new ArgumentException("No such " + getName() + ": " + name);
         }
         applied = true;
 
         // Skip the sub-command name itself, and parse the remaining args
         // in the sub-command argument argumentParser.
-        ArgumentList copy = new ArgumentList(args);
-        copy.consume(1);
-        parser.parse(copy);
+        ArgumentList subArgs = new ArgumentList(args);
+        subArgs.consume(1);
+
+        SubCommandDef instance = cmd.newInstance();
+        parser = cmd.getArgumentParser(instance);
+        parser.parse(subArgs);
+        consumer.accept(instance);
 
         return args.remaining();
+    }
+
+    private void printUsageInternal(IndentedPrintWriter writer, boolean showHidden) {
+        int usageWidth = argumentOptions.getUsageWidth();
+
+        int prefixLen = 0;
+        for (SubCommand<SubCommandDef> cmd : subCommands) {
+            prefixLen = Math.max(prefixLen,
+                                 cmd.getName()
+                                    .length());
+        }
+        prefixLen = Math.min(prefixLen, (usageWidth / 3) - USAGE_EXTRA_CHARS);
+        String indent = Strings.times(" ", prefixLen + USAGE_EXTRA_CHARS);
+
+        boolean first = true;
+        for (SubCommand<SubCommandDef> arg : subCommands) {
+            if (arg.isHidden() && !showHidden) {
+                continue;
+            }
+
+            String prefix = arg.getName();
+            String usage = arg.getUsage();
+
+            if (first) {
+                first = false;
+            } else {
+                writer.appendln();
+            }
+            writer.begin(indent);
+
+            printSingleUsageEntry(writer, prefix, usage, prefixLen, usageWidth);
+
+            writer.end();
+        }
+
+        writer.newline()
+              .flush();
     }
 }

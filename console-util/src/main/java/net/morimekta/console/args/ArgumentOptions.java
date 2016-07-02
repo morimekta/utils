@@ -63,6 +63,13 @@ public class ArgumentOptions {
         return this;
     }
 
+    /**
+     * Set the maximum usage width. The width is set as wide as possible
+     * based on the terminal column count, but maximum the maxWidth.
+     *
+     * @param maxWidth The maximum width.
+     * @return The Argument options.
+     */
     public ArgumentOptions withMaxUsageWidth(int maxWidth) {
         this.usageWidth = Math.min(maxWidth, TerminalSize.get().cols);
         return this;

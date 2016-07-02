@@ -20,11 +20,11 @@
  */
 package net.morimekta.console.args;
 
-import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 
 import java.util.List;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * Sub command base class.
@@ -32,10 +32,10 @@ import java.util.function.Function;
  * @param <SubCommandDef> The sub-command instance type.
  */
 public class SubCommand<SubCommandDef> {
-    private final String                           name;
-    private final String                           usage;
-    private final List<String>                     aliases;
-    private final boolean                          hidden;
+    private final String       name;
+    private final String       usage;
+    private final List<String> aliases;
+    private final boolean      hidden;
 
     private final Supplier<SubCommandDef>                 instanceFactory;
     private final Function<SubCommandDef, ArgumentParser> parserFactory;

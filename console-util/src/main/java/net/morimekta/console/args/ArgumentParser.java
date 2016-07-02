@@ -112,7 +112,7 @@ public class ArgumentParser {
      * @param option The option to add.
      * @return The argument argumentParser.
      */
-    public ArgumentParser add(BaseOption option) {
+    public <O extends BaseOption> ArgumentParser add(O option) {
         this.options.add(option);
         if (option.getName() != null) {
             if (longNameOptions.containsKey(option.getName())) {
@@ -154,7 +154,7 @@ public class ArgumentParser {
      * @param arg The command to add.
      * @return The argument argumentParser.
      */
-    public ArgumentParser add(BaseArgument arg) {
+    public <A extends BaseArgument> ArgumentParser add(A arg) {
         if (arg instanceof BaseOption) {
             return add((BaseOption) arg);
         }
@@ -312,7 +312,7 @@ public class ArgumentParser {
      * @param showHidden Whether to show hidden options.
      */
     public void printUsage(PrintWriter writer, boolean showHidden) {
-        printUsage(new IndentedPrintWriter(writer), showHidden);
+        printUsageInternal(new IndentedPrintWriter(writer), showHidden);
     }
 
     /**
@@ -367,15 +367,15 @@ public class ArgumentParser {
         return writer.toString();
     }
 
-    public void printUsage(IndentedPrintWriter writer, boolean showHidden) {
+    private void printUsageInternal(IndentedPrintWriter writer, boolean showHidden) {
         int usageWidth = argumentOptions.getUsageWidth();
 
         int prefixLen = 0;
         for (BaseOption opt : options) {
             prefixLen = Math.max(prefixLen, opt.getPrefix().length());
         }
-        for (BaseArgument cmd : arguments) {
-            prefixLen = Math.max(prefixLen, cmd.getName().length());
+        for (BaseArgument arg : arguments) {
+            prefixLen = Math.max(prefixLen, arg.getPrefix().length());
         }
         prefixLen = Math.min(prefixLen, (usageWidth / 3) - USAGE_EXTRA_CHARS);
         String indent = Strings.times(" ", prefixLen + USAGE_EXTRA_CHARS);
