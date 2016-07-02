@@ -126,7 +126,7 @@ public class SubCommandSetTest {
         public ArgumentParser getParser() {
             return new ArgumentParser("test cmd1", "v0.1.1", "Test command 1")
                     .add(new Option("--param_1", null, "str", "Param 1", this::setParam1))
-                    .add(new Option("--param_2", null, "int", "Param 2", i32().andThen(this::setParam2)));
+                    .add(new Option("--param_2", null, "int", "Param 2", i32().andApply(this::setParam2)));
         }
 
         @Override
@@ -155,7 +155,7 @@ public class SubCommandSetTest {
         public ArgumentParser getParser() {
             return new ArgumentParser("test cmd2", "v0.1.1", "Test command 2")
                     .add(new Option("--param_3", null, "str", "Param 3", this::setParam3))
-                    .add(new Option("--param_4", null, "int", "Param 4", i32().andThen(this::setParam4)));
+                    .add(new Option("--param_4", null, "int", "Param 4", i32().andApply(this::setParam4)));
         }
 
         @Override

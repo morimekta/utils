@@ -72,7 +72,7 @@ public interface Parser<T> {
      * @param consumer The consumer to wrap.
      * @return The string consumer.
      */
-    default Consumer<String> andThen(Consumer<T> consumer) {
+    default Consumer<String> andApply(Consumer<T> consumer) {
         return s -> consumer.accept(parse(s));
     }
 
@@ -82,7 +82,7 @@ public interface Parser<T> {
      * @param putter The typed putter.
      * @return The property putter.
      */
-    default Property.Putter andThen(TypedPutter<T> putter) {
+    default Property.Putter andPut(TypedPutter<T> putter) {
         return (k, v) -> putter.put(k, parse(v));
     }
 
@@ -93,7 +93,7 @@ public interface Parser<T> {
      * @param key The property key.
      * @return The string consumer.
      */
-    default Consumer<String> andThen(TypedPutter<T> putter, String key) {
+    default Consumer<String> andPutAs(TypedPutter<T> putter, String key) {
         return s -> putter.put(key, parse(s));
     }
 
@@ -104,7 +104,7 @@ public interface Parser<T> {
      * @param key The key to put.
      * @return The string consumer.
      */
-    static Consumer<String> putInto(Property.Putter putter, String key) {
+    static Consumer<String> putAs(Property.Putter putter, String key) {
         return s -> putter.put(key, s);
     }
 
@@ -118,12 +118,32 @@ public interface Parser<T> {
     }
 
     /**
+     * Make a 32-bit integer parsing consumer.
+     *
+     * @param target The target consumer.
+     * @return The consumer wrapper.
+     */
+    static Consumer<String> i32(Consumer<Integer> target) {
+        return i32().andApply(target);
+    }
+
+    /**
      * Make a 64-bit integer parser.
      *
      * @return The parser.
      */
     static Parser<Long> i64() {
         return new LongParser();
+    }
+
+    /**
+     * Make a 64-bit integer parsing consumer.
+     *
+     * @param target The target consumer.
+     * @return The consumer wrapper.
+     */
+    static Consumer<String> i64(Consumer<Long> target) {
+        return i64().andApply(target);
     }
 
     /**
@@ -136,7 +156,17 @@ public interface Parser<T> {
     }
 
     /**
-     * Make an enum value parser.
+     * Make a 64-bit integer parsing consumer.
+     *
+     * @param target The target consumer.
+     * @return The consumer wrapper.
+     */
+    static Consumer<String> dbl(Consumer<Double> target) {
+        return dbl().andApply(target);
+    }
+
+    /**
+     * Make an enum value parsing consumer.
      *
      * @param klass The enum class.
      * @return The parser.
@@ -144,6 +174,17 @@ public interface Parser<T> {
      */
     static <E extends Enum<E>> Parser<E> oneOf(Class<E> klass) {
         return new EnumParser<>(klass);
+    }
+
+    /**
+     * Make a file parsing consumer that refers to an existing file.
+     *
+     * @param klass The enum class.
+     * @param target The target consumer.
+     * @return The consumer wrapper.
+     */
+    static <E extends Enum<E>> Consumer<String> oneOf(Class<E> klass, Consumer<E> target) {
+        return oneOf(klass).andApply(target);
     }
 
     /**
@@ -156,6 +197,16 @@ public interface Parser<T> {
     }
 
     /**
+     * Make a file parsing consumer that refers to an existing file.
+     *
+     * @param target The target consumer.
+     * @return The consumer wrapper.
+     */
+    static Consumer<String> file(Consumer<File> target) {
+        return file().andApply(target);
+    }
+
+    /**
      * Make a file parser that refers to an existing directory.
      *
      * @return The consumer wrapper.
@@ -165,13 +216,34 @@ public interface Parser<T> {
     }
 
     /**
+     * Make a file parsing consumer that refers to an existing directory.
+     *
+     * @param target The target consumer.
+     * @return The parser.
+     */
+    static Consumer<String> dir(Consumer<File> target) {
+        return dir().andApply(target);
+    }
+
+    /**
      * Make a file parser that refers either to a non-existing entry or an
      * existing file, but not a directory or special device.
      *
-     * @return The consumer wrapper.
+     * @return The parser.
      */
     static Parser<File> outputFile() {
         return new OutputFileParser();
+    }
+
+    /**
+     * Make a file parsing consumer that refers either to a non-existing entry or an
+     * existing file, but not a directory or special device.
+     *
+     * @param target The target consumer.
+     * @return The consumer wrapper.
+     */
+    static Consumer<String> outputFile(Consumer<File> target) {
+        return outputFile().andApply(target);
     }
 
     /**
@@ -185,12 +257,33 @@ public interface Parser<T> {
     }
 
     /**
+     * Make a parsing consumer that refers either to a non-existing entry or an
+     * existing directory, but not a file or special device.
+     *
+     * @param target The target consumer.
+     * @return The consumer wrapper.
+     */
+    static Consumer<String> outputDir(Consumer<File> target) {
+        return outputDir().andApply(target);
+    }
+
+    /**
      * Make a parser that parses a path.
      *
      * @return The parser.
      */
     static Parser<Path> path() {
         return new PathParser();
+    }
+
+    /**
+     * Make a parsing consumer that parses a path.
+     *
+     * @param target The target consumer.
+     * @return The consumer wrapper.
+     */
+    static Consumer<String> path(Consumer<Path> target) {
+        return path().andApply(target);
     }
 
     /**

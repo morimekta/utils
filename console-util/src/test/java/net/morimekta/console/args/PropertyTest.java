@@ -88,8 +88,8 @@ public class PropertyTest {
     public void testApplyParser() {
         SimpleConfig config = new SimpleConfig();
         Property straight = new Property('D', "Help", config::put);
-        Property typed    = new Property('I', "Int", i32().andThen(config::putInteger));
-        Option typedInto = new Option("--i32", "i", "num", "I2", i32().andThen(config::putInteger, "i2"));
+        Property typed    = new Property('I', "Int", i32().andPut(config::putInteger));
+        Option typedInto = new Option("--i32", "i", "num", "I2", i32().andPutAs(config::putInteger, "i2"));
 
     }
 }
