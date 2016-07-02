@@ -43,7 +43,7 @@ public abstract class BaseOption extends BaseArgument {
             throw new IllegalArgumentException("Option must have name or short name");
         }
         if (getName() != null && !getName().startsWith("--")) {
-            throw new IllegalArgumentException("Option name does not start with '--'");
+            throw new IllegalArgumentException("Option name \"" + getName() + "\" does not start with '--'");
         }
     }
 
@@ -102,22 +102,39 @@ public abstract class BaseOption extends BaseArgument {
         StringBuilder sb = new StringBuilder();
         if (getName() != null) {
             sb.append(getName());
-        }
-        if (getShortNames().length() > 0) {
-            if (getName() != null) {
+
+            if (getShortNames().length() > 0) {
                 sb.append(" (");
-            }
-            boolean first = true;
-            for (char c : getShortNames().toCharArray()) {
-                if (first) {
-                    first = false;
-                } else {
-                    sb.append(", ");
+                boolean first = true;
+                for (char c : getShortNames().toCharArray()) {
+                    if (first) {
+                        first = false;
+                    } else {
+                        sb.append(", ");
+                    }
+                    sb.append('-')
+                      .append(c);
                 }
-                sb.append('-')
-                  .append(c);
+
+                sb.append(")");
             }
-            if (getName() != null) {
+        } else {
+            sb.append('-')
+              .append(getShortNames().subSequence(0, 1));
+
+            if (getShortNames().length() > 1) {
+                sb.append(" (");
+
+                boolean first = true;
+                for (char c : getShortNames().substring(1).toCharArray()) {
+                    if (first) {
+                        first = false;
+                    } else {
+                        sb.append(", ");
+                    }
+                    sb.append('-')
+                      .append(c);
+                }
                 sb.append(")");
             }
         }

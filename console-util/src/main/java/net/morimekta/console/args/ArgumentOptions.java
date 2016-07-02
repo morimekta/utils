@@ -20,6 +20,8 @@
  */
 package net.morimekta.console.args;
 
+import net.morimekta.console.util.TerminalSize;
+
 import java.util.Comparator;
 
 /**
@@ -58,6 +60,11 @@ public class ArgumentOptions {
      */
     public ArgumentOptions withUsageWidth(int usageWidth) {
         this.usageWidth = usageWidth;
+        return this;
+    }
+
+    public ArgumentOptions withMaxUsageWidth(int maxWidth) {
+        this.usageWidth = Math.min(maxWidth, TerminalSize.get().cols);
         return this;
     }
 

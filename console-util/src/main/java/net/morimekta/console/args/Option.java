@@ -64,14 +64,19 @@ public class Option extends BaseOption {
 
     @Override
     public int applyShort(String opts, ArgumentList args) {
-        if (opts.length() == 1) {
-            return apply(args);
-        } else {
-            if (applied && !isRepeated()) {
-                throw new ArgumentException("Option " + nameOrShort() + " already applied");
-            }
-            applied = true;
+        if (applied && !isRepeated()) {
+            throw new ArgumentException("Option " + nameOrShort() + " already applied");
+        }
+        applied = true;
 
+        if (opts.length() == 1) {
+            if (args.remaining() > 1) {
+                setter.accept(args.get(1));
+            } else {
+                throw new ArgumentException("Missing value after -" + opts);
+            }
+            return 2;
+        } else {
             String value = opts.substring(1);
             setter.accept(value);
             return 1;
@@ -88,21 +93,26 @@ public class Option extends BaseOption {
     @Override
     public int apply(ArgumentList args) throws ArgumentException {
         if (applied && !isRepeated()) {
-            throw new ArgumentException("Option " + nameOrShort() + " used more than once");
+            throw new ArgumentException("Option " + nameOrShort() + " already applied");
+        }
+        if (getName() == null) {
+            throw new IllegalStateException("No long option for -[" + getShortNames() + "]");
         }
         applied = true;
 
         String current = args.get(0);
-        if (getName() != null && current.startsWith(getName() + "=")) {
+        if (current.startsWith(getName() + "=")) {
             String value = current.substring(getName().length() + 1);
             setter.accept(value);
             return 1;
+        } else if (current.equals(getName())) {
+            if (args.remaining() < 2) {
+                throw new ArgumentException("Missing value after " + getName());
+            }
+            setter.accept(args.get(1));
+            return 2;
+        } else {
+            throw new IllegalArgumentException("Argument not matching option " + nameOrShort() + ": " + current);
         }
-
-        if (args.remaining() < 2) {
-            throw new ArgumentException("Missing value after " + getName());
-        }
-        setter.accept(args.get(1));
-        return 2;
     }
 }

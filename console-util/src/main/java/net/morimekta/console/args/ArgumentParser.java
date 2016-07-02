@@ -280,10 +280,25 @@ public class ArgumentParser {
         arguments.forEach(BaseArgument::validate);
     }
 
+    /**
+     * Print the option usage list. Essentially printed as a list of options
+     * with the description indented where it overflows the available line
+     * width.
+     *
+     * @param out The output stream.
+     */
     public void printUsage(OutputStream out) {
         printUsage(out, false);
     }
 
+    /**
+     * Print the option usage list. Essentially printed as a list of options
+     * with the description indented where it overflows the available line
+     * width.
+     *
+     * @param out The output stream.
+     * @param showHidden Whether to show hidden options.
+     */
     public void printUsage(OutputStream out, boolean showHidden) {
         printUsage(new PrintWriter(out), showHidden);
     }
@@ -421,11 +436,11 @@ public class ArgumentParser {
               .flush();
     }
 
-    private void printSingleUsageEntry(IndentedPrintWriter writer,
-                                       String prefix,
-                                       String usage,
-                                       int prefixLen,
-                                       int usageWidth) {
+    static void printSingleUsageEntry(IndentedPrintWriter writer,
+                                      String prefix,
+                                      String usage,
+                                      int prefixLen,
+                                      int usageWidth) {
         String[] descLines;
         int printLinesFrom = 0;
 
@@ -460,7 +475,7 @@ public class ArgumentParser {
         }
     }
 
-    private static final int USAGE_EXTRA_CHARS = 4;
+    static final int USAGE_EXTRA_CHARS = 4;
 
     private final String                 program;
     private final String                 version;
