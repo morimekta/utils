@@ -43,23 +43,37 @@ public class LayeredConfigTest {
         config.addFixedTopLayer(() -> new SimpleConfig().putString("common", "fixed-top")
                                                         .putString("fixed-top", "fixed-top")
                                                         .putString("top-2", "fixed-top"));
+        config.addFixedBottomLayer(() -> new SimpleConfig().putString("common", "fixed-bottom")
+                                                           .putString("fixed-bottom", "fixed-bottom")
+                                                           .putString("bottom-2", "fixed-bottom"));
+
         config.addBottomLayer(() -> new SimpleConfig().putString("common", "bottom")
                                                       .putString("bottom", "bottom")
+                                                      .putString("middle-2", "bottom")
                                                       .putString("bottom-2", "bottom"));
         // Is added *after* the fixed top.
         config.addTopLayer(() -> new SimpleConfig().putString("common", "top")
                                                    .putString("top", "top")
                                                    .putString("top-2", "top")
-                                                   .putString("bottom-2", "top"));
+                                                   .putString("middle-2", "top"));
 
         assertEquals("fixed-top", config.getString("common"));
-        assertEquals("fixed-top", config.getString("top-2"));
-        assertEquals("top",       config.getString("bottom-2"));
-        assertEquals("fixed-top", config.getString("fixed-top"));
-        assertEquals("top",       config.getString("top"));
-        assertEquals("bottom",    config.getString("bottom"));
 
-        assertEquals(ImmutableSet.of("bottom", "bottom-2", "common", "fixed-top", "top", "top-2"), config.keySet());
+        assertEquals("fixed-top", config.getString("top-2"));
+        assertEquals("top", config.getString("middle-2"));
+        assertEquals("bottom", config.getString("bottom-2"));
+        assertEquals("fixed-top", config.getString("fixed-top"));
+        assertEquals("top", config.getString("top"));
+        assertEquals("bottom", config.getString("bottom"));
+
+        assertEquals(ImmutableSet.of("bottom",
+                                     "bottom-2",
+                                     "common",
+                                     "fixed-bottom",
+                                     "fixed-top",
+                                     "middle-2",
+                                     "top",
+                                     "top-2"), config.keySet());
     }
 
     @Test

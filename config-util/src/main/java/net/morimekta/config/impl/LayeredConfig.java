@@ -3,7 +3,7 @@ package net.morimekta.config.impl;
 import net.morimekta.config.Config;
 import net.morimekta.config.util.ConfigUtil;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Supplier;
@@ -12,34 +12,51 @@ import java.util.function.Supplier;
  * A config based on a layered set of configs.
  */
 public class LayeredConfig implements Config {
-    private final LinkedList<Supplier<Config>> layers;
+    private final ArrayList<Supplier<Config>> layers;
 
     private int top;
+    private int bottom;
 
     public LayeredConfig(Config... configs) {
         this.top = 0;
-        this.layers = new LinkedList<>();
+        this.layers = new ArrayList<>();
         for (Config config : configs) {
             this.layers.add(() -> config);
         }
+        this.bottom = layers.size();
     }
 
     public LayeredConfig addFixedTopLayer(Supplier<Config> supplier) {
         layers.add(0, supplier);
         ++top;
+        ++bottom;
         return this;
     }
 
     public LayeredConfig addTopLayer(Supplier<Config> supplier) {
         layers.add(top, supplier);
+        ++bottom;
         return this;
     }
 
     public LayeredConfig addBottomLayer(Supplier<Config> supplier) {
+        layers.add(bottom, supplier);
+        ++bottom;
+        return this;
+    }
+
+    public LayeredConfig addFixedBottomLayer(Supplier<Config> supplier) {
         layers.add(supplier);
         return this;
     }
 
+    /**
+     * Get the 'toString()' value for the config supplier for the layer that
+     * contains the wanted key.
+     *
+     * @param key The key to get layer for.
+     * @return The layer number and name.
+     */
     public String getLayerFor(String key) {
         for (Supplier<Config> supplier : layers) {
             Config config = supplier.get();
