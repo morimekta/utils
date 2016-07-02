@@ -27,7 +27,7 @@ import java.util.TreeMap;
 /**
  * Mutable configuration object backed by a tree map.
  */
-public class SimpleConfig extends TreeMap<String,Object> implements ConfigBuilder {
+public class SimpleConfig extends TreeMap<String,Object> implements ConfigBuilder<SimpleConfig> {
     /**
      * Create an empty config instance.
      */

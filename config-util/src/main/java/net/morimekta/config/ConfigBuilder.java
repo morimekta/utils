@@ -25,7 +25,7 @@ import java.util.Date;
  * Base configuration container. Essentially a type-safe map that group
  * values into a few basic types:
  */
-public interface ConfigBuilder extends Config {
+public interface ConfigBuilder<Builder extends ConfigBuilder<Builder>> extends Config {
     /**
      * Put a value into the config.
      *
@@ -41,11 +41,12 @@ public interface ConfigBuilder extends Config {
      * @param other The other config.
      * @return The config.
      */
-    default ConfigBuilder putAll(Config other) {
+    @SuppressWarnings("unchecked")
+    default Builder putAll(Config other) {
         for (String key : other.keySet()) {
             put(key, other.get(key));
         }
-        return this;
+        return (Builder) this;
     }
 
     /**
@@ -56,9 +57,9 @@ public interface ConfigBuilder extends Config {
      * @return The config.
      */
     @SuppressWarnings("unchecked")
-    default ConfigBuilder putBoolean(String key, boolean value) {
+    default Builder putBoolean(String key, boolean value) {
         put(key, value);
-        return this;
+        return (Builder) this;
     }
 
     /**
@@ -69,9 +70,9 @@ public interface ConfigBuilder extends Config {
      * @return The config.
      */
     @SuppressWarnings("unchecked")
-    default ConfigBuilder putInteger(String key, int value) {
+    default Builder putInteger(String key, int value) {
         put(key, value);
-        return this;
+        return (Builder) this;
     }
 
     /**
@@ -82,9 +83,9 @@ public interface ConfigBuilder extends Config {
      * @return The config.
      */
     @SuppressWarnings("unchecked")
-    default ConfigBuilder putLong(String key, long value) {
+    default Builder putLong(String key, long value) {
         put(key, value);
-        return this;
+        return (Builder) this;
     }
 
     /**
@@ -95,9 +96,9 @@ public interface ConfigBuilder extends Config {
      * @return The config.
      */
     @SuppressWarnings("unchecked")
-    default ConfigBuilder putDouble(String key, double value) {
+    default Builder putDouble(String key, double value) {
         put(key, value);
-        return this;
+        return (Builder) this;
     }
 
     /**
@@ -108,9 +109,9 @@ public interface ConfigBuilder extends Config {
      * @return The config.
      */
     @SuppressWarnings("unchecked")
-    default ConfigBuilder putString(String key, String value) {
+    default Builder putString(String key, String value) {
         put(key, value);
-        return this;
+        return (Builder) this;
     }
 
     /**
@@ -120,9 +121,10 @@ public interface ConfigBuilder extends Config {
      * @param value The value to put.
      * @return The config.
      */
-    default ConfigBuilder putDate(String key, Date value) {
+    @SuppressWarnings("unchecked")
+    default Builder putDate(String key, Date value) {
         put(key, value);
-        return this;
+        return (Builder) this;
     }
 
     /**
@@ -133,9 +135,9 @@ public interface ConfigBuilder extends Config {
      * @return The config.
      */
     @SuppressWarnings("unchecked")
-    default <T> ConfigBuilder putCollection(String key, Collection<T> value) {
+    default <T> Builder putCollection(String key, Collection<T> value) {
         put(key, value);
-        return this;
+        return (Builder) this;
     }
 
 }
