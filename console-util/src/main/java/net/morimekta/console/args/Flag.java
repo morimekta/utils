@@ -26,26 +26,26 @@ import java.util.function.Consumer;
  * Similar to {@link Option}, but without any value argument. Can only
  * toggle boolean values.
  */
-public class UnaryOption extends BaseOption {
+public class Flag extends BaseOption {
     public static final String NEGATE = "--no_";
 
     private final Consumer<Boolean> setter;
 
     private boolean applied = false;
 
-    public UnaryOption(String name,
-                       String shortNames,
-                       String usage,
-                       Consumer<Boolean> setter) {
+    public Flag(String name,
+                String shortNames,
+                String usage,
+                Consumer<Boolean> setter) {
         this(name, shortNames, usage, setter, null, false);
     }
 
-    public UnaryOption(String name,
-                       String shortNames,
-                       String usage,
-                       Consumer<Boolean> setter,
-                       Boolean defaultValue,
-                       boolean hidden) {
+    public Flag(String name,
+                String shortNames,
+                String usage,
+                Consumer<Boolean> setter,
+                Boolean defaultValue,
+                boolean hidden) {
         super(name, shortNames, null,  usage, defaultValue == null ? null : defaultValue.toString(), false, false, hidden);
         this.setter = setter;
     }

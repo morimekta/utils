@@ -50,7 +50,7 @@ public class ArgumentParserTest {
 
         parser.add(new Option("--arg1", "a", "I", "Integer value", i32(ai::set), "55"));
         parser.add(new Property('D', "key", "val", "System property", props::setProperty));
-        parser.add(new UnaryOption("--arg2", null, "Another boolean", ab::set));
+        parser.add(new Flag("--arg2", null, "Another boolean", ab::set));
         parser.add(new Argument("type", "Some type", "no-type", type::set, s -> !s.startsWith("/"), false, false, false));
         parser.add(new Argument("file", "Extra files", null, args::add, null, true, true, false));
 
@@ -76,7 +76,7 @@ public class ArgumentParserTest {
 
         parser.add(new Option("--arg1", "a", "I", "Integer value", i32(ai::set)));
         parser.add(new Property('D', "key", "val", "System property", properties::setProperty));
-        parser.add(new UnaryOption("--arg2", null, "Boolean Usage", ab::set));
+        parser.add(new Flag("--arg2", null, "Boolean Usage", ab::set));
 
         parser.parse("--arg1=4", "--no_arg2");
 
@@ -96,7 +96,7 @@ public class ArgumentParserTest {
 
         parser.add(new Option("--arg1", "a", "I", "Integer value", i32(ai::set)));
         parser.add(new Property('D', "key", "val", "System property", properties::setProperty));
-        parser.add(new UnaryOption("--arg2", "b", "Boolean Usage", ab::set));
+        parser.add(new Flag("--arg2", "b", "Boolean Usage", ab::set));
 
         parser.parse("-ba4");
 
@@ -116,7 +116,7 @@ public class ArgumentParserTest {
 
         parser.add(new Option("--arg1", "a", "I", "Integer value", i32(ai::set), "55"));
         parser.add(new Property('D', "key", "val", "System property", properties::setProperty));
-        parser.add(new UnaryOption("--arg2", null, "Another boolean", ab::set));
+        parser.add(new Flag("--arg2", null, "Another boolean", ab::set));
         parser.add(new Option(null, "A", "I", "Integer value (#2), " +
                                               "This one has a really long description, that should be " +
                                               "wrapped at some point. This extra text is just to make " +
@@ -169,7 +169,7 @@ public class ArgumentParserTest {
 
         parser.add(new Option("--arg1", "a", "I", "Integer value", i32(ai::set), "55"));
         parser.add(new Property('D', "key", "val", "System property", properties::setProperty));
-        parser.add(new UnaryOption("--arg2", null, "Another boolean", ab::set));
+        parser.add(new Flag("--arg2", null, "Another boolean", ab::set));
         parser.add(new Option(null, "A", "I", "Integer value (#2), " +
                                               "This one has a really long description, that should be " +
                                               "wrapped at some point. This extra text is just to make " +
@@ -201,7 +201,7 @@ public class ArgumentParserTest {
 
         parser.add(new Option("--arg1", "a", "I", "Integer value", i32(ai::set), "55"));
         parser.add(new Property('D', "key", "val", "System property", properties::setProperty));
-        parser.add(new UnaryOption("--arg2", null, "Another boolean", ab::set));
+        parser.add(new Flag("--arg2", null, "Another boolean", ab::set));
         parser.add(new Argument("type", "Some type", "no-type", type::set, s -> !s.startsWith("/"), false, false, false));
         parser.add(new Argument("file", "Extra files", null, args::add, null, true, true, false));
 
@@ -231,7 +231,7 @@ public class ArgumentParserTest {
 
         parser.add(new Option("--arg1", "a", "I", "Integer value", i32(ai::set), "55"));
         parser.add(new Property('D', "key", "val", "System property", properties::setProperty));
-        parser.add(new UnaryOption("--arg2", null, "Another boolean", ab::set));
+        parser.add(new Flag("--arg2", null, "Another boolean", ab::set));
         parser.add(new Argument("type", "Some type", "no-type", type::set, s -> !s.startsWith("/"), false, false, false));
         parser.add(new Argument("file", "Extra files", null, args::add, null, true, true, false));
 
@@ -262,7 +262,7 @@ public class ArgumentParserTest {
 
         parser.add(new Option("--arg1", "a", "I", "Integer value", i32(ai::set), "55"));
         parser.add(new Property('D', "key", "val", "System property", properties::setProperty));
-        parser.add(new UnaryOption("--arg2", null, "Another boolean", ab::set));
+        parser.add(new Flag("--arg2", null, "Another boolean", ab::set));
         parser.add(new Argument("type", "Some type", "no-type", type::set, s -> !s.startsWith("/"), false, false, false));
 
         SubCommandSet<Sub> subs = new SubCommandSet<>("file", "Extra files", sub::set);

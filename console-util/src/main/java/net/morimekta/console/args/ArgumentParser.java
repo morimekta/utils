@@ -122,8 +122,8 @@ public class ArgumentParser {
             longNameOptions.put(option.getName(), option);
         }
 
-        if (option instanceof UnaryOption) {
-            String alt = ((UnaryOption) option).altName();
+        if (option instanceof Flag) {
+            String alt = ((Flag) option).altName();
             if (alt != null) {
                 if (longNameOptions.containsKey(alt)) {
                     throw new IllegalArgumentException("Option " + alt + " already exists.");
@@ -323,7 +323,7 @@ public class ArgumentParser {
         // first just list up all the unary short opts.
         String sh = "-";
         for (BaseOption opt : options) {
-            if (opt instanceof UnaryOption) {
+            if (opt instanceof Flag) {
                 sh = sh + opt.getShortNames();
             }
         }
@@ -333,7 +333,7 @@ public class ArgumentParser {
         }
 
         for (BaseOption opt : options) {
-            if (opt instanceof UnaryOption && opt.getShortNames().length() > 0) {
+            if (opt instanceof Flag && opt.getShortNames().length() > 0) {
                 // already included as short opt.
                 continue;
             }
