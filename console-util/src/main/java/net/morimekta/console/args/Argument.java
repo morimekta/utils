@@ -24,7 +24,8 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 /**
- * TODO(morimekta): Make a real class description.
+ * An argument is a non-optioned CLI argument. Instead of having to match the
+ * option name, it may use a predicate to test the value before applying.
  */
 public class Argument extends BaseArgument {
     private final Consumer<String> consumer;
@@ -32,9 +33,55 @@ public class Argument extends BaseArgument {
 
     private boolean applied;
 
-    public Argument(String name, String usage, String defaultValue,
-                       Consumer<String> consumer, Predicate<String> predicate,
-                       boolean repeated, boolean required, boolean hidden) {
+    /**
+     * Create a default required argument.
+     *
+     * @param name The name of the argument.
+     * @param usage The argument usage description.
+     * @param consumer The argument consumer.
+     */
+    public Argument(String name,
+                    String usage,
+                    Consumer<String> consumer) {
+        this(name, usage, consumer, null, null, false, true, false);
+    }
+
+    /**
+     * Create a default optional argument with default value.
+     *
+     * @param name The name of the argument.
+     * @param usage The argument usage description.
+     * @param consumer The argument consumer.
+     * @param defaultValue The default value.
+     */
+    public Argument(String name,
+                    String usage,
+                    Consumer<String> consumer,
+                    String defaultValue) {
+        this(name, usage, consumer, defaultValue, null, false, false, false);
+    }
+
+    /**
+     * Create an argument instance.
+     *
+     * @param name The name of the argument.
+     * @param usage The argument usage description.
+     * @param consumer The argument consumer.
+     * @param defaultValue The default value.
+     * @param predicate A predicate to check if the argument should try to
+     *                  consume the value.
+     * @param repeated If the argument is repeated.
+     * @param required If the argument is required.
+     * @param hidden If the argument is hidden.
+     */
+    public Argument(String name,
+                    String usage,
+                    Consumer<String> consumer,
+                    String defaultValue,
+                    Predicate<String> predicate,
+                    boolean repeated,
+                    boolean required,
+                    boolean hidden) {
         super(name, usage, defaultValue, repeated, required, hidden);
         this.consumer = consumer;
         this.predicate = predicate == null ? s -> true : predicate;

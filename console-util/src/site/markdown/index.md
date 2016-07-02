@@ -33,8 +33,9 @@ interfaces, it should be pretty compact regardless. Example usage:
 ArgumentParser parser = new ArgumentParser("pvdrpc", "v2.0.0", "Providence RPC Tool");
 parser.add(new Option("--connect_timeout", "C", "ms", "Connection timeout in milliseconds. 0 means infinite.", i32(this::setConnectTimeout), "10000"));
 parser.add(new Option("--read_timeout",    "R", "ms", "Request timeout in milliseconds. 0 means infinite.",    i32(this::setReadTimeout), "10000"));
-parser.add(new UnaryOption("--help",       "h?",      "This help message.",                                    this::setHelp));
-parser.add(new Argument("URL",                        "The endpoint URI", null,                                this::setEndpoint, null, false, true, false));
+parser.add(new Property('H',          "key", "value", "Header",                                                i32(this::setHeader)));
+parser.add(new Flag(  "--help",            "h?",      "This help message.",                                    this::setHelp));
+parser.add(new Argument("URL",                        "The endpoint URI",                                      this::setUrl));
 
 parser.parse(args);
 ```
