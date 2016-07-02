@@ -52,7 +52,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  *
  * <ul>
  *     <li>The Structure is completely 2-tier, section and property.</li>
- *     <li>No support for special types like 'date', it must be entered as a string.</li>
  *     <li>No support for multi-line basic strings (triple-quoted).</li>
  *     <li>No support for literal strings (quoted with "'").</li>
  *     <li>Integers follow JSON syntax only, so no '_' separators, no hex.</li>

@@ -8,6 +8,7 @@ import net.morimekta.config.source.RefreshingFileConfigSupplier;
 import net.morimekta.config.source.ResourceConfigSupplier;
 import net.morimekta.util.io.IOUtils;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import org.junit.Before;
 import org.junit.Rule;
@@ -49,6 +50,13 @@ public class LayeredConfigTest {
                                                                 .putString("s", "str"));
 
         assertEquals("LayeredConfig{b=true, s=str}", cfg.toString());
+
+        cfg = new LayeredConfig(ImmutableList.of(new ResourceConfigSupplier("/net/morimekta/config/impl/config.toml",
+                                                                            new TomlConfigParser()),
+                                                 () -> new SimpleConfig().putBoolean("b", false)
+                                                                         .putString("s", "str")));
+
+        assertEquals("ResourceConfigSupplier{resource=/net/morimekta/config/impl/config.toml}", cfg.getLayerFor("b"));
     }
 
     @Test
