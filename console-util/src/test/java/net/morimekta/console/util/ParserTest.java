@@ -20,6 +20,7 @@
  */
 package net.morimekta.console.util;
 
+import net.morimekta.config.impl.SimpleConfig;
 import net.morimekta.console.args.ArgumentException;
 
 import com.google.common.util.concurrent.AtomicDouble;
@@ -74,14 +75,39 @@ public class ParserTest {
     }
 
     @Test
+    public void testAndThen() {
+        AtomicInteger integer = new AtomicInteger();
+        SimpleConfig config = new SimpleConfig();
+
+        Parser.IntegerParser parser = new Parser.IntegerParser();
+
+        parser.andThen(integer::set).accept("4");
+        assertEquals(4, integer.get());
+
+        parser.andThen(config::putInteger).put("first", "4");
+        assertEquals(4, config.getInteger("first"));
+
+        parser.andThen(config::putInteger, "second").accept("6");
+        assertEquals(6, config.getInteger("second"));
+    }
+
+    @Test
+    public void testPutInto() {
+        SimpleConfig config = new SimpleConfig();
+
+        Parser.putInto(config::putString, "test").accept("value");
+        assertEquals("value", config.getString("test"));
+    }
+
+    @Test
     public void testI32() {
         AtomicInteger integer = new AtomicInteger();
 
-        i32(integer::set).accept("4");
+        i32().andThen(integer::set).accept("4");
         assertEquals(4, integer.get());
 
         try {
-            i32(integer::set).accept("b");
+            i32().andThen(integer::set).accept("b");
             fail("No exception on invalid value.");
         } catch (ArgumentException e) {
             assertEquals("Invalid integer value b", e.getMessage());
@@ -92,11 +118,11 @@ public class ParserTest {
     public void testI64() {
         AtomicLong integer = new AtomicLong();
 
-        i64(integer::set).accept("4");
+        i64().andThen(integer::set).accept("4");
         assertEquals(4L, integer.get());
 
         try {
-            i64(integer::set).accept("b");
+            i64().andThen(integer::set).accept("b");
             fail("No exception on invalid value.");
         } catch (ArgumentException e) {
             assertEquals("Invalid long value b", e.getMessage());
@@ -107,11 +133,11 @@ public class ParserTest {
     public void testDBL() {
         AtomicDouble integer = new AtomicDouble();
 
-        dbl(integer::set).accept("4.7");
+        dbl().andThen(integer::set).accept("4.7");
         assertEquals(4.7, integer.get(), 0.001);
 
         try {
-            dbl(integer::set).accept("b");
+            dbl().andThen(integer::set).accept("b");
             fail("No exception on invalid value.");
         } catch (ArgumentException e) {
             assertEquals("Invalid double value b", e.getMessage());
@@ -127,12 +153,12 @@ public class ParserTest {
     public void testOneOf() {
         AtomicReference<E> value = new AtomicReference<>(E.A);
 
-        oneOf(E.class, value::set).accept("B");
+        oneOf(E.class).andThen(value::set).accept("B");
 
         assertEquals(E.B, value.get());
 
         try {
-            oneOf(E.class, value::set).accept("not");
+            oneOf(E.class).andThen(value::set).accept("not");
             fail("No exception on invalid value.");
         } catch (ArgumentException e) {
             assertEquals("Invalid E value not", e.getMessage());
@@ -143,7 +169,7 @@ public class ParserTest {
     public void testFile() throws IOException {
         AtomicReference<File> f = new AtomicReference<>();
 
-        file(f::set).accept(tempFile.getAbsolutePath());
+        file().andThen(f::set).accept(tempFile.getAbsolutePath());
 
         assertEquals(tempFile, f.get());
 
@@ -151,7 +177,7 @@ public class ParserTest {
             File not = tmp.newFile("exists.not");
             not.delete();
 
-            file(f::set).accept(not.getAbsolutePath());
+            file().andThen(f::set).accept(not.getAbsolutePath());
             fail("No exception on invalid value.");
         } catch (ArgumentException e) {
             assertThat(e.getMessage(), startsWith("No such file "));
@@ -162,7 +188,7 @@ public class ParserTest {
     public void testDir() throws IOException {
         AtomicReference<File> f = new AtomicReference<>();
 
-        dir(f::set).accept(tempDir.getAbsolutePath());
+        dir().andThen(f::set).accept(tempDir.getAbsolutePath());
 
         assertEquals(tempDir, f.get());
 
@@ -170,7 +196,7 @@ public class ParserTest {
             File not = tmp.newFile("exists.not");
             not.delete();
 
-            dir(f::set).accept(not.getAbsolutePath());
+            dir().andThen(f::set).accept(not.getAbsolutePath());
             fail("No exception on invalid value.");
         } catch (ArgumentException e) {
             assertThat(e.getMessage(), startsWith("No such directory "));
@@ -181,17 +207,17 @@ public class ParserTest {
     public void testOutputFile() throws IOException {
         AtomicReference<File> f = new AtomicReference<>();
 
-        outputFile(f::set).accept(tempFile.getAbsolutePath());
+        outputFile().andThen(f::set).accept(tempFile.getAbsolutePath());
         assertEquals(tempFile, f.get());
 
         tempFile.delete();
         f.set(null);
 
-        outputFile(f::set).accept(tempFile.getAbsolutePath());
+        outputFile().andThen(f::set).accept(tempFile.getAbsolutePath());
         assertEquals(tempFile, f.get());
 
         try {
-            outputFile(f::set).accept(tempDir.getAbsolutePath());
+            outputFile().andThen(f::set).accept(tempDir.getAbsolutePath());
             fail("No exception on invalid value.");
         } catch (ArgumentException e) {
             assertThat(e.getMessage(), containsString(" exists and is not a file"));
@@ -202,17 +228,17 @@ public class ParserTest {
     public void testOutputDir() throws IOException {
         AtomicReference<File> f = new AtomicReference<>();
 
-        outputDir(f::set).accept(tempDir.getAbsolutePath());
+        outputDir().andThen(f::set).accept(tempDir.getAbsolutePath());
         assertEquals(tempDir, f.get());
 
         tempDir.delete();
         f.set(null);
 
-        outputDir(f::set).accept(tempDir.getAbsolutePath());
+        outputDir().andThen(f::set).accept(tempDir.getAbsolutePath());
         assertEquals(tempDir, f.get());
 
         try {
-            outputDir(f::set).accept(tempFile.getAbsolutePath());
+            outputDir().andThen(f::set).accept(tempFile.getAbsolutePath());
             fail("No exception on invalid value.");
         } catch (ArgumentException e) {
             assertThat(e.getMessage(), containsString(" exists and is not a directory"));
@@ -223,7 +249,7 @@ public class ParserTest {
     public void testPath() {
         AtomicReference<Path> p = new AtomicReference<>();
 
-        path(p::set).accept(tmp.getRoot().getAbsolutePath());
+        path().andThen(p::set).accept(tmp.getRoot().getAbsolutePath());
         assertEquals(Paths.get(tmp.getRoot().getAbsolutePath()), p.get());
     }
 }

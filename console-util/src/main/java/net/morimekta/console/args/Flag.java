@@ -30,6 +30,7 @@ public class Flag extends BaseOption {
     public static final String NEGATE = "--no_";
 
     private final Consumer<Boolean> setter;
+    private final String negateName;
 
     private boolean applied = false;
 
@@ -37,7 +38,24 @@ public class Flag extends BaseOption {
                 String shortNames,
                 String usage,
                 Consumer<Boolean> setter) {
-        this(name, shortNames, usage, setter, null, false);
+        this(name, shortNames, usage, setter, null);
+    }
+
+    public Flag(String name,
+                String shortNames,
+                String usage,
+                Consumer<Boolean> setter,
+                Boolean defaultValue) {
+        this(name, shortNames, usage, setter, defaultValue, false);
+    }
+
+    public Flag(String name,
+                String shortNames,
+                String usage,
+                Consumer<Boolean> setter,
+                Boolean defaultValue,
+                String negateName) {
+        this(name, shortNames, usage, setter, defaultValue, negateName, false);
     }
 
     public Flag(String name,
@@ -46,8 +64,28 @@ public class Flag extends BaseOption {
                 Consumer<Boolean> setter,
                 Boolean defaultValue,
                 boolean hidden) {
-        super(name, shortNames, null,  usage, defaultValue == null ? null : defaultValue.toString(), false, false, hidden);
+        this(name, shortNames, usage, setter, defaultValue, makeNegateName(name), hidden);
+    }
+
+    public Flag(String name,
+                String shortNames,
+                String usage,
+                Consumer<Boolean> setter,
+                Boolean defaultValue,
+                String negateName,
+                boolean hidden) {
+        super(name, shortNames, null, usage, defaultValue == null ? null : defaultValue.toString(), false, false, hidden);
         this.setter = setter;
+        this.negateName = negateName;
+    }
+
+    /**
+     * The alternative (negating) long name for the flag.
+     *
+     * @return The negating name.
+     */
+    public String getNegateName() {
+        return this.negateName;
     }
 
     @Override
@@ -68,7 +106,7 @@ public class Flag extends BaseOption {
     @Override
     public int applyShort(String opts, ArgumentList args) {
         if (applied) {
-            throw new ArgumentException(nameOrShort() + " is already set.");
+            throw new ArgumentException(nameOrShort() + " is already applied");
         }
         applied = true;
 
@@ -83,25 +121,27 @@ public class Flag extends BaseOption {
         }
 
         if (applied) {
-            throw new ArgumentException(nameOrShort() + " is already set.");
+            throw new ArgumentException(nameOrShort() + " is already applied");
         }
         applied = true;
 
         String current = args.get(0);
         if (current.equals(getName())) {
             setter.accept(true);
-        } else if (current.equals(altName())) {
+        } else if (current.equals(getNegateName())) {
             setter.accept(false);
         } else if (current.startsWith(getName() + "=")) {
             String value = current.substring(getName().length() + 1);
             setter.accept(Boolean.parseBoolean(value));
+        } else {
+            throw new IllegalArgumentException("Argument not matching flag " + nameOrShort() + ": " + current);
         }
         return 1;
     }
 
-    public String altName() {
-        if (getName() != null && getName().startsWith("--")) {
-            return NEGATE + getName().substring(2);
+    private static String makeNegateName(String name) {
+        if (name != null && name.startsWith("--")) {
+            return NEGATE + name.substring(2);
         }
         return null;
     }

@@ -48,7 +48,7 @@ public class ArgumentParserTest {
         AtomicReference<String> type = new AtomicReference<>("no-type");
         Properties props = new Properties();
 
-        parser.add(new Option("--arg1", "a", "I", "Integer value", i32(ai::set), "55"));
+        parser.add(new Option("--arg1", "a", "I", "Integer value", i32().andThen(ai::set), "55"));
         parser.add(new Property('D', "key", "val", "System property", props::setProperty));
         parser.add(new Flag("--arg2", null, "Another boolean", ab::set));
         parser.add(new Argument("type", "Some type", type::set, "no-type", s -> !s.startsWith("/"), false, false, false));
@@ -74,7 +74,7 @@ public class ArgumentParserTest {
 
         Properties properties = new Properties();
 
-        parser.add(new Option("--arg1", "a", "I", "Integer value", i32(ai::set)));
+        parser.add(new Option("--arg1", "a", "I", "Integer value", i32().andThen(ai::set)));
         parser.add(new Property('D', "key", "val", "System property", properties::setProperty));
         parser.add(new Flag("--arg2", null, "Boolean Usage", ab::set));
 
@@ -94,7 +94,7 @@ public class ArgumentParserTest {
 
         Properties properties = new Properties();
 
-        parser.add(new Option("--arg1", "a", "I", "Integer value", i32(ai::set)));
+        parser.add(new Option("--arg1", "a", "I", "Integer value", i32().andThen(ai::set)));
         parser.add(new Property('D', "key", "val", "System property", properties::setProperty));
         parser.add(new Flag("--arg2", "b", "Boolean Usage", ab::set));
 
@@ -114,25 +114,25 @@ public class ArgumentParserTest {
         AtomicBoolean ab = new AtomicBoolean();
         Properties properties = new Properties();
 
-        parser.add(new Option("--arg1", "a", "I", "Integer value", i32(ai::set), "55"));
+        parser.add(new Option("--arg1", "a", "I", "Integer value", i32().andThen(ai::set), "55"));
         parser.add(new Property('D', "key", "val", "System property", properties::setProperty));
         parser.add(new Flag("--arg2", null, "Another boolean", ab::set));
         parser.add(new Option(null, "A", "I", "Integer value (#2), " +
                                               "This one has a really long description, that should be " +
                                               "wrapped at some point. This extra text is just to make " +
-                                              "sure it actually wraps...", i32(ai::set), "55"));
+                                              "sure it actually wraps...", i32().andThen(ai::set), "55"));
         parser.add(new Option("--this-is-somewhat-long-long-option", null, "V",
                               "ANOTHER Integer value (#3), " +
                               "This one has a really long description, that should be " +
                               "wrapped at some point. This extra text is just to make " +
                               "sure it actually wraps... This one should also be side-" +
-                              "shifted on the first line.", i32(ai::set), "55"));
+                              "shifted on the first line.", i32().andThen(ai::set), "55"));
         parser.add(new Option("--this-is-a-really-long-long-option", "cdefgh", "true-value",
                               "ANOTHER Integer value (#2), " +
                               "This one has a really long description, that should be " +
                               "wrapped at some point. This extra text is just to make " +
                               "sure it actually wraps... Though this one should be shifted " +
-                              "entirely to the next line.", i32(ai::set), "55"));
+                              "entirely to the next line.", i32().andThen(ai::set), "55"));
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         parser.printUsage(baos);
@@ -167,13 +167,13 @@ public class ArgumentParserTest {
         AtomicBoolean ab = new AtomicBoolean();
         Properties properties = new Properties();
 
-        parser.add(new Option("--arg1", "a", "I", "Integer value", i32(ai::set), "55"));
+        parser.add(new Option("--arg1", "a", "I", "Integer value", i32().andThen(ai::set), "55"));
         parser.add(new Property('D', "key", "val", "System property", properties::setProperty));
         parser.add(new Flag("--arg2", null, "Another boolean", ab::set));
         parser.add(new Option(null, "A", "I", "Integer value (#2), " +
                                               "This one has a really long description, that should be " +
                                               "wrapped at some point. This extra text is just to make " +
-                                              "sure it actually wraps...", i32(ai::set), "55"));
+                                              "sure it actually wraps...", i32().andThen(ai::set), "55"));
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         parser.printUsage(baos);
@@ -199,7 +199,7 @@ public class ArgumentParserTest {
         AtomicReference<String> type = new AtomicReference<>("no-type");
         Properties properties = new Properties();
 
-        parser.add(new Option("--arg1", "a", "I", "Integer value", i32(ai::set), "55"));
+        parser.add(new Option("--arg1", "a", "I", "Integer value", i32().andThen(ai::set), "55"));
         parser.add(new Property('D', "key", "val", "System property", properties::setProperty));
         parser.add(new Flag("--arg2", null, "Another boolean", ab::set));
         parser.add(new Argument("type", "Some type", type::set, "no-type", s -> !s.startsWith("/"), false, false, false));
@@ -229,7 +229,7 @@ public class ArgumentParserTest {
         AtomicReference<String> type = new AtomicReference<>("no-type");
         Properties properties = new Properties();
 
-        parser.add(new Option("--arg1", "a", "I", "Integer value", i32(ai::set), "55"));
+        parser.add(new Option("--arg1", "a", "I", "Integer value", i32().andThen(ai::set), "55"));
         parser.add(new Property('D', "key", "val", "System property", properties::setProperty));
         parser.add(new Flag("--arg2", null, "Another boolean", ab::set));
         parser.add(new Argument("type", "Some type", type::set, "no-type", s -> !s.startsWith("/"), false, false, false));
@@ -260,7 +260,7 @@ public class ArgumentParserTest {
         AtomicReference<Sub> sub = new AtomicReference<>();
         Properties properties = new Properties();
 
-        parser.add(new Option("--arg1", "a", "I", "Integer value", i32(ai::set), "55"));
+        parser.add(new Option("--arg1", "a", "I", "Integer value", i32().andThen(ai::set), "55"));
         parser.add(new Property('D', "key", "val", "System property", properties::setProperty));
         parser.add(new Flag("--arg2", null, "Another boolean", ab::set));
         parser.add(new Argument("type", "Some type", type::set, "no-type", s -> !s.startsWith("/"), false, false, false));
@@ -271,7 +271,7 @@ public class ArgumentParserTest {
                                                                                                 "i",
                                                                                                 "I",
                                                                                                 "Integer",
-                                                                                                i32(i::setI),
+                                                                                                i32().andThen(i::setI),
                                                                                                 "12")),
                                   "s"));
         subs.add(new SubCommand<>("sub2",
@@ -282,7 +282,7 @@ public class ArgumentParserTest {
                                                                                                 "i",
                                                                                                 "I",
                                                                                                 "Integer",
-                                                                                                i32(i::setI)))));
+                                                                                                i32().andThen(i::setI)))));
 
         parser.add(subs);
 

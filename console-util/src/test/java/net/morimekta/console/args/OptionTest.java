@@ -20,35 +20,14 @@
  */
 package net.morimekta.console.args;
 
+import org.junit.Test;
+
 /**
- * List of arguments with various tools.
+ * TODO(morimekta): Make a real class description.
  */
-public class ArgumentList {
-    private final String[] args;
-    private int            offset;
+public class OptionTest {
+    @Test
+    public void testConstrictor() {
 
-    public ArgumentList(ArgumentList copy) {
-        this.args = copy.args;
-        this.offset = copy.offset;
-    }
-
-    public ArgumentList(String... args) {
-        this.args = args;
-        this.offset = 0;
-    }
-
-    public int remaining() {
-        return args.length - offset;
-    }
-
-    public String get(int i) {
-        if (i >= (args.length - offset)) {
-            throw new IllegalArgumentException("Index: " + i + ", Offset: " + offset + ", Size: " + args.length);
-        }
-        return args[offset + i];
-    }
-
-    public void consume(int offset) {
-        this.offset += offset;
     }
 }

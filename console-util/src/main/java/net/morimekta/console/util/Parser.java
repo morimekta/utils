@@ -23,6 +23,7 @@ package net.morimekta.console.util;
 import net.morimekta.console.args.Argument;
 import net.morimekta.console.args.ArgumentException;
 import net.morimekta.console.args.Option;
+import net.morimekta.console.args.Property;
 
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
@@ -46,6 +47,16 @@ import java.util.function.Consumer;
  */
 @FunctionalInterface
 public interface Parser<T> {
+    @FunctionalInterface
+    interface TypedPutter<T> {
+        /**
+         * Put a typed value
+         * @param key The property key.
+         * @param value The property value.
+         */
+        void put(String key, T value);
+    }
+
     /**
      * Parse the value into a typed instance.
      *
@@ -61,103 +72,125 @@ public interface Parser<T> {
      * @param consumer The consumer to wrap.
      * @return The string consumer.
      */
-    default Consumer<String> then(Consumer<T> consumer) {
+    default Consumer<String> andThen(Consumer<T> consumer) {
         return s -> consumer.accept(parse(s));
     }
 
     /**
-     * Make a 32-bit integer consumer wrapper.
+     * Make a property putter that calls a typed putter with the parsed value.
      *
-     * @param consumer The int consumer.
-     * @return The consumer wrapper.
+     * @param putter The typed putter.
+     * @return The property putter.
      */
-    static Consumer<String> i32(Consumer<Integer> consumer) {
-        return new IntegerParser().then(consumer);
+    default Property.Putter andThen(TypedPutter<T> putter) {
+        return (k, v) -> putter.put(k, parse(v));
     }
 
     /**
-     * Make a 64-bit integer consumer wrapper.
+     * Make a consumer that puts a specific value with the typed putter.
      *
-     * @param consumer The long consumer.
-     * @return The consumer wrapper.
+     * @param putter the typed putter.
+     * @param key The property key.
+     * @return The string consumer.
      */
-    static Consumer<String> i64(Consumer<Long> consumer) {
-        return new LongParser().then(consumer);
+    default Consumer<String> andThen(TypedPutter<T> putter, String key) {
+        return s -> putter.put(key, parse(s));
     }
 
     /**
-     * Make a double consumer wrapper.
+     * Convenience method to put a specific value into a putter.
      *
-     * @param consumer The double consumer.
-     * @return The consumer wrapper.
+     * @param putter The putter.
+     * @param key The key to put.
+     * @return The string consumer.
      */
-    static Consumer<String> dbl(Consumer<Double> consumer) {
-        return new DoubleParser().then(consumer);
+    static Consumer<String> putInto(Property.Putter putter, String key) {
+        return s -> putter.put(key, s);
     }
 
     /**
-     * Make an enum value consumer wrapper.
+     * Make a 32-bit integer parser.
+     *
+     * @return The parser.
+     */
+    static Parser<Integer> i32() {
+        return new IntegerParser();
+    }
+
+    /**
+     * Make a 64-bit integer parser.
+     *
+     * @return The parser.
+     */
+    static Parser<Long> i64() {
+        return new LongParser();
+    }
+
+    /**
+     * Make a double parser.
+     *
+     * @return The parser.
+     */
+    static Parser<Double> dbl() {
+        return new DoubleParser();
+    }
+
+    /**
+     * Make an enum value parser.
      *
      * @param klass The enum class.
-     * @param consumer The enum value consumer.
-     * @return The consumer wrapper.
+     * @return The parser.
      * @param <E> The enum type.
      */
-    static <E extends Enum<E>> Consumer<String> oneOf(Class<E> klass, Consumer<E> consumer) {
-        return new EnumParser<>(klass).then(consumer);
+    static <E extends Enum<E>> Parser<E> oneOf(Class<E> klass) {
+        return new EnumParser<>(klass);
     }
 
     /**
-     * Make a file consumer that refers to an existing file.
+     * Make a file parser that refers to an existing file.
      *
-     * @param consumer The file consumer.
+     * @return The parser.
+     */
+    static Parser<File> file() {
+        return new FileParser();
+    }
+
+    /**
+     * Make a file parser that refers to an existing directory.
+     *
      * @return The consumer wrapper.
      */
-    static Consumer<String> file(Consumer<File> consumer) {
-        return new FileParser().then(consumer);
+    static Parser<File> dir() {
+        return new DirParser();
     }
 
     /**
-     * Make a file consumer that refers to an existing directory.
-     *
-     * @param consumer The file consumer.
-     * @return The consumer wrapper.
-     */
-    static Consumer<String> dir(Consumer<File> consumer) {
-        return new DirParser().then(consumer);
-    }
-
-    /**
-     * Make a file consumer that refers either to a non-existing entry or an
+     * Make a file parser that refers either to a non-existing entry or an
      * existing file, but not a directory or special device.
      *
-     * @param consumer The file consumer.
      * @return The consumer wrapper.
      */
-    static Consumer<String> outputFile(Consumer<File> consumer) {
-        return new OutputFileParser().then(consumer);
+    static Parser<File> outputFile() {
+        return new OutputFileParser();
     }
 
-
     /**
-     * Make a consumer that refers either to a non-existing entry or an
+     * Make a parser that refers either to a non-existing entry or an
      * existing directory, but not a file or special device.
      *
-     * @param consumer The file consumer.
-     * @return The consumer wrapper.
+     * @return The parser.
      */
-    static Consumer<String> outputDir(Consumer<File> consumer) {
-        return new OutputDirParser().then(consumer);
+    static Parser<File> outputDir() {
+        return new OutputDirParser();
     }
 
     /**
-     * Make a consumer that parses a path.
+     * Make a parser that parses a path.
      *
-     * @param consumer The path consumer.
-     * @return The consumer wrapper.
+     * @return The parser.
      */
-    static Consumer<String> path(Consumer<Path> consumer) {
-        return new PathParser().then(consumer);
+    static Parser<Path> path() {
+        return new PathParser();
     }
 
     /**

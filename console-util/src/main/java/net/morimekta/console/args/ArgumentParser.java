@@ -123,13 +123,13 @@ public class ArgumentParser {
         }
 
         if (option instanceof Flag) {
-            String alt = ((Flag) option).altName();
-            if (alt != null) {
-                if (longNameOptions.containsKey(alt)) {
-                    throw new IllegalArgumentException("Option " + alt + " already exists.");
+            String negate = ((Flag) option).getNegateName();
+            if (negate != null) {
+                if (longNameOptions.containsKey(negate)) {
+                    throw new IllegalArgumentException("Flag " + negate + " already exists.");
                 }
 
-                longNameOptions.put(alt, option);
+                longNameOptions.put(negate, option);
             }
         }
 

@@ -25,7 +25,14 @@ package net.morimekta.console.args;
  * the value is always a key-value pair.
  */
 public class Property extends BaseOption {
+    @FunctionalInterface
     public interface Putter {
+        /**
+         * Put the property into place.
+         *
+         * @param key The property key.
+         * @param value The property value.
+         */
         void put(String key, String value);
     }
 
@@ -114,8 +121,8 @@ public class Property extends BaseOption {
         if (parts.length != 2) {
             throw new ArgumentException("No key value sep for properties: " + opts.substring(1));
         }
-        if (parts[0].length() < 1 || parts[1].length() < 1) {
-            throw new ArgumentException("Empty property key or value: " + opts.substring(1));
+        if (parts[0].length() == 0) {
+            throw new ArgumentException("Empty property key: \"-" + opts + "\"");
         }
         properties.put(parts[0], parts[1]);
         return 1;

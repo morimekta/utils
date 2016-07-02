@@ -68,7 +68,7 @@ public class Option extends BaseOption {
             return apply(args);
         } else {
             if (applied && !isRepeated()) {
-                throw new ArgumentException("Option " + nameOrShort() + " used more than once");
+                throw new ArgumentException("Option " + nameOrShort() + " already applied");
             }
             applied = true;
 
