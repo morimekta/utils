@@ -1,5 +1,6 @@
 package net.morimekta.config.impl;
 
+import net.morimekta.config.ConfigBuilder;
 import net.morimekta.config.format.JsonConfigParser;
 import net.morimekta.config.format.TomlConfigParser;
 import net.morimekta.config.source.FileConfigSupplier;
@@ -21,8 +22,11 @@ import java.io.InputStream;
 import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.Matchers.startsWith;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Tests for the layered config.
@@ -35,6 +39,16 @@ public class LayeredConfigTest {
     public void setUp() throws IOException {
         temp = new TemporaryFolder();
         temp.create();
+    }
+
+    @Test
+    public void testConstructor() {
+        // Makeing layered config with layers from top to bottom.
+        LayeredConfig cfg = new LayeredConfig(new SimpleConfig().putBoolean("b", true),
+                                              new SimpleConfig().putBoolean("b", false)
+                                                                .putString("s", "str"));
+
+        assertEquals("LayeredConfig{b=true, s=str}", cfg.toString());
     }
 
     @Test
@@ -58,6 +72,7 @@ public class LayeredConfigTest {
                                                    .putString("middle-2", "top"));
 
         assertEquals("fixed-top", config.getString("common"));
+        assertTrue(config.containsKey("common"));
 
         assertEquals("fixed-top", config.getString("top-2"));
         assertEquals("top", config.getString("middle-2"));
@@ -65,6 +80,8 @@ public class LayeredConfigTest {
         assertEquals("fixed-top", config.getString("fixed-top"));
         assertEquals("top", config.getString("top"));
         assertEquals("bottom", config.getString("bottom"));
+        assertEquals(null, config.get("not.found"));
+        assertFalse(config.containsKey("not.found"));
 
         assertEquals(ImmutableSet.of("bottom",
                                      "bottom-2",
@@ -93,6 +110,8 @@ public class LayeredConfigTest {
         config.addBottomLayer(new FileConfigSupplier(toml, new TomlConfigParser()));
         config.addBottomLayer(new ResourceConfigSupplier("/net/morimekta/config/impl/config-2.json", new JsonConfigParser()));
         config.addBottomLayer(new RefreshingFileConfigSupplier(json, new JsonConfigParser()));
+        config.addFixedBottomLayer(() -> new SimpleConfig()
+                .putString("fixed-bottom", "fixed-bottom"));
 
         assertThat(config.getLayerFor("s"),
                    endsWith("/config.toml}"));
@@ -113,5 +132,47 @@ public class LayeredConfigTest {
         assertThat(config.getLayerFor("config-3"),
                    startsWith("RefreshingFileConfigSupplier{file=/"));
         assertNull(config.getLayerFor("not.exists"));
+
+        assertEquals("InMemorySupplier{SimpleConfig}", config.getLayerFor("fixed-bottom"));
+    }
+
+    @Test
+    public void testEquals() {
+        LayeredConfig cfg = new LayeredConfig();
+
+        assertEquals(cfg, cfg);
+        assertNotEquals(cfg, null);
+        assertNotEquals(cfg, "not a config");
+
+        ConfigBuilder simple = new SimpleConfig();
+        simple.putString("a", "a");
+        simple.putString("b", "b");
+
+        ImmutableConfig imm = new ImmutableConfig(simple);
+        cfg.addTopLayer(() -> imm);
+
+        assertEquals(cfg, simple);
+
+        simple.putString("c", "c");
+
+        assertNotEquals(cfg, simple);
+    }
+
+    @Test
+    public void testToString() {
+        LayeredConfig cfg = new LayeredConfig();
+
+        ConfigBuilder simple = new SimpleConfig();
+        simple.putString("a", "a");
+        simple.putString("b", "b");
+
+        ImmutableConfig imm = new ImmutableConfig(simple);
+        cfg.addTopLayer(() -> imm);
+
+        simple.putString("c", "c");
+
+        cfg.addBottomLayer(() -> simple);
+
+        assertEquals("LayeredConfig{a=a, b=b, c=c}", cfg.toString());
     }
 }

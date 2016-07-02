@@ -81,7 +81,7 @@ public class LayeredConfig implements Config {
                 return config.get(key);
             }
         }
-        return false;
+        return null;
     }
 
     @Override
