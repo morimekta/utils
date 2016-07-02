@@ -17,7 +17,7 @@ library (public domain, unlicensed):
 * `net.morimekta.util.Base64`: Stripped to bare minimum to encode and decode
   standard base64.
 
-From Android OSS project (Apache 2.0 licensed):
+Other imported code pieces (Apache 2.0 licensed):
 
 * `android.util.Base64Test`: Mainly unmodified from original, from old android
   open sourced code (2010).

@@ -11,6 +11,7 @@
             <item href="index.html" name="Morimekta Utilities" />
             <item href="release.html" name="Release Process" />
             <item href="license-exceptions.html" name="License Exceptions" />
+            <item href="https://github.com/morimekta/utils/releases" name="Releases" />
             <!-- item href="coverage-report/jacoco-multi/" name="Code Coverage" -->
         </menu>
 
