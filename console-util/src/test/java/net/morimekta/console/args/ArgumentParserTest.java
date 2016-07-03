@@ -105,6 +105,24 @@ public class ArgumentParserTest {
         assertTrue(ab.get());
     }
 
+    @Test
+    public void testParse_shortFlag() {
+        ArgumentParser parser = new ArgumentParser("gt", "0.2.5", "Git Tools");
+
+        AtomicBoolean b1 = new AtomicBoolean(false);
+        AtomicBoolean b2 = new AtomicBoolean(false);
+        AtomicBoolean b3 = new AtomicBoolean(false);
+
+        parser.add(new Flag("--arg1", "a", "Boolean Usage", b1::set));
+        parser.add(new Flag("--arg2", "b", "Boolean Usage", b2::set));
+        parser.add(new Flag("--arg3", "c", "Boolean Usage", b3::set));
+
+        parser.parse("-ac");
+
+        assertTrue(b1.get());
+        assertFalse(b2.get());
+        assertTrue(b3.get());
+    }
 
     @Test
     public void testHelp_long() {

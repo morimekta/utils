@@ -203,19 +203,20 @@ public class ArgumentParser {
             } else if (cur.startsWith("-")) {
                 // short opt.
                 String remaining = cur.substring(1);
+                int skip = 0;
                 while (remaining.length() > 0) {
                     BaseOption opt = shortOptions.get(remaining.charAt(0));
                     if (opt == null) {
                         throw new ArgumentException("No short opt for -" + remaining.charAt(0));
                     }
-                    int skip = opt.applyShort(remaining, args);
+                    skip = opt.applyShort(remaining, args);
                     if (skip == 0) {
                         remaining = remaining.substring(1);
                     } else {
-                        args.consume(skip);
                         break;
                     }
                 }
+                args.consume(Math.max(1, skip));
             } else {
                 if (cur.startsWith("@")) {
                     File f = new File(cur.substring(1));
