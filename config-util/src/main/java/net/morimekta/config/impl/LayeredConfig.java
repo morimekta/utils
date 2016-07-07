@@ -6,8 +6,11 @@ import net.morimekta.config.source.RefreshingFileConfigSupplier;
 import net.morimekta.config.source.ResourceConfigSupplier;
 import net.morimekta.config.util.ConfigUtil;
 
+import com.google.common.collect.ImmutableList;
+
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Supplier;
@@ -208,5 +211,14 @@ public class LayeredConfig implements Config {
     @Override
     public String toString() {
         return ConfigUtil.toString(this);
+    }
+
+    /**
+     * In case sub-classes need access to the layers (in some order).
+     *
+     * @return The layer list, ordered from top to bottom.
+     */
+    protected List<Supplier<Config>> layers() {
+        return ImmutableList.copyOf(layers);
     }
 }

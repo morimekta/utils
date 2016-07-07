@@ -57,6 +57,8 @@ public class LayeredConfigTest {
                                                                          .putString("s", "str")));
 
         assertEquals("ResourceConfigSupplier{resource=/net/morimekta/config/impl/config.toml}", cfg.getLayerFor("b"));
+
+        assertEquals(2, cfg.layers().size());
     }
 
     @Test
