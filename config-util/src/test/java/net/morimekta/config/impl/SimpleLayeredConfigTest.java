@@ -1,6 +1,7 @@
 package net.morimekta.config.impl;
 
 import net.morimekta.config.ConfigBuilder;
+import net.morimekta.config.LayeredConfig;
 import net.morimekta.config.format.JsonConfigParser;
 import net.morimekta.config.format.TomlConfigParser;
 import net.morimekta.config.source.FileConfigSupplier;
@@ -32,7 +33,7 @@ import static org.junit.Assert.assertTrue;
 /**
  * Tests for the layered config.
  */
-public class LayeredConfigTest {
+public class SimpleLayeredConfigTest {
     @Rule
     public TemporaryFolder temp;
 
@@ -44,16 +45,16 @@ public class LayeredConfigTest {
 
     @Test
     public void testConstructor() {
-        // Makeing layered config with layers from top to bottom.
-        LayeredConfig cfg = new LayeredConfig(new SimpleConfig().putBoolean("b", true),
-                                              new SimpleConfig().putBoolean("b", false)
+        // Making layered config with layers from top to bottom.
+        SimpleLayeredConfig cfg = new SimpleLayeredConfig(new SimpleConfig().putBoolean("b", true),
+                                                          new SimpleConfig().putBoolean("b", false)
                                                                 .putString("s", "str"));
 
-        assertEquals("LayeredConfig{b=true, s=str}", cfg.toString());
+        assertEquals("SimpleLayeredConfig{b=true, s=str}", cfg.toString());
 
-        cfg = new LayeredConfig(ImmutableList.of(new ResourceConfigSupplier("/net/morimekta/config/impl/config.toml",
-                                                                            new TomlConfigParser()),
-                                                 () -> new SimpleConfig().putBoolean("b", false)
+        cfg = new SimpleLayeredConfig(ImmutableList.of(new ResourceConfigSupplier("/net/morimekta/config/impl/config.toml",
+                                                                                  new TomlConfigParser()),
+                                                       () -> new SimpleConfig().putBoolean("b", false)
                                                                          .putString("s", "str")));
 
         assertEquals("ResourceConfigSupplier{resource=/net/morimekta/config/impl/config.toml}", cfg.getLayerFor("b"));
@@ -63,7 +64,7 @@ public class LayeredConfigTest {
 
     @Test
     public void testLayeredConfig() {
-        LayeredConfig config = new LayeredConfig();
+        SimpleLayeredConfig config = new SimpleLayeredConfig();
         config.addFixedTopLayer(() -> new SimpleConfig().putString("common", "fixed-top")
                                                         .putString("fixed-top", "fixed-top")
                                                         .putString("top-2", "fixed-top"));
@@ -116,7 +117,7 @@ public class LayeredConfigTest {
             IOUtils.copy(in, fos);
         }
 
-        LayeredConfig config = new LayeredConfig();
+        LayeredConfig config = new SimpleLayeredConfig();
         config.addBottomLayer(new FileConfigSupplier(toml, new TomlConfigParser()));
         config.addBottomLayer(new ResourceConfigSupplier("/net/morimekta/config/impl/config-2.json", new JsonConfigParser()));
         config.addBottomLayer(new RefreshingFileConfigSupplier(json, new JsonConfigParser()));
@@ -148,7 +149,7 @@ public class LayeredConfigTest {
 
     @Test
     public void testEquals() {
-        LayeredConfig cfg = new LayeredConfig();
+        LayeredConfig cfg = new SimpleLayeredConfig();
 
         assertEquals(cfg, cfg);
         assertNotEquals(cfg, null);
@@ -170,7 +171,7 @@ public class LayeredConfigTest {
 
     @Test
     public void testToString() {
-        LayeredConfig cfg = new LayeredConfig();
+        SimpleLayeredConfig cfg = new SimpleLayeredConfig();
 
         ConfigBuilder simple = new SimpleConfig();
         simple.putString("a", "a");
@@ -183,6 +184,6 @@ public class LayeredConfigTest {
 
         cfg.addBottomLayer(() -> simple);
 
-        assertEquals("LayeredConfig{a=a, b=b, c=c}", cfg.toString());
+        assertEquals("SimpleLayeredConfig{a=a, b=b, c=c}", cfg.toString());
     }
 }
