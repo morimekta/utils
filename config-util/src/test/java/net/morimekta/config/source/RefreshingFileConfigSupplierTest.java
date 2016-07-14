@@ -86,7 +86,7 @@ public class RefreshingFileConfigSupplierTest {
 
         // We need to have a short sleep, because otherwise we may miss the file update.
         // And make sure we wait longer than the "check interval of 1 second.
-        sleep(10);
+        sleep(150);
         clock.tick(150, TimeUnit.MILLISECONDS);
 
         config = src.get();
