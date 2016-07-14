@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -237,6 +238,66 @@ public class ConfigUtil {
     }
 
     /**
+     * Make collection into a boolean array.
+     *
+     * @param collection The value instance.
+     * @return The array.
+     */
+    public static boolean[] asBooleanArray(Collection collection) {
+        boolean[] result = new boolean[collection.size()];
+        int i = 0;
+        for (Object c : collection) {
+            result[i++] = asBoolean(c);
+        }
+        return result;
+    }
+
+    /**
+     * Make collection into an integer array.
+     *
+     * @param collection The value instance.
+     * @return The array.
+     */
+    public static int[] asIntegerArray(Collection collection) {
+        int[] result = new int[collection.size()];
+        int i = 0;
+        for (Object c : collection) {
+            result[i++] = asInteger(c);
+        }
+        return result;
+    }
+
+    /**
+     * Make collection into a long array.
+     *
+     * @param collection The value instance.
+     * @return The array.
+     */
+    public static long[] asLongArray(Collection collection) {
+        long[] result = new long[collection.size()];
+        int i = 0;
+        for (Object c : collection) {
+            result[i++] = asLong(c);
+        }
+        return result;
+    }
+
+    /**
+     * Make collection into a double array.
+     *
+     * @param collection The value instance.
+     * @return The array.
+     */
+    public static double[] asDoubleArray(Collection collection) {
+        double[] result = new double[collection.size()];
+        int i = 0;
+        for (Object c : collection) {
+            result[i++] = asDouble(c);
+        }
+        return result;
+    }
+
+    /**
      * Proper equality between configs.
      *
      * @param first The first config.
@@ -323,6 +384,21 @@ public class ConfigUtil {
             helper.add(key, config.get(key));
         }
         return helper.toString();
+    }
+
+    /**
+     * Get the layer name based on the supplier.
+     *
+     * @param layer The layer to get the name of.
+     * @return The layer name.
+     */
+    public static String getLayerName(Supplier<Config> layer) {
+        String str = layer.toString();
+        if (str.contains("$$Lambda$")) {
+            return String.format("InMemorySupplier{%s}",
+                                 layer.get().getClass().getSimpleName());
+        }
+        return str;
     }
 
     // -- defeat instantiation

@@ -31,11 +31,15 @@ import java.util.LinkedList;
 import java.util.function.Function;
 
 import static net.morimekta.config.util.ConfigUtil.asBoolean;
+import static net.morimekta.config.util.ConfigUtil.asBooleanArray;
 import static net.morimekta.config.util.ConfigUtil.asCollection;
 import static net.morimekta.config.util.ConfigUtil.asDate;
 import static net.morimekta.config.util.ConfigUtil.asDouble;
+import static net.morimekta.config.util.ConfigUtil.asDoubleArray;
 import static net.morimekta.config.util.ConfigUtil.asInteger;
+import static net.morimekta.config.util.ConfigUtil.asIntegerArray;
 import static net.morimekta.config.util.ConfigUtil.asLong;
+import static net.morimekta.config.util.ConfigUtil.asLongArray;
 import static net.morimekta.config.util.ConfigUtil.asString;
 import static net.morimekta.config.util.ConfigUtil.asStringArray;
 import static org.junit.Assert.assertArrayEquals;
@@ -131,6 +135,38 @@ public class ConfigUtilTest {
     public void testAsStringArray() {
         String[] a = asStringArray(ImmutableList.of(1, 2, 3));
         assertArrayEquals(new String[]{"1", "2", "3"}, a);
+
+        assertException("Unable to convert String to a collection", "not a list", ConfigUtil::asStringArray);
+    }
+
+    @Test
+    public void testAsBooleanArray() {
+        boolean[] a = asBooleanArray(ImmutableList.of(1, "false", true));
+        assertArrayEquals(new boolean[]{true, false, true}, a);
+
+        assertException("Unable to convert String to a collection", "not a list", ConfigUtil::asStringArray);
+    }
+
+    @Test
+    public void testAsIntegerArray() {
+        int[] a = asIntegerArray(ImmutableList.of(1, "2", 3L));
+        assertArrayEquals(new int[]{1, 2, 3}, a);
+
+        assertException("Unable to convert String to a collection", "not a list", ConfigUtil::asStringArray);
+    }
+
+    @Test
+    public void testAsLongArray() {
+        long[] a = asLongArray(ImmutableList.of(1, "2", 3L));
+        assertArrayEquals(new long[]{1L, 2L, 3L}, a);
+
+        assertException("Unable to convert String to a collection", "not a list", ConfigUtil::asStringArray);
+    }
+
+    @Test
+    public void testAsDoubleArray() {
+        double[] a = asDoubleArray(ImmutableList.of(1, "2.2", 3.3));
+        assertArrayEquals(new double[]{1, 2.2, 3.3}, a, 0.001);
 
         assertException("Unable to convert String to a collection", "not a list", ConfigUtil::asStringArray);
     }
