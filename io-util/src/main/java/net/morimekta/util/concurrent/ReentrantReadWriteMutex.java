@@ -39,6 +39,16 @@ public class ReentrantReadWriteMutex implements ReadWriteMutex {
     }
 
     @Override
+    public void lockForReading(Runnable callable) {
+        readLock.lock();
+        try {
+            callable.run();
+        } finally {
+            readLock.unlock();
+        }
+    }
+
+    @Override
     public <V> V lockForReading(Supplier<V> callable) {
         readLock.lock();
         try {
@@ -53,6 +63,16 @@ public class ReentrantReadWriteMutex implements ReadWriteMutex {
         writeLock.lock();
         try {
             callable.run();
+        } finally {
+            writeLock.unlock();
+        }
+    }
+
+    @Override
+    public <V> V lockForWriting(Supplier<V> callable) {
+        writeLock.lock();
+        try {
+            return callable.get();
         } finally {
             writeLock.unlock();
         }

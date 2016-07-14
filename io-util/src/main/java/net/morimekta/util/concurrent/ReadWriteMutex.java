@@ -29,8 +29,15 @@ public interface ReadWriteMutex {
     /**
      * Lock the config for a read operation that must be read atomic.
      *
+     * @param callable The callable operation.
+     */
+    void lockForReading(Runnable callable);
+
+    /**
+     * Lock the config for a read operation that must be read atomic.
+     *
      * @param callable The enclosed callable to be run inside read lock.
-     * @param <V> The read return value.
+     * @param <V> The read return value type.
      * @return The supplied value.
      */
     <V> V lockForReading(Supplier<V> callable);
@@ -42,4 +49,14 @@ public interface ReadWriteMutex {
      * @param callable The callable operation.
      */
     void lockForWriting(Runnable callable);
+
+    /**
+     * Lock the config for a write operation that must be write atomic, and
+     * could interfere with read operations.
+     *
+     * @param callable The callable operation.
+     * @param <V> The write return value type.
+     * @return The supplied value.
+     */
+    <V> V lockForWriting(Supplier<V> callable);
 }

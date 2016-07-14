@@ -86,6 +86,11 @@ public class SynchronizedLayeredConfig implements Config, LayeredConfig, ReadWri
     }
 
     @Override
+    public void lockForReading(Runnable callable) {
+        mutex.lockForReading(callable);
+    }
+
+    @Override
     public <V> V lockForReading(Supplier<V> callable) {
         return mutex.lockForReading(callable);
     }
@@ -93,6 +98,11 @@ public class SynchronizedLayeredConfig implements Config, LayeredConfig, ReadWri
     @Override
     public void lockForWriting(Runnable runnable) {
         mutex.lockForWriting(runnable);
+    }
+
+    @Override
+    public <V> V lockForWriting(Supplier<V> callable) {
+        return mutex.lockForWriting(callable);
     }
 
     @Override

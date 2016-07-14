@@ -39,7 +39,6 @@ public class ReentrantReadWriteMutexTest {
             } catch (InterruptedException e) {
                 changes.addAndGet(10000);
             }
-            return null;
         });
     }
 
@@ -55,6 +54,7 @@ public class ReentrantReadWriteMutexTest {
             } else {
                 executor.submit(this::assertNoChange);
             }
+            Thread.sleep(5);
         }
 
         executor.shutdown();
