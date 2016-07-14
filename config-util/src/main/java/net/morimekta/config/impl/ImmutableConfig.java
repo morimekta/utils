@@ -33,32 +33,17 @@ import java.util.Set;
  * Immutable configuration object backed by a guava ImmutableMap.
  */
 public class ImmutableConfig implements Config {
-    private final ImmutableMap<String, Object> instance;
-
     /**
      * Create an immutable config instance.
      *
-     * @param base The base config (or super-config).
+     * @param config The base config (or super-config).
      */
-    public ImmutableConfig(Config base) {
-        ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
-        for (String key : base.keySet()) {
-            builder.put(key, immutable(base.get(key)));
+    public static ImmutableConfig copyOf(Config config) {
+        if (config instanceof ImmutableConfig) {
+            return (ImmutableConfig) config;
+        } else {
+            return new ImmutableConfig(config);
         }
-        instance = builder.build();
-    }
-
-    /**
-     * Create an immutable config instance.
-     *
-     * @param base The base config (or super-config).
-     */
-    public ImmutableConfig(Map<String,Object> base) {
-        ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
-        for (String key : base.keySet()) {
-            builder.put(key, immutable(base.get(key)));
-        }
-        instance = builder.build();
     }
 
     @Override
@@ -111,4 +96,14 @@ public class ImmutableConfig implements Config {
             return o;
         }
     }
+
+    private ImmutableConfig(Config base) {
+        ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
+        for (String key : base.keySet()) {
+            builder.put(key, immutable(base.get(key)));
+        }
+        instance = builder.build();
+    }
+
+    private final ImmutableMap<String, Object> instance;
 }

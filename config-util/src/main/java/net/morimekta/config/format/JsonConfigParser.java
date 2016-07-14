@@ -76,7 +76,7 @@ public class JsonConfigParser implements ConfigParser {
             sep = tokenizer.expectSymbol("", JsonToken.kMapEnd, JsonToken.kListSep);
         }
 
-        return new ImmutableConfig(config);
+        return ImmutableConfig.copyOf(config);
     }
 
     @SuppressWarnings("unchecked")

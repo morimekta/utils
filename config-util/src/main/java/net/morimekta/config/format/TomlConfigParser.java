@@ -164,7 +164,7 @@ public class TomlConfigParser implements ConfigParser {
                 token = tokenizer.next();
             }
 
-            return new ImmutableConfig(config);
+            return ImmutableConfig.copyOf(config);
         } catch (JsonException | IOException e) {
             throw new ConfigException(e, e.getMessage());
         }

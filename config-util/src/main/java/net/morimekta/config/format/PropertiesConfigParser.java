@@ -50,7 +50,7 @@ public class PropertiesConfigParser implements ConfigParser {
                 config.put(key, properties.getProperty(key));
             }
         }
-        return new ImmutableConfig(config);
+        return ImmutableConfig.copyOf(config);
     }
 
     private static boolean isPositional(String key) {

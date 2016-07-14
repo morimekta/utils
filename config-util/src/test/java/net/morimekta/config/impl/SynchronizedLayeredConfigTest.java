@@ -154,7 +154,7 @@ public class SynchronizedLayeredConfigTest {
         simple.putString("a", "a");
         simple.putString("b", "b");
 
-        ImmutableConfig imm = new ImmutableConfig(simple);
+        ImmutableConfig imm = ImmutableConfig.copyOf(simple);
         cfg.addTopLayer(() -> imm);
 
         assertEquals(cfg, simple);
@@ -172,7 +172,7 @@ public class SynchronizedLayeredConfigTest {
         simple.putString("a", "a");
         simple.putString("b", "b");
 
-        ImmutableConfig imm = new ImmutableConfig(simple);
+        ImmutableConfig imm = ImmutableConfig.copyOf(simple);
         cfg.addTopLayer(() -> imm);
 
         simple.putString("c", "c");
