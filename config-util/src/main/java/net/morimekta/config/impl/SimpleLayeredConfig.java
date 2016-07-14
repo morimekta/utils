@@ -13,6 +13,8 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Supplier;
 
+import static net.morimekta.config.util.ConfigUtil.getLayerName;
+
 /**
  * The LayeredConfig is a non-thread-safe layered config, regarding editing.
  * Meaning each sub-config that is both modified and edited at the same time
@@ -93,12 +95,7 @@ public class SimpleLayeredConfig implements Config, LayeredConfig {
         for (Supplier<Config> supplier : layers) {
             Config config = supplier.get();
             if (config.containsKey(key)) {
-                String str = supplier.toString();
-                if (str.contains("$$Lambda$")) {
-                    return String.format("InMemorySupplier{%s}",
-                                         config.getClass().getSimpleName());
-                }
-                return str;
+                return getLayerName(supplier);
             }
         }
 

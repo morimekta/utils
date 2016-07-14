@@ -37,18 +37,20 @@ import static net.morimekta.config.util.ConfigUtil.asString;
  * implementing generic entry adders (put, putAll), and getType unsafe getters.
  */
 public interface Config {
+
     /**
      * Look up a single value from the config.
+     *
+     * @param key The key to look for.
+     * @return The value if found, null otherwise.
      */
     Object get(String key);
 
     /**
-     * Checks if the key prefix exists deeply in the config. Also supports 'up'
-     * and 'super' navigation, unless the config instance also contains the key
-     * "up" or "super".
+     * Checks if the key exists in the config.
      *
-     * @param key The prefix to look for.
-     * @return The
+     * @param key The key to look for.
+     * @return True if the value exists. False otherwise.
      */
     boolean containsKey(String key);
 
@@ -77,10 +79,7 @@ public interface Config {
      *         requested type.
      */
     default String getString(String key, String def) {
-        if (containsKey(key)) {
-            return asString(get(key));
-        }
-        return def;
+        return asString(getWithDefault(key, def));
     }
 
     /**
@@ -102,10 +101,7 @@ public interface Config {
      *         requested type.
      */
     default boolean getBoolean(String key, boolean def) {
-        if (containsKey(key)) {
-            return asBoolean(get(key));
-        }
-        return def;
+        return asBoolean(getWithDefault(key, def));
     }
 
     /**
@@ -127,10 +123,7 @@ public interface Config {
      *         requested type.
      */
     default int getInteger(String key, int def) {
-        if (containsKey(key)) {
-            return asInteger(get(key));
-        }
-        return def;
+        return asInteger(getWithDefault(key, def));
     }
 
     /**
@@ -152,10 +145,7 @@ public interface Config {
      *         requested type.
      */
     default long getLong(String key, long def) {
-        if (containsKey(key)) {
-            return asLong(get(key));
-        }
-        return def;
+        return asLong(getWithDefault(key, def));
     }
 
     /**
@@ -177,10 +167,7 @@ public interface Config {
      *         requested type.
      */
     default double getDouble(String key, double def) {
-        if (containsKey(key)) {
-            return asDouble(get(key));
-        }
-        return def;
+        return asDouble(getWithDefault(key, def));
     }
 
     /**
@@ -202,10 +189,7 @@ public interface Config {
      *         requested type.
      */
     default Date getDate(String key, Date def) {
-        if (containsKey(key)) {
-            return asDate(get(key));
-        }
-        return def;
+        return asDate(getWithDefault(key, def));
     }
 
     /**
@@ -232,5 +216,22 @@ public interface Config {
             throw new KeyNotFoundException("No such config entry \"" + key + "\"");
         }
         return (T) get(key);
+    }
+
+    /**
+     * Look up a single value from the config. If not found return a default
+     * value.
+     *
+     * @param key The key to look for.
+     * @param def The default value.
+     * @param <T> The value type.
+     * @return The value if found, otherwise the default.
+     */
+    @SuppressWarnings("unchecked")
+    default <T> T getWithDefault(String key, T def) {
+        if (containsKey(key)) {
+            return (T) get(key);
+        }
+        return def;
     }
 }
