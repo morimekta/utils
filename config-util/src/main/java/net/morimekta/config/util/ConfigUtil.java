@@ -343,10 +343,20 @@ public class ConfigUtil {
             if (first instanceof Double || first instanceof Float ||
                 second instanceof Double || second instanceof Float) {
                 return asDouble(first) == asDouble(second);
-            } else if (first instanceof Number || second instanceof Number) {
+            } else if (first instanceof Long || second instanceof Long) {
                 return asLong(first) == asLong(second);
+            } else if (first instanceof Number || second instanceof Number) {
+                return asInteger(first) == asInteger(second);
             } else if (first instanceof Boolean || second instanceof Boolean) {
                 return asBoolean(first) == asBoolean(second);
+            } else if (first instanceof Set && second instanceof Set) {
+                @SuppressWarnings("unchecked")
+                Set<Object> f = (Set) first;
+                @SuppressWarnings("unchecked")
+                Set<Object> s = (Set) second;
+                // If we compare two sets, compare objects directly, as this time the
+                // encoding class does matter.
+                return f.size() == s.size() && f.containsAll(s);
             } else if (first instanceof Collection || second instanceof Collection) {
                 Collection f = asCollection(first);
                 Collection s = asCollection(second);
@@ -364,8 +374,10 @@ public class ConfigUtil {
                     }
                 }
                 return !(fi.hasNext() || si.hasNext());
-            } else {
+            } else if (first instanceof CharSequence || second instanceof CharSequence) {
                 return asString(first).equals(asString(second));
+            } else {
+                return first.equals(second);
             }
         } catch (IncompatibleValueException e) {
             return false;
