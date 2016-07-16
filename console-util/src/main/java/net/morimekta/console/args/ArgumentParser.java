@@ -110,6 +110,7 @@ public class ArgumentParser {
      * Add a command line option.
      *
      * @param option The option to add.
+     * @param <O> The base option type.
      * @return The argument argumentParser.
      */
     public <O extends BaseOption> ArgumentParser add(O option) {
@@ -152,6 +153,7 @@ public class ArgumentParser {
      * Add a sub-command.
      *
      * @param arg The command to add.
+     * @param <A> The base argument type.
      * @return The argument argumentParser.
      */
     public <A extends BaseArgument> ArgumentParser add(A arg) {

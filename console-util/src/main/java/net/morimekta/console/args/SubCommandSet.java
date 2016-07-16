@@ -85,6 +85,8 @@ public class SubCommandSet<SubCommandDef> extends BaseArgument {
      * @param usage The usage description.
      * @param consumer The sub-command consumer.
      * @param defaultValue The default sub-command.
+     * @param required If the sub-command is required.
+     * @param options Extra argument options.
      */
     public SubCommandSet(String name, String usage,
                          Consumer<SubCommandDef> consumer,
@@ -133,10 +135,21 @@ public class SubCommandSet<SubCommandDef> extends BaseArgument {
         return this;
     }
 
+    /**
+     * Print the sub-command list.
+     *
+     * @param out The output stream.
+     */
     public void printUsage(OutputStream out) {
         printUsage(out, false);
     }
 
+    /**
+     * Print the sub-command list.
+     *
+     * @param out The output stream.
+     * @param showHidden If hidden sub-commands should be printed.
+     */
     public void printUsage(OutputStream out, boolean showHidden) {
         printUsage(new PrintWriter(out), showHidden);
     }
@@ -166,6 +179,7 @@ public class SubCommandSet<SubCommandDef> extends BaseArgument {
      *
      * @param out The output stream.
      * @param name The sub-command to print help for.
+     * @param showHidden If hidden sub-commands should be shown.
      */
     public void printUsage(OutputStream out, String name, boolean showHidden) {
         printUsage(new PrintWriter(out), name, showHidden);

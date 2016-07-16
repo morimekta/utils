@@ -207,6 +207,7 @@ public interface Config {
      * instance. E.g.
      *
      * @param key The key to look up.
+     * @param <T> The value type.
      * @return The value.
      * @throws KeyNotFoundException If not found.
      */

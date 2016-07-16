@@ -26,7 +26,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
 import java.util.Collection;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -37,6 +36,7 @@ public class ImmutableConfig implements Config {
      * Create an immutable config instance.
      *
      * @param config The base config (or super-config).
+     * @return The immutable config.
      */
     public static ImmutableConfig copyOf(Config config) {
         if (config instanceof ImmutableConfig) {

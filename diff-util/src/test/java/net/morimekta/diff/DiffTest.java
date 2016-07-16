@@ -432,7 +432,7 @@ public class DiffTest {
 
     @Test
     public void testDiffMain() {
-        DiffOptions opts = DiffOptions.defaults().withChangeLines(false);
+        DiffOptions opts = DiffOptions.defaults().withCheckLines(false);
 
         // Perform a trivial diff.
         Diff diffs = diff();
@@ -497,7 +497,7 @@ public class DiffTest {
         Assert.assertTrue("main: Timeout max.", opts.getTimeout() * 1000 * 2 > endTime - startTime);
 
         opts = opts.withTimeout(0)
-                   .withChangeLines(false);
+                   .withCheckLines(false);
 
         // Test the linemode speedup.
         // Must be long to pass the 100 char cutoff.
@@ -505,7 +505,7 @@ public class DiffTest {
         b = "abcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\nabcdefghij\n";
         Assert.assertEquals("main: Simple line-mode.", new Diff(a, b, opts), new Diff(a, b, opts));
 
-        opts.withChangeLines(true);
+        opts.withCheckLines(true);
 
         a = "1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890";
         b = "abcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghij";
@@ -513,8 +513,8 @@ public class DiffTest {
 
         a = "1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n1234567890\n";
         b = "abcdefghij\n1234567890\n1234567890\n1234567890\nabcdefghij\n1234567890\n1234567890\n1234567890\nabcdefghij\n1234567890\n1234567890\n1234567890\nabcdefghij\n";
-        String[] texts_linemode = rebuildtexts(new Diff(a, b, opts.withChangeLines(true)));
-        String[] texts_textmode = rebuildtexts(new Diff(a, b, opts.withChangeLines(false)));
+        String[] texts_linemode = rebuildtexts(new Diff(a, b, opts.withCheckLines(true)));
+        String[] texts_textmode = rebuildtexts(new Diff(a, b, opts.withCheckLines(false)));
         assertArrayEquals("main: Overlap line-mode.", texts_textmode, texts_linemode);
 
         // Test null inputs.

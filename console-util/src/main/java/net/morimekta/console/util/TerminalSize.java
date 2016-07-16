@@ -60,12 +60,13 @@ public class TerminalSize {
     }
 
     /**
-     * Get the terminal size.
-     *
-     * @param runtime The runtime to run the stty command.
-     * @return the terminal size.
-     * @throws IOException If getting the terminal size failed.
+     * @return True if this is an interactive TTY terminal.
      */
+    public static boolean isInteractive() {
+        return isInteractive(Runtime.getRuntime());
+    }
+
+    @VisibleForTesting
     protected static TerminalSize get(Runtime runtime) throws IOException {
         String[] cmd = new String[]{"/bin/sh", "-c", "stty size </dev/tty"};
         Process p = runtime.exec(cmd);
@@ -94,6 +95,15 @@ public class TerminalSize {
                 throw new IOException("Unknown 'stty size' output: " + out);
             }
             throw new IOException("No 'stty size' output.");
+        }
+    }
+
+    @VisibleForTesting
+    protected static boolean isInteractive(Runtime runtime) {
+        try {
+            return get(runtime) != null;
+        } catch (IOException e) {
+            return false;
         }
     }
 }

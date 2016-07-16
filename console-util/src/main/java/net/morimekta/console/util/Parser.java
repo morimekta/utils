@@ -181,6 +181,7 @@ public interface Parser<T> {
      *
      * @param klass The enum class.
      * @param target The target consumer.
+     * @param <E> The enum type.
      * @return The consumer wrapper.
      */
     static <E extends Enum<E>> Consumer<String> oneOf(Class<E> klass, Consumer<E> target) {

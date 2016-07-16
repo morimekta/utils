@@ -71,7 +71,11 @@ public class ArgumentOptions {
      * @return The Argument options.
      */
     public ArgumentOptions withMaxUsageWidth(int maxWidth) {
-        this.usageWidth = Math.min(maxWidth, TerminalSize.get().cols);
+        if (TerminalSize.isInteractive()) {
+            this.usageWidth = Math.min(maxWidth, TerminalSize.get().cols);
+        } else {
+            this.usageWidth = maxWidth;
+        }
         return this;
     }
 

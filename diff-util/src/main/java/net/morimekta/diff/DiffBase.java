@@ -82,8 +82,10 @@ public abstract class DiffBase {
     public String prettyHtml() {
         StringBuilder html = new StringBuilder();
         for (Change aDiff : getChangeList()) {
-            String text = aDiff.text.replace("&", "&amp;").replace("<", "&lt;")
-                                    .replace(">", "&gt;").replace("\n", "&para;<br>");
+            String text = aDiff.text.replace("&", "&amp;")
+                                    .replace("<", "&lt;")
+                                    .replace(">", "&gt;")
+                                    .replace("\n", "&para;<br>");
             switch (aDiff.operation) {
                 case INSERT:
                     html.append("<ins style=\"background:#e6ffe6;\">").append(text)

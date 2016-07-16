@@ -214,7 +214,12 @@ public class InputSelection<E> {
         this.pageSize = pageSize;
         this.pageMargin = pageMargin;
         if (lineWidth == 0) {
-            this.lineWidth = TerminalSize.get().cols;
+            if (TerminalSize.isInteractive()) {
+                this.lineWidth = TerminalSize.get().cols;
+            } else {
+                // Fallback for non-interactive terminals.
+                this.lineWidth = 100;
+            }
         } else {
             this.lineWidth = lineWidth;
         }

@@ -60,11 +60,28 @@ public class DiffOptions {
         return this;
     }
 
-    public DiffOptions withChangeLines(boolean changeLines) {
-        this.checkLines = changeLines;
+    /**
+     * Set the option to check line-line diff before inter-line diffs. The two
+     * modes of diffing has different overall cost, so may save a significant
+     * time when diffing, but may produce a non-optimal diff in some
+     * circumstances.
+     *
+     * @see DiffBase#lineMode(String, String)
+     *
+     * @param checkLines If we should check line-diff.
+     * @return The options.
+     */
+    public DiffOptions withCheckLines(boolean checkLines) {
+        this.checkLines = checkLines;
         return this;
     }
 
+    /**
+     * Use the clock instance when calculating deadline oversteps.
+     *
+     * @param clock The clock to use.
+     * @return The options.
+     */
     public DiffOptions withClock(Clock clock) {
         this.clock = clock;
         return this;

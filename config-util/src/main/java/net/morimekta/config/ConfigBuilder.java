@@ -132,6 +132,7 @@ public interface ConfigBuilder<Builder extends ConfigBuilder<Builder>> extends C
      *
      * @param key The key to put at.
      * @param value The value to put.
+     * @param <T> The collection item type.
      * @return The config.
      */
     @SuppressWarnings("unchecked")
