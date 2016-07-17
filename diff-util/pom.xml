@@ -17,13 +17,13 @@
 
     <scm>
         <url>https://github.com/morimekta/utils.git</url>
-        <tag>HEAD</tag>
+        <tag>v0.3.3</tag>
     </scm>
 
     <parent>
         <groupId>net.morimekta.utils</groupId>
         <artifactId>utils</artifactId>
-        <version>0.3.3-SNAPSHOT</version>
+        <version>0.3.3</version>
     </parent>
     <artifactId>diff-util</artifactId>
     <packaging>jar</packaging>
@@ -32,7 +32,7 @@
         <dependency>
             <groupId>net.morimekta.utils</groupId>
             <artifactId>io-util</artifactId>
-            <version>0.3.3-SNAPSHOT</version>
+            <version>0.3.3</version>
         </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>
