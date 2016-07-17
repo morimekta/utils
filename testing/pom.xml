@@ -50,7 +50,6 @@
     </dependencies>
 
     <build>
-        <finalName>testing</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -77,6 +76,7 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
+                            <finalName>testing</finalName>
                             <minimizeJar>true</minimizeJar>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
