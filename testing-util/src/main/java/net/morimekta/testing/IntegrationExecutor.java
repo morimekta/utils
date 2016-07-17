@@ -27,6 +27,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -37,48 +39,32 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public class IntegrationExecutor {
     private final File            jarFile;
     private final Runtime         runtime;
-    private ByteArrayOutputStream out;
-    private ByteArrayOutputStream err;
+    private final ExecutorService executor;
+    private final ByteArrayOutputStream out;
+    private final ByteArrayOutputStream err;
+
+    private IOException           inException;
+    private IOException           outException;
+    private IOException           errException;
+
     private InputStream           in;
     private long                  deadlineMs;
 
-    public static File findMavenTargetJar(String module, String name) throws IOException {
-        if (new File(module).isDirectory()) {
-            File inModule = new File(module + "/target/" + name);
-
-            if (inModule.isFile()) {
-                return inModule;
-            }
-        }
-
-        File local = new File("target/" + name);
-        if (local.isFile()) {
-            return local;
-        }
-
-        throw new IOException("No such jar file: " + name);
-    }
-
     public IntegrationExecutor(String module, String name) throws IOException {
-        this(module, name, Runtime.getRuntime());
+        this(findMavenTargetJar(module, name),
+             Runtime.getRuntime(),
+             Executors.newFixedThreadPool(3));
     }
 
-    private IntegrationExecutor(String module, String name, Runtime runtime) throws IOException {
-        this(findMavenTargetJar(module, name), runtime);
-    }
-
-    public IntegrationExecutor(File jarFile) {
-        this(jarFile, Runtime.getRuntime());
-    }
-
-    private IntegrationExecutor(File jarFile, Runtime runtime) {
+    private IntegrationExecutor(File jarFile, Runtime runtime, ExecutorService executor) {
         this.jarFile = jarFile;
         this.runtime = runtime;
+        this.executor = executor;
 
         this.out = new ByteArrayOutputStream();
         this.err = new ByteArrayOutputStream();
         this.in = null;
-        this.deadlineMs = 60L * 1000L;
+        this.deadlineMs = TimeUnit.SECONDS.toMillis(1);
     }
 
     /**
@@ -109,7 +95,7 @@ public class IntegrationExecutor {
      * the run fails with an IOException.
      *
      * @param deadlineMs The new deadline in milliseconds. 0 means to wait
-     *                   forever. Default is 60 seconds.
+     *                   forever. Default is 1 second.
      */
     public void setDeadlineMs(long deadlineMs) {
         this.deadlineMs = deadlineMs;
@@ -127,6 +113,10 @@ public class IntegrationExecutor {
             out.reset();
             err.reset();
 
+            inException = null;
+            outException = null;
+            errException = null;
+
             String[] cmd = new String[args.length + 3];
             cmd[0] = "java";
             cmd[1] = "-jar";
@@ -134,12 +124,53 @@ public class IntegrationExecutor {
             if (args.length > 0) {
                 System.arraycopy(args, 0, cmd, 3, args.length);
             }
+
             Process process = runtime.exec(cmd);
 
+            // T avoid the process running out of IO buffer, we need to handle
+            // the read and writing of both std-in and std-out/-err in separate
+            // threads, while we at the same time we wait (to handle the
+            // execution deadline).
+            executor.submit(() -> {
+                try {
+                    IOUtils.copy(process.getInputStream(), out);
+                } catch (IOException e) {
+                    outException = e;
+                }
+            });
+            executor.submit(() -> {
+                try {
+                    IOUtils.copy(process.getErrorStream(), err);
+                } catch (IOException e) {
+                    errException = e;
+                }
+            });
+
             if (in != null) {
-                IOUtils.copy(in, process.getOutputStream());
+                executor.submit(() -> {
+                    try {
+                        IOUtils.copy(in, process.getOutputStream());
+                        // Do not allow the std-in to have lingering bytes.
+                        process.getOutputStream().flush();
+                    } catch (IOException e) {
+                        inException = e;
+                    } finally {
+                        try {
+                            process.getOutputStream().close();
+                        } catch (IOException e2) {
+                            e2.printStackTrace();
+                        }
+                        in = null;
+                    }
+                });
+            } else {
+                // Always close the program's input stream to force it to stop reading.
+                // NOTE: This is not identical to how interactive apps work, but avoids
+                // the test to halt because of problems reading from std input stream.
+                //
+                // TODO(morimekta): Figure out the correct behavior + deadline.
+                process.getOutputStream().close();
             }
-            process.getOutputStream().close();
 
             if (deadlineMs > 0) {
                 if (!process.waitFor(deadlineMs, TimeUnit.MILLISECONDS)) {
@@ -173,12 +204,36 @@ public class IntegrationExecutor {
                 process.waitFor();
             }
 
-            IOUtils.copy(process.getInputStream(), out);
-            IOUtils.copy(process.getErrorStream(), err);
+            executor.shutdownNow();
+
+            if (inException != null) {
+                throw new IOException(inException.getMessage(), inException);
+            } else if (outException != null) {
+                throw new IOException(outException.getMessage(), outException);
+            } else if (errException != null) {
+                throw new IOException(errException.getMessage(), errException);
+            }
 
             return process.exitValue();
         } catch (InterruptedException e) {
             throw new IOException(e);
         }
+    }
+
+    private static File findMavenTargetJar(String module, String name) throws IOException {
+        if (new File(module).isDirectory()) {
+            File inModule = new File(module + "/target/" + name);
+
+            if (inModule.isFile()) {
+                return inModule;
+            }
+        }
+
+        File local = new File("target/" + name);
+        if (local.isFile()) {
+            return local;
+        }
+
+        throw new IOException("No such jar file: " + name);
     }
 }
