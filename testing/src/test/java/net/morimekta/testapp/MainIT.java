@@ -49,7 +49,7 @@ public class MainIT {
 
     @Test
     public void testMain_withArgs() throws IOException {
-        assertEquals(0, executor.run(new String[]{"first", "second", "third", "fourth"}));
+        assertEquals(0, executor.run("first", "second", "third", "fourth"));
 
         assertEquals("len: 4\n" +
                      "+ first\n" +

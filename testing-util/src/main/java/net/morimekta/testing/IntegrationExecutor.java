@@ -20,13 +20,14 @@
  */
 package net.morimekta.testing;
 
+import net.morimekta.util.Strings;
 import net.morimekta.util.io.IOUtils;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.concurrent.TimeUnit;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -34,11 +35,12 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * Helper to handle process forking related to testing a jar file.
  */
 public class IntegrationExecutor {
-    private final File jarFile;
-    private final Runtime runtime;
+    private final File            jarFile;
+    private final Runtime         runtime;
     private ByteArrayOutputStream out;
     private ByteArrayOutputStream err;
-    private InputStream in;
+    private InputStream           in;
+    private long                  deadlineMs;
 
     public static File findMavenTargetJar(String module, String name) throws IOException {
         if (new File(module).isDirectory()) {
@@ -75,26 +77,52 @@ public class IntegrationExecutor {
 
         this.out = new ByteArrayOutputStream();
         this.err = new ByteArrayOutputStream();
-        this.in = new ByteArrayInputStream(new byte[0]);
+        this.in = null;
+        this.deadlineMs = 60L * 1000L;
     }
 
+    /**
+     * @return The programs stdout content.
+     */
     public String getOutput() {
         return new String(out.toByteArray(), UTF_8);
     }
 
+    /**
+     * @return The programs stderr content.
+     */
     public String getError() {
         return new String(err.toByteArray(), UTF_8);
     }
 
+    /**
+     * Set input stream to write to the process as program input.
+     *
+     * @param in The program input.
+     */
     public void setInput(InputStream in) {
         this.in = in;
     }
 
-    public int run() throws IOException {
-        return run(new String[]{});
+    /**
+     * Set the program deadline. If not finished in this time interval,
+     * the run fails with an IOException.
+     *
+     * @param deadlineMs The new deadline in milliseconds. 0 means to wait
+     *                   forever. Default is 60 seconds.
+     */
+    public void setDeadlineMs(long deadlineMs) {
+        this.deadlineMs = deadlineMs;
     }
 
-    public int run(String[] args) throws IOException {
+    /**
+     * Run the program with the specified arguments.
+     *
+     * @param args The arguments.
+     * @return The programs exit code.
+     * @throws IOException If the run times out or is interrupted.
+     */
+    public int run(String... args) throws IOException {
         try {
             out.reset();
             err.reset();
@@ -108,9 +136,42 @@ public class IntegrationExecutor {
             }
             Process process = runtime.exec(cmd);
 
-            IOUtils.copy(in, process.getOutputStream());
+            if (in != null) {
+                IOUtils.copy(in, process.getOutputStream());
+            }
+            process.getOutputStream().close();
 
-            process.waitFor();
+            if (deadlineMs > 0) {
+                if (!process.waitFor(deadlineMs, TimeUnit.MILLISECONDS)) {
+                    process.destroyForcibly();
+
+                    StringBuilder bld = new StringBuilder();
+                    boolean first = true;
+                    for (String c : cmd) {
+                        if (first) {
+                            first = false;
+                        } else {
+                            bld.append(" ");
+                        }
+
+                        String esc = Strings.escape(c);
+
+                        // Quote where escaping is needed, OR the argument
+                        // contains a literal space.
+                        if (!c.equals(esc) || c.contains(" ")) {
+                            bld.append('\"')
+                               .append(esc)
+                               .append('\"');
+                        } else {
+                            bld.append(c);
+                        }
+                    }
+
+                    throw new IOException("Process took too long: " + bld.toString());
+                }
+            } else {
+                process.waitFor();
+            }
 
             IOUtils.copy(process.getInputStream(), out);
             IOUtils.copy(process.getErrorStream(), err);
