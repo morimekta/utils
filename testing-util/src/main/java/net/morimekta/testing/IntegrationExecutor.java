@@ -56,7 +56,7 @@ public class IntegrationExecutor {
              Executors.newFixedThreadPool(3));
     }
 
-    private IntegrationExecutor(File jarFile, Runtime runtime, ExecutorService executor) {
+    protected IntegrationExecutor(File jarFile, Runtime runtime, ExecutorService executor) {
         this.jarFile = jarFile;
         this.runtime = runtime;
         this.executor = executor;
@@ -203,8 +203,6 @@ public class IntegrationExecutor {
             } else {
                 process.waitFor();
             }
-
-            executor.shutdownNow();
 
             if (inException != null) {
                 throw new IOException(inException.getMessage(), inException);
