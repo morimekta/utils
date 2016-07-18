@@ -32,12 +32,12 @@ import static org.junit.Assert.assertEquals;
 /**
  * TODO(morimekta): Make a real class description.
  */
-public class MainIT {
+public class IntegrationIT {
     private IntegrationExecutor executor;
 
     @Before
     public void setUp() throws IOException {
-        executor = new IntegrationExecutor("testing", "testing.jar");
+        executor = new IntegrationExecutor("testing", "integration.jar");
     }
 
     @Test

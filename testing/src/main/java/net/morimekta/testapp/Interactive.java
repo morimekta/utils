@@ -16,24 +16,8 @@ import java.util.List;
  * Since much of the console IO is dependent on a unix-like
  * terminal to work, it cannot be truly tested in a unit.
  */
-public class Main {
+public class Interactive {
     public static void main(String[] args) throws IOException {
-        // Use this if we are in integration testing. Meaning in order to
-        // run the interactive testing below use the argument "--interactive".
-        if (Arrays.binarySearch(args, "--interactive") < 0) {
-            System.out.println("len: " + args.length);
-
-            for (String arg : args) {
-                if (arg.contains("e") || arg.contains("E")) {
-                    System.err.println("- " + arg);
-                } else {
-                    System.out.println("+ " + arg);
-                }
-            }
-
-            return;
-        }
-
         try (Terminal term = new Terminal()) {
             List<String> entries = new ArrayList<>();
             for (int i = 0; i < 100; ++i) {
