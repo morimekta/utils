@@ -20,6 +20,9 @@
  */
 package net.morimekta.config.util;
 
+import net.morimekta.config.format.JsonConfigParser;
+import net.morimekta.config.format.PropertiesConfigParser;
+import net.morimekta.config.format.TomlConfigParser;
 import net.morimekta.util.Strings;
 
 import com.google.common.collect.ImmutableList;
@@ -42,9 +45,12 @@ import static net.morimekta.config.util.ConfigUtil.asLong;
 import static net.morimekta.config.util.ConfigUtil.asLongArray;
 import static net.morimekta.config.util.ConfigUtil.asString;
 import static net.morimekta.config.util.ConfigUtil.asStringArray;
+import static net.morimekta.config.util.ConfigUtil.getParserForSuffix;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -52,6 +58,14 @@ import static org.junit.Assert.fail;
  * Tests for ConfigUtil
  */
 public class ConfigUtilTest {
+    @Test
+    public void testGetParserForSuffix() {
+        assertThat(getParserForSuffix(".toml"), instanceOf(TomlConfigParser.class));
+        assertThat(getParserForSuffix(".ini"), instanceOf(TomlConfigParser.class));
+        assertThat(getParserForSuffix(".json"), instanceOf(JsonConfigParser.class));
+        assertThat(getParserForSuffix(".properties"), instanceOf(PropertiesConfigParser.class));
+    }
+
     @Test
     public void testAsBoolean() {
         assertTrue(asBoolean(true));

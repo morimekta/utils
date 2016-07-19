@@ -21,6 +21,10 @@ package net.morimekta.config.util;
 import net.morimekta.config.Config;
 import net.morimekta.config.ConfigException;
 import net.morimekta.config.IncompatibleValueException;
+import net.morimekta.config.format.ConfigParser;
+import net.morimekta.config.format.JsonConfigParser;
+import net.morimekta.config.format.PropertiesConfigParser;
+import net.morimekta.config.format.TomlConfigParser;
 import net.morimekta.util.Strings;
 
 import com.google.common.base.MoreObjects;
@@ -40,9 +44,32 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
- * Config value utility.
+ * General utility functions for config.
  */
 public class ConfigUtil {
+    /**
+     * Get the parser that matches the file format associated with the given
+     * file suffix. The suffix <b>should include the leading '.'</b>.
+     *
+     * @param suffix The file suffix.
+     * @return The associated config parser.
+     * @throws ConfigException If no known parser is associated with the file
+     *         suffix.
+     */
+    public static ConfigParser getParserForSuffix(String suffix) {
+        switch (suffix.toLowerCase()) {
+            case ".toml":
+            case ".ini":
+                return new TomlConfigParser();
+            case ".json":
+                return new JsonConfigParser();
+            case ".properties":
+                return new PropertiesConfigParser();
+            default:
+                throw new ConfigException("Unknown config file suffix: " + suffix);
+        }
+    }
+
     /**
      * Convert the value to a boolean.
      *
