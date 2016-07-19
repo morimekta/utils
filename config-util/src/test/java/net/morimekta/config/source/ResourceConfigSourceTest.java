@@ -20,8 +20,7 @@ import static org.junit.Assert.assertSame;
 public class ResourceConfigSourceTest {
     @Test
     public void testLoad() throws IOException, ConfigException {
-        Supplier<Config> source = new ResourceConfigSupplier("/net/morimekta/config/test.json",
-                                                             new JsonConfigParser());
+        Supplier<Config> source = new ResourceConfigSupplier("/net/morimekta/config/test.json");
 
         Config config = source.get();
 

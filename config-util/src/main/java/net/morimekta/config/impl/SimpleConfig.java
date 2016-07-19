@@ -65,6 +65,11 @@ public class SimpleConfig extends TreeMap<String,Object> implements ConfigBuilde
     }
 
     @Override
+    public int hashCode() {
+        return ConfigUtil.hashCode(this);
+    }
+
+    @Override
     public String toString() {
         return ConfigUtil.toString(this);
     }

@@ -54,7 +54,18 @@ public class RefreshingFileConfigSupplierTest {
     }
 
     @Test
-    public void testLoad() throws IOException, ConfigException, InterruptedException {
+    public void testLoad() {
+        Supplier<Config> src = new RefreshingFileConfigSupplier(cfg);
+        Config config = src.get();
+
+        assertEquals("string value.", config.getString("s"));
+        assertEquals(1234, config.getLong("i"));
+        assertEquals("another string value.", config.getValue("conf.sub_str"));
+        assertEquals(1234.5678, config.getDouble("conf.real"), 0.001);
+    }
+
+    @Test
+    public void testLoad_withRealoading() throws IOException, ConfigException, InterruptedException {
         Supplier<Config> src = new RefreshingFileConfigSupplier(cfg, new JsonConfigParser(), clock);
         Config config = src.get();
 
@@ -86,8 +97,8 @@ public class RefreshingFileConfigSupplierTest {
 
         // We need to have a short sleep, because otherwise we may miss the file update.
         // And make sure we wait longer than the "check interval of 1 second.
-        sleep(150);
-        clock.tick(150, TimeUnit.MILLISECONDS);
+        sleep(200);
+        clock.tick(250, TimeUnit.MILLISECONDS);
 
         config = src.get();
         assertNotSame(config, config_2);

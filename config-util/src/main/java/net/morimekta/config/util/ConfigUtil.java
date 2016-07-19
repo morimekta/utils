@@ -28,6 +28,7 @@ import net.morimekta.config.format.TomlConfigParser;
 import net.morimekta.util.Strings;
 
 import com.google.common.base.MoreObjects;
+import com.google.common.hash.HashCode;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -49,14 +50,20 @@ import java.util.stream.Collectors;
 public class ConfigUtil {
     /**
      * Get the parser that matches the file format associated with the given
-     * file suffix. The suffix <b>should include the leading '.'</b>.
+     * file suffix. The given string must include the last '.' in order to be
+     * valid.
      *
-     * @param suffix The file suffix.
+     * @param name The file name.
      * @return The associated config parser.
      * @throws ConfigException If no known parser is associated with the file
-     *         suffix.
+     *         suffix, or the file name does not have a dot.
      */
-    public static ConfigParser getParserForSuffix(String suffix) {
+    public static ConfigParser getParserForName(String name) {
+        int lastDot = name.lastIndexOf(".");
+        if (lastDot < 0)  {
+            throw new ConfigException("No file suffix in name: " + name);
+        }
+        String suffix = name.substring(lastDot);
         switch (suffix.toLowerCase()) {
             case ".toml":
             case ".ini":
@@ -348,6 +355,22 @@ public class ConfigUtil {
             }
         }
         return true;
+    }
+
+    /**
+     * Calculate a config hash for the config. It should be as type agnostic
+     * as possible by converting all values into strings.
+     *
+     * @param config The config to hash.
+     * @return The hash code value.
+     */
+    public static int hashCode(Config config) {
+        Set<String> keys = config.keySet();
+        int hash = Objects.hash(Config.class);
+        for (String key : keys) {
+            hash = Objects.hash(hash, config.getString(key));
+        }
+        return hash;
     }
 
     /**

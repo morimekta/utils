@@ -35,6 +35,8 @@ import java.nio.file.Files;
 import java.time.Clock;
 import java.util.function.Supplier;
 
+import static net.morimekta.config.util.ConfigUtil.getParserForName;
+
 /**
  * File source for config objects.
  */
@@ -49,6 +51,10 @@ public class RefreshingFileConfigSupplier implements Supplier<Config> {
     private long lastModified;
 
     private Config config;
+
+    public RefreshingFileConfigSupplier(File configFile) {
+        this(configFile, getParserForName(configFile.getName()));
+    }
 
     public RefreshingFileConfigSupplier(File configFile, ConfigParser format) {
         this(configFile, format, Clock.systemUTC());

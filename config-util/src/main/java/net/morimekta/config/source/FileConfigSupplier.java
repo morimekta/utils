@@ -33,6 +33,8 @@ import java.io.IOException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
+import static net.morimekta.config.util.ConfigUtil.getParserForName;
+
 /**
  * File source for config objects.
  */
@@ -40,6 +42,10 @@ public class FileConfigSupplier implements Supplier<Config> {
     private final File         configFile;
     private final ConfigParser parser;
     private final AtomicReference<Config> config;
+
+    public FileConfigSupplier(File configFile) {
+        this(configFile, getParserForName(configFile.getName()));
+    }
 
     public FileConfigSupplier(File configFile, ConfigParser format) {
         this.configFile = configFile;

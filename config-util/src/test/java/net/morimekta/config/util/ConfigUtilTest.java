@@ -23,6 +23,8 @@ package net.morimekta.config.util;
 import net.morimekta.config.format.JsonConfigParser;
 import net.morimekta.config.format.PropertiesConfigParser;
 import net.morimekta.config.format.TomlConfigParser;
+import net.morimekta.config.impl.ImmutableConfig;
+import net.morimekta.config.impl.SimpleConfig;
 import net.morimekta.util.Strings;
 
 import com.google.common.collect.ImmutableList;
@@ -45,7 +47,7 @@ import static net.morimekta.config.util.ConfigUtil.asLong;
 import static net.morimekta.config.util.ConfigUtil.asLongArray;
 import static net.morimekta.config.util.ConfigUtil.asString;
 import static net.morimekta.config.util.ConfigUtil.asStringArray;
-import static net.morimekta.config.util.ConfigUtil.getParserForSuffix;
+import static net.morimekta.config.util.ConfigUtil.getParserForName;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -59,11 +61,36 @@ import static org.junit.Assert.fail;
  */
 public class ConfigUtilTest {
     @Test
-    public void testGetParserForSuffix() {
-        assertThat(getParserForSuffix(".toml"), instanceOf(TomlConfigParser.class));
-        assertThat(getParserForSuffix(".ini"), instanceOf(TomlConfigParser.class));
-        assertThat(getParserForSuffix(".json"), instanceOf(JsonConfigParser.class));
-        assertThat(getParserForSuffix(".properties"), instanceOf(PropertiesConfigParser.class));
+    public void testGetParserForName() {
+        assertThat(getParserForName(".toml"), instanceOf(TomlConfigParser.class));
+        assertThat(getParserForName(".ini"), instanceOf(TomlConfigParser.class));
+        assertThat(getParserForName(".json"), instanceOf(JsonConfigParser.class));
+        assertThat(getParserForName(".properties"), instanceOf(PropertiesConfigParser.class));
+
+        assertThat(getParserForName("config.toml"), instanceOf(TomlConfigParser.class));
+        assertThat(getParserForName("/home/test.ini"), instanceOf(TomlConfigParser.class));
+        assertThat(getParserForName("c:\\my.properties.json"), instanceOf(JsonConfigParser.class));
+        assertThat(getParserForName("/home/toml/json.properties"), instanceOf(PropertiesConfigParser.class));
+    }
+
+    @Test
+    public void testHashCode() {
+        SimpleConfig a = new SimpleConfig();
+        a.putString("a", "1234");
+
+        ImmutableConfig b = ImmutableConfig.copyOf(new SimpleConfig().putInteger("a", 1234));
+
+        assertEquals(ConfigUtil.hashCode(a), ConfigUtil.hashCode(b));
+    }
+
+    @Test
+    public void testEquals() {
+        SimpleConfig a = new SimpleConfig();
+        a.putString("a", "1234");
+
+        ImmutableConfig b = ImmutableConfig.copyOf(new SimpleConfig().putInteger("a", 1234));
+
+        assertTrue(ConfigUtil.equals(a, b));
     }
 
     @Test

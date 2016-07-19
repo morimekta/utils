@@ -30,12 +30,18 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.function.Supplier;
 
+import static net.morimekta.config.util.ConfigUtil.getParserForName;
+
 /**
  * File source for config objects.
  */
 public class ResourceConfigSupplier implements Supplier<Config> {
     private final Config config;
     private final String resource;
+
+    public ResourceConfigSupplier(String resource) {
+        this(resource, getParserForName(resource));
+    }
 
     public ResourceConfigSupplier(String resource, ConfigParser parser) {
         this.resource = resource;

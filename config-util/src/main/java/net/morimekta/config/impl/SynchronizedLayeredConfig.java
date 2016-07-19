@@ -219,6 +219,11 @@ public class SynchronizedLayeredConfig implements Config, LayeredConfig, ReadWri
     }
 
     @Override
+    public int hashCode() {
+        return lockForReading(() -> ConfigUtil.hashCode(this));
+    }
+
+    @Override
     public String toString() {
         return lockForReading(() -> ConfigUtil.toString(this));
     }

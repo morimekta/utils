@@ -77,6 +77,11 @@ public class MappedConfig implements Config {
     }
 
     @Override
+    public int hashCode() {
+        return ConfigUtil.hashCode(this);
+    }
+
+    @Override
     public String toString() {
         return ConfigUtil.toString(this);
     }

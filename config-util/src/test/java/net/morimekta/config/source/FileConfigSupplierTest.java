@@ -47,7 +47,7 @@ public class FileConfigSupplierTest {
 
     @Test
     public void testLoad() throws IOException, ConfigException, InterruptedException {
-        FileConfigSupplier src = new FileConfigSupplier(cfg, new JsonConfigParser());
+        FileConfigSupplier src = new FileConfigSupplier(cfg);
         Config config = src.get();
 
         assertEquals("string value.", config.getString("s"));
