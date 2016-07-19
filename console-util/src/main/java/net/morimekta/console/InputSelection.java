@@ -306,6 +306,7 @@ public class InputSelection<E> {
                                 terminalBuffer.update(shownEntries + 2, makeMoreEntriesLine());
                             }
                             // continue to next.
+                            // ignore SF_SWITCH_FALLTHROUGH
                         }
                         case UPDATE_KEEP_POSITION: {
                             int off = paged ? 2 : 1;

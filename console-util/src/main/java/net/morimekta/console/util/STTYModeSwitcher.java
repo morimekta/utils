@@ -25,6 +25,8 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 /**
  * Switch terminal mode and make it return on close. Basic usage is:
  *
@@ -147,7 +149,8 @@ public class STTYModeSwitcher implements Closeable {
                     throw new IOException(ie.getMessage(), ie);
                 }
 
-                try (BufferedReader reader = new BufferedReader(new InputStreamReader(p.getErrorStream()))) {
+                try (InputStreamReader in = new InputStreamReader(p.getErrorStream(), UTF_8);
+                     BufferedReader reader = new BufferedReader(in)) {
                     String err = reader.readLine();
                     if (err != null) {
                         throw new IOException(err);

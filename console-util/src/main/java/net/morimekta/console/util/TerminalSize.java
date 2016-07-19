@@ -27,6 +27,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 /**
  * Column and row count for the current terminal.
  */
@@ -76,14 +78,14 @@ public class TerminalSize {
             throw new IOException(ie.getMessage(), ie);
         }
 
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(p.getErrorStream()))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(p.getErrorStream(), UTF_8))) {
             String err = reader.readLine();
             if (err != null) {
                 throw new IOException(err);
             }
         }
 
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream(), UTF_8))) {
             String out = reader.readLine();
             if (out != null) {
                 String[] parts = out.trim().split("[ ]");
@@ -101,7 +103,9 @@ public class TerminalSize {
     @VisibleForTesting
     protected static boolean isInteractive(Runtime runtime) {
         try {
-            return get(runtime) != null;
+            // Just check that is does not throw an exception.
+            get(runtime);
+            return true;
         } catch (IOException e) {
             return false;
         }

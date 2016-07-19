@@ -44,7 +44,7 @@ public class CharStream {
     private static class CharSpliterator implements Spliterator<Char> {
         private final CharSequence cstr;
 
-        private volatile int pos;
+        private int pos;
 
         private CharSpliterator(CharSequence cstr) {
             this.cstr = cstr;

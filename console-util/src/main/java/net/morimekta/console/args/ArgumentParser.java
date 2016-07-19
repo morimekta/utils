@@ -32,12 +32,15 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * Argument argumentParser class. This is the actual argumentParser that is initialized with
@@ -224,7 +227,7 @@ public class ArgumentParser {
                     File f = new File(cur.substring(1));
                     if (f.exists() && f.isFile()) {
                         try (FileInputStream fis = new FileInputStream(f);
-                             BufferedReader reader = new BufferedReader(new InputStreamReader(fis))) {
+                             BufferedReader reader = new BufferedReader(new InputStreamReader(fis, UTF_8))) {
                             List<String> lines = reader.lines()
                                                        .map(String::trim)
                                                        .filter(l -> !(l.isEmpty() || l.startsWith("#")))
@@ -303,7 +306,7 @@ public class ArgumentParser {
      * @param showHidden Whether to show hidden options.
      */
     public void printUsage(OutputStream out, boolean showHidden) {
-        printUsage(new PrintWriter(out), showHidden);
+        printUsage(new PrintWriter(new OutputStreamWriter(out, UTF_8)), showHidden);
     }
 
     /**
@@ -339,15 +342,15 @@ public class ArgumentParser {
         writer.append(program);
 
         // first just list up all the unary short opts.
-        String sh = "-";
-        for (BaseOption opt : options) {
-            if (opt instanceof Flag) {
-                sh = sh + opt.getShortNames();
-            }
-        }
+        StringBuilder sh = new StringBuilder();
+        // Only include the first short name form the flag.
+        options.stream()
+               .filter(opt -> opt instanceof Flag)
+               .filter(opt -> opt.getShortNames().length() > 0)
+               .forEachOrdered(opt -> sh.append(opt.getShortNames().charAt(0)));
 
-        if (sh.length() > 1) {
-            writer.append('[').append(sh).append(']');
+        if (sh.length() > 0) {
+            writer.append("[-").append(sh.toString()).append(']');
         }
 
         for (BaseOption opt : options) {

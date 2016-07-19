@@ -24,6 +24,7 @@ import net.morimekta.util.Strings;
 import net.morimekta.util.io.IndentedPrintWriter;
 
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -32,6 +33,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static net.morimekta.console.args.ArgumentParser.USAGE_EXTRA_CHARS;
 import static net.morimekta.console.args.ArgumentParser.printSingleUsageEntry;
 
@@ -151,7 +153,7 @@ public class SubCommandSet<SubCommandDef> extends BaseArgument {
      * @param showHidden If hidden sub-commands should be printed.
      */
     public void printUsage(OutputStream out, boolean showHidden) {
-        printUsage(new PrintWriter(out), showHidden);
+        printUsage(new PrintWriter(new OutputStreamWriter(out, UTF_8)), showHidden);
     }
 
     /**
@@ -171,7 +173,7 @@ public class SubCommandSet<SubCommandDef> extends BaseArgument {
      * @param name The sub-command to print help for.
      */
     public void printUsage(OutputStream out, String name) {
-        printUsage(new PrintWriter(out), name);
+        printUsage(new PrintWriter(new OutputStreamWriter(out, UTF_8)), name);
     }
 
     /**
@@ -182,7 +184,7 @@ public class SubCommandSet<SubCommandDef> extends BaseArgument {
      * @param showHidden If hidden sub-commands should be shown.
      */
     public void printUsage(OutputStream out, String name, boolean showHidden) {
-        printUsage(new PrintWriter(out), name, showHidden);
+        printUsage(new PrintWriter(new OutputStreamWriter(out, UTF_8)), name, showHidden);
     }
 
     /**

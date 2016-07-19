@@ -64,9 +64,9 @@ public class Control implements Char {
 
     public Control(CharSequence str) {
         if (str.equals("\033OH")) {
-            this.str = HOME.str;
+            this.str = "\033[1~";  // HOME
         } else if (str.equals("\033OF")) {
-            this.str = END.str;
+            this.str = "\033[4~";  // END
         } else {
             this.str = str.toString();
         }
@@ -185,7 +185,7 @@ public class Control implements Char {
         if (o == this) {
             return true;
         }
-        if (o == null || !(o instanceof Control)) {
+        if (o == null || !o.getClass().equals(getClass())) {
             return false;
         }
         Control other = (Control) o;

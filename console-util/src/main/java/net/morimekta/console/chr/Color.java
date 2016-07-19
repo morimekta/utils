@@ -23,6 +23,7 @@ package net.morimekta.console.chr;
 import net.morimekta.util.Strings;
 
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.TreeSet;
 
 /**
@@ -117,12 +118,17 @@ public class Color extends Control {
         if (o == this) {
             return true;
         }
-        if (o == null || !(o instanceof Color)) {
+        if (o == null || !o.getClass().equals(getClass())) {
             return false;
         }
         Color other = (Color) o;
 
         return Arrays.equals(mods, other.mods);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getClass(), Arrays.hashCode(mods));
     }
 
     /**
