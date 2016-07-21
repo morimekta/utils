@@ -39,6 +39,16 @@ import static org.junit.Assert.assertTrue;
  */
 public class ArgumentParserTest {
     @Test
+    public void testConstructor() {
+        ArgumentParser parser = new ArgumentParser("gt", "0.2.5", "Git Tools");
+
+        assertEquals("Git Tools - 0.2.5", parser.getProgramDescription());
+        assertEquals("gt", parser.getProgram());
+        assertEquals("0.2.5", parser.getVersion());
+        assertEquals("Git Tools", parser.getDescription());
+    }
+
+    @Test
     public void testParse() {
         ArgumentParser parser = new ArgumentParser("gt", "0.2.5", "Git Tools");
 

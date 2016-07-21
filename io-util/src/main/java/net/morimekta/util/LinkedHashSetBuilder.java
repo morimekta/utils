@@ -19,6 +19,7 @@
 package net.morimekta.util;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 
 /**
@@ -31,11 +32,10 @@ public class LinkedHashSetBuilder<T> {
         set = new LinkedHashSet<>();
     }
 
-    public LinkedHashSetBuilder<T> add(T first, T... values) {
+    @SafeVarargs
+    public final LinkedHashSetBuilder<T> add(T first, T... values) {
         set.add(first);
-        for (T value : values) {
-            set.add(value);
-        }
+        Collections.addAll(set, values);
         return this;
     }
 

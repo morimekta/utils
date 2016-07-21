@@ -152,8 +152,8 @@ public class Binary implements Comparable<Binary>, Stringable, Serializable {
      */
     public String toHexString() {
         StringBuilder builder = new StringBuilder();
-        for (int i = 0; i < bytes.length; ++i) {
-            builder.append(String.format("%02x", bytes[i]));
+        for (byte b : bytes) {
+            builder.append(String.format("%02x", b));
         }
         return builder.toString();
     }
@@ -235,7 +235,7 @@ public class Binary implements Comparable<Binary>, Stringable, Serializable {
 
     @Override
     public String toString() {
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
         buffer.append("binary(");
         for (byte b : bytes) {
             int i = b < 0 ? 0x100 + b : b;
@@ -247,10 +247,6 @@ public class Binary implements Comparable<Binary>, Stringable, Serializable {
 
     @Override
     public String asString() {
-        StringBuffer buffer = new StringBuffer();
-        buffer.append("[")
-              .append(toBase64())
-              .append("]");
-        return buffer.toString();
+        return "[" + toBase64() + "]";
     }
 }
