@@ -6,6 +6,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 /**
  * Test application for testing out the the integration executor.
  */
@@ -25,7 +27,7 @@ public class Integration {
             ByteArrayOutputStream in = new ByteArrayOutputStream();
             IOUtils.copy(System.in, in);
 
-            System.out.println(in.toString());
+            System.out.println(new String(in.toByteArray(), UTF_8));
         }
 
         for (String arg : args) {

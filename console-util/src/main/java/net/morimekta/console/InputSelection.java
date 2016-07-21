@@ -301,12 +301,16 @@ public class InputSelection<E> {
                             // remain the same.
                             updateSelectionIndex(current);
 
+                            int off = 1;
                             if (paged) {
                                 terminalBuffer.update(1, makeMoreEntriesLine());
                                 terminalBuffer.update(shownEntries + 2, makeMoreEntriesLine());
+                                off = 2;
                             }
-                            // continue to next.
-                            // ignore SF_SWITCH_FALLTHROUGH
+                            for (int i = 0; i < shownEntries; ++i) {
+                                terminalBuffer.update(off + i, makeEntryLine(i));
+                            }
+                            break;
                         }
                         case UPDATE_KEEP_POSITION: {
                             int off = paged ? 2 : 1;

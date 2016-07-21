@@ -28,6 +28,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Stack;
 import java.util.regex.Pattern;
 
@@ -73,6 +74,11 @@ public abstract class DiffBase {
         }
         DiffBase other = (DiffBase) o;
         return getChangeList().equals(other.getChangeList());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getClass(), getChangeList());
     }
 
     /**
