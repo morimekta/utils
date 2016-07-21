@@ -618,8 +618,13 @@ public final class Parcel {
                 result = valueOf(from[offset + 7]) << 56
                        | valueOf(from[offset + 6]) << 48
                        | valueOf(from[offset + 5]) << 40
-                       | valueOf(from[offset + 4]) << 32;
-            case 4:
+                       | valueOf(from[offset + 4]) << 32
+                       | valueOf(from[offset + 3]) << 24
+                       | valueOf(from[offset + 2]) << 16
+                       | valueOf(from[offset + 1]) <<  8
+                       | valueOf(from[offset]);
+                break;
+             case 4:
                 result = result
                        | valueOf(from[offset + 3]) << 24
                        | valueOf(from[offset + 2]) << 16

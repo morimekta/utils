@@ -22,10 +22,8 @@ package android.os;
 
 import android.util.Pair;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * A simpler variant of {@link Bundle} that only contains a few basic types
@@ -34,7 +32,7 @@ import java.util.Objects;
 @SuppressWarnings("unused")
 public final class PersistableBundle
         extends BaseBundle
-        implements Parcelable {
+        implements Parcelable, Cloneable {
     public PersistableBundle(int capacity) {
         super(capacity);
     }

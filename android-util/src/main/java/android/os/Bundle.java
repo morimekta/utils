@@ -40,7 +40,7 @@ import java.util.Map;
  * See also {@link PersistableBundle} and {@link BaseBundle}.
  */
 @SuppressWarnings("unused")
-public final class Bundle extends BaseBundle implements Parcelable {
+public final class Bundle extends BaseBundle implements Parcelable, Cloneable {
     public Bundle() {
         this(null, kDefaultSize);
     }

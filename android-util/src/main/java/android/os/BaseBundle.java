@@ -22,8 +22,8 @@ package android.os;
 
 import android.util.Pair;
 
-import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -278,6 +278,11 @@ public abstract class BaseBundle {
             }
         }
         return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getClass(), map);
     }
 
     @Override
