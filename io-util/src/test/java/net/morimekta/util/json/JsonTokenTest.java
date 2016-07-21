@@ -16,7 +16,10 @@ public class JsonTokenTest {
     public void testIsNull() {
         JsonToken token;
 
-        token = new JsonToken(JsonToken.Type.TOKEN, buffer, 57, 4, 1, 1);
+        token = new JsonToken(JsonToken.Type.TOKEN, buffer, 57, 4, 1, 5);
+        assertEquals(JsonToken.Type.TOKEN, token.getType());
+        assertEquals(1, token.getLineNo());
+        assertEquals(5, token.getLinePos());
         assertEquals("null", token.asString());
         assertTrue(token.isNull());
 

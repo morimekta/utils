@@ -73,8 +73,8 @@ public class JsonException extends Exception {
 
     public String describe() {
         if (getLine() != null) {
-            return String.format("JSON Error on line %d: %s\n" +
-                                 "# %s\n" +
+            return String.format("JSON Error on line %d: %s%n" +
+                                 "# %s%n" +
                                  "#%s%s",
                                  getLineNo(),
                                  getLocalizedMessage(),

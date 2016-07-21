@@ -28,6 +28,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
 /**
@@ -512,7 +513,7 @@ public class JsonTokenizer {
     }
 
     private void flushLineBuffer() {
-        lineBuilder.append(new String(lineBuffer.array(), 0, lineBuffer.position()));
+        lineBuilder.append(new String(lineBuffer.array(), 0, lineBuffer.position(), StandardCharsets.UTF_8));
         lineBuffer.clear();
     }
 

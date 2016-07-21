@@ -113,7 +113,7 @@ public class Binary implements Comparable<Binary>, Stringable, Serializable {
      */
     public static Binary fromBase64(String base64) {
         byte[] arr = Base64.decode(base64);
-        return new Binary(arr);
+        return Binary.wrap(arr);
     }
 
     /**
@@ -142,7 +142,7 @@ public class Binary implements Comparable<Binary>, Stringable, Serializable {
             String part = hex.substring(pos, pos + 2);
             out[i] = (byte) Integer.parseInt(part, 16);
         }
-        return new Binary(out);
+        return Binary.wrap(out);
     }
 
     /**

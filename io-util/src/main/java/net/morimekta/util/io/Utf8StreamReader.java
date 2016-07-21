@@ -146,6 +146,8 @@ public class Utf8StreamReader extends Reader {
             case 6:
                 cp = (arr[0] & 0x01);
                 break;
+            default:
+                throw new IOException("Unhandled utf-8 char length: " + num);
         }
         for (int i = 1; i < num; ++i) {
             if (arr[i] == -1) {

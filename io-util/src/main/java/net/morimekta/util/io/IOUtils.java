@@ -49,12 +49,12 @@ public class IOUtils {
             if(len > 4) { return skipUntilInternal(in, separator, new byte[len]); }
 
             int mask = len == 2 ? 0xffff : len == 3 ? 0xffffff : 0xffffffff;
-            int sep = (separator[0] % 0x100) << 8 | separator[1];
+            int sep = (separator[0] % 0x100) << 8 | ((int) separator[1] % 0x100);
             if(len > 2) {
-                sep = sep << 8 | separator[2];
+                sep = sep << 8 | ((int) separator[2] % 0x100);
             }
             if(len > 3) {
-                sep = sep << 8 | separator[3];
+                sep = sep << 8 | ((int) separator[3] % 0x100);
             }
             int r, p = 0;
             int tmp = 0;

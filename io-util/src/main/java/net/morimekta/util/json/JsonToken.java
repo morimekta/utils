@@ -40,9 +40,9 @@ public class JsonToken extends Slice {
         TOKEN,
     }
 
-    public static final byte[] kNull  = new byte[]{'n', 'u', 'l', 'l'};
-    public static final byte[] kTrue  = new byte[]{'t', 'r', 'u', 'e'};
-    public static final byte[] kFalse = new byte[]{'f', 'a', 'l', 's', 'e'};
+    private static final byte[] kNull  = new byte[]{'n', 'u', 'l', 'l'};
+    private static final byte[] kTrue  = new byte[]{'t', 'r', 'u', 'e'};
+    private static final byte[] kFalse = new byte[]{'f', 'a', 'l', 's', 'e'};
 
     public static final char kListStart = '[';
     public static final char kListEnd   = ']';
@@ -51,12 +51,12 @@ public class JsonToken extends Slice {
     public static final char kMapEnd    = '}';
     public static final char kKeyValSep = ':';
 
-    protected static final char kDoubleQuote    = '\"';
-    protected static final char kEscape         = '\\';
-    protected static final char kSpace          = ' ';
-    protected static final char kTab            = '\t';
-    protected static final char kNewLine        = '\n';
-    protected static final char kCarriageReturn = '\r';
+    static final char kDoubleQuote    = '\"';
+    static final char kEscape         = '\\';
+    static final char kSpace          = ' ';
+    static final char kTab            = '\t';
+    static final char kNewLine        = '\n';
+    static final char kCarriageReturn = '\r';
 
     public final Type type;
     public final int  lineNo;
@@ -67,6 +67,27 @@ public class JsonToken extends Slice {
         this.type = type;
         this.lineNo = lineNo;
         this.linePos = linePos;
+    }
+
+    /**
+     * @return The token type.
+     */
+    public Type getType() {
+        return type;
+    }
+
+    /**
+     * @return The line number (1-indexed).
+     */
+    public int getLineNo() {
+        return lineNo;
+    }
+
+    /**
+     * @return The start position on the line (0-indexed).
+     */
+    public int getLinePos() {
+        return linePos;
     }
 
     public boolean isNull() {
@@ -199,7 +220,7 @@ public class JsonToken extends Slice {
         if (o == this) {
             return true;
         }
-        if (o == null || !(o instanceof JsonToken)) {
+        if (o == null || !o.getClass().equals(getClass())) {
             return false;
         }
         JsonToken other = (JsonToken) o;
