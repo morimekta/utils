@@ -30,11 +30,11 @@ import net.morimekta.util.json.JsonException;
 import net.morimekta.util.json.JsonToken;
 import net.morimekta.util.json.JsonTokenizer;
 
+import com.google.common.collect.ImmutableList;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
 
 /**
  * Config parser for JSON object syntax.
@@ -44,22 +44,28 @@ public class JsonConfigParser implements ConfigParser {
     public Config parse(InputStream in) {
         try {
             JsonTokenizer tokenizer = new JsonTokenizer(in);
-            JsonToken token = tokenizer.next();
+            JsonToken token = tokenizer.expect("config start");
             if (!token.isSymbol(JsonToken.kMapStart)) {
                 throw new ConfigException("Illegal json start token: %s", token);
             }
-            return parseConfig(tokenizer, token);
+            return parseConfig(tokenizer);
         } catch (JsonException | IOException e) {
             throw new ConfigException(e, e.getMessage());
         }
     }
 
-    private Config parseConfig(JsonTokenizer tokenizer, JsonToken token)
+    private Config parseConfig(JsonTokenizer tokenizer)
             throws ConfigException, IOException, JsonException {
         ConfigBuilder config = new SimpleConfig();
+        JsonToken token = tokenizer.peek("for empty map");
+        if (token.isSymbol(JsonToken.kMapEnd)) {
+            tokenizer.next();
+            return ImmutableConfig.copyOf(config);
+        }
+
         char sep = token.charAt(0);
         while (sep != JsonToken.kMapEnd) {
-            JsonToken jkey = tokenizer.expect("Map key.");
+            JsonToken jkey = tokenizer.expect("map key");
             // No need to decode the key.
             String key = jkey.substring(1, -1).asString();
             tokenizer.expectSymbol("", JsonToken.kKeyValSep);
@@ -69,7 +75,7 @@ public class JsonConfigParser implements ConfigParser {
                 case SYMBOL:
                     switch (token.charAt(0)) {
                         case JsonToken.kListStart:
-                            config.putCollection(key, parseCollection(tokenizer, token));
+                            config.putCollection(key, parseCollection(tokenizer));
                             break;
                         default:
                             throw new IncompatibleValueException("No supported value type for " + token);
@@ -100,12 +106,18 @@ public class JsonConfigParser implements ConfigParser {
     }
 
     @SuppressWarnings("unchecked")
-    private <T> Collection<T> parseCollection(JsonTokenizer tokenizer, JsonToken token)
+    private <T> Collection<T> parseCollection(JsonTokenizer tokenizer)
             throws ConfigException, IOException, JsonException {
-        List<T> builder = new LinkedList<>();
+        JsonToken token = tokenizer.peek("for empty list");
+        if (token.isSymbol(JsonToken.kListEnd)) {
+            tokenizer.next();
+            return ImmutableList.of();
+        }
+
+        ImmutableList.Builder<T> builder = ImmutableList.builder();
         char sep = token.charAt(0);
         while (sep != JsonToken.kListEnd) {
-            token = tokenizer.expect("Array value.");
+            token = tokenizer.expect("array value.");
             switch (token.type) {
                 case LITERAL:
                     builder.add((T) token.decodeJsonLiteral());
@@ -127,9 +139,9 @@ public class JsonConfigParser implements ConfigParser {
                     throw new IllegalArgumentException("Unhandled JSON value token: " + token);
             }
 
-            sep = tokenizer.expectSymbol("List sep or end", JsonToken.kListEnd, JsonToken.kListSep);
+            sep = tokenizer.expectSymbol("list sep or end", JsonToken.kListEnd, JsonToken.kListSep);
         }
 
-        return builder;
+        return builder.build();
     }
 }
