@@ -44,6 +44,7 @@ public class PropertyTest {
         assertEquals("-Dkey=val", p.getPrefix());
         assertEquals("Help", p.getUsage());
         assertEquals("[-Dkey=val ...]", p.getSingleLineUsage());
+        assertEquals("key", p.getMetaKey());
 
         p.validate();
     }
@@ -75,21 +76,25 @@ public class PropertyTest {
     @Test
     public void testApply() {
         Map<String, String> map = new TreeMap<>();
-        Property p = new Property('D', "Help", map::put);
-        try {
-            p.apply(new ArgumentList("--def", "key=val"));
-            fail("No exception on apply");
-        } catch (IllegalArgumentException e) {
-            assertEquals("Properties does not support long options", e.getMessage());
-        }
-    }
+        Property p = new Property("--def", 'D', "Help", map::put);
+        assertEquals(2, p.apply(new ArgumentList("--def", "key=val")));
+        assertEquals("val", map.get("key"));
+   }
 
     @Test
     public void testApplyParser() {
         SimpleConfig config = new SimpleConfig();
-        Property straight = new Property('D', "Help", config::put);
-        Property typed    = new Property('I', "Int", i32().andPut(config::putInteger));
+        Property straight = new Property("--def", 'D', "Help", config::put);
+        Property typed = new Property('I', "Int", i32().andPut(config::putInteger));
         Option typedInto = new Option("--i32", "i", "num", "I2", i32().andPutAs(config::putInteger, "i2"));
 
+        assertEquals(2, straight.apply(new ArgumentList("--def", "key=val")));
+        assertEquals("val", config.getString("key"));
+
+        typed.applyShort("Ik=32", new ArgumentList("-I32"));
+        assertEquals(32, config.get("k"));
+
+        typedInto.apply(new ArgumentList("--i32", "1234"));
+        assertEquals(1234, config.get("i2"));
     }
 }

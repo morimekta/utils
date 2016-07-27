@@ -21,10 +21,13 @@
 package net.morimekta.console.args;
 
 /**
- * A property is an option with a short-option version only, and
- * the value is always a key-value pair.
+ * A property is an option where the value is a key-value pair, and applies
+ * the key value onto a putter.
  */
 public class Property extends BaseOption {
+    /**
+     * Basic interface for putting value onto a map, properties or config.
+     */
     @FunctionalInterface
     public interface Putter {
         /**
@@ -37,7 +40,7 @@ public class Property extends BaseOption {
     }
 
     private final Putter properties;
-    private final String     metaKey;
+    private final String metaKey;
 
     /**
      * Create a property argument with default key and value names.
@@ -48,6 +51,18 @@ public class Property extends BaseOption {
      */
     public Property(char shortName, String usage, Putter properties) {
         this(shortName, null, null, usage, properties, false);
+    }
+
+    /**
+     * Create a property argument with default key and value names.
+     *
+     * @param name The long option name.
+     * @param shortName The short name character.
+     * @param usage The usage string.
+     * @param properties The properties instance to populate.
+     */
+    public Property(String name, char shortName, String usage, Putter properties) {
+        this(name, shortName, null, null, usage, properties, false);
     }
 
     /**
@@ -74,7 +89,22 @@ public class Property extends BaseOption {
      * @param hidden If the property argument should be hidden.
      */
     public Property(char shortName, String metaKey, String metaVar, String usage, Putter properties, boolean hidden) {
-        super(null,   // long-option name
+        this(null, shortName, metaKey, metaVar, usage, properties, hidden);
+    }
+
+    /**
+     * Create a property argument.
+     *
+     * @param name The long option name.
+     * @param shortName The short name character.
+     * @param metaKey The meta key name.
+     * @param metaVar The meta value name.
+     * @param usage The usage string.
+     * @param properties The properties instance to populate.
+     * @param hidden If the property argument should be hidden.
+     */
+    public Property(String name, char shortName, String metaKey, String metaVar, String usage, Putter properties, boolean hidden) {
+        super(name,   // long-option name
               new String(new char[]{shortName}),
               metaVar == null ? "val" : metaVar,
               usage,
@@ -85,6 +115,13 @@ public class Property extends BaseOption {
 
         this.metaKey = metaKey == null ? "key" : metaKey;
         this.properties = properties;
+    }
+
+    /**
+     * @return The meta key name.
+     */
+    public String getMetaKey() {
+        return metaKey;
     }
 
     @Override
@@ -116,8 +153,11 @@ public class Property extends BaseOption {
 
     @Override
     public int applyShort(String opts, ArgumentList args) {
-        String[] parts = opts.substring(1)
-                             .split("[=]", 2);
+        if (opts.length() == 1) {
+            return apply(args);
+        }
+
+        String[] parts = opts.substring(1).split("[=]", 2);
         if (parts.length != 2) {
             throw new ArgumentException("No key value sep for properties: " + opts.substring(1));
         }
@@ -130,6 +170,17 @@ public class Property extends BaseOption {
 
     @Override
     public int apply(ArgumentList args) {
-        throw new IllegalArgumentException("Properties does not support long options");
+        if (args.remaining() < 2) {
+            throw new ArgumentException("No value for " + nameOrShort());
+        }
+        String[] parts = args.get(1).split("[=]", 2);
+        if (parts.length != 2) {
+            throw new ArgumentException("No key value sep for properties: " + nameOrShort());
+        }
+        if (parts[0].length() == 0) {
+            throw new ArgumentException("Empty property key : " + args.get(1));
+        }
+        properties.put(parts[0], parts[1]);
+        return 2;
     }
 }
