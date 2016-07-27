@@ -6,10 +6,13 @@ import net.morimekta.config.ConfigException;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Tests for the JSON config format.
@@ -56,5 +59,20 @@ public class TomlConfigTest {
                      "        \"c\"\n" +
                      "    ]\n" +
                      "}", result);
+
+        assertEquals(1467475262055L, config.getDate("date").getTime());
+    }
+
+    @Test
+    public void testEmptyCollection() {
+        ByteArrayInputStream in = new ByteArrayInputStream((
+                "[section]\n" +
+                "value = []\n" +
+                "").getBytes(UTF_8));
+
+        Config config = parser.parse(in);
+
+        assertNotNull(config.getCollection("section.value"));
+        assertTrue(config.getCollection("section.value").isEmpty());
     }
 }
