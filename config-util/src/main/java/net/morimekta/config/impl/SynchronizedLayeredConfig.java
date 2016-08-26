@@ -24,6 +24,7 @@ import net.morimekta.config.Config;
 import net.morimekta.config.KeyNotFoundException;
 import net.morimekta.config.LayeredConfig;
 import net.morimekta.config.util.ConfigUtil;
+import net.morimekta.config.util.ValueConverter;
 import net.morimekta.util.concurrent.ReadWriteMutex;
 import net.morimekta.util.concurrent.ReentrantReadWriteMutex;
 
@@ -155,7 +156,7 @@ public class SynchronizedLayeredConfig implements Config, LayeredConfig, ReadWri
 
     @Override
     public Object get(String key) {
-        return getWithDefault(key, null);
+        return getWithDefault(key, v -> v, null);
     }
 
     @Override
@@ -170,13 +171,12 @@ public class SynchronizedLayeredConfig implements Config, LayeredConfig, ReadWri
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public <T> T getWithDefault(String key, T def) {
+    public <T> T getWithDefault(String key, ValueConverter<T> converter, T def) {
         return lockForReading(() -> {
             for (Supplier<Config> supplier : layers) {
                 Config config = supplier.get();
                 if (config.containsKey(key)) {
-                    return (T) config.get(key);
+                    return converter.convert(config.get(key));
                 }
             }
             return def;

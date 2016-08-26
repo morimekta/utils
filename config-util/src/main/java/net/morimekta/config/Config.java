@@ -18,6 +18,9 @@
  */
 package net.morimekta.config;
 
+import net.morimekta.config.util.ConfigUtil;
+import net.morimekta.config.util.ValueConverter;
+
 import java.util.Collection;
 import java.util.Date;
 import java.util.Set;
@@ -79,7 +82,7 @@ public interface Config {
      *         requested type.
      */
     default String getString(String key, String def) {
-        return asString(getWithDefault(key, def));
+        return getWithDefault(key, ConfigUtil::asString, def);
     }
 
     /**
@@ -101,7 +104,7 @@ public interface Config {
      *         requested type.
      */
     default boolean getBoolean(String key, boolean def) {
-        return asBoolean(getWithDefault(key, def));
+        return getWithDefault(key, ConfigUtil::asBoolean, def);
     }
 
     /**
@@ -123,7 +126,7 @@ public interface Config {
      *         requested type.
      */
     default int getInteger(String key, int def) {
-        return asInteger(getWithDefault(key, def));
+        return getWithDefault(key, ConfigUtil::asInteger, def);
     }
 
     /**
@@ -145,7 +148,7 @@ public interface Config {
      *         requested type.
      */
     default long getLong(String key, long def) {
-        return asLong(getWithDefault(key, def));
+        return getWithDefault(key, ConfigUtil::asLong, def);
     }
 
     /**
@@ -167,7 +170,7 @@ public interface Config {
      *         requested type.
      */
     default double getDouble(String key, double def) {
-        return asDouble(getWithDefault(key, def));
+        return getWithDefault(key, ConfigUtil::asDouble, def);
     }
 
     /**
@@ -189,7 +192,7 @@ public interface Config {
      *         requested type.
      */
     default Date getDate(String key, Date def) {
-        return asDate(getWithDefault(key, def));
+        return getWithDefault(key, ConfigUtil::asDate, def);
     }
 
     /**
@@ -227,11 +230,27 @@ public interface Config {
      * @param def The default value.
      * @param <T> The value type.
      * @return The value if found, otherwise the default.
+     *
+     * @deprecated since 0.3.5, use {@link #getWithDefault(String, ValueConverter, Object)}
      */
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings("unchecked,unused")
+    @Deprecated
     default <T> T getWithDefault(String key, T def) {
+        return getWithDefault(key, v -> (T) v, def);
+    }
+
+    /**
+     * Look up a single value from the config. If not found return a default
+     * value. Convert the value using the given converter function.
+     *
+     * @param key The key to look for.
+     * @param def The default value.
+     * @param <T> The value type.
+     * @return The value if found, otherwise the default.
+     */
+    default <T> T getWithDefault(String key, ValueConverter<T> convert, T def) {
         if (containsKey(key)) {
-            return (T) get(key);
+            return convert.convert(get(key));
         }
         return def;
     }
