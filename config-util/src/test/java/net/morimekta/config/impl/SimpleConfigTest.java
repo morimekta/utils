@@ -103,12 +103,14 @@ public class SimpleConfigTest {
         assertEquals(1L, config.getLong("not.found", 1));
         assertEquals(1.1, config.getDouble("not.found", 1.1), 0.001);
         assertEquals("default", config.getString("not.found", "default"));
+        assertEquals(null, config.getString("not.found", null));
 
         assertEquals(false, config.getBoolean("bool", true));
         assertEquals(3, config.getInteger("int", 1));
         assertEquals(3L, config.getLong("long", 1));
         assertEquals(3.3, config.getDouble("double", 1.1), 0.001);
         assertEquals("not default", config.getString("str", "default"));
+        assertEquals("not default", config.getString("str", null));
     }
 
     @Test

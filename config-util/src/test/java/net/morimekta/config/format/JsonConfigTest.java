@@ -77,4 +77,28 @@ public class JsonConfigTest {
         assertNotNull(c);
         assertTrue(c.isEmpty());
     }
+
+    @Test
+    public void testConvenience() {
+        assertEquals("{" +
+                     "\"b\":true," +
+                     "\"conf.real\":1234.5678," +
+                     "\"conf.sub_str\":\"another string value.\"," +
+                     "\"i\":1234," +
+                     "\"s\":\"string value.\"," +
+                     "\"seq_b\":[false,false,false,true]," +
+                     "\"seq_i\":[1,2.2,3.7,-4]," +
+                     "\"seq_s\":[\"a\",\"b\",\"c\"]" +
+                     "}", formatter.formatToString(
+                             parser.parseString("{" +
+                                                "\"b\":true," +
+                                                "\"conf.real\":1234.5678," +
+                                                "\"conf.sub_str\":\"another string value.\"," +
+                                                "\"i\":1234," +
+                                                "\"s\":\"string value.\"," +
+                                                "\"seq_b\":[false,false,false,true]," +
+                                                "\"seq_i\":[1,2.2,3.7,-4]," +
+                                                "\"seq_s\":[\"a\",\"b\",\"c\"]" +
+                                                "}")));
+    }
 }

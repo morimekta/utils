@@ -22,7 +22,9 @@ package net.morimekta.config.format;
 
 import net.morimekta.config.Config;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 
 /**
  * A config parser interface.
@@ -36,4 +38,15 @@ public interface ConfigParser {
      * @return The config.
      */
     Config parse(InputStream in);
+
+    /**
+     * Convenience method to parse a string config.
+     *
+     * @param configString The config string representation.
+     * @return The parsed config.
+     */
+    default Config parseString(String configString) {
+        ByteArrayInputStream bais = new ByteArrayInputStream(configString.getBytes(StandardCharsets.UTF_8));
+        return parse(bais);
+    }
 }

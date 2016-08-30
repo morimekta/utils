@@ -22,7 +22,10 @@ package net.morimekta.config.format;
 
 import net.morimekta.config.Config;
 
+import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * Config formatter interface.
@@ -36,4 +39,16 @@ public interface ConfigFormatter {
      * @param out The output stream to write to.
      */
     void format(Config config, OutputStream out);
+
+    /**
+     * Format the config to string.
+     *
+     * @param config The config to format.
+     * @return The string representation of the config with this formatter.
+     */
+    default String formatToString(Config config) {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        format(config, baos);
+        return new String(baos.toByteArray(), UTF_8);
+    }
 }
