@@ -48,12 +48,12 @@
     <scm>
         <url>https://github.com/morimekta/utils.git</url>
         <developerConnection>scm:git:ssh://git@github.com/morimekta/utils.git</developerConnection>
-        <tag>v0.3.5</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <groupId>net.morimekta.utils</groupId>
     <artifactId>utils</artifactId>
-    <version>0.3.5</version>
+    <version>0.3.6-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <prerequisites>
