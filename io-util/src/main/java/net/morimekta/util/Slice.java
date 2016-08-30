@@ -56,18 +56,21 @@ public class Slice implements Comparable<Slice>, Stringable {
 
     public final Slice substring(int start, int end) {
         if (start < 0 || end > len || end < -len) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException(
+                    String.format("[%d,%d] of slice length %d is not valid.", start, end, len));
         }
         int l = end < 0 ? (len - start) + end : end - start;
         if (l < 0 || l > (len - start)) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException(
+                    String.format("[%d,%d] of slice length %d is not valid.", start, end, len));
         }
         return new Slice(fb, off + start, l);
     }
 
     public final char charAt(int i) {
         if (i < -len || len <= i) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException(
+                    String.format("position %d of slice length %d is not valid.", i, len));
         }
         if (i < 0) {
             i = len + i;

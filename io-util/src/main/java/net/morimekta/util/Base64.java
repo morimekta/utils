@@ -168,15 +168,35 @@ public class Base64 {
      * @throws NullPointerException if source array is null
      * @since 2.0
      */
-    public static String encodeToString(byte[] source) {
+    public static String encodeToString(final byte[] source) {
         return encodeToString(source, 0, source.length);
     }
 
-    public static String encodeToString(byte[] source, int off, int len) {
+    /**
+     * Encodes a byte array into Base64 string.
+     *
+     * @param source The data to convert
+     * @param off The data offset of what to encode.
+     * @param len The number of bytes to encode.
+     * @return The Base64-encoded data as a String
+     * @throws NullPointerException if source array is null
+     * @since 2.0
+     */
+    public static String encodeToString(final byte[] source, int off, int len) {
         byte[] encoded = encode(source, off, len);
         return new String(encoded, US_ASCII);
     }
 
+    /**
+     * Encodes a byte array into Base64 data.
+     *
+     * @param source The data to convert
+     * @param off The data offset of what to encode.
+     * @param len The number of bytes to encode.
+     * @return The Base64-encoded data as a String
+     * @throws NullPointerException if source array is null
+     * @since 2.0
+     */
     public static byte[] encode(final byte[] source, final int off, final int len) {
         if (source == null) {
             throw new NullPointerException("Cannot serialize a null array.");
@@ -228,6 +248,14 @@ public class Base64 {
         return dest;
     }
 
+    /**
+     * Encodes a byte array into Base64 string.
+     *
+     * @param source The data to convert
+     * @return The Base64-encoded data.
+     * @throws NullPointerException if source array is null
+     * @since 2.0
+     */
     public static byte[] encode(byte[] source) {
         return encode(source, 0, source.length);
     }
