@@ -2,8 +2,7 @@ package net.morimekta.config.source;
 
 import net.morimekta.config.Config;
 import net.morimekta.config.ConfigException;
-import net.morimekta.config.format.JsonConfigParser;
-import net.morimekta.testing.time.FakeClock;
+import net.morimekta.util.FileWatcher;
 import net.morimekta.util.io.IOUtils;
 
 import org.junit.Before;
@@ -15,7 +14,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
@@ -30,17 +28,15 @@ import static org.junit.Assert.assertTrue;
 /**
  * Tests for the file source for config.
  */
-public class RefreshingFileConfigSupplierTest {
+public class WatchedFileConfigSupplierTest {
     @Rule
     public TemporaryFolder tmp;
 
-    private File             cfg;
-    private FakeClock        clock;
+    private File        cfg;
+    private FileWatcher watcher;
 
     @Before
     public void setUp() throws IOException {
-        clock = new FakeClock();
-
         tmp = new TemporaryFolder();
         tmp.create();
 
@@ -51,11 +47,13 @@ public class RefreshingFileConfigSupplierTest {
             out.flush();
             out.getFD().sync();
         }
+
+        watcher = new FileWatcher();
     }
 
     @Test
     public void testLoad() {
-        Supplier<Config> src = new RefreshingFileConfigSupplier(cfg);
+        Supplier<Config> src = new WatchedFileConfigSupplier(watcher, cfg);
         Config config = src.get();
 
         assertEquals("string value.", config.getString("s"));
@@ -66,7 +64,7 @@ public class RefreshingFileConfigSupplierTest {
 
     @Test
     public void testLoad_withReloading() throws IOException, ConfigException, InterruptedException {
-        Supplier<Config> src = new RefreshingFileConfigSupplier(cfg, new JsonConfigParser(), clock);
+        Supplier<Config> src = new WatchedFileConfigSupplier(watcher, cfg);
         Config config = src.get();
 
         assertEquals("string value.", config.getString("s"));
@@ -85,8 +83,6 @@ public class RefreshingFileConfigSupplierTest {
         Config config_2 = src.get();
         assertSame(config, config_2);
 
-        clock.tick(900, TimeUnit.MILLISECONDS);
-
         // update file to test2.json
         try (FileOutputStream out = new FileOutputStream(cfg);
              InputStream in = getClass().getResourceAsStream("/net/morimekta/config/test2.json")) {
@@ -98,7 +94,6 @@ public class RefreshingFileConfigSupplierTest {
         // We need to have a short sleep, because otherwise we may miss the file update.
         // And make sure we wait longer than the "check interval of 1 second.
         sleep(200);
-        clock.tick(250, TimeUnit.MILLISECONDS);
 
         config = src.get();
         assertNotSame(config, config_2);
