@@ -22,6 +22,8 @@ package net.morimekta.config.format;
 
 import net.morimekta.config.Config;
 import net.morimekta.config.ConfigException;
+import net.morimekta.util.Numeric;
+import net.morimekta.util.Stringable;
 import net.morimekta.util.json.JsonException;
 import net.morimekta.util.json.JsonWriter;
 import net.morimekta.util.json.PrettyJsonWriter;
@@ -81,6 +83,10 @@ public class JsonConfigFormatter implements ConfigFormatter {
                 writeValue(writer, o);
             }
             writer.endArray();
+        } else if (value instanceof Numeric) {
+            writer.value(((Numeric) value).asInteger());
+        } else if (value instanceof Stringable) {
+            writer.value(((Stringable) value).asString());
         } else {
             throw new ConfigException("Unknown value class: " + value.getClass().getSimpleName());
         }

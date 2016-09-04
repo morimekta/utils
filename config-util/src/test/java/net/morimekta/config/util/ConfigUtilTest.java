@@ -25,6 +25,8 @@ import net.morimekta.config.format.PropertiesConfigParser;
 import net.morimekta.config.format.TomlConfigParser;
 import net.morimekta.config.impl.ImmutableConfig;
 import net.morimekta.config.impl.SimpleConfig;
+import net.morimekta.util.Numeric;
+import net.morimekta.util.Stringable;
 import net.morimekta.util.Strings;
 
 import com.google.common.collect.ImmutableList;
@@ -118,6 +120,7 @@ public class ConfigUtilTest {
         assertEquals(1, asInteger(1L));
         assertEquals(1, asInteger(true));
         assertEquals(1, asInteger("1"));
+        assertEquals(4, asInteger((Numeric) () -> 4));
 
         assertException("Unable to parse string \"foo\" to an int", "foo", ConfigUtil::asInteger);
         assertException("Unable to convert LinkedList to an int", new LinkedList<>(), ConfigUtil::asInteger);
@@ -129,6 +132,7 @@ public class ConfigUtilTest {
         assertEquals(1L, asLong(1L));
         assertEquals(1L, asLong(true));
         assertEquals(1L, asLong("1"));
+        assertEquals(4L, asLong((Numeric) () -> 4));
 
         assertException("Unable to parse string \"foo\" to a long", "foo", ConfigUtil::asLong);
         assertException("Unable to convert LinkedList to a long", new LinkedList<>(), ConfigUtil::asLong);
@@ -140,6 +144,7 @@ public class ConfigUtilTest {
         assertEquals(1.1, asDouble(1.1f), 0.001);
         assertEquals(1.1, asDouble(1.1), 0.001);
         assertEquals(1.1, asDouble("1.1"), 0.001);
+        assertEquals(4.0, asDouble((Numeric) () -> 4), 0.001);
 
         assertException("Unable to parse string \"foo\" to a double", "foo", ConfigUtil::asDouble);
         assertException("Unable to convert LinkedList to a double", new LinkedList<>(), ConfigUtil::asDouble);
@@ -150,6 +155,7 @@ public class ConfigUtilTest {
         assertEquals("1", asString(1L));
         assertEquals("1.1", asString(1.1));
         assertEquals("foo", asString("foo"));
+        assertEquals("4", asString((Stringable) () -> "4"));
 
         assertException("Unable to convert LinkedList to a string", new LinkedList<>(), ConfigUtil::asString);
     }

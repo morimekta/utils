@@ -25,10 +25,11 @@ import net.morimekta.config.format.ConfigParser;
 import net.morimekta.config.format.JsonConfigParser;
 import net.morimekta.config.format.PropertiesConfigParser;
 import net.morimekta.config.format.TomlConfigParser;
+import net.morimekta.util.Numeric;
+import net.morimekta.util.Stringable;
 import net.morimekta.util.Strings;
 
 import com.google.common.base.MoreObjects;
-import com.google.common.hash.HashCode;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -125,6 +126,8 @@ public class ConfigUtil {
     public static int asInteger(Object value) {
         if (value instanceof Number) {
             return ((Number) value).intValue();
+        } else if (value instanceof Numeric) {
+            return ((Numeric) value).asInteger();
         } else if (value instanceof Boolean) {
             return ((Boolean) value) ? 1 : 0;
         } else if (value instanceof CharSequence) {
@@ -151,6 +154,8 @@ public class ConfigUtil {
     public static long asLong(Object value) {
         if (value instanceof Number) {
             return ((Number) value).longValue();
+        } else if (value instanceof Numeric) {
+            return ((Numeric) value).asInteger();
         } else if (value instanceof Boolean) {
             return ((Boolean) value) ? 1L : 0L;
         } else if (value instanceof CharSequence) {
@@ -177,6 +182,8 @@ public class ConfigUtil {
     public static double asDouble(Object value) {
         if (value instanceof Number) {
             return ((Number) value).doubleValue();
+        } else if (value instanceof Numeric) {
+            return ((Numeric) value).asInteger();
         } else if (value instanceof CharSequence) {
             try {
                 return Double.parseDouble(value.toString());
@@ -199,6 +206,8 @@ public class ConfigUtil {
         if (value instanceof Collection || value instanceof Map || value instanceof Config) {
             throw new IncompatibleValueException(
                     "Unable to convert " + value.getClass().getSimpleName() + " to a string");
+        } else if (value instanceof Stringable) {
+            return ((Stringable) value).asString();
         } else if (value instanceof Date) {
             Instant instant = ((Date) value).toInstant();
             return DateTimeFormatter.ISO_INSTANT.format(instant);
