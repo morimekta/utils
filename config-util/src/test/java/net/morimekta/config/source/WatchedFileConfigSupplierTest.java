@@ -101,4 +101,10 @@ public class WatchedFileConfigSupplierTest {
         assertFalse(config.containsKey("as"));
         assertTrue(config.containsKey("conf.real"));
     }
+
+    @Test
+    public void testToString() {
+        Supplier<Config> src = new WatchedFileConfigSupplier(watcher, cfg);
+        assertEquals("WatchedFileConfigSupplier{file=" + cfg.toString() + "}", src.toString());
+    }
 }

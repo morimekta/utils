@@ -20,68 +20,40 @@
  */
 package net.morimekta.config.source;
 
-import net.morimekta.config.Config;
-import net.morimekta.config.ConfigException;
 import net.morimekta.config.format.ConfigParser;
 import net.morimekta.util.FileWatcher;
 
-import com.google.common.base.MoreObjects;
-
-import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Supplier;
 
 import static net.morimekta.config.util.ConfigUtil.getParserForName;
 
 /**
- * File source for config objects.
+ * File source for config objects that is updated with help from a file
+ * watcher. If you want to have separate watcher that should react to the same
+ * file, but trigger <b>after</b> the config is updated, then you need to
+ * register that watcher <b>after</b> the supplier is created.
+ *
+ * <code>
+ *     FileWatcher watcher = new FileWatcher();
+ *     WatchedFileConfigSupplier supplier = new WatchedFileConfigSupplier(watcher, file);
+ *     watcher.addWatcher(this::onConfigUpdate);
+ * </code>
+ *
+ * Most likely you would want to register the watcher after your entire app has
+ * been initialized, but that is another topic.
  */
-public class WatchedFileConfigSupplier implements Supplier<Config> {
-    private final File         configFile;
-    private final ConfigParser parser;
-    private final AtomicReference<Config> config;
-
+public class WatchedFileConfigSupplier extends FileConfigSupplier {
     public WatchedFileConfigSupplier(FileWatcher watcher, File configFile) {
         this(watcher, configFile, getParserForName(configFile.getName()));
     }
 
     public WatchedFileConfigSupplier(FileWatcher watcher, File configFile, ConfigParser format) {
+        super(configFile, format);
         watcher.startWatching(configFile);
         watcher.addWatcher(file -> {
             if (configFile.equals(configFile)) {
                 reload();
             }
         });
-        this.configFile = configFile;
-        this.parser = format;
-        this.config = new AtomicReference<>(loadInternal());
-    }
-
-    @Override
-    public synchronized Config get() {
-        return config.get();
-    }
-
-    @Override
-    public String toString() {
-        return MoreObjects.toStringHelper(this)
-                          .add("file", configFile)
-                          .toString();
-    }
-
-    private void reload() {
-        this.config.set(loadInternal());
-    }
-
-    private Config loadInternal() {
-        try (FileInputStream fis = new FileInputStream(configFile);
-             BufferedInputStream bis = new BufferedInputStream(fis)) {
-            return parser.parse(bis);
-        } catch (IOException e) {
-            throw new ConfigException(e, e.getMessage());
-        }
     }
 }
