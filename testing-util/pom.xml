@@ -45,6 +45,11 @@
             <artifactId>io-util</artifactId>
             <version>0.3.7-SNAPSHOT</version>
         </dependency>
+        <dependency>
+            <groupId>com.google.http-client</groupId>
+            <artifactId>google-http-client</artifactId>
+            <version>${google-http-client.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>org.hamcrest</groupId>
