@@ -350,7 +350,7 @@ public class ArgumentParser {
                .forEachOrdered(opt -> sh.append(opt.getShortNames().charAt(0)));
 
         if (sh.length() > 0) {
-            writer.append("[-").append(sh.toString()).append(']');
+            writer.append(" [-").append(sh.toString()).append(']');
         }
 
         for (BaseOption opt : options) {

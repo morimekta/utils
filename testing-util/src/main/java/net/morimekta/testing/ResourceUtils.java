@@ -38,9 +38,12 @@ public class ResourceUtils {
         int i = resource.lastIndexOf('/');
         File file = new File(dir, resource.substring(i + 1));
 
-        try (FileOutputStream out = new FileOutputStream(file);
+        try (FileOutputStream fos = new FileOutputStream(file);
+             BufferedOutputStream out = new BufferedOutputStream(fos);
              InputStream in = getResourceAsStream(resource)) {
             IOUtils.copy(in, out);
+            out.flush();
+            fos.getFD().sync();
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -57,6 +60,7 @@ public class ResourceUtils {
              BufferedOutputStream out = new BufferedOutputStream(fos)) {
             out.write(content.getBytes(UTF_8));
             out.flush();
+            fos.getFD().sync();
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }

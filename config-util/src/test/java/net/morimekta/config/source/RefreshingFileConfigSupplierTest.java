@@ -15,6 +15,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.attribute.FileTime;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
@@ -51,6 +53,8 @@ public class RefreshingFileConfigSupplierTest {
             out.flush();
             out.getFD().sync();
         }
+        // Modified 1 second in the past.
+        Files.setLastModifiedTime(cfg.toPath(), FileTime.fromMillis(System.currentTimeMillis() - 1000));
     }
 
     @Test

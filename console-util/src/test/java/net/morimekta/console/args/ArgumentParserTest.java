@@ -267,6 +267,20 @@ public class ArgumentParserTest {
                      parser.getSingleLineUsage());
     }
 
+    @Test
+    public void testSingleLineUsage_flags() {
+        ArgumentParser parser = new ArgumentParser("gt", "0.2.5", "Git Tools",
+                                                   ArgumentOptions.defaults()
+                                                                  .withDefaultsShown(false));
+
+        parser.add(new Flag("--arg", "a", "Argument flag", s -> {}));
+        parser.add(new Flag("--help", "h?", "Show help", s -> {}));
+        parser.add(new Argument("file", "File", s -> {}));
+
+        assertEquals("gt [-ah] file",
+                     parser.getSingleLineUsage());
+    }
+
     private static class Sub {
         int i = 12;
 
