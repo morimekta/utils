@@ -18,13 +18,13 @@
 
     <scm>
         <url>https://github.com/morimekta/utils.git</url>
-        <tag>HEAD</tag>
+        <tag>v0.3.7</tag>
     </scm>
 
     <parent>
         <groupId>net.morimekta.utils</groupId>
         <artifactId>utils</artifactId>
-        <version>0.3.7-SNAPSHOT</version>
+        <version>0.3.7</version>
     </parent>
     <artifactId>testing-util</artifactId>
     <packaging>jar</packaging>
@@ -43,7 +43,7 @@
         <dependency>
             <groupId>net.morimekta.utils</groupId>
             <artifactId>io-util</artifactId>
-            <version>0.3.7-SNAPSHOT</version>
+            <version>0.3.7</version>
         </dependency>
         <dependency>
             <groupId>com.google.http-client</groupId>
