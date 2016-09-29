@@ -50,6 +50,22 @@ public class StringsTest {
     }
 
     @Test
+    public void testCharEscape() {
+        assertEquals("\\b", Strings.escape('\b'));
+        assertEquals("\\t", Strings.escape('\t'));
+        assertEquals("\\n", Strings.escape('\n'));
+        assertEquals("\\f", Strings.escape('\f'));
+        assertEquals("\\r", Strings.escape('\r'));
+        assertEquals("\\\"", Strings.escape('\"'));
+        assertEquals("\\\'", Strings.escape('\''));
+        assertEquals("\\\\", Strings.escape('\\'));
+
+        assertEquals("\\016", Strings.escape('\016'));
+        assertEquals("\\u0085", Strings.escape('\u0085'));
+        assertEquals("a", Strings.escape('a'));
+    }
+
+    @Test
     public void testJoin() {
         assertEquals("a,b", Strings.join(",", 'a', 'b'));
         assertEquals("a,b", Strings.join(",", "a", "b"));

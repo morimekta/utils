@@ -79,6 +79,41 @@ public class Strings {
     }
 
     /**
+     * Escape a single character. It is escaped into a string, as it may become
+     * more than one char when escaped.
+     *
+     * @param c The char to escape.
+     * @return The escaped char string.
+     */
+    public static String escape(char c) {
+        switch (c) {
+            case '\b':
+                return "\\b";
+            case '\t':
+                return "\\t";
+            case '\n':
+                return "\\n";
+            case '\f':
+                return "\\f";
+            case '\r':
+                return "\\r";
+            case '"':
+                return "\\\"";
+            case '\'':
+                return "\\'";
+            case '\\':
+                return "\\\\";
+            default:
+                if (c < 32 || c == 127) {
+                    return String.format("\\%03o", (int) c);
+                } else if ((127 < c && c < 160) || (8192 <= c && c < 8448) || !Character.isDefined(c)) {
+                    return String.format("\\u%04x", (int) c);
+                }
+                return String.valueOf(c);
+        }
+    }
+
+    /**
      * Unescape selected chars for compatability with JavaScript's encodeURI.
      * In speed critical applications this could be dropped since the
      * receiving application will certainly decode these fine.
