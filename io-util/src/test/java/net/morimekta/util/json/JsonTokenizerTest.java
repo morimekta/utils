@@ -20,6 +20,9 @@
  */
 package net.morimekta.util.json;
 
+import net.morimekta.util.Binary;
+import net.morimekta.util.Strings;
+
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -36,6 +39,13 @@ import static org.junit.Assert.fail;
  * Tests for the JSON tokenizer.
  */
 public class JsonTokenizerTest {
+    private static final String lorem =
+            "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et \n" +
+            "dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut \n" +
+            "aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse \n" +
+            "cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in \n" +
+            "culpa qui officia deserunt mollit anim id est laborum.\n";
+
     @Test
     public void testExpect() throws IOException, JsonException {
         JsonTokenizer tokenizer = makeTokenizer("a, \t\n\"abba\"");
@@ -76,6 +86,33 @@ public class JsonTokenizerTest {
 
         assertEquals("\"a long \\n\\tstring with escapes\"", token.asString());
         assertEquals("a long \n\tstring with escapes", token.decodeJsonLiteral());
+    }
+
+    @Test
+    public void testExpectLongString() throws IOException, JsonException {
+        String merged = Strings.times(lorem, 500);
+        String escaped = Strings.escape(merged);
+
+        String total = "{ \"field\": \"" + escaped + "\" }";
+        JsonTokenizer tokenizer = makeTokenizer(total);
+
+        tokenizer.expectSymbol("message start", '{');
+        assertEquals("field", tokenizer.expectString("field name").decodeJsonLiteral());
+        tokenizer.expectSymbol("", ':');
+
+        JsonToken longString = tokenizer.expectString("long string literal");
+        int len = longString.asString().length();
+        assertEquals('\"', longString.asString().charAt(0));
+        assertEquals('\"', longString.asString().charAt(len - 1));
+
+        String longLiteral = longString.decodeJsonLiteral();
+
+        String[] a = merged.split("\n");
+        String[] b = longLiteral.split("\n");
+        assertEquals(a.length, b.length);
+        for (int i = 0; i < a.length; ++i) {
+            assertEquals(Binary.wrap(a[i].getBytes()), Binary.wrap(b[i].getBytes()));
+        }
     }
 
     @Test

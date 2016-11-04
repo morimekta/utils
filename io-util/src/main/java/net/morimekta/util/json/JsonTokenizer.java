@@ -464,7 +464,7 @@ public class JsonTokenizer {
         stringBuffer.write(lastByte);
 
         int startPos = linePos;
-        int startOffset = lineBuffer.position() - 1;
+        int startOffset = lineBuffer.position();
 
         boolean consolidated = false;
         boolean esc = false;
@@ -505,8 +505,8 @@ public class JsonTokenizer {
         } else {
             return new JsonToken(JsonToken.Type.LITERAL,
                                  lineBuffer.array(),
-                                 startOffset,
-                                 lineBuffer.position() - startOffset,
+                                 startOffset - 1,
+                                 lineBuffer.position() - startOffset + 1,
                                  line,
                                  startPos);
         }
