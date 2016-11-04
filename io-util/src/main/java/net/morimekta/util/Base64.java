@@ -406,10 +406,17 @@ public class Base64 {
                 }
             } else {
                 // There's a bad input character in the Base64 stream.
-                throw new IllegalArgumentException(
-                        String.format("Bad Base64 input character decimal %d in array position %d",
-                                      ((int) source[i]) & 0xFF,
-                                      i));
+                if (source[i] > 0x20 && source[i] < 0x7f) {
+                    throw new IllegalArgumentException(String.format(
+                            "Bad Base64 input character '%c' in array position %d",
+                            (char) source[i],
+                            i));
+                } else {
+                    throw new IllegalArgumentException(String.format(
+                            "Bad Base64 input character decimal %d in array position %d",
+                            ((int) source[i]) & 0xFF,
+                            i));
+                }
             }
         }
 
