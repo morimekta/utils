@@ -70,6 +70,19 @@ public class SubCommandSetTest {
     }
 
     @Test
+    public void testGetSingleLineUsage() {
+        @SuppressWarnings("unchecked")
+        SubCommandSet<Sub> scs = new SubCommandSet<>("sub", "Subbety sub", this::setSub).addAll(
+                new SubCommand<>("cmd_1", "Test command 1", false, Command1::new, Sub::getParser),
+                new SubCommand<>("cmd_2", "Test command 1", false, Command2::new, Sub::getParser)
+        );
+
+        assertEquals("test [...] cmd_1 [--param_1 str] [--param_2 int]", scs.getSingleLineUsage("cmd_1"));
+        assertEquals("test [...] cmd_2 [--param_3 str] [--param_4 int]", scs.getSingleLineUsage("cmd_2"));
+    }
+
+
+    @Test
     public void testPipeline() {
         ArgumentParser parser = getParser();
         try {
@@ -124,7 +137,7 @@ public class SubCommandSetTest {
 
         @Override
         public ArgumentParser getParser() {
-            return new ArgumentParser("test cmd1", "v0.1.1", "Test command 1")
+            return new ArgumentParser("test [...] cmd_1", "v0.1.1", "Test command 1")
                     .add(new Option("--param_1", null, "str", "Param 1", this::setParam1))
                     .add(new Option("--param_2", null, "int", "Param 2", i32().andApply(this::setParam2)));
         }
@@ -153,7 +166,7 @@ public class SubCommandSetTest {
 
         @Override
         public ArgumentParser getParser() {
-            return new ArgumentParser("test cmd2", "v0.1.1", "Test command 2")
+            return new ArgumentParser("test [...] cmd_2", "v0.1.1", "Test command 2")
                     .add(new Option("--param_3", null, "str", "Param 3", this::setParam3))
                     .add(new Option("--param_4", null, "int", "Param 4", i32().andApply(this::setParam4)));
         }

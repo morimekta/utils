@@ -198,6 +198,20 @@ public class SubCommandSet<SubCommandDef> extends BaseArgument {
     }
 
     /**
+     * Get the single line usage string for a given sub-command.
+     *
+     * @param name The sub-command to print help for.
+     */
+    public String getSingleLineUsage(String name) {
+        for (SubCommand<SubCommandDef> cmd : subCommands) {
+            if (name.equals(cmd.getName())) {
+                return cmd.getArgumentParser(cmd.newInstance()).getSingleLineUsage();
+            }
+        }
+        throw new ArgumentException("No such " + getName() + " " + name);
+    }
+
+    /**
      * Print the option usage list. Essentially printed as a list of options
      * with the description indented where it overflows the available line
      * width.
