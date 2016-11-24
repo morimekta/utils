@@ -20,6 +20,8 @@
  */
 package net.morimekta.util;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -35,6 +37,14 @@ import java.util.Locale;
 public class Binary implements Comparable<Binary>, Stringable, Serializable {
     private final byte[] bytes;
 
+    /**
+     * Create a binary instance that wraps a created byte array. Exposed so
+     * it can be used in places where constructors are expected.
+     *
+     * @param bytes The byte array to wrap.
+     */
+    @SuppressFBWarnings(justification = "Wrapping of byte array is intentional.",
+                        value = {"EI_EXPOSE_REP2"})
     public Binary(byte[] bytes) {
         this.bytes = bytes;
     }

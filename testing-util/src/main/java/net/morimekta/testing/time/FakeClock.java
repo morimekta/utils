@@ -61,9 +61,7 @@ public class FakeClock extends Clock {
      * @param millis Milliseconds to move the clock.
      */
     public void tick(long millis) {
-        synchronized (currentTimeUTC) {
-            currentTimeUTC.set(currentTimeUTC.get().plus(millis, ChronoUnit.MILLIS));
-        }
+        currentTimeUTC.updateAndGet(d -> d.plus(millis, ChronoUnit.MILLIS));
     }
 
     public void tick(long time, TimeUnit unit) {

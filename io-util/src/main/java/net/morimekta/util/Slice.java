@@ -20,6 +20,8 @@
  */
 package net.morimekta.util;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 import java.util.Objects;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -34,12 +36,27 @@ public class Slice implements Comparable<Slice>, Stringable {
     protected final int    off;
     protected final int    len;
 
+    /**
+     * Create a slice instance. The slice is only meant to be internal state
+     * immutable, and not representing an immutable byte content.
+     *
+     * @param fb The buffer to wrap.
+     * @param off The start offset to wrap.
+     * @param len The length to represent.
+     */
+    @SuppressFBWarnings(justification = "Wrapping of byte array is intentional.",
+                        value = {"EI_EXPOSE_REP2"})
     public Slice(byte[] fb, int off, int len) {
         this.fb = fb;
         this.off = off;
         this.len = len;
     }
 
+    /**
+     * Get the total length of the slice.
+     *
+     * @return The slice length.
+     */
     public final int length() {
         return len;
     }
@@ -54,6 +71,14 @@ public class Slice implements Comparable<Slice>, Stringable {
         return new String(fb, off, len, UTF_8);
     }
 
+    /**
+     * Create a substring slice based on the current slice.
+     *
+     * @param start The internal start position, relative to the slice's offset.
+     * @param end The internal end position, relative to the slice's offset. If end
+     *            is negative, then it is relative to the slice's end position.
+     * @return The substring slice.
+     */
     public final Slice substring(int start, int end) {
         if (start < 0 || end > len || end < -len) {
             throw new IllegalArgumentException(
@@ -67,6 +92,11 @@ public class Slice implements Comparable<Slice>, Stringable {
         return new Slice(fb, off + start, l);
     }
 
+    /**
+     * Get character at slice relative position.
+     * @param i The position to get. If negative is relative to the slice's end position.
+     * @return The char at given position.
+     */
     public final char charAt(int i) {
         if (i < -len || len <= i) {
             throw new IllegalArgumentException(
@@ -114,10 +144,24 @@ public class Slice implements Comparable<Slice>, Stringable {
         return Double.parseDouble(asString());
     }
 
+    /**
+     * Checks if the slice is equal to given byte array.
+     *
+     * @param a The array to compare with.
+     * @return True if equal.
+     */
     public boolean strEquals(byte[] a) {
         return strEquals(a, 0, a.length);
     }
 
+    /**
+     * Checks if the slice is equal to a portion of a given byte array.
+     *
+     * @param a The array to compare with.
+     * @param aOff The offset to compare with in the array.
+     * @param aLen The length to compare with.
+     * @return True if equal.
+     */
     public boolean strEquals(byte[] a, int aOff, int aLen) {
         if (aLen != len) {
             return false;
@@ -130,6 +174,12 @@ public class Slice implements Comparable<Slice>, Stringable {
         return true;
     }
 
+    /**
+     * Checks if any of the provided bytes is contained in the slice.
+     *
+     * @param a Bytes to find in the slice.
+     * @return True if any of the bytes were found.
+     */
     public boolean containsAny(byte... a) {
         for (int i = 0; i < len; ++i) {
             for (byte b : a) {
@@ -141,6 +191,12 @@ public class Slice implements Comparable<Slice>, Stringable {
         return false;
     }
 
+    /**
+     * Checks if the byte array is contained in the slice.
+     *
+     * @param a The byte array to find.
+     * @return True if the byte array was found.
+     */
     public boolean contains(byte[] a) {
         final int last_pos = off + len - a.length;
         outer:
@@ -155,6 +211,12 @@ public class Slice implements Comparable<Slice>, Stringable {
         return false;
     }
 
+    /**
+     * Checks if a single byte can be found in the slice.
+     *
+     * @param a The byte to find.
+     * @return True of the byte was found.
+     */
     public boolean contains(byte a) {
         for (int i = off; i < (off + len); ++i) {
             if (fb[i] == a) {
