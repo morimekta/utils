@@ -216,7 +216,7 @@ public class Binary implements Comparable<Binary>, Stringable, Serializable {
         if (o == this) {
             return true;
         }
-        if (o == null || !(o instanceof Binary)) {
+        if (o == null || !(getClass().equals(o.getClass()))) {
             return false;
         }
         Binary other = (Binary) o;

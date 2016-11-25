@@ -241,7 +241,7 @@ public class Slice implements Comparable<Slice>, Stringable {
         if (o == this) {
             return true;
         }
-        if (o == null || !(o instanceof Slice)) {
+        if (o == null || !(getClass().equals(o.getClass()))) {
             return false;
         }
         Slice other = (Slice) o;
