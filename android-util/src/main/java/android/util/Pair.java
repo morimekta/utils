@@ -60,7 +60,7 @@ public final class Pair<F, S> {
         if (o == this) {
             return true;
         }
-        if (o == null || !(o instanceof Pair)) {
+        if (o == null || !(getClass().equals(o.getClass()))) {
             return false;
         }
         Pair<?, ?> other = (Pair<?, ?>) o;

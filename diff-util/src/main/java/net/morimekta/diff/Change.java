@@ -66,18 +66,18 @@ public class Change {
 
     /**
      * Is this DiffBase equivalent to another DiffBase?
-     * @param obj Another DiffBase to compare against.
+     * @param o Another Change to compare against.
      * @return true or false.
      */
     @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
+    public boolean equals(Object o) {
+        if (o == this) {
             return true;
         }
-        if (obj == null || !(obj instanceof Change)) {
+        if (o == null || !(getClass().equals(o.getClass()))) {
             return false;
         }
-        Change other = (Change) obj;
+        Change other = (Change) o;
         if (operation != other.operation) {
             return false;
         }

@@ -1,14 +1,13 @@
 package net.morimekta.testing.matchers;
 
-import junit.framework.AssertionFailedError;
 import org.hamcrest.StringDescription;
 import org.junit.Test;
 
 import java.util.Objects;
 
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
 /**
@@ -18,10 +17,10 @@ public class IsInRangeTest {
     @Test
     public void testConstructor() {
         IsInRange range = new IsInRange(4, 5);
-        assertFalse(range.matches(3.9999));
-        assertTrue(range.matches(4));
-        assertTrue(range.matches(4.9999));
-        assertFalse(range.matches(5));
+        assertThat(range.matches(3.9999), is(false));
+        assertThat(range.matches(4),      is(true));
+        assertThat(range.matches(4.9999), is(true));
+        assertThat(range.matches(5),      is(false));
 
         assertBad("Lower bound 4 not lower than upper bound 4 of range.", 4, 4);
         assertBad("Missing lower bound of range.", null, 4);

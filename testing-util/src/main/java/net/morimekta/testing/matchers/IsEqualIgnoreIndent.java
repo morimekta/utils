@@ -49,6 +49,24 @@ public class IsEqualIgnoreIndent extends BaseMatcher<String> {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (o == this) {
+            return true;
+        }
+        if (o == null || !(getClass().equals(o.getClass()))) {
+            return false;
+        }
+
+        IsEqualIgnoreIndent other = (IsEqualIgnoreIndent) o;
+        return Objects.equals(other.expected, expected);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(IsEqualIgnoreIndent.class, expected);
+    }
+
+    @Override
     public void describeTo(Description description) {
         description.appendText("isEqualIgnoreIndent(" + expected + ")");
     }

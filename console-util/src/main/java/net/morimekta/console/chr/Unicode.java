@@ -135,8 +135,12 @@ public class Unicode implements Char {
 
     @Override
     public boolean equals(Object o) {
-        if (o == this) return true;
-        if (o == null || !(o instanceof Unicode)) return false;
+        if (o == this) {
+            return true;
+        }
+        if (o == null || !(getClass().equals(o.getClass()))) {
+            return false;
+        }
 
         return asInteger() == ((Unicode) o).asInteger();
     }

@@ -41,7 +41,8 @@ public class ParcelUuid implements Parcelable {
 
     @Override
     public boolean equals(Object o) {
-        if (o == null || !(o instanceof ParcelUuid)) return false;
+        if (o == this) return true;
+        if (o == null || !(getClass().equals(o.getClass()))) return false;
         ParcelUuid other = (ParcelUuid) o;
         return Objects.equals(uuid, other.uuid);
     }

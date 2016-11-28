@@ -21,6 +21,8 @@ package net.morimekta.testing.matchers;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 
+import java.util.Objects;
+
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -44,10 +46,29 @@ public class IsInRange extends BaseMatcher<Number> {
 
     @Override
     public boolean matches(Object o) {
-        if (o == null || !(o instanceof Number)) return false;
+        if (o == null || !(Number.class.isAssignableFrom(o.getClass()))) return false;
         Number actual = (Number) o;
         return lowerInclusive.doubleValue() <= actual.doubleValue() &&
                actual.doubleValue() < higherExclusive.doubleValue();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == this) {
+            return true;
+        }
+        if (o == null || !(getClass().equals(o.getClass()))) {
+            return false;
+        }
+
+        IsInRange other = (IsInRange) o;
+        return Objects.equals(lowerInclusive, other.lowerInclusive) &&
+               Objects.equals(higherExclusive, other.higherExclusive);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(IsInRange.class, lowerInclusive, higherExclusive);
     }
 
     @Override
