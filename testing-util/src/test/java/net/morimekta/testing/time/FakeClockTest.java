@@ -7,6 +7,10 @@ import java.time.ZoneId;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 /**
  * Testing the fake clock.
@@ -68,5 +72,32 @@ public class FakeClockTest {
 
         // The difference equals UTC -> CET (not CEST).
         assertEquals(3600000L, 1234569125234L - oslo.millis());
+    }
+
+    @Test
+    public void testListeners() {
+        FakeClock clock = FakeClock.forCurrentTimeMillis(1234567890000L);
+
+        FakeClock.TimeListener l1 = mock(FakeClock.TimeListener.class);
+        FakeClock.TimeListener l2 = mock(FakeClock.TimeListener.class);
+
+        clock.addListener(l1);
+        clock.addListener(l2);
+        clock.addListener(l2);
+
+        clock.tick(5L);
+
+        verify(l1).newCurrentTimeUTC(clock.millis());
+        verify(l2).newCurrentTimeUTC(clock.millis());
+        verifyNoMoreInteractions(l1, l2);
+
+        reset(l1, l2);
+
+        clock.removeListener(l2);
+
+        clock.tick(5L);
+
+        verify(l1).newCurrentTimeUTC(clock.millis());
+        verifyNoMoreInteractions(l1, l2);
     }
 }
