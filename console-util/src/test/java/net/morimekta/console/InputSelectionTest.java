@@ -3,14 +3,12 @@ package net.morimekta.console;
 import net.morimekta.console.chr.Char;
 import net.morimekta.console.chr.Control;
 import net.morimekta.console.test_utils.TerminalTestUtils;
+import net.morimekta.console.util.STTY;
 import net.morimekta.console.util.TerminalSize;
 
 import com.google.common.collect.ImmutableList;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -19,20 +17,19 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
 /**
  * Testing the line input.
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(TerminalSize.class)
 public class InputSelectionTest {
     private InputSelection.Action<String> action;
+    private STTY                          tty;
 
     @Before
     public void setUp() {
-        mockStatic(TerminalSize.class);
-        when(TerminalSize.get()).thenReturn(new TerminalSize(65, 120));
+        tty = mock(STTY.class);
+        when(tty.getTerminalSize()).thenReturn(new TerminalSize(65, 120));
+        when(tty.isInteractive()).thenReturn(true);
     }
 
     @Test
@@ -55,7 +52,6 @@ public class InputSelectionTest {
         }
     }
 
-
     @Test
     public void testSelectFew() throws IOException {
         assertEquals("entry 3", makeSelection(5, '3', '\r').select());
@@ -67,7 +63,7 @@ public class InputSelectionTest {
 
     @SuppressWarnings("unchecked")
     private InputSelection<String> makeSelection(int num, Object... chars) throws IOException {
-        Terminal terminal = TerminalTestUtils.getTerminal(chars);
+        Terminal terminal = TerminalTestUtils.getTerminal(tty, chars);
 
         this.action = mock(InputSelection.Action.class);
 

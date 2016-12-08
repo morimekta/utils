@@ -1,5 +1,6 @@
 package net.morimekta.console;
 
+import net.morimekta.console.util.STTY;
 import net.morimekta.console.util.STTYMode;
 import net.morimekta.console.util.STTYModeSwitcher;
 import net.morimekta.util.Strings;
@@ -33,7 +34,9 @@ public class TerminalTest {
         when(switcher.didChangeMode()).thenReturn(true);
         when(switcher.getBefore()).thenReturn(STTYMode.COOKED);
 
-        Terminal terminal = new Terminal(in, out, null, switcher);
+        STTY tty = mock(STTY.class);
+
+        Terminal terminal = new Terminal(tty, in, out, null, switcher);
 
         verify(switcher).didChangeMode();
         verify(switcher).getBefore();
@@ -65,11 +68,13 @@ public class TerminalTest {
         InputStream in = mock(InputStream.class);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
+        STTY tty = mock(STTY.class);
+
         when(switcher.didChangeMode()).thenReturn(true);
         when(switcher.getCurrentMode()).thenReturn(STTYMode.RAW);
         when(switcher.getBefore()).thenReturn(STTYMode.COOKED);
 
-        Terminal terminal = new Terminal(in, out, null, switcher);
+        Terminal terminal = new Terminal(tty, in, out, null, switcher);
 
         out.reset();
         terminal.info("test");

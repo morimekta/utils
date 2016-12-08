@@ -214,8 +214,8 @@ public class InputSelection<E> {
         this.pageSize = pageSize;
         this.pageMargin = pageMargin;
         if (lineWidth == 0) {
-            if (TerminalSize.isInteractive()) {
-                this.lineWidth = TerminalSize.get().cols;
+            if (terminal.getTTY().isInteractive()) {
+                this.lineWidth = terminal.getTTY().getTerminalSize().cols;
             } else {
                 // Fallback for non-interactive terminals.
                 this.lineWidth = 100;

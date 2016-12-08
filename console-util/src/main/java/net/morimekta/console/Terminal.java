@@ -23,6 +23,7 @@ package net.morimekta.console;
 import net.morimekta.console.chr.Char;
 import net.morimekta.console.chr.CharReader;
 import net.morimekta.console.chr.Control;
+import net.morimekta.console.util.STTY;
 import net.morimekta.console.util.STTYMode;
 import net.morimekta.console.util.STTYModeSwitcher;
 
@@ -40,55 +41,73 @@ import java.nio.charset.StandardCharsets;
  * from the input, and writes lines dependent on terminal mode.
  */
 public class Terminal extends CharReader implements Closeable, LinePrinter {
+    private final STTY tty;
     /**
      * Construct a default RAW terminal.
+     *
      * @throws UncheckedIOException If unable to set TTY mode.
      */
     public Terminal() {
-        this(STTYMode.RAW, null);
+        this(new STTY());
+    }
+
+    /**
+     * Construct a default RAW terminal.
+     *
+     * @param tty The terminal device.
+     * @throws UncheckedIOException If unable to set TTY mode.
+     */
+    public Terminal(STTY tty) {
+        this(tty, STTYMode.RAW, null);
     }
 
     /**
      * Construct a terminal with given mode.
+     *
+     * @param tty The terminal device.
      * @param mode The terminal mode.
      * @throws UncheckedIOException If unable to set TTY mode.
      */
-    public Terminal(STTYMode mode) {
-        this(mode, null);
+    public Terminal(STTY tty, STTYMode mode) {
+        this(tty, mode, null);
     }
 
     /**
      * Construct a terminal with a custom line printer.
      *
+     * @param tty The terminal device.
      * @param lp The line printer.
      * @throws UncheckedIOException If unable to set TTY mode.
      */
-    public Terminal(LinePrinter lp) {
-        this(STTYMode.RAW, lp);
+    public Terminal(STTY tty, LinePrinter lp) {
+        this(tty, STTYMode.RAW, lp);
     }
 
     /**
      * Construct a terminal with a terminal mode and custom line printer.
+     *
+     * @param tty The terminal device.
      * @param mode The terminal mode.
      * @param lp The line printer.
      * @throws UncheckedIOException If unable to set TTY mode.
      */
-    public Terminal(STTYMode mode, LinePrinter lp) {
-        this(System.in, System.out, lp, makeSwitcher(mode));
+    public Terminal(STTY tty, STTYMode mode, LinePrinter lp) {
+        this(tty, System.in, System.out, lp, tty.setSTTYMode(mode));
     }
 
     /**
      * Constructor visible for testing.
      *
+     * @param tty The terminal device.
      * @param in The input stream.
      * @param out The output stream.
      * @param lp The line printer or null.
-     * @param switcher The TTY mode switcher.
      * @throws UncheckedIOException If unable to set TTY mode.
      */
     @VisibleForTesting
-    public Terminal(InputStream in, OutputStream out, LinePrinter lp, STTYModeSwitcher switcher) {
+    public Terminal(STTY tty, InputStream in, OutputStream out, LinePrinter lp, STTYModeSwitcher switcher) {
         super(in);
+        this.tty = tty;
         this.lp = lp == null ? this::printlnInternal : lp;
         this.out = out;
         this.switcher = switcher;
@@ -101,6 +120,13 @@ public class Terminal extends CharReader implements Closeable, LinePrinter {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    /**
+     * @return Get the terminal device.
+     */
+    public STTY getTTY() {
+        return tty;
     }
 
     /**
@@ -263,14 +289,6 @@ public class Terminal extends CharReader implements Closeable, LinePrinter {
         out.flush();
 
         ++lineCount;
-    }
-
-    private static STTYModeSwitcher makeSwitcher(STTYMode mode) {
-        try {
-            return new STTYModeSwitcher(mode);
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
     }
 
     private final STTYModeSwitcher switcher;

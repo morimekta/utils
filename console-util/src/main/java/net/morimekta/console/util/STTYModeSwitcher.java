@@ -42,7 +42,10 @@ public class STTYModeSwitcher implements Closeable {
      *
      * @param mode The mode to switch to.
      * @throws IOException If unable to switch.
+     * @deprecated Use {@link STTY#setSTTYMode(STTYMode)}.
      */
+    @Deprecated
+    @SuppressWarnings("unused")
     public STTYModeSwitcher(STTYMode mode) throws IOException {
         this(mode, Runtime.getRuntime());
     }

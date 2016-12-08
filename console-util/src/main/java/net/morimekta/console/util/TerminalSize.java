@@ -22,12 +22,7 @@ package net.morimekta.console.util;
 
 import com.google.common.annotations.VisibleForTesting;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
-
-import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * Column and row count for the current terminal.
@@ -52,62 +47,21 @@ public class TerminalSize {
      *
      * @return the terminal size.
      * @throws UncheckedIOException If getting the terminal size failed.
+     * @deprecated Use {@link STTY#getTerminalSize()}.
      */
+    @Deprecated
+    @SuppressWarnings("unused")
     public static TerminalSize get() {
-        try {
-            return get(Runtime.getRuntime());
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
+        return new STTY().getTerminalSize();
     }
 
     /**
      * @return True if this is an interactive TTY terminal.
+     * @deprecated Use {@link STTY#isInteractive()}.
      */
+    @Deprecated
+    @SuppressWarnings("unused")
     public static boolean isInteractive() {
-        return isInteractive(Runtime.getRuntime());
-    }
-
-    @VisibleForTesting
-    protected static TerminalSize get(Runtime runtime) throws IOException {
-        String[] cmd = new String[]{"/bin/sh", "-c", "stty size </dev/tty"};
-        Process p = runtime.exec(cmd);
-        try {
-            p.waitFor();
-        } catch (InterruptedException ie) {
-            throw new IOException(ie.getMessage(), ie);
-        }
-
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(p.getErrorStream(), UTF_8))) {
-            String err = reader.readLine();
-            if (err != null) {
-                throw new IOException(err);
-            }
-        }
-
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream(), UTF_8))) {
-            String out = reader.readLine();
-            if (out != null) {
-                String[] parts = out.trim().split("[ ]");
-                if (parts.length == 2) {
-                    int rows = Integer.parseInt(parts[0]);
-                    int cols = Integer.parseInt(parts[1]);
-                    return new TerminalSize(rows, cols);
-                }
-                throw new IOException("Unknown 'stty size' output: " + out);
-            }
-            throw new IOException("No 'stty size' output.");
-        }
-    }
-
-    @VisibleForTesting
-    protected static boolean isInteractive(Runtime runtime) {
-        try {
-            // Just check that is does not throw an exception.
-            get(runtime);
-            return true;
-        } catch (IOException e) {
-            return false;
-        }
+        return new STTY().isInteractive();
     }
 }

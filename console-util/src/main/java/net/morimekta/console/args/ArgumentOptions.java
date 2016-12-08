@@ -20,7 +20,7 @@
  */
 package net.morimekta.console.args;
 
-import net.morimekta.console.util.TerminalSize;
+import net.morimekta.console.util.STTY;
 
 import java.util.Comparator;
 
@@ -28,12 +28,22 @@ import java.util.Comparator;
  * Options for configuring the argument parser.
  */
 public class ArgumentOptions {
+    private final STTY tty;
+
     private boolean defaultsShown = true;
     private int usageWidth = 80;
     private Comparator<BaseOption> optionComparator = null;
 
+    public ArgumentOptions(STTY tty) {
+        this.tty = tty;
+    }
+
     public static ArgumentOptions defaults() {
-        return new ArgumentOptions();
+        return new ArgumentOptions(new STTY());
+    }
+
+    public static ArgumentOptions defaults(STTY tty) {
+        return new ArgumentOptions(tty);
     }
 
     /**
@@ -71,8 +81,8 @@ public class ArgumentOptions {
      * @return The Argument options.
      */
     public ArgumentOptions withMaxUsageWidth(int maxWidth) {
-        if (TerminalSize.isInteractive()) {
-            this.usageWidth = Math.min(maxWidth, TerminalSize.get().cols);
+        if (tty.isInteractive()) {
+            this.usageWidth = Math.min(maxWidth, tty.getTerminalSize().cols);
         } else {
             this.usageWidth = maxWidth;
         }

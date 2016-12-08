@@ -3,6 +3,7 @@ package net.morimekta.console.test_utils;
 import net.morimekta.console.Terminal;
 import net.morimekta.console.chr.Char;
 import net.morimekta.console.chr.Unicode;
+import net.morimekta.console.util.STTY;
 import net.morimekta.console.util.STTYMode;
 import net.morimekta.console.util.STTYModeSwitcher;
 
@@ -23,11 +24,11 @@ import static org.mockito.Mockito.when;
  * Utilities for testing of terminal usage.
  */
 public class TerminalTestUtils {
-    public static Terminal getTerminal(Object... in) throws IOException {
-        return getTerminal(new ByteArrayOutputStream(), in);
+    public static Terminal getTerminal(STTY tty, Object... in) throws IOException {
+        return getTerminal(tty, new ByteArrayOutputStream(), in);
     }
 
-    public static Terminal getTerminal(OutputStream out, Object... in) throws IOException {
+    public static Terminal getTerminal(STTY tty, OutputStream out, Object... in) throws IOException {
         ByteArrayOutputStream tmp = new ByteArrayOutputStream();
         for (Object c : in) {
             if (c instanceof Character) {
@@ -42,16 +43,17 @@ public class TerminalTestUtils {
             }
         }
 
-        return getTerminal(out, new ByteArrayInputStream(tmp.toByteArray()));
+        return getTerminal(tty, out, new ByteArrayInputStream(tmp.toByteArray()));
     }
 
-    public static Terminal getTerminal(OutputStream out, InputStream in) {
+    public static Terminal getTerminal(STTY tty, OutputStream out, InputStream in) {
         STTYModeSwitcher switcher = mock(STTYModeSwitcher.class);
         when(switcher.didChangeMode()).thenReturn(true);
         when(switcher.getCurrentMode()).thenReturn(STTYMode.RAW);
         when(switcher.getBefore()).thenReturn(STTYMode.COOKED);
 
-        return new Terminal(in,
+        return new Terminal(tty,
+                            in,
                             out,
                             null,
                             switcher);

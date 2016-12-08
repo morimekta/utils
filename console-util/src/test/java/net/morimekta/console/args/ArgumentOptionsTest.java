@@ -1,12 +1,10 @@
 package net.morimekta.console.args;
 
+import net.morimekta.console.util.STTY;
 import net.morimekta.console.util.TerminalSize;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -17,28 +15,28 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 /**
  * TODO(steineldar): Make a proper class description.
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(TerminalSize.class)
 public class ArgumentOptionsTest {
+    private STTY tty;
+
     @Before
     public void setUp() {
-        mockStatic(TerminalSize.class);
-        when(TerminalSize.get()).thenReturn(new TerminalSize(65, 120));
-        when(TerminalSize.isInteractive()).thenReturn(true);
+        tty = mock(STTY.class);
+        when(tty.getTerminalSize()).thenReturn(new TerminalSize(65, 120));
+        when(tty.isInteractive()).thenReturn(true);
     }
 
     @Test
     public void testDefaultsShown() {
-        assertTrue(ArgumentOptions.defaults()
+        assertTrue(ArgumentOptions.defaults(tty)
                                   .getDefaultsShown());
-        assertTrue(ArgumentOptions.defaults()
+        assertTrue(ArgumentOptions.defaults(tty)
                                   .withDefaultsShown(true)
                                   .getDefaultsShown());
         assertFalse(ArgumentOptions.defaults()
@@ -48,40 +46,40 @@ public class ArgumentOptionsTest {
 
     @Test
     public void testUsageWidth() {
-        assertEquals(80, ArgumentOptions.defaults()
+        assertEquals(80, ArgumentOptions.defaults(tty)
                                         .getUsageWidth());
-        assertEquals(100, ArgumentOptions.defaults()
+        assertEquals(100, ArgumentOptions.defaults(tty)
                                          .withUsageWidth(100)
                                          .getUsageWidth());
-        assertEquals(100, ArgumentOptions.defaults()
+        assertEquals(100, ArgumentOptions.defaults(tty)
                                          .withMaxUsageWidth(100)
                                          .getUsageWidth());
 
-        assertEquals(120, ArgumentOptions.defaults()
+        assertEquals(120, ArgumentOptions.defaults(tty)
                                          .withMaxUsageWidth(144)
                                          .getUsageWidth());
-        assertEquals(144, ArgumentOptions.defaults()
+        assertEquals(144, ArgumentOptions.defaults(tty)
                                          .withUsageWidth(144)
                                          .getUsageWidth());
 
+        reset(tty);
+        when(tty.getTerminalSize()).thenThrow(new UncheckedIOException(new IOException("Oops")));
+        when(tty.isInteractive()).thenReturn(false);
 
-        when(TerminalSize.get()).thenThrow(new UncheckedIOException(new IOException("Oops")));
-        when(TerminalSize.isInteractive()).thenReturn(false);
-
-        assertEquals(144, ArgumentOptions.defaults()
+        assertEquals(144, ArgumentOptions.defaults(tty)
                                          .withMaxUsageWidth(144)
                                          .getUsageWidth());
-        assertEquals(144, ArgumentOptions.defaults()
+        assertEquals(144, ArgumentOptions.defaults(tty)
                                          .withUsageWidth(144)
                                          .getUsageWidth());
     }
 
     @Test
     public void testOptionComparator() {
-        assertNull(ArgumentOptions.defaults().getOptionComparator());
+        assertNull(ArgumentOptions.defaults(tty).getOptionComparator());
         Comparator<BaseOption> comp = (bo1, bo2) -> bo1.getName().compareTo(bo2.getName());
 
-        assertSame(comp, ArgumentOptions.defaults()
+        assertSame(comp, ArgumentOptions.defaults(tty)
                                         .withOptionComparator(comp)
                                         .getOptionComparator());
     }

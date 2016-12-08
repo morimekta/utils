@@ -4,6 +4,7 @@ import net.morimekta.console.chr.Char;
 import net.morimekta.console.chr.Control;
 import net.morimekta.console.chr.Unicode;
 import net.morimekta.console.test_utils.TerminalTestUtils;
+import net.morimekta.console.util.STTY;
 import net.morimekta.util.Strings;
 
 import org.junit.Test;
@@ -30,7 +31,7 @@ public class InputLineTest {
         InputStream in = mock(InputStream.class);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-        Terminal terminal = TerminalTestUtils.getTerminal(out, in);
+        Terminal terminal = TerminalTestUtils.getTerminal(new STTY(), out, in);
 
         InputLine li = new InputLine(terminal, "Test");
 
@@ -56,7 +57,7 @@ public class InputLineTest {
 
     @Test
     public void testEOF() throws IOException {
-        Terminal terminal = TerminalTestUtils.getTerminal();
+        Terminal terminal = TerminalTestUtils.getTerminal(new STTY());
 
         try {
             new InputLine(terminal, "test").readLine();
@@ -68,7 +69,8 @@ public class InputLineTest {
 
     @Test
     public void testMovements() throws IOException {
-        Terminal terminal = TerminalTestUtils.getTerminal("aba",
+        Terminal terminal = TerminalTestUtils.getTerminal(new STTY(),
+                                                          "aba",
                                                           Control.LEFT,
                                                           Control.LEFT,
                                                           "cd",
