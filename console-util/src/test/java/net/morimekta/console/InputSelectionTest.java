@@ -72,7 +72,8 @@ public class InputSelectionTest {
             builder.add("entry " + i);
         }
 
-        return new InputSelection<>(terminal,
+        // There is a bug in oracle JDK 8 that fails this <> generic check.
+        return new InputSelection<String>(terminal,
                                     "select",
                                     builder.build(),
                                     ImmutableList.of(new InputSelection.Command<>('a', "Action", action),
