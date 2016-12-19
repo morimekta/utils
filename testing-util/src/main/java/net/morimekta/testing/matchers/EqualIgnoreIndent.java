@@ -24,32 +24,28 @@ import org.hamcrest.Description;
 import java.util.Objects;
 
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 /**
- * Numeric Value range matcher.
+ * Equality matcher that ignores line indent. But matches all other spacing.
  */
-public class IsInRange extends BaseMatcher<Number> {
-    private final Number lowerInclusive;
-    private final Number higherExclusive;
+public class EqualIgnoreIndent extends BaseMatcher<String> {
+    private final String expected;
 
-    public IsInRange(Number lowerInclusive, Number higherExclusive) {
-        assertNotNull("Missing lower bound of range.", lowerInclusive);
-        assertNotNull("Missing upper bound of range.", higherExclusive);
-        assertTrue(String.format("Lower bound %s not lower than upper bound %s of range.", lowerInclusive, higherExclusive),
-                   lowerInclusive.doubleValue() < higherExclusive.doubleValue());
+    public EqualIgnoreIndent(String expected) {
+        assertNotNull("Missing expected.", expected);
 
-        this.lowerInclusive = lowerInclusive;
-        this.higherExclusive = higherExclusive;
+        this.expected = expected;
 
     }
 
     @Override
     public boolean matches(Object o) {
-        if (o == null || !(Number.class.isAssignableFrom(o.getClass()))) return false;
-        Number actual = (Number) o;
-        return lowerInclusive.doubleValue() <= actual.doubleValue() &&
-               actual.doubleValue() < higherExclusive.doubleValue();
+        if (o == null || !(CharSequence.class.isAssignableFrom(o.getClass()))) return false;
+
+        String noIndentActual = o.toString().replaceAll("\\r?\\n[ \\t]*", "\n");
+        String noIndentExpected = this.expected.replaceAll("\\r?\\n[ \\t]*", "\n");
+
+        return noIndentActual.equals(noIndentExpected);
     }
 
     @Override
@@ -61,22 +57,22 @@ public class IsInRange extends BaseMatcher<Number> {
             return false;
         }
 
-        IsInRange other = (IsInRange) o;
-        return Objects.equals(lowerInclusive, other.lowerInclusive) &&
-               Objects.equals(higherExclusive, other.higherExclusive);
+        EqualIgnoreIndent other = (EqualIgnoreIndent) o;
+        return Objects.equals(other.expected, expected);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(IsInRange.class, lowerInclusive, higherExclusive);
+        return Objects.hash(EqualIgnoreIndent.class, expected);
     }
 
     @Override
     public void describeTo(Description description) {
-        description.appendText("range(" + lowerInclusive + " <= x < " + higherExclusive + ")");
+        description.appendText("equalIgnoreIndent(" + expected + ")");
     }
 
     public void describeMismatch(Object actual, Description mismatchDescription) {
-        mismatchDescription.appendText("was " + actual);
+        // TODO(show per-line mismatch).
+        mismatchDescription.appendText("was " + Objects.toString(actual));
     }
 }

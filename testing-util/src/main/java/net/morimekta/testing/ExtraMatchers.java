@@ -18,21 +18,63 @@
  */
 package net.morimekta.testing;
 
-import net.morimekta.testing.matchers.IsEqualIgnoreIndent;
-import net.morimekta.testing.matchers.IsInRange;
+import net.morimekta.testing.matchers.EqualIgnoreIndent;
+import net.morimekta.testing.matchers.EqualToLines;
+import net.morimekta.testing.matchers.InRange;
+import net.morimekta.testing.matchers.OneOf;
 
 import org.hamcrest.Matcher;
+
+import javax.annotation.Nonnull;
 
 /**
  * Extra hamcrest matchers.
  */
 public class ExtraMatchers {
-    public static Matcher<Number> isInRange(Number lowerInclusive, Number upperExclusive) {
-        return new IsInRange(lowerInclusive, upperExclusive);
+    /**
+     * Checks that the value is in a given numeric value range.
+     *
+     * @param lowerInclusive The lower inclusive accepted value.
+     * @param upperExclusive The upper exclusive accepted value (the exact value not accepted).
+     * @return The matcher.
+     */
+    public static Matcher<Number> inRange(@Nonnull Number lowerInclusive, @Nonnull Number upperExclusive) {
+        return new InRange(lowerInclusive, upperExclusive);
     }
 
-    public static Matcher<String> isEqualIgnoreIndent(String expected) {
-        return new IsEqualIgnoreIndent(expected);
+    /**
+     * Equivalent to 'equalTo' for strings that normalize the new-line to '\n',
+     * this can make testing that should match output on various platforms
+     * easier to wrote.
+     *
+     * @param expected The expected line content.
+     * @return The matcher.
+     */
+    public static Matcher<String> equalToLines(@Nonnull String expected) {
+        return new EqualToLines(expected);
+    }
+
+    /**
+     * Equivalent to 'equalToLines' but also ignores any indentation each line has.
+     *
+     * @param expected The expected line content.
+     * @return The matcher.
+     */
+    public static Matcher<String> equalIgnoreIndent(@Nonnull String expected) {
+        return new EqualIgnoreIndent(expected);
+    }
+
+
+    /**
+     * Alternative to hamcrest 'anyOf' that simplifies to match any one of the
+     * <i>values</i> given.
+     *
+     * @param alternatives The value alternatives.
+     * @param <T> The value type.
+     * @return The matcher.
+     */
+    public static <T> Matcher<T> oneOf(T... alternatives) {
+        return new OneOf<>(alternatives);
     }
 
     private ExtraMatchers() {}

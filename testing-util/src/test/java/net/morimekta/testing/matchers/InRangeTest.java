@@ -13,10 +13,10 @@ import static org.junit.Assert.fail;
 /**
  * Testing the is-in-range matcher.
  */
-public class IsInRangeTest {
+public class InRangeTest {
     @Test
     public void testConstructor() {
-        IsInRange range = new IsInRange(4, 5);
+        InRange range = new InRange(4, 5);
         assertThat(range.matches(3.9999), is(false));
         assertThat(range.matches(4),      is(true));
         assertThat(range.matches(4.9999), is(true));
@@ -29,8 +29,8 @@ public class IsInRangeTest {
 
     private void assertBad(String message, Number lower, Number upper) {
         try {
-            new IsInRange(lower, upper);
-            fail(String.format("Expected exception on new IsInRange(%s, %s)",
+            new InRange(lower, upper);
+            fail(String.format("Expected exception on new InRange(%s, %s)",
                                Objects.toString(lower),
                                Objects.toString(upper)));
         } catch (AssertionError e) {
@@ -42,25 +42,25 @@ public class IsInRangeTest {
     public void testDescribeTo() {
         StringDescription description = new StringDescription();
 
-        new IsInRange(12, 20).describeTo(description);
-        assertEquals("range(12 <= x < 20)", description.toString());
+        new InRange(12, 20).describeTo(description);
+        assertEquals("in range [12 .. 20)", description.toString());
 
         description = new StringDescription();
 
-        new IsInRange(-123.45, 123.45).describeTo(description);
-        assertEquals("range(-123.45 <= x < 123.45)", description.toString());
+        new InRange(-123.45, 123.45).describeTo(description);
+        assertEquals("in range [-123.45 .. 123.45)", description.toString());
     }
 
     @Test
     public void testDescribeMismatch() {
         StringDescription description = new StringDescription();
 
-        new IsInRange(12, 20).describeMismatch(10, description);
-        assertEquals("was 10", description.toString());
+        new InRange(12, 20).describeMismatch(10, description);
+        assertEquals("was <10>", description.toString());
 
         description = new StringDescription();
 
-        new IsInRange(-123.45, 123.45).describeMismatch(255.6789, description);
-        assertEquals("was 255.6789", description.toString());
+        new InRange(-123.45, 123.45).describeMismatch(255.6789, description);
+        assertEquals("was <255.6789>", description.toString());
     }
 }

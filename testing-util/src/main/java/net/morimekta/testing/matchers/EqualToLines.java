@@ -28,13 +28,13 @@ import static org.junit.Assert.assertNotNull;
 /**
  * Equality matcher that ignores line indent. But matches all other spacing.
  */
-public class IsEqualIgnoreIndent extends BaseMatcher<String> {
+public class EqualToLines extends BaseMatcher<String> {
     private final String expected;
 
-    public IsEqualIgnoreIndent(String expected) {
+    public EqualToLines(String expected) {
         assertNotNull("Missing expected.", expected);
 
-        this.expected = expected;
+        this.expected = normalize(expected);
 
     }
 
@@ -42,10 +42,10 @@ public class IsEqualIgnoreIndent extends BaseMatcher<String> {
     public boolean matches(Object o) {
         if (o == null || !(CharSequence.class.isAssignableFrom(o.getClass()))) return false;
 
-        String noIndentActual = o.toString().replaceAll("\\r?\\n[ \\t]*", "\n");
-        String noIndentExpected = this.expected.replaceAll("\\r?\\n[ \\t]*", "\n");
+        // replace all '\r\n' with '\n' so windows & *nix line output is normalized to the same.
+        String actualLines = normalize(o.toString());
 
-        return noIndentActual.equals(noIndentExpected);
+        return actualLines.equals(expected);
     }
 
     @Override
@@ -57,22 +57,30 @@ public class IsEqualIgnoreIndent extends BaseMatcher<String> {
             return false;
         }
 
-        IsEqualIgnoreIndent other = (IsEqualIgnoreIndent) o;
+        EqualToLines other = (EqualToLines) o;
         return Objects.equals(other.expected, expected);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(IsEqualIgnoreIndent.class, expected);
+        return Objects.hash(EqualToLines.class, expected);
     }
 
     @Override
     public void describeTo(Description description) {
-        description.appendText("isEqualIgnoreIndent(" + expected + ")");
+        description.appendText("equal lines ")
+                   .appendValue(expected);
     }
 
     public void describeMismatch(Object actual, Description mismatchDescription) {
-        // TODO(show per-line mismatch).
-        mismatchDescription.appendText("was " + Objects.toString(actual));
+        mismatchDescription.appendText("was ")
+                           .appendValue(normalize(actual));
+    }
+
+    private String normalize(Object str) {
+        if (str == null) {
+            return null;
+        }
+        return str.toString().replaceAll("\\r\\n", "\n");
     }
 }
