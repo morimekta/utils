@@ -41,20 +41,20 @@ import static org.mockito.Mockito.verifyZeroInteractions;
  * Test testing the pairing between BinaryWriter and BinaryReader, and that
  * what it writes will be read back exactly the same.
  */
-public class BinaryIOTest {
+public class LittleEndinanBinaryIOTest {
     ByteArrayOutputStream out;
     BinaryWriter writer;
 
     @Before
     public void setUp() throws InterruptedException, IOException {
         out = new ByteArrayOutputStream();
-        writer = new BinaryWriter(out);
+        writer = new LittleEndianBinaryWriter(out);
     }
 
     private BinaryReader getReader() {
         ByteArrayInputStream in = new ByteArrayInputStream(out.toByteArray());
         out.reset();
-        return new BinaryReader(in);
+        return new LittleEndianBinaryReader(in);
     }
 
     @Test
@@ -148,8 +148,8 @@ public class BinaryIOTest {
         OutputStream out = mock(OutputStream.class);
         InputStream in = mock(InputStream.class);
 
-        new BinaryWriter(out).close();
-        new BinaryReader(in).close();
+        new LittleEndianBinaryWriter(out).close();
+        new LittleEndianBinaryReader(in).close();
 
         verifyZeroInteractions(out, in);
     }
@@ -215,7 +215,7 @@ public class BinaryIOTest {
     private void assertBadExpectShort(String message, byte[] data) {
         ByteArrayInputStream bais = new ByteArrayInputStream(data);
         try {
-            BinaryReader reader = new BinaryReader(bais);
+            BinaryReader reader = new LittleEndianBinaryReader(bais);
             reader.expectShort();
             fail("No exception on bad short");
         } catch (IOException e) {
@@ -252,7 +252,7 @@ public class BinaryIOTest {
     private void assertBadExpectInt(String message, byte[] data) {
         ByteArrayInputStream bais = new ByteArrayInputStream(data);
         try {
-            BinaryReader reader = new BinaryReader(bais);
+            BinaryReader reader = new LittleEndianBinaryReader(bais);
             reader.expectInt();
             fail("No exception on bad int");
         } catch (IOException e) {
@@ -293,7 +293,7 @@ public class BinaryIOTest {
     private void assertBadExpectLong(String message, byte[] data) {
         ByteArrayInputStream bais = new ByteArrayInputStream(data);
         try {
-            BinaryReader reader = new BinaryReader(bais);
+            BinaryReader reader = new LittleEndianBinaryReader(bais);
             reader.expectLong();
             fail("No exception on bad long");
         } catch (IOException e) {
@@ -432,7 +432,7 @@ public class BinaryIOTest {
     private void assertBadExpectUnsigned(String message, byte[] data, int bytes) {
         ByteArrayInputStream bais = new ByteArrayInputStream(data);
         try {
-            BinaryReader reader = new BinaryReader(bais);
+            BinaryReader reader = new LittleEndianBinaryReader(bais);
             reader.expectUnsigned(bytes);
             fail("No exception on bad short");
         } catch (IOException e) {

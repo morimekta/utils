@@ -24,63 +24,64 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 /**
- * IO-Optimized binary writer using big-endian integer encoding.
+ * IO-Optimized binary writer using little-endian integer encoding.
  */
-public class BigEndianBinaryWriter extends BinaryWriter {
-    public BigEndianBinaryWriter(OutputStream out) {
+public class LittleEndianBinaryWriter extends BinaryWriter {
+    public LittleEndianBinaryWriter(OutputStream out) {
         super(out);
     }
 
     @Override
     public int writeShort(short integer) throws IOException {
-        out.write(integer >>> 8);
         out.write(integer);
+        out.write(integer >>> 8);
         return 2;
     }
 
     @Override
     public int writeInt(int integer) throws IOException {
-        out.write(integer >>> 24);
-        out.write(integer >>> 16);
-        out.write(integer >>> 8);
         out.write(integer);
+        out.write(integer >>> 8);
+        out.write(integer >>> 16);
+        out.write(integer >>> 24);
         return 4;
     }
 
     @Override
     public int writeLong(long integer) throws IOException {
-        out.write((int) (integer >>> 56));
-        out.write((int) (integer >>> 48));
-        out.write((int) (integer >>> 40));
-        out.write((int) (integer >>> 32));
-        out.write((int) (integer >>> 24));
-        out.write((int) (integer >>> 16));
-        out.write((int) (integer >>> 8));
         out.write((int) (integer));
+        out.write((int) (integer >>> 8));
+        out.write((int) (integer >>> 16));
+        out.write((int) (integer >>> 24));
+        out.write((int) (integer >>> 32));
+        out.write((int) (integer >>> 40));
+        out.write((int) (integer >>> 48));
+        out.write((int) (integer >>> 56));
         return 8;
     }
 
     @Override
     public int writeUInt16(int number) throws IOException {
-        out.write(number >>> 8);
         out.write(number);
+        out.write(number >>> 8);
         return 2;
     }
 
     @Override
     public int writeUInt24(int number) throws IOException {
-        out.write(number >>> 16);
-        out.write(number >>> 8);
         out.write(number);
+        out.write(number >>> 8);
+        out.write(number >>> 16);
         return 3;
     }
 
     @Override
     public int writeUInt32(int number) throws IOException {
-        out.write(number >>> 24);
-        out.write(number >>> 16);
-        out.write(number >>> 8);
         out.write(number);
+        out.write(number >>> 8);
+        out.write(number >>> 16);
+        out.write(number >>> 24);
         return 4;
     }
+
 }

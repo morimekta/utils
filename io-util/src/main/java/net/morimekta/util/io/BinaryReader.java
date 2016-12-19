@@ -28,7 +28,7 @@ import java.io.InputStream;
 /**
  * IO-Optimized binary reader.
  */
-public class BinaryReader extends InputStream {
+public abstract class BinaryReader extends InputStream {
     private final InputStream in;
 
     public BinaryReader(InputStream in) {
@@ -448,9 +448,7 @@ public class BinaryReader extends InputStream {
         return out;
     }
 
-    protected int unshift2bytes(int b1, int b2) {
-        return (b1 | b2 << 8);
-    }
+    protected abstract int unshift2bytes(int b1, int b2);
 
     protected int unshift3bytes(int b1, int b2, int b3) {
         return (b1 | b2 << 8 | b3 << 16);
