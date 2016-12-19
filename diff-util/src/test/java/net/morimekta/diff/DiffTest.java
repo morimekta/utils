@@ -490,11 +490,11 @@ public class DiffTest {
         new Diff(a, b, opts);
         long endTime = opts.getClock().millis();
         // Test that we took at least the timeout period.
-        Assert.assertTrue("main: Timeout min.", opts.getTimeout() * 1000 <= endTime - startTime);
+        Assert.assertTrue("main: Timeout min.", (opts.getTimeout() * 1000) <= (endTime - startTime));
         // Test that we didn't take forever (be forgiving).
         // Theoretically this test could fail very occasionally if the
         // OS task swaps or locks up for a second at the wrong moment.
-        Assert.assertTrue("main: Timeout max.", opts.getTimeout() * 1000 * 2 > endTime - startTime);
+        Assert.assertTrue("main: Timeout max.", (opts.getTimeout() * 1000 * 2) > (endTime - startTime));
 
         opts = opts.withTimeout(0)
                    .withCheckLines(false);
