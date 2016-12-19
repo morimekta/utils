@@ -150,6 +150,15 @@ public class SubCommandSet<SubCommandDef> extends BaseArgument {
      * Print the sub-command list.
      *
      * @param out The output stream.
+     */
+    public void printUsage(PrintWriter out) {
+        printUsage(out, false);
+    }
+
+    /**
+     * Print the sub-command list.
+     *
+     * @param out The output stream.
      * @param showHidden If hidden sub-commands should be printed.
      */
     public void printUsage(OutputStream out, boolean showHidden) {
@@ -173,7 +182,7 @@ public class SubCommandSet<SubCommandDef> extends BaseArgument {
      * @param name The sub-command to print help for.
      */
     public void printUsage(OutputStream out, String name) {
-        printUsage(new PrintWriter(new OutputStreamWriter(out, UTF_8)), name);
+        printUsage(out, name, false);
     }
 
     /**

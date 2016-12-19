@@ -24,6 +24,7 @@ import com.google.common.base.MoreObjects;
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
+import java.io.PrintWriter;
 
 import static net.morimekta.console.util.Parser.i32;
 import static org.junit.Assert.assertEquals;
@@ -64,6 +65,27 @@ public class SubCommandSetTest {
 
         baos.reset();
         scs.printUsage(baos, "cmd_1");
+
+        assertEquals(" --param_1 str : Param 1\n" +
+                     " --param_2 int : Param 2\n", baos.toString());
+    }
+
+    @Test
+    public void testPrintUsage_hidden() {
+        @SuppressWarnings("unchecked")
+        SubCommandSet<Sub> scs = new SubCommandSet<>("sub", "Subbety sub", this::setSub).addAll(
+                new SubCommand<>("cmd_1", "Test command 1", false, Command1::new, Sub::getParser),
+                new SubCommand<>("cmd_2", "Test command 1", false, Command2::new, Sub::getParser)
+        );
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        scs.printUsage(new PrintWriter(baos));
+
+        assertEquals(" cmd_1 : Test command 1\n" +
+                     " cmd_2 : Test command 1\n", baos.toString());
+
+        baos.reset();
+        scs.printUsage(new PrintWriter(baos), "cmd_1");
 
         assertEquals(" --param_1 str : Param 1\n" +
                      " --param_2 int : Param 2\n", baos.toString());
