@@ -70,7 +70,7 @@ public class TerminalBuffer {
      * @param line The new line content.
      */
     public void update(int i, String line) {
-        if (i >= count()) {
+        if (i >= count() || i < 0) {
             throw new IndexOutOfBoundsException("Index: " + i + ", Size: " + count());
         }
         String old = buffer.get(i);
