@@ -43,7 +43,7 @@ import static java.util.Arrays.fill;
  * methods *not* implemented as they refer to android-internal utility classes
  * or android system functionality.
  * <p>
- * E.g. methods referencing android.net.morimekta.util.* classes are omitted (SparseArray,
+ * E.g. methods referencing android.util.* classes are omitted (SparseArray,
  * Size, SizeF, IBinder).
  * <p>
  * The main reason for porting this is to be able to extensively test parcelable
@@ -696,7 +696,7 @@ public final class Parcel {
     }
 
     private char[] bytes2chars(byte[] bytes) {
-        char[] out = new char[bytes.length / Character.BYTES];
+        char[] out = new char[bytes.length / 2];
         for (int i = 0; i < out.length; ++i) {
             int bp = i * 2;
             int a = bytes[bp + 1];

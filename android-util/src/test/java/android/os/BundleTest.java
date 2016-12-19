@@ -25,10 +25,43 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.BlockJUnit4ClassRunner;
 
+import java.io.Serializable;
+import java.util.Objects;
+
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
+
 @RunWith(BlockJUnit4ClassRunner.class)
 public class BundleTest {
+    private static class TestSerializable implements Serializable{
+        private final String message;
+
+        public TestSerializable(String message) {
+            this.message = message;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (o == this) return true;
+            if (o == null || !o.getClass().equals(getClass())) return false;
+            TestSerializable other = (TestSerializable) o;
+
+            return Objects.equals(message, other.message);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(TestSerializable.class, message);
+        }
+    }
+
     @Test
     public void testConstructor() {
+        Bundle bundle = new Bundle();
 
+        bundle.putSerializable("a", new TestSerializable("b"));
+
+        assertThat(bundle.getSerializable("a"), is(equalTo((Serializable) new TestSerializable("b"))));
     }
 }
