@@ -30,11 +30,11 @@ import static org.junit.Assert.assertTrue;
 /**
  * Numeric Value range matcher.
  */
-public class InRange extends BaseMatcher<Number> {
-    private final Number lowerInclusive;
-    private final Number higherExclusive;
+public class InRange<T extends Number> extends BaseMatcher<T> {
+    private final T lowerInclusive;
+    private final T higherExclusive;
 
-    public InRange(@Nonnull Number lowerInclusive, @Nonnull Number higherExclusive) {
+    public InRange(@Nonnull T lowerInclusive, @Nonnull T higherExclusive) {
         assertNotNull("Missing lower bound of range.", lowerInclusive);
         assertNotNull("Missing upper bound of range.", higherExclusive);
         assertTrue(String.format("Lower bound %s not lower than upper bound %s of range.", lowerInclusive, higherExclusive),

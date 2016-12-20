@@ -38,7 +38,7 @@ public class ExtraMatchers {
      * @param upperExclusive The upper exclusive accepted value (the exact value not accepted).
      * @return The matcher.
      */
-    public static Matcher<Number> inRange(@Nonnull Number lowerInclusive, @Nonnull Number upperExclusive) {
+    public static <T extends Number> Matcher<T> inRange(@Nonnull T lowerInclusive, @Nonnull T upperExclusive) {
         return new InRange(lowerInclusive, upperExclusive);
     }
 
