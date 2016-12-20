@@ -39,7 +39,7 @@ public class ExtraMatchers {
      * @return The matcher.
      */
     public static <T extends Number> Matcher<T> inRange(@Nonnull T lowerInclusive, @Nonnull T upperExclusive) {
-        return new InRange(lowerInclusive, upperExclusive);
+        return new InRange<>(lowerInclusive, upperExclusive);
     }
 
     /**
