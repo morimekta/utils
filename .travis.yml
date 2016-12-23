@@ -5,6 +5,5 @@ jdk:
 branches:
   only:
   - master
-  - /^release-.*$/
 after_success:
   - bash <(curl -s https://codecov.io/bash)
