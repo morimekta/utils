@@ -1,9 +1,11 @@
 language: java
+sudo: false
 jdk:
   # - openjdk8 # add when openjdk8 is also supported
   - oraclejdk8
 branches:
   only:
   - master
+script: "mvn verify"
 after_success:
   - bash <(curl -s https://codecov.io/bash)
