@@ -84,6 +84,15 @@ public class Binary implements Comparable<Binary>, Stringable, Serializable {
     }
 
     /**
+     * Method to create a Binary with 0 bytes.
+     *
+     * @return Empty Binary object.
+     */
+    public static Binary empty() {
+        return new Binary(new byte[0]);
+    }
+
+    /**
      * Get the length of the backing array.
      *
      * @return Byte count.

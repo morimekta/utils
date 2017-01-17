@@ -77,6 +77,16 @@ public class BinaryTest {
     }
 
     @Test
+    public void testEmpty() {
+        // Copy makes an in-memory copy, and will thus be unaffected by
+        // modifications to the original.
+        Binary empty = Binary.empty();
+
+        // Not modified.
+        assertEquals("", empty.toHexString());
+    }
+
+    @Test
     public void testCopy() {
         // Copy makes an in-memory copy, and will thus be unaffected by
         // modifications to the original.
