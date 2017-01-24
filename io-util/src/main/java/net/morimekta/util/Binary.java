@@ -22,6 +22,7 @@ package net.morimekta.util;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -184,6 +185,15 @@ public class Binary implements Comparable<Binary>, Stringable, Serializable {
      */
     public ByteBuffer getByteBuffer() {
         return ByteBuffer.wrap(get());
+    }
+
+    /**
+     * Get an input stream that reads from the stored bytes.
+     *
+     * @return An input stream.
+     */
+    public InputStream getInputStream() {
+        return new ByteArrayInputStream(bytes);
     }
 
     /**

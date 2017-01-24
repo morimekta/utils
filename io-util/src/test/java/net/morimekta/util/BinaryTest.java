@@ -20,6 +20,8 @@
  */
 package net.morimekta.util;
 
+import net.morimekta.util.io.IOUtils;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -31,11 +33,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.TreeSet;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -161,6 +166,15 @@ public class BinaryTest {
         Binary a = Binary.wrap(a1);
         ByteBuffer b = a.getByteBuffer();
         assertNotSame(a1, b.array());
+    }
+
+    @Test
+    public void testGetInputStream() throws IOException {
+        Binary a = Binary.wrap(a1);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        IOUtils.copy(a.getInputStream(), baos);
+
+        assertThat(baos.toByteArray(), is(equalTo(a1)));
     }
 
     @Test
