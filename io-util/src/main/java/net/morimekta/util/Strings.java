@@ -366,7 +366,7 @@ public class Strings {
 
         boolean lastUpper = true;
         for (char c : name.toCharArray()) {
-            if (Character.isUpperCase(c)) {
+            if (Character.isUpperCase(c) || Character.isDigit(c)) {
                 if (!lastUpper) {
                     builder.append('_');
                 }

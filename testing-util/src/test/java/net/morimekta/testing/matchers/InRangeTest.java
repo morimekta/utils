@@ -34,7 +34,7 @@ public class InRangeTest {
             fail(String.format("Expected exception on new InRange(%s, %s)",
                                Objects.toString(lower),
                                Objects.toString(upper)));
-        } catch (AssertionError e) {
+        } catch (AssertionError|IllegalArgumentException e) {
             assertEquals(message, e.getMessage());
         }
     }

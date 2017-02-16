@@ -21,7 +21,6 @@ package net.morimekta.testing.matchers;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 
-import javax.annotation.Nonnull;
 import java.util.Objects;
 
 import static org.junit.Assert.assertNotNull;
@@ -34,7 +33,7 @@ public class InRange<T extends Number> extends BaseMatcher<T> {
     private final T lowerInclusive;
     private final T higherExclusive;
 
-    public InRange(@Nonnull T lowerInclusive, @Nonnull T higherExclusive) {
+    public InRange(T lowerInclusive, T higherExclusive) {
         assertNotNull("Missing lower bound of range.", lowerInclusive);
         assertNotNull("Missing upper bound of range.", higherExclusive);
         assertTrue(String.format("Lower bound %s not lower than upper bound %s of range.", lowerInclusive, higherExclusive),

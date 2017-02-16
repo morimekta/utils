@@ -121,6 +121,9 @@ public class StringsTest {
 
         // TODO: This case should be possible to split to: "get_abbr_and_more_now".
         assertEquals("get_abbrand_more_now", Strings.c_case("get_", "ABBRAndMore", "_now"));
+
+        assertEquals("mp3", Strings.c_case("", "MP3"));
+        assertEquals("m4v", Strings.c_case("", "M4V"));
     }
 
     @Test
