@@ -400,6 +400,20 @@ public class Strings {
         return c_case(prefix, name, "");
     }
 
+    /**
+     * Format a prefixed name as c_case. The prefix is kept verbatim, while the
+     * name has a '_' character inserted before each upper-case letter, not
+     * including the first character. Then the whole thing is lower-cased.
+     * <p>
+     * Note that this may mangle upper-case abbreviations.
+     * </p>
+     * @param name   The name to c-case.
+     * @return the_c_cased_name
+     */
+    public static String c_case(String name) {
+        return c_case("", name, "");
+    }
+
     public static String capitalize(String string) {
         return string.substring(0, 1)
                      .toUpperCase() + string.substring(1);

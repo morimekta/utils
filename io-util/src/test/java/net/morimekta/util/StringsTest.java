@@ -123,7 +123,10 @@ public class StringsTest {
         assertEquals("get_abbrand_more_now", Strings.c_case("get_", "ABBRAndMore", "_now"));
 
         assertEquals("mp3", Strings.c_case("", "MP3"));
-        assertEquals("m4v", Strings.c_case("", "M4V"));
+        assertEquals("boo_m4v", Strings.c_case("boo_", "M4V"));
+
+        assertEquals("mp3", Strings.c_case("MP3"));
+        assertEquals("m4v", Strings.c_case("M4V"));
     }
 
     @Test
