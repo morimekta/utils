@@ -18,24 +18,15 @@
  */
 package net.morimekta.testing.matchers;
 
-import org.hamcrest.BaseMatcher;
-import org.hamcrest.Description;
-
-import java.util.Objects;
-
-import static org.junit.Assert.assertNotNull;
+import org.hamcrest.core.IsEqual;
 
 /**
- * Equality matcher that ignores line indent. But matches all other spacing.
+ * Equality matcher that that ignores changes in line separators.
  */
-public class EqualToLines extends BaseMatcher<String> {
-    private final String expected;
-
+public class EqualToLines extends IsEqual<String> {
     public EqualToLines(String expected) {
-        assertNotNull("Missing expected.", expected);
-
-        this.expected = normalize(expected);
-
+        // replace all '\r\n' with '\n' so windows & *nix line output is normalized to the same.
+        super(normalize(expected));
     }
 
     @Override
@@ -43,44 +34,13 @@ public class EqualToLines extends BaseMatcher<String> {
         if (o == null || !(CharSequence.class.isAssignableFrom(o.getClass()))) return false;
 
         // replace all '\r\n' with '\n' so windows & *nix line output is normalized to the same.
-        String actualLines = normalize(o.toString());
-
-        return actualLines.equals(expected);
+        return super.matches(normalize(o.toString()));
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (o == this) {
-            return true;
-        }
-        if (o == null || !(getClass().equals(o.getClass()))) {
-            return false;
-        }
-
-        EqualToLines other = (EqualToLines) o;
-        return Objects.equals(other.expected, expected);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(EqualToLines.class, expected);
-    }
-
-    @Override
-    public void describeTo(Description description) {
-        description.appendText("equal lines ")
-                   .appendValue(expected);
-    }
-
-    public void describeMismatch(Object actual, Description mismatchDescription) {
-        mismatchDescription.appendText("was ")
-                           .appendValue(normalize(actual));
-    }
-
-    private String normalize(Object str) {
+    private static String normalize(Object str) {
         if (str == null) {
             return null;
         }
-        return str.toString().replaceAll("\\r\\n", "\n");
+        return str.toString().replaceAll("\\r?\\n", System.lineSeparator());
     }
 }
