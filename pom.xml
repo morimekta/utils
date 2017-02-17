@@ -61,6 +61,8 @@
     </prerequisites>
 
     <properties>
+        <gpg.executable>gpg2</gpg.executable>
+
         <!-- project config -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -434,6 +436,10 @@
                                 <goals>
                                     <goal>sign</goal>
                                 </goals>
+                                <configuration>
+                                    <executable>${gpg.executable}</executable>
+                                    <useAgent>true</useAgent>
+                                </configuration>
                             </execution>
                         </executions>
                     </plugin>
