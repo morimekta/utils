@@ -55,8 +55,8 @@ public class ResourceUtilsTest {
             ResourceUtils.copyResourceTo("/net/morimekta/testing/test.txt", tmp);
             fail("No exception on target is file");
         } catch (AssertionError e) {
-            assertEquals("Trying to copy resource /net/morimekta/testing/test.txt to file: " + tmp.getAbsolutePath() +
-                         ", directory required",
+            assertEquals("Trying to copy resource '/net/morimekta/testing/test.txt' to file: '" + tmp.getAbsolutePath() +
+                         "', directory required",
                          e.getMessage());
         }
 
@@ -65,8 +65,8 @@ public class ResourceUtilsTest {
             ResourceUtils.copyResourceTo("/net/morimekta/testing/test.txt", temp.getRoot());
             fail("No exception on missing target dir");
         } catch (AssertionError e) {
-            assertEquals("Trying to copy resource /net/morimekta/testing/test.txt to non-existing directory: " +
-                         temp.getRoot().getAbsolutePath(), e.getMessage());
+            assertEquals("Trying to copy resource '/net/morimekta/testing/test.txt' to non-existing directory: '" +
+                         temp.getRoot().getAbsolutePath() + "'", e.getMessage());
         }
     }
 

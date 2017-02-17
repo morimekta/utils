@@ -12,8 +12,13 @@ import static org.junit.Assert.fail;
 
 /**
  * Networking utilities for testing.
+ *
+ * @deprecated This class will be removed from 0.5.0. Networking needs to be
+ * handled closer to the actual tests.
  */
+@Deprecated
 public class NetworkUtils {
+    @Deprecated
     public static int findFreePort() {
         int port = -1;
         try (ServerSocket socket = new ServerSocket(0)) {
@@ -24,14 +29,17 @@ public class NetworkUtils {
         return port;
     }
 
+    @Deprecated
     public static HttpRequestFactory httpFactory() {
         return httpTransport().createRequestFactory();
     }
 
+    @Deprecated
     public static HttpRequestFactory httpFactory(HttpRequestInitializer initializer) {
         return httpTransport().createRequestFactory(initializer);
     }
 
+    @Deprecated
     public static HttpTransport httpTransport() {
         return new ApacheHttpTransport();
     }

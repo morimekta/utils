@@ -30,10 +30,10 @@ public class ResourceUtils {
      */
     public static File copyResourceTo(String resource, File dir) {
         if (!dir.exists()) {
-            fail("Trying to copy resource " + resource + " to non-existing directory: " + dir);
+            fail("Trying to copy resource '" + resource + "' to non-existing directory: '" + dir + "'");
         }
         if (dir.isFile()) {
-            fail("Trying to copy resource " + resource + " to file: " + dir + ", directory required");
+            fail("Trying to copy resource '" + resource + "' to file: '" + dir + "', directory required");
         }
         int i = resource.lastIndexOf('/');
         File file = new File(dir, resource.substring(i + 1));
@@ -57,6 +57,8 @@ public class ResourceUtils {
      * @param target The file to write to.
      */
     public static void writeContentTo(String content, File target) {
+        assertNotNull("Content is null", content);
+        assertNotNull("Target file is null", target);
         try (FileOutputStream fos = new FileOutputStream(target);
              BufferedOutputStream out = new BufferedOutputStream(fos)) {
             out.write(content.getBytes(UTF_8));
@@ -74,6 +76,7 @@ public class ResourceUtils {
      * @return The buffered input stream.
      */
     public static BufferedInputStream getResourceAsStream(String resource) {
+        assertNotNull("Given null resource", resource);
         InputStream in = ResourceUtils.class.getResourceAsStream(resource);
         assertNotNull("Trying to read non-existing resource " + resource, in);
         return new BufferedInputStream(in);
@@ -91,7 +94,7 @@ public class ResourceUtils {
         try (InputStream in = getResourceAsStream(resource)) {
             IOUtils.copy(in, baos);
         } catch (IOException e) {
-            fail("Failed to read resource " + resource + ": " + e.getMessage());
+            fail("Failed to read resource '" + resource + "': " + e.getMessage());
         }
 
         return baos.toByteArray();
