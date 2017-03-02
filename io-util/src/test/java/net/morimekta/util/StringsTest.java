@@ -127,6 +127,12 @@ public class StringsTest {
 
         assertEquals("mp3", Strings.c_case("MP3"));
         assertEquals("m4v", Strings.c_case("M4V"));
+
+        assertEquals("mp3", Strings.c_case("", "mp3"));
+        assertEquals("boo_m4v", Strings.c_case("boo_", "m4v"));
+
+        assertEquals("mp3", Strings.c_case("mp3"));
+        assertEquals("m4v", Strings.c_case("m4v"));
     }
 
     @Test
