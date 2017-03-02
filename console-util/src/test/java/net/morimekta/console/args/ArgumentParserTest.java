@@ -30,8 +30,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static net.morimekta.console.util.Parser.i32;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -206,13 +209,13 @@ public class ArgumentParserTest {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         parser.printUsage(baos);
 
-        assertEquals(" --arg1 (-a) I : Integer value\n" +
-                     " -Dkey=val     : System property\n" +
-                     " --arg2        : Another boolean\n" +
-                     " -A I          : Integer value (#2), This one has a really long description,\n" +
-                     "                 that should be wrapped at some point. This extra text is just\n" +
-                     "                 to make sure it actually wraps...\n",
-                     baos.toString());
+        assertThat(baos.toString(),
+                   is(equalTo(" --arg1 (-a) I : Integer value\n" +
+                   " -Dkey=val     : System property\n" +
+                   " --arg2        : Another boolean\n" +
+                   " -A I          : Integer value (#2), This one has a really long description,\n" +
+                   "                 that should be wrapped at some point. This extra text is just\n" +
+                   "                 to make sure it actually wraps...\n")));
     }
 
     @Test

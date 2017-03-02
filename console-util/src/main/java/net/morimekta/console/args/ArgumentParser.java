@@ -455,15 +455,15 @@ public class ArgumentParser {
         if (prefix.length() > prefixLen) {
             writer.append(prefix);
             if (prefix.length() > (prefixLen * 1.7)) {
-                descLines = WordUtils.wrap(usage, usageWidth - prefixLen - USAGE_EXTRA_CHARS).split("[\\n]");
+                descLines = WordUtils.wrap(usage, usageWidth - prefixLen - USAGE_EXTRA_CHARS).split("[\\r]?[\\n]");
             } else {
                 writer.append(" : ");
 
-                String[] tmp = WordUtils.wrap(usage, usageWidth - prefix.length() - USAGE_EXTRA_CHARS).split("[\\n]", 2);
+                String[] tmp = WordUtils.wrap(usage, usageWidth - prefix.length() - USAGE_EXTRA_CHARS).split("[\\r]?[\\n]", 2);
                 writer.append(tmp[0]);
 
                 if (tmp.length > 1) {
-                    descLines = WordUtils.wrap(tmp[1].replaceAll("\\n", " "), usageWidth - prefixLen - USAGE_EXTRA_CHARS).split("[\\n]");
+                    descLines = WordUtils.wrap(tmp[1].replaceAll("[\\r]?[\\n]", " "), usageWidth - prefixLen - USAGE_EXTRA_CHARS).split("[\\r]?[\\n]");
                 } else {
                     descLines = new String[0];
                 }
@@ -471,7 +471,7 @@ public class ArgumentParser {
         } else {
             writer.append(CharUtil.leftJust(prefix, prefixLen));
             writer.append(" : ");
-            descLines = WordUtils.wrap(usage, usageWidth - prefixLen - USAGE_EXTRA_CHARS).split("[\\n]");
+            descLines = WordUtils.wrap(usage, usageWidth - prefixLen - USAGE_EXTRA_CHARS).split("[\\r]?[\\n]");
             writer.append(descLines[0]);
             printLinesFrom = 1;
         }

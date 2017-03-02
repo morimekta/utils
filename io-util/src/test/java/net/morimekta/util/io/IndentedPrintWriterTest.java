@@ -76,6 +76,8 @@ public class IndentedPrintWriterTest {
 
     @Test
     public void testExtraMethods() {
+        Locale.setDefault(Locale.ENGLISH);
+
         // testing methods that just wraps PrintWriter methods.
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         IndentedPrintWriter writer = new IndentedPrintWriter(new PrintWriter(baos));
@@ -93,7 +95,7 @@ public class IndentedPrintWriterTest {
                      "en 1.000000\n" +
                      "fr 1,000000\n" +
                      "|ԥ\n" +
-                     "㡧㚉", new String(baos.toByteArray(), UTF_8));
+                     "㡧㚉", new String(baos.toByteArray(), UTF_8).replaceAll("\\r\\n", "\n"));
     }
 
     @Test
