@@ -35,6 +35,11 @@
             <artifactId>io-util</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>net.morimekta.utils</groupId>
+            <artifactId>diff-util</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>org.hamcrest</groupId>
@@ -49,6 +54,11 @@
             <artifactId>google-http-client</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>org.hamcrest</groupId>
             <artifactId>hamcrest-library</artifactId>

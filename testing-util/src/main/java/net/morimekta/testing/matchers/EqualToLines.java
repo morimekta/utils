@@ -18,29 +18,76 @@
  */
 package net.morimekta.testing.matchers;
 
-import org.hamcrest.core.IsEqual;
+import net.morimekta.diff.Change;
+import net.morimekta.diff.DiffLines;
+
+import org.hamcrest.BaseMatcher;
+import org.hamcrest.Description;
+
+import java.util.List;
 
 /**
- * Equality matcher that that ignores changes in line separators.
+ * Equality matcher that that ignores changes in line separators, and shows
+ * a line by line diff on mismatch.
  */
-public class EqualToLines extends IsEqual<String> {
+public class EqualToLines extends BaseMatcher<String> {
+    private final String expected;
+
     public EqualToLines(String expected) {
         // replace all '\r\n' with '\n' so windows & *nix line output is normalized to the same.
-        super(normalize(expected));
+        this.expected = normalize(expected);
     }
 
     @Override
-    public boolean matches(Object o) {
-        if (o == null || !(CharSequence.class.isAssignableFrom(o.getClass()))) return false;
+    public boolean matches(Object item) {
+        if (item == null || !(CharSequence.class.isAssignableFrom(item.getClass()))) return false;
 
         // replace all '\r\n' with '\n' so windows & *nix line output is normalized to the same.
-        return super.matches(normalize(o.toString()));
+        return expected.equals(normalize(item));
     }
 
-    private static String normalize(Object str) {
-        if (str == null) {
+    @Override
+    public void describeTo(Description description) {
+        description.appendText("equal to lines:" + System.lineSeparator())
+                   .appendText(expected.replaceAll("\\n", System.lineSeparator()));
+    }
+
+    @Override
+    public void describeMismatch(Object item, Description description) {
+        if (item == null || !(CharSequence.class.isAssignableFrom(item.getClass()))) {
+            super.describeMismatch(item, description);
+            return;
+        }
+
+        List<Change> changes = new DiffLines(expected, normalize(item)).getChangeList();
+
+        description.appendText("has line-by-line diff:" + System.lineSeparator());
+
+        for (Change change : changes) {
+            switch (change.operation) {
+                case EQUAL:
+                    description.appendText("  ")
+                               .appendText(change.text)
+                               .appendText(System.lineSeparator());
+                    break;
+                case DELETE:
+                    description.appendText("- ")
+                               .appendText(change.text)
+                               .appendText(System.lineSeparator());
+                    break;
+                case INSERT:
+                    description.appendText("+ ")
+                               .appendText(change.text)
+                               .appendText(System.lineSeparator());
+                    break;
+            }
+        }
+    }
+
+    private static String normalize(Object o) {
+        if (o == null) {
             return null;
         }
-        return str.toString().replaceAll("\\r?\\n", System.lineSeparator());
+        return o.toString().replaceAll("\\r\\n", "\n");
     }
 }

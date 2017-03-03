@@ -18,6 +18,7 @@
  */
 package net.morimekta.testing;
 
+import net.morimekta.testing.matchers.DistinctFrom;
 import net.morimekta.testing.matchers.EqualIgnoreIndent;
 import net.morimekta.testing.matchers.EqualToLines;
 import net.morimekta.testing.matchers.InRange;
@@ -26,6 +27,7 @@ import net.morimekta.testing.matchers.OneOf;
 import org.hamcrest.Matcher;
 
 import javax.annotation.Nonnull;
+import java.util.Set;
 
 /**
  * Extra hamcrest matchers.
@@ -75,6 +77,19 @@ public class ExtraMatchers {
      */
     public static <T> Matcher<T> oneOf(T... alternatives) {
         return new OneOf<>(alternatives);
+    }
+
+    /**
+     * Matcher to check that two sets does not have any common elements.
+     *
+     * The elements must have proper equals method implementations for this matcher to work.
+     *
+     * @param from The set it should not match.
+     * @param <T> The element type.
+     * @return The distinct-from matcher.
+     */
+    public static <T> Matcher<Set<T>> distinctFrom(Set<T> from) {
+        return new DistinctFrom<>(from);
     }
 
     private ExtraMatchers() {}

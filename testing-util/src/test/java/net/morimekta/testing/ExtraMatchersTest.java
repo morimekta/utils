@@ -1,5 +1,6 @@
 package net.morimekta.testing;
 
+import net.morimekta.testing.matchers.DistinctFrom;
 import net.morimekta.testing.matchers.EqualIgnoreIndent;
 import net.morimekta.testing.matchers.EqualToLines;
 import net.morimekta.testing.matchers.InRange;
@@ -10,6 +11,9 @@ import org.junit.Test;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Collections;
+import java.util.Set;
+import java.util.TreeSet;
 
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
@@ -44,6 +48,25 @@ public class ExtraMatchersTest {
 
         assertThat(matcher.matches("a\r\n  b\r\n"), is(false));
         assertThat(matcher.matches(null), is(false));
+    }
+
+    @Test
+    public void testDistinctFrom() {
+        Matcher<Set<String>> matcher = ExtraMatchers.distinctFrom(set("a", "b", "c"));
+
+        assertThat(matcher, is(instanceOf(DistinctFrom.class)));
+        assertThat(matcher.matches(set("d", "e")), is(true));
+        assertThat(matcher.matches(set("d", "e", "f")), is(true));
+
+        assertThat(matcher.matches(set("a")), is(false));
+        assertThat(matcher.matches(null), is(false));
+        assertThat(matcher.matches("blaa"), is(false));
+    }
+
+    private static Set<String> set(String... items) {
+        TreeSet<String> res = new TreeSet<>();
+        Collections.addAll(res, items);
+        return res;
     }
 
     @Test
