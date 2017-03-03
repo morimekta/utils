@@ -50,15 +50,15 @@ public class FileWatcherTest {
 
     @Test
     public void testSimpleWatch() throws IOException, InterruptedException {
-        File test1 = temp.newFile("test1");
-        File test2 = temp.newFile("test2");
-        File test3 = new File(temp.getRoot(), "test3");
+        File test1 = temp.newFile("test1").getCanonicalFile();
+        File test2 = temp.newFile("test2").getCanonicalFile();
+        File test3 = new File(temp.getRoot(), "test3").getCanonicalFile();
         temp.newFile("test4");
-        File test5 = new File(temp.getRoot(), "test5");
+        File test5 = new File(temp.getRoot(), "test5").getCanonicalFile();
 
         File subDir = temp.newFolder();
         subDir.mkdirs();
-        File subFile = new File(subDir, "subFile");
+        File subFile = new File(subDir, "subFile").getCanonicalFile();
         subFile.createNewFile();
 
         write("1", test1);
@@ -92,8 +92,8 @@ public class FileWatcherTest {
 
     @Test
     public void testStopWatching() throws IOException, InterruptedException {
-        File file1 = temp.newFile();
-        File file2 = temp.newFile();
+        File file1 = temp.newFile().getCanonicalFile();
+        File file2 = temp.newFile().getCanonicalFile();
 
         sut.startWatching(file1);
         sut.startWatching(file2);
@@ -139,9 +139,9 @@ public class FileWatcherTest {
         sut2.addWatcher(w3);
         sut2.addWatcher(w4);
 
-        File f1 = temp.newFile();
-        File f2 = temp.newFile();
-        File f12 = temp.newFile();
+        File f1 = temp.newFile().getCanonicalFile();
+        File f2 = temp.newFile().getCanonicalFile();
+        File f12 = temp.newFile().getCanonicalFile();
 
         sut.startWatching(f1);
         sut2.startWatching(f2);
@@ -198,8 +198,8 @@ public class FileWatcherTest {
         File dir1 = temp.newFolder("dir1");
         File dir2 = temp.newFolder("dir2");
 
-        File f1 = new File(dir1, "f1");
-        File f2 = new File(dir2, "f2");
+        File f1 = new File(dir1, "f1").getCanonicalFile();
+        File f2 = new File(dir2, "f2").getCanonicalFile();
 
         FileWatcher.Watcher watcher = mock(FileWatcher.Watcher.class);
         sut.addWatcher(watcher);
