@@ -18,15 +18,17 @@
  */
 package net.morimekta.testing;
 
+import net.morimekta.testing.matchers.AllItemsMatch;
 import net.morimekta.testing.matchers.DistinctFrom;
 import net.morimekta.testing.matchers.EqualIgnoreIndent;
 import net.morimekta.testing.matchers.EqualToLines;
 import net.morimekta.testing.matchers.InRange;
-import net.morimekta.testing.matchers.OneOf;
 
 import org.hamcrest.Matcher;
+import org.hamcrest.Matchers;
 
 import javax.annotation.Nonnull;
+import java.util.Collection;
 import java.util.Set;
 
 /**
@@ -68,15 +70,16 @@ public class ExtraMatchers {
 
 
     /**
-     * Alternative to hamcrest 'anyOf' that simplifies to match any one of the
-     * <i>values</i> given.
+     * Alternative to hamcrest 'oneOf' that simplifies to match any one of the
+     * <i>values</i> given. And uses a vararg interface
      *
      * @param alternatives The value alternatives.
      * @param <T> The value type.
      * @return The matcher.
      */
+    @SafeVarargs
     public static <T> Matcher<T> oneOf(T... alternatives) {
-        return new OneOf<>(alternatives);
+        return Matchers.isOneOf(alternatives);
     }
 
     /**
@@ -90,6 +93,17 @@ public class ExtraMatchers {
      */
     public static <T> Matcher<Set<T>> distinctFrom(Set<T> from) {
         return new DistinctFrom<>(from);
+    }
+
+    /**
+     * Matcher that checks all items in a collection to match the item-matcher.
+     *
+     * @param itemMatcher The matcher for each individual item.
+     * @param <T> The item type.
+     * @return The collection matcher.
+     */
+    public static <T> Matcher<Collection<T>> allItemsMatch(Matcher<T> itemMatcher) {
+        return new AllItemsMatch<>(itemMatcher);
     }
 
     private ExtraMatchers() {}

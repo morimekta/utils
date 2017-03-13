@@ -4,19 +4,21 @@ import net.morimekta.testing.matchers.DistinctFrom;
 import net.morimekta.testing.matchers.EqualIgnoreIndent;
 import net.morimekta.testing.matchers.EqualToLines;
 import net.morimekta.testing.matchers.InRange;
-import net.morimekta.testing.matchers.OneOf;
 
 import org.hamcrest.Matcher;
+import org.hamcrest.collection.IsIn;
 import org.junit.Test;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 import java.util.TreeSet;
 
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.isOneOf;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
@@ -63,6 +65,15 @@ public class ExtraMatchersTest {
         assertThat(matcher.matches("blaa"), is(false));
     }
 
+    @Test
+    public void testAllItemsMatch() {
+        Matcher<Collection<String>> matcher = ExtraMatchers.allItemsMatch(isOneOf("a", "b", "c"));
+
+        assertThat(set("a", "b"), matcher);
+        assertThat(set("a", "b", "c"), matcher);
+        assertThat(matcher.matches(set("a", "d")), is(false));
+    }
+
     private static Set<String> set(String... items) {
         TreeSet<String> res = new TreeSet<>();
         Collections.addAll(res, items);
@@ -84,7 +95,7 @@ public class ExtraMatchersTest {
     public void testOneOf() {
         Matcher<String> matcher = ExtraMatchers.oneOf("a", "b", null);
 
-        assertThat(matcher, is(instanceOf(OneOf.class)));
+        assertThat(matcher, is(instanceOf(IsIn.class)));
         assertThat(matcher.matches("a"), is(true));
         assertThat(matcher.matches("b"), is(true));
         assertThat(matcher.matches("c"), is(false));
