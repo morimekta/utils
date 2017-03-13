@@ -22,6 +22,8 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.sun.nio.file.SensitivityWatchEventModifier.HIGH;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
@@ -39,8 +41,8 @@ public class FileWatcher implements AutoCloseable {
 
     public FileWatcher() {
         this(newWatchService(),
-             Executors.newSingleThreadExecutor(),
-             Executors.newSingleThreadExecutor());
+             Executors.newSingleThreadExecutor(makeThreadFactory("FileWatcher")),
+             Executors.newSingleThreadExecutor(makeThreadFactory("FileWatcherCallback")));
     }
 
     // @VisibleForTesting
@@ -135,6 +137,16 @@ public class FileWatcher implements AutoCloseable {
         watchService.close();
     }
 
+    private static ThreadFactory makeThreadFactory(String name) {
+        AtomicInteger idx = new AtomicInteger();
+        return runnable -> {
+            Thread thread = Executors.defaultThreadFactory().newThread(runnable);
+            thread.setName(name + "-" + idx.incrementAndGet());
+            thread.setDaemon(true);
+            return thread;
+        };
+    }
+
     /**
      * Handle the watch service event loop.
      */
@@ -180,7 +192,11 @@ public class FileWatcher implements AutoCloseable {
                     callbackExecutor.submit(() -> {
                         for (final Watcher watcher : tmp) {
                             for (final File file : updates) {
-                                watcher.onFileUpdate(file);
+                                try {
+                                    watcher.onFileUpdate(file);
+                                } catch (RuntimeException e) {
+                                    LOGGER.error("Exception when notifying update on " + file, e);
+                                }
                             }
                         }
                     });
