@@ -40,6 +40,11 @@
             <artifactId>diff-util</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>net.morimekta.utils</groupId>
+            <artifactId>console-util</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>org.hamcrest</groupId>
