@@ -61,7 +61,7 @@ public class STTYModeSwitcher implements Closeable {
     public STTYModeSwitcher(STTYMode mode, Runtime runtime) throws IOException {
         this.runtime = runtime;
         this.mode = mode;
-        this.before = setSttyMode(mode);
+        this.before = switchSttyMode(mode);
     }
 
     /**
@@ -71,7 +71,7 @@ public class STTYModeSwitcher implements Closeable {
      * @throws IOException If unable to switch back.
      */
     public void close() throws IOException {
-        setSttyMode(before);
+        switchSttyMode(before);
     }
 
     /**
@@ -120,6 +120,36 @@ public class STTYModeSwitcher implements Closeable {
         }
     }
 
+    /**
+     * Set terminal mode.
+     *
+     * @param mode The mode to set.
+     */
+    protected void setSttyMode(STTYMode mode) throws IOException {
+        String[] cmd;
+        if (mode == STTYMode.COOKED) {
+            cmd = new String[]{"/bin/sh", "-c", "stty -raw echo </dev/tty"};
+        } else {
+            cmd = new String[]{"/bin/sh", "-c", "stty raw -echo </dev/tty"};
+        }
+
+        Process p = runtime.exec(cmd);
+
+        try {
+            p.waitFor();
+        } catch (InterruptedException ie) {
+            throw new IOException(ie.getMessage(), ie);
+        }
+
+        try (InputStreamReader in = new InputStreamReader(p.getErrorStream(), UTF_8);
+             BufferedReader reader = new BufferedReader(in)) {
+            String err = reader.readLine();
+            if (err != null) {
+                throw new IOException(err);
+            }
+        }
+    }
+
     // Default input mode is COOKED.
     private static STTYMode current_mode = STTYMode.COOKED;
 
@@ -127,39 +157,11 @@ public class STTYModeSwitcher implements Closeable {
     private final STTYMode before;
     private final STTYMode mode;
 
-    /**
-     * Set terminal mode.
-     *
-     * @param mode The mode to set.
-     * @return The mode before the call.
-     */
-    private STTYMode setSttyMode(STTYMode mode) throws IOException {
+    private STTYMode switchSttyMode(STTYMode mode) throws IOException {
         synchronized (STTYModeSwitcher.class) {
             STTYMode old = current_mode;
             if (mode != current_mode) {
-                String[] cmd;
-                if (mode == STTYMode.COOKED) {
-                    cmd = new String[]{"/bin/sh", "-c", "stty -raw echo </dev/tty"};
-                } else {
-                    cmd = new String[]{"/bin/sh", "-c", "stty raw -echo </dev/tty"};
-                }
-
-                Process p = runtime.exec(cmd);
-
-                try {
-                    p.waitFor();
-                } catch (InterruptedException ie) {
-                    throw new IOException(ie.getMessage(), ie);
-                }
-
-                try (InputStreamReader in = new InputStreamReader(p.getErrorStream(), UTF_8);
-                     BufferedReader reader = new BufferedReader(in)) {
-                    String err = reader.readLine();
-                    if (err != null) {
-                        throw new IOException(err);
-                    }
-                }
-
+                setSttyMode(mode);
                 current_mode = mode;
             }
             return old;

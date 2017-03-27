@@ -45,13 +45,6 @@
         </dependency>
 
         <dependency>
-            <groupId>net.morimekta.utils</groupId>
-            <artifactId>config-util</artifactId>
-            <version>${project.version}</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
             <groupId>org.hamcrest</groupId>
             <artifactId>hamcrest-library</artifactId>
             <scope>test</scope>

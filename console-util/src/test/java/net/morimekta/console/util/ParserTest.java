@@ -20,10 +20,8 @@
  */
 package net.morimekta.console.util;
 
-import net.morimekta.config.impl.SimpleConfig;
-import net.morimekta.console.args.ArgumentException;
-
 import com.google.common.util.concurrent.AtomicDouble;
+import net.morimekta.console.args.ArgumentException;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -33,6 +31,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -76,27 +76,27 @@ public class ParserTest {
 
     @Test
     public void testAndThen() {
-        AtomicInteger integer = new AtomicInteger();
-        SimpleConfig config = new SimpleConfig();
+        AtomicInteger      integer = new AtomicInteger();
+        Map<String,Object> config  = new TreeMap<>();
 
         Parser.IntegerParser parser = new Parser.IntegerParser();
 
         parser.andApply(integer::set).accept("4");
         assertEquals(4, integer.get());
 
-        parser.andPut(config::putInteger).put("first", "4");
-        assertEquals(4, config.getInteger("first"));
+        parser.andPut(config::put).put("first", "4");
+        assertEquals(4, config.get("first"));
 
-        parser.andPutAs(config::putInteger, "second").accept("6");
-        assertEquals(6, config.getInteger("second"));
+        parser.andPutAs(config::put, "second").accept("6");
+        assertEquals(6, config.get("second"));
     }
 
     @Test
     public void testPutInto() {
-        SimpleConfig config = new SimpleConfig();
+        Map<String,Object> config  = new TreeMap<>();
 
-        Parser.putAs(config::putString, "test").accept("value");
-        assertEquals("value", config.getString("test"));
+        Parser.putAs(config::put, "test").accept("value");
+        assertEquals("value", config.get("test"));
     }
 
     @Test

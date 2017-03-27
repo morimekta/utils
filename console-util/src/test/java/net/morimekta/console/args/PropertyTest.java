@@ -20,8 +20,6 @@
  */
 package net.morimekta.console.args;
 
-import net.morimekta.config.impl.SimpleConfig;
-
 import org.junit.Test;
 
 import java.util.Map;
@@ -38,8 +36,7 @@ public class PropertyTest {
     @Test
     public void testConstructor() {
         Map<String, String> map = new TreeMap<>();
-
-        Property p = new Property('D', "Help", map::put);
+        Property            p   = new Property('D', "Help", map::put);
 
         assertEquals("-Dkey=val", p.getPrefix());
         assertEquals("Help", p.getUsage());
@@ -52,7 +49,7 @@ public class PropertyTest {
     @Test
     public void testApplyShort() {
         Map<String, String> map = new TreeMap<>();
-        Property p = new Property('D', "Help", map::put);
+        Property            p   = new Property('D', "Help", map::put);
 
         p.applyShort("Dkey=val", new ArgumentList("-Dkey=val"));
 
@@ -76,20 +73,20 @@ public class PropertyTest {
     @Test
     public void testApply() {
         Map<String, String> map = new TreeMap<>();
-        Property p = new Property("--def", 'D', "Help", map::put);
+        Property            p   = new Property("--def", 'D', "Help", map::put);
         assertEquals(2, p.apply(new ArgumentList("--def", "key=val")));
         assertEquals("val", map.get("key"));
-   }
+    }
 
     @Test
     public void testApplyParser() {
-        SimpleConfig config = new SimpleConfig();
-        Property straight = new Property("--def", 'D', "Help", config::put);
-        Property typed = new Property('I', "Int", i32().andPut(config::putInteger));
-        Option typedInto = new Option("--i32", "i", "num", "I2", i32().andPutAs(config::putInteger, "i2"));
+        Map<String,Object> config    = new TreeMap<>();
+        Property           straight  = new Property("--def", 'D', "Help", config::put);
+        Property           typed     = new Property('I', "Int", i32().andPut(config::put));
+        Option             typedInto = new Option("--i32", "i", "num", "I2", i32().andPutAs(config::put, "i2"));
 
         assertEquals(2, straight.apply(new ArgumentList("--def", "key=val")));
-        assertEquals("val", config.getString("key"));
+        assertEquals("val", config.get("key"));
 
         typed.applyShort("Ik=32", new ArgumentList("-I32"));
         assertEquals(32, config.get("k"));
