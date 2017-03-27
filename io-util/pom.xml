@@ -18,13 +18,13 @@
 
     <scm>
         <url>https://github.com/morimekta/utils.git</url>
-        <tag>HEAD</tag>
+        <tag>v0.4.5</tag>
     </scm>
 
     <parent>
         <groupId>net.morimekta.utils</groupId>
         <artifactId>utils</artifactId>
-        <version>0.4.5-SNAPSHOT</version>
+        <version>0.4.5</version>
     </parent>
     <artifactId>io-util</artifactId>
     <packaging>jar</packaging>
