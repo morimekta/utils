@@ -100,8 +100,6 @@
         <module>diff-util</module>
         <module>io-util</module>
         <module>testing-util</module>
-
-        <module>testing</module>
     </modules>
 
     <dependencyManagement>
@@ -519,6 +517,19 @@
     </reporting>
 
     <profiles>
+        <profile>
+            <id>it</id>
+            <activation>
+                <!--
+                 This effectively means it will be disabled during release:perform
+                 because of the profile activation below.
+                 -->
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <modules>
+                <module>testing</module>
+            </modules>
+        </profile>
         <profile>
             <id>release-sign-artifacts</id>
             <activation>
