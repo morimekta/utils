@@ -66,6 +66,13 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-site-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
                 <executions>
                     <execution>
@@ -102,136 +109,7 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-site-plugin</artifactId>
-                <configuration>
-                    <skip>true</skip>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-dependency-plugin</artifactId>
-                <executions>
-                    <!-- Copy the ant tasks jar. Needed for ts.jacoco.report-ant . -->
-                    <execution>
-                        <id>jacoco-dependency-ant</id>
-                        <goals>
-                            <goal>copy</goal>
-                        </goals>
-                        <phase>process-test-resources</phase>
-                        <inherited>false</inherited>
-                        <configuration>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>org.jacoco</groupId>
-                                    <artifactId>org.jacoco.ant</artifactId>
-                                    <version>${jacoco.version}</version>
-                                </artifactItem>
-                            </artifactItems>
-                            <stripVersion>true</stripVersion>
-                            <outputDirectory>${basedir}/target/jacoco-jars</outputDirectory>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <phase>post-integration-test</phase>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                        <configuration>
-                            <target>
-                                <!-- Execute an ant task within maven -->
-                                <echo message="Generating JaCoCo Reports" />
-                                <taskdef name="report" classname="org.jacoco.ant.ReportTask">
-                                    <classpath path="${basedir}/target/jacoco-jars/org.jacoco.ant.jar" />
-                                </taskdef>
-                                <mkdir dir="${basedir}/target/coverage-report" />
-                                <report>
-                                    <executiondata>
-                                        <fileset dir="${build.directory.android-util}">
-                                            <include name="jacoco.exec" />
-                                        </fileset>
-                                        <fileset dir="${build.directory.config-util}">
-                                            <include name="jacoco.exec" />
-                                        </fileset>
-                                        <fileset dir="${build.directory.console-util}">
-                                            <include name="jacoco.exec" />
-                                        </fileset>
-                                        <fileset dir="${build.directory.diff-util}">
-                                            <include name="jacoco.exec" />
-                                        </fileset>
-                                        <fileset dir="${build.directory.io-util}">
-                                            <include name="jacoco.exec" />
-                                        </fileset>
-                                        <fileset dir="${build.directory.testing-util}">
-                                            <include name="jacoco.exec" />
-                                        </fileset>
-                                    </executiondata>
-                                    <structure name="jacoco-multi Coverage Project">
-                                        <group name="jacoco-multi">
-                                            <classfiles>
-                                                <fileset dir="${classes.directory.android-util}" />
-                                                <fileset dir="${classes.directory.config-util}" />
-                                                <fileset dir="${classes.directory.console-util}" />
-                                                <fileset dir="${classes.directory.diff-util}" />
-                                                <fileset dir="${classes.directory.io-util}" />
-                                                <fileset dir="${classes.directory.testing-util}" />
-                                            </classfiles>
-                                            <sourcefiles encoding="UTF-8">
-                                                <fileset dir="${sources.directory.android-util}" />
-                                                <fileset dir="${sources.directory.config-util}" />
-                                                <fileset dir="${sources.directory.console-util}" />
-                                                <fileset dir="${sources.directory.diff-util}" />
-                                                <fileset dir="${sources.directory.io-util}" />
-                                                <fileset dir="${sources.directory.testing-util}" />
-                                            </sourcefiles>
-                                        </group>
-                                    </structure>
-                                    <html destdir="${basedir}/target/coverage-report/html" />
-                                    <xml destfile="${basedir}/target/coverage-report/coverage-report.xml" />
-                                    <csv destfile="${basedir}/target/coverage-report/coverage-report.csv" />
-                                </report>
-                            </target>
-                        </configuration>
-                    </execution>
-                </executions>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.jacoco</groupId>
-                        <artifactId>org.jacoco.ant</artifactId>
-                        <version>${jacoco.version}</version>
-                    </dependency>
-                </dependencies>
-            </plugin>
         </plugins>
     </build>
 
-    <properties>
-        <sources.directory.android-util>../android-util/src/main/java</sources.directory.android-util>
-        <sources.directory.config-util>../config-util/src/main/java</sources.directory.config-util>
-        <sources.directory.console-util>../console-util/src/main/java</sources.directory.console-util>
-        <sources.directory.diff-util>../diff-util/src/main/java</sources.directory.diff-util>
-        <sources.directory.io-util>../io-util/src/main/java</sources.directory.io-util>
-        <sources.directory.testing-util>../testing-util/src/main/java</sources.directory.testing-util>
-
-        <classes.directory.android-util>../android-util/target/classes</classes.directory.android-util>
-        <classes.directory.config-util>../config-util/target/classes</classes.directory.config-util>
-        <classes.directory.console-util>../console-util/target/classes</classes.directory.console-util>
-        <classes.directory.diff-util>../diff-util/target/classes</classes.directory.diff-util>
-        <classes.directory.io-util>../io-util/target/classes</classes.directory.io-util>
-        <classes.directory.testing-util>../testing-util/target/classes</classes.directory.testing-util>
-
-        <build.directory.android-util>../android-util/target</build.directory.android-util>
-        <build.directory.config-util>../config-util/target</build.directory.config-util>
-        <build.directory.console-util>../console-util/target</build.directory.console-util>
-        <build.directory.diff-util>../diff-util/target</build.directory.diff-util>
-        <build.directory.io-util>../io-util/target</build.directory.io-util>
-        <build.directory.testing-util>../testing-util/target</build.directory.testing-util>
-    </properties>
 </project>
