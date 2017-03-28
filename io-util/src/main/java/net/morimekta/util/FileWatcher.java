@@ -23,6 +23,7 @@ import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.sun.nio.file.SensitivityWatchEventModifier.HIGH;
@@ -133,8 +134,19 @@ public class FileWatcher implements AutoCloseable {
         synchronized (watchers) {
             watchers.clear();
         }
-        watcherExecutor.shutdown();
-        watchService.close();
+        watcherExecutor.shutdownNow();
+        try {
+            watchService.close();
+        } catch (IOException e) {
+            LOGGER.error("WatchService did not close", e);
+        }
+        try {
+            if (!watcherExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
+                LOGGER.warn("WatcherExecutor failed to terminate in 10 seconds");
+            }
+        } catch (InterruptedException e) {
+            LOGGER.error("WatcherExecutor termination interrupted", e);
+        }
     }
 
     private static ThreadFactory makeThreadFactory(String name) {
