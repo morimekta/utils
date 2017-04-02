@@ -23,7 +23,6 @@ package net.morimekta.console.args;
 import net.morimekta.console.chr.CharUtil;
 import net.morimekta.util.Strings;
 import net.morimekta.util.io.IndentedPrintWriter;
-
 import org.apache.commons.lang3.text.WordUtils;
 
 import java.io.BufferedReader;
@@ -386,9 +385,8 @@ public class ArgumentParser {
         prefixLen = Math.min(prefixLen, (usageWidth / 3) - USAGE_EXTRA_CHARS);
         String indent = Strings.times(" ", prefixLen + USAGE_EXTRA_CHARS);
 
+        boolean first = true;
         if (options.size() > 0) {
-            boolean first = true;
-
             if (argumentOptions.getOptionComparator() != null) {
                 options.sort(argumentOptions.getOptionComparator());
             }
@@ -429,7 +427,11 @@ public class ArgumentParser {
                     usage = usage + " (default: " + arg.getDefaultValue() + ")";
                 }
 
-                writer.appendln();
+                if (first) {
+                    first = false;
+                } else {
+                    writer.appendln();
+                }
                 writer.begin(indent);
 
                 printSingleUsageEntry(writer, prefix, usage, prefixLen, usageWidth);
@@ -438,8 +440,11 @@ public class ArgumentParser {
             }
         }
 
-        writer.newline()
-              .flush();
+        // if nothing printed, complete nothing.
+        if (!first) {
+            writer.newline()
+                  .flush();
+        }
     }
 
     static void printSingleUsageEntry(IndentedPrintWriter writer,
