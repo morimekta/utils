@@ -56,7 +56,7 @@ public class ResourceUtils {
      * @param content The file content.
      * @param target The file to write to.
      */
-    public static void writeContentTo(String content, File target) {
+    public static File writeContentTo(String content, File target) {
         assertNotNull("Content is null", content);
         assertNotNull("Target file is null", target);
         try (FileOutputStream fos = new FileOutputStream(target);
@@ -64,6 +64,7 @@ public class ResourceUtils {
             out.write(content.getBytes(UTF_8));
             out.flush();
             fos.getFD().sync();
+            return target;
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
