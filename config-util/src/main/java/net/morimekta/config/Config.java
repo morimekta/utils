@@ -224,23 +224,6 @@ public interface Config {
 
     /**
      * Look up a single value from the config. If not found return a default
-     * value.
-     *
-     * @param key The key to look for.
-     * @param def The default value.
-     * @param <T> The value type.
-     * @return The value if found, otherwise the default.
-     *
-     * @deprecated since 0.3.5, use {@link #getWithDefault(String, ValueConverter, Object)}
-     */
-    @SuppressWarnings("unchecked,unused")
-    @Deprecated
-    default <T> T getWithDefault(String key, T def) {
-        return getWithDefault(key, v -> (T) v, def);
-    }
-
-    /**
-     * Look up a single value from the config. If not found return a default
      * value. Convert the value using the given converter function.
      *
      * @param key The key to look for.
