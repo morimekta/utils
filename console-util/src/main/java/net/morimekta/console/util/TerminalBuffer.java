@@ -20,6 +20,7 @@
  */
 package net.morimekta.console.util;
 
+import com.google.common.collect.ImmutableList;
 import net.morimekta.console.Terminal;
 
 import java.util.ArrayList;
@@ -51,10 +52,7 @@ public class TerminalBuffer {
     }
 
     public void add(String ... lines) {
-        for (String line : lines) {
-            buffer.add(line);
-            terminal.println(line);
-        }
+        add(ImmutableList.copyOf(lines));
     }
 
     public void add(Collection<String> lines) {

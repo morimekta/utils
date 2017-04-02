@@ -47,7 +47,10 @@ public class STTY {
 
     @Override
     public String toString() {
-        return MoreObjects.toStringHelper(STTY.class).toString();
+        return MoreObjects.toStringHelper(STTY.class)
+                          .add("tty", getTerminalSize())
+                          .add("mode", STTYModeSwitcher.currentMode())
+                          .toString();
     }
 
     /**

@@ -41,27 +41,4 @@ public class TerminalSize {
     public String toString() {
         return String.format("tty(rows:%d, cols:%d)", rows, cols);
     }
-
-    /**
-     * Get the terminal size.
-     *
-     * @return the terminal size.
-     * @throws UncheckedIOException If getting the terminal size failed.
-     * @deprecated Use {@link STTY#getTerminalSize()}.
-     */
-    @Deprecated
-    @SuppressWarnings("unused")
-    public static TerminalSize get() {
-        return new STTY().getTerminalSize();
-    }
-
-    /**
-     * @return True if this is an interactive TTY terminal.
-     * @deprecated Use {@link STTY#isInteractive()}.
-     */
-    @Deprecated
-    @SuppressWarnings("unused")
-    public static boolean isInteractive() {
-        return new STTY().isInteractive();
-    }
 }

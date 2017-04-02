@@ -24,6 +24,7 @@ import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -37,19 +38,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * </code>
  */
 public class STTYModeSwitcher implements Closeable {
-    /**
-     * Switch to the requested mode until closed.
-     *
-     * @param mode The mode to switch to.
-     * @throws IOException If unable to switch.
-     * @deprecated Use {@link STTY#setSTTYMode(STTYMode)}.
-     */
-    @Deprecated
-    @SuppressWarnings("unused")
-    public STTYModeSwitcher(STTYMode mode) throws IOException {
-        this(mode, Runtime.getRuntime());
-    }
-
     /**
      * Switch to the requested mode until closed.
      *
@@ -98,7 +86,7 @@ public class STTYModeSwitcher implements Closeable {
      */
     public STTYMode getCurrentMode() {
         synchronized (STTYModeSwitcher.class) {
-            return current_mode;
+            return current_mode.get();
         }
     }
 
@@ -116,7 +104,7 @@ public class STTYModeSwitcher implements Closeable {
      */
     public static STTYMode currentMode() {
         synchronized (STTYModeSwitcher.class) {
-            return current_mode;
+            return current_mode.get();
         }
     }
 
@@ -151,7 +139,7 @@ public class STTYModeSwitcher implements Closeable {
     }
 
     // Default input mode is COOKED.
-    private static STTYMode current_mode = STTYMode.COOKED;
+    private static AtomicReference<STTYMode> current_mode = new AtomicReference<>(STTYMode.COOKED);
 
     private final Runtime  runtime;
     private final STTYMode before;
@@ -159,10 +147,9 @@ public class STTYModeSwitcher implements Closeable {
 
     private STTYMode switchSttyMode(STTYMode mode) throws IOException {
         synchronized (STTYModeSwitcher.class) {
-            STTYMode old = current_mode;
-            if (mode != current_mode) {
+            STTYMode old = current_mode.getAndSet(mode);
+            if (mode != old) {
                 setSttyMode(mode);
-                current_mode = mode;
             }
             return old;
         }
