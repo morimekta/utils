@@ -115,19 +115,18 @@ public class Slice implements Comparable<Slice>, Stringable {
      */
     public final long parseInteger() {
         int pos = off, radix = 10;
+        boolean neg = false;
         if (len > 2 && charAt(0) == '0' && charAt(1) == 'x') {
             pos += 2;
             radix = 16;
         } else if (len > 1 && charAt(0) == '0') {
             pos += 1;
             radix = 8;
+        } else if (len > 1 && charAt(0) == '-') {
+            neg = true;
+            pos += 1;
         }
         long res = 0;
-        boolean neg = false;
-        if (fb[off] == '-') {
-            neg = true;
-            pos++;
-        }
         for (; pos < off + len; ++pos) {
             res *= radix;
             res += validate(fb[pos], valueOfHex(fb[pos]), radix);
