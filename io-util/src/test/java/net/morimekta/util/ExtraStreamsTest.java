@@ -6,12 +6,15 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
 import static net.morimekta.util.ExtraStreams.range;
 import static net.morimekta.util.ExtraStreams.times;
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
 /**
@@ -43,6 +46,13 @@ public class ExtraStreamsTest {
         } catch (IllegalArgumentException e) {
             assertEquals("[0,0) not a valid range", e.getMessage());
         }
+    }
+
+    @Test
+    public void testTimes() {
+        AtomicInteger calls = new AtomicInteger();
+        ExtraStreams.times(55).forEach(i -> calls.incrementAndGet());
+        assertThat(calls.get(), is(55));
     }
 
     @Test
