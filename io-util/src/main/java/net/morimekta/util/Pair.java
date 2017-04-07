@@ -27,7 +27,7 @@ import java.util.Objects;
  * provides a sensible implementation of equals(), returning true if equals()
  * is true on each of the contained objects.
  */
-public final class Pair<F, S> {
+public class Pair<F, S> {
     public final F first;
     public final S second;
 
