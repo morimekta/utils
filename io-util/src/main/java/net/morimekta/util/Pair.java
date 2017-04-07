@@ -28,7 +28,14 @@ import java.util.Objects;
  * is true on each of the contained objects.
  */
 public class Pair<F, S> {
+    /**
+     * The first value.
+     */
     public final F first;
+
+    /**
+     * The second value.
+     */
     public final S second;
 
     /**
@@ -53,6 +60,24 @@ public class Pair<F, S> {
      */
     public static <A, B> Pair<A, B> create(A a, B b) {
         return new Pair<>(a, b);
+    }
+
+    /**
+     * Convenience method to get the first value.
+     *
+     * @return The first value.
+     */
+    public F getFirst() {
+        return first;
+    }
+
+    /**
+     * Convenience method to get the second value.
+     *
+     * @return The second value.
+     */
+    public S getSecond() {
+        return second;
     }
 
     @Override
