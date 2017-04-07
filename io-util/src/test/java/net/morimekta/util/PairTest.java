@@ -21,19 +21,45 @@
 
 package net.morimekta.util;
 
+import com.google.common.collect.ImmutableList;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.BlockJUnit4ClassRunner;
 
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.UUID;
 
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(BlockJUnit4ClassRunner.class)
 public class PairTest {
+    @Test
+    public void testGetters() {
+        Pair<Integer, String> a1 = Pair.create(4, "a");
+        Pair<Integer, String> a2 = Pair.create(6, "a");
+        Pair<Integer, String> b1 = Pair.create(4, "b");
+        Pair<Integer, String> b2 = Pair.create(6, "b");
+
+        List<Pair<Integer, String>> list = new LinkedList<>();
+        Collections.addAll(list, a1, a2, b1, b2);
+
+        list.sort(Comparator.comparing(Pair::getFirst));
+
+        assertThat(list, is(ImmutableList.of(a1, b1, a2, b2)));
+
+        list.sort(Comparator.comparing(Pair::getSecond));
+
+        assertThat(list, is(ImmutableList.of(a1, a2, b1, b2)));
+    }
+
     @Test
     public void testEquals() {
         Pair<Integer, String> a = Pair.create(4, "a");
