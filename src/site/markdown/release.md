@@ -25,14 +25,19 @@ mvn versions:display-plugin-updates
 # Make the maven release:
 mvn release:prepare
 mvn release:perform
+git fetch origin
 ```
 
 ```bash
 # Make site release:
 git checkout HEAD~1 -b release
+# make the versions env variable:
+export utils_version=$(cat pom.xml | grep '^    <version>' | sed 's: *[<][/]\?version[>]::g')
+
 mvn clean verify site site:stage
-git checkout gh-pages && cp -R target/staging/* .
-git commit -a -m "Site release for ..."
+git checkout gh-pages && git pull -p && cp -R target/staging/* .
+git commit -a -m "Site release for ${utils_version}"
+git push
 ```
 
 * Check sonatype staging repository found at the
