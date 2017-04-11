@@ -47,6 +47,7 @@ public class ConsoleWatcher extends TestWatcher implements AutoCloseable {
     private ByteArrayOutputStream outStream = new ByteArrayOutputStream();
     private ByteArrayOutputStream errStream = new ByteArrayOutputStream();
     private ByteArrayInputStream inStream = new ByteArrayInputStream(new byte[0]);
+    private boolean interactive = true;
 
     private PrintStream out;
     private PrintStream err;
@@ -73,7 +74,23 @@ public class ConsoleWatcher extends TestWatcher implements AutoCloseable {
             public TerminalSize getTerminalSize() {
                 return terminalSize;
             }
+
+            @Override
+            public boolean isInteractive() {
+                return interactive;
+            }
         };
+    }
+
+    /**
+     * Set the current terminal size.
+     * @param rows Row count.
+     * @param cols Column countr.
+     * @return The console watcher.
+     */
+    public ConsoleWatcher setTerminalSize(int rows, int cols) {
+        terminalSize = new TerminalSize(rows, cols);
+        return this;
     }
 
     /**
@@ -130,17 +147,6 @@ public class ConsoleWatcher extends TestWatcher implements AutoCloseable {
     }
 
     /**
-     * Set the current terminal size.
-     * @param rows Row count.
-     * @param cols Column countr.
-     * @return The console watcher.
-     */
-    public ConsoleWatcher setTerminalSize(int rows, int cols) {
-        terminalSize = new TerminalSize(rows, cols);
-        return this;
-    }
-
-    /**
      * Set input to return the given string content.
      * @param in The string input.
      */
@@ -154,6 +160,7 @@ public class ConsoleWatcher extends TestWatcher implements AutoCloseable {
      */
     public void setInput(@Nonnull byte[] in) {
         inStream = new ByteArrayInputStream(in);
+        interactive = false;
     }
 
     /**
@@ -213,6 +220,8 @@ public class ConsoleWatcher extends TestWatcher implements AutoCloseable {
 
         out = new PrintStream(outStream);
         err = new PrintStream(errStream);
+
+        interactive = true;
     }
 
     private STTYModeSwitcher makeSttyModeSwitcher(STTYMode mode) throws IOException {
