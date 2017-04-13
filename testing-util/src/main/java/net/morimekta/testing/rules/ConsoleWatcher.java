@@ -1,6 +1,7 @@
 package net.morimekta.testing.rules;
 
 import net.morimekta.console.Terminal;
+import net.morimekta.console.chr.Color;
 import net.morimekta.console.chr.Unicode;
 import net.morimekta.console.util.STTY;
 import net.morimekta.console.util.STTYMode;
@@ -38,20 +39,29 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * </pre>
  */
 public class ConsoleWatcher extends TestWatcher implements AutoCloseable {
+    private static final TerminalSize DEFAULT_TERMINAL_SIZE = new TerminalSize(42, 144);
+
     private final PrintStream originalOut;
     private final PrintStream originalErr;
     private final InputStream originalIn;
     private final STTY tty;
     private final InputStream in;
 
-    private ByteArrayOutputStream outStream = new ByteArrayOutputStream();
-    private ByteArrayOutputStream errStream = new ByteArrayOutputStream();
-    private ByteArrayInputStream inStream = new ByteArrayInputStream(new byte[0]);
-    private boolean interactive = true;
-
+    private ByteArrayOutputStream outStream = null;
+    private ByteArrayOutputStream errStream = null;
+    private ByteArrayInputStream inStream = null;
     private PrintStream out;
+
     private PrintStream err;
-    private TerminalSize terminalSize = new TerminalSize(42, 144);
+    private TerminalSize terminalSize = DEFAULT_TERMINAL_SIZE;
+    private TerminalSize defaultTerminalSize = DEFAULT_TERMINAL_SIZE;
+    private boolean interactive = true;
+    private boolean defaultInteractive = true;
+    private boolean dumpOutputOnFailure = false;
+    private boolean dumpErrorOnFailure = false;
+    private boolean defaultDumpOutputOnFailure = false;
+    private boolean defaultDumpErrorOnFailure = false;
+    private boolean started = false;
 
     public ConsoleWatcher() {
         originalErr = System.err;
@@ -72,6 +82,9 @@ public class ConsoleWatcher extends TestWatcher implements AutoCloseable {
 
             @Override
             public TerminalSize getTerminalSize() {
+                if (!isInteractive()) {
+                    throw new UncheckedIOException(new IOException("Non-interactive test-terminal"));
+                }
                 return terminalSize;
             }
 
@@ -84,12 +97,83 @@ public class ConsoleWatcher extends TestWatcher implements AutoCloseable {
 
     /**
      * Set the current terminal size.
+     *
      * @param rows Row count.
-     * @param cols Column countr.
+     * @param cols Column count.
      * @return The console watcher.
      */
-    public ConsoleWatcher setTerminalSize(int rows, int cols) {
+    public ConsoleWatcher withTerminalSize(int rows, int cols) {
         terminalSize = new TerminalSize(rows, cols);
+        if (!started) {
+            defaultTerminalSize = terminalSize;
+        }
+        return this;
+    }
+
+    /**
+     * Set input mode to non-interactive. This makes the terminal no longer
+     * behave like an interactive terminal (the default for ConsoleWatcher),
+     * but as a wrapped shell script.
+     *
+     * @return The console watcher.
+     */
+    public ConsoleWatcher nonInteractive() {
+        interactive = false;
+        if (!started) {
+            defaultInteractive = false;
+        }
+        return this;
+    }
+
+    /**
+     * Set input mode to interactive. This makes the terminal behave like an
+     * interactive terminal (the default for ConsoleWatcher).
+     *
+     * @return The console watcher.
+     */
+    public ConsoleWatcher interactive() {
+        interactive = true;
+        if (!started) {
+            defaultInteractive = true;
+        }
+        return this;
+    }
+
+
+    /**
+     * Dump stdout to error output on failure.
+     *
+     * @return The console watcher.
+     */
+    public ConsoleWatcher dumpOutputOnFailure() {
+        dumpOutputOnFailure = true;
+        if (!started) {
+            defaultDumpOutputOnFailure = true;
+        }
+        return this;
+    }
+
+    /**
+     * Dump stderr to error output on failure.
+     *
+     * @return The console watcher.
+     */
+    public ConsoleWatcher dumpErrorOnFailure() {
+        dumpErrorOnFailure = true;
+        if (!started) {
+            defaultDumpErrorOnFailure = true;
+        }
+        return this;
+    }
+
+    /**
+     * Dump both stdout and stderr to error output on failure.
+     *
+     * @return The console watcher.
+     */
+    public ConsoleWatcher dumpOnFailure() {
+        dumpOutputOnFailure();
+        dumpErrorOnFailure();
         return this;
     }
 
@@ -97,6 +181,9 @@ public class ConsoleWatcher extends TestWatcher implements AutoCloseable {
      * Reset stream console.
      */
     public void reset() {
+        if (!started) {
+            throw new AssertionError("Resetting a non-started console watcher.");
+        }
         setUpStreams();
 
         System.setIn(in);
@@ -159,8 +246,8 @@ public class ConsoleWatcher extends TestWatcher implements AutoCloseable {
      * @param in The bytes for input.
      */
     public void setInput(@Nonnull byte[] in) {
+        assert started : "Setting input on a non-started console";
         inStream = new ByteArrayInputStream(in);
-        interactive = false;
     }
 
     /**
@@ -198,6 +285,12 @@ public class ConsoleWatcher extends TestWatcher implements AutoCloseable {
     protected void starting(Description description) {
         setUpStreams();
 
+        started = true;
+        interactive = defaultInteractive;
+        terminalSize = defaultTerminalSize;
+        dumpErrorOnFailure = defaultDumpErrorOnFailure;
+        dumpOutputOnFailure = defaultDumpOutputOnFailure;
+
         System.setIn(in);
         System.setErr(err);
         System.setOut(out);
@@ -205,7 +298,19 @@ public class ConsoleWatcher extends TestWatcher implements AutoCloseable {
 
     @Override
     protected void failed(Throwable e, Description description) {
-        close();
+        if (dumpOutputOnFailure) {
+            originalErr.println(Color.BOLD + " <<< --- stdout : " + description.getMethodName() + " --- >>> " + Color.CLEAR);
+            originalErr.print(output());
+            originalErr.println(Color.BOLD + " <<< --- stdout : END --- >>> " + Color.CLEAR);
+            if (dumpErrorOnFailure) {
+                originalErr.println();
+            }
+        }
+        if (dumpErrorOnFailure) {
+            originalErr.println(Color.BOLD + " <<< --- stderr : " + description.getMethodName() + " --- >>> " + Color.CLEAR);
+            originalErr.print(error());
+            originalErr.println(Color.BOLD + " <<< --- stderr : END --- >>> " + Color.CLEAR);
+        }
     }
 
     @Override
@@ -220,8 +325,6 @@ public class ConsoleWatcher extends TestWatcher implements AutoCloseable {
 
         out = new PrintStream(outStream);
         err = new PrintStream(errStream);
-
-        interactive = true;
     }
 
     private STTYModeSwitcher makeSttyModeSwitcher(STTYMode mode) throws IOException {

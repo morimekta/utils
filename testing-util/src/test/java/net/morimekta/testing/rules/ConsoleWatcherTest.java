@@ -79,7 +79,7 @@ public class ConsoleWatcherTest {
         assertThat(terminal.getTTY().getTerminalSize().rows, is(42));
         assertThat(terminal.getTTY().getTerminalSize().cols, is(144));
 
-        console.setTerminalSize(55, 123);
+        console.withTerminalSize(55, 123);
         assertThat(terminal.getTTY().getTerminalSize().rows, is(55));
         assertThat(terminal.getTTY().getTerminalSize().cols, is(123));
     }
