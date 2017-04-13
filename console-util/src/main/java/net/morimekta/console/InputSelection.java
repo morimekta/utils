@@ -175,7 +175,7 @@ public class InputSelection<E> {
                           List<E> entries,
                           List<Command<E>> commands,
                           EntryPrinter<E> printer) {
-        this(terminal, prompt, entries, commands, printer, 20, 5, 0);
+        this(terminal, prompt, entries, commands, printer, defaultPageSize(terminal), 5, 0);
     }
 
     /**
@@ -542,6 +542,17 @@ public class InputSelection<E> {
             line = builder.toString();
         }
         return line + Color.CLEAR.toString();
+    }
+
+    private static int defaultPageSize(Terminal terminal) {
+        if (terminal.getTTY().isInteractive()) {
+            // 2 rows above, 2 rows below, 5 margin and 3 extra.
+            // 22 rows -> 10 entries + 5 margin
+            // 44 rows -> 22 entries + 5 margin
+            // 80 rows -> 35 entries + 5 margin (max)
+            return Math.max(35, terminal.getTTY().getTerminalSize().rows - 12);
+        }
+        return 20;
     }
 
     private final Terminal terminal;
