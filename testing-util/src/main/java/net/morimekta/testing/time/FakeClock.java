@@ -73,9 +73,16 @@ public class FakeClock extends Clock {
      * @param millis Milliseconds to move the clock.
      */
     public void tick(long millis) {
-        currentTimeUTC.updateAndGet(d -> d.plus(millis, ChronoUnit.MILLIS));
-        long now = withZone(systemUTC.getZone()).millis();
-        listeners.forEach(l -> l.newCurrentTimeUTC(now));
+        // Tick the clock along in 100 millis blocks. This is to be able to
+        // spread out the 'now' timestamps seen while ticking along.
+        while (millis > 0) {
+            long next = Math.min(100, millis);
+            millis -= next;
+
+            currentTimeUTC.updateAndGet(d -> d.plus(next, ChronoUnit.MILLIS));
+            long now = withZone(systemUTC.getZone()).millis();
+            listeners.forEach(l -> l.newCurrentTimeUTC(now));
+        }
     }
 
     public void tick(long time, @Nonnull TimeUnit unit) {
