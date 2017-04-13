@@ -36,9 +36,11 @@ public interface LinePrinter {
     /**
      * Print an info string message.
      *
-     * @param message The info message.
+     * @param format The info message.
+     * @param params Printf like params to format.
      */
-    default void info(String message) {
+    default void info(String format, Object... params) {
+        String message = params.length > 0 ? format : String.format(format, params);
         println(String.format("%s[info]%s %s",
                               Color.GREEN,
                               Color.CLEAR,
@@ -48,9 +50,11 @@ public interface LinePrinter {
     /**
      * Print a warning string message.
      *
-     * @param message The warning message.
+     * @param format The warning message.
+     * @param params Printf like params to format.
      */
-    default void warn(String message) {
+    default void warn(String format, Object... params) {
+        String message = params.length > 0 ? format : String.format(format, params);
         println(String.format("%s[warn]%s %s",
                               Color.YELLOW,
                               Color.CLEAR,
@@ -60,9 +64,11 @@ public interface LinePrinter {
     /**
      * Print an error string message.
      *
-     * @param message The error message.
+     * @param format The error message.
+     * @param params Printf like params to format.
      */
-    default void error(String message) {
+    default void error(String format, Object... params) {
+        String message = params.length > 0 ? format : String.format(format, params);
         println(String.format("%s[error]%s %s",
                               Color.RED,
                               Color.CLEAR,
@@ -72,9 +78,11 @@ public interface LinePrinter {
     /**
      * Print a fatal string message.
      *
-     * @param message The fatal message.
+     * @param format The fatal message.
+     * @param params Printf like params to format.
      */
-    default void fatal(String message) {
+    default void fatal(String format, Object... params) {
+        String message = params.length > 0 ? format : String.format(format, params);
         println(String.format("%s[FATAL]%s %s",
                               new Color(Color.RED, Color.BOLD),
                               Color.CLEAR,

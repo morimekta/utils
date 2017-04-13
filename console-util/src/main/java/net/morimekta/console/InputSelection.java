@@ -26,7 +26,6 @@ import net.morimekta.console.chr.Color;
 import net.morimekta.console.chr.Control;
 import net.morimekta.console.chr.Unicode;
 import net.morimekta.console.util.TerminalBuffer;
-import net.morimekta.console.util.TerminalSize;
 import net.morimekta.util.Strings;
 
 import java.io.IOException;
@@ -199,11 +198,37 @@ public class InputSelection<E> {
                           int pageSize,
                           int pageMargin,
                           int lineWidth) {
+        this(terminal, prompt, entries, commands, printer, Clock.systemUTC(), pageSize, pageMargin, lineWidth);
+    }
+
+    /**
+     * Create a selection instance.
+     *
+     * @param terminal The terminal to print to.
+     * @param prompt The prompt to introduce the selection with.
+     * @param entries The list of entries.
+     * @param commands The list of commands.
+     * @param printer The entry printer.
+     * @param clock The system clock.
+     * @param pageSize The max number of entries per page.
+     * @param pageMargin The number of entries above page size needed to trigger paging.
+     * @param lineWidth The number of columns to print on.
+     */
+    public InputSelection(Terminal terminal,
+                          String prompt,
+                          List<E> entries,
+                          List<Command<E>> commands,
+                          EntryPrinter<E> printer,
+                          Clock clock,
+                          int pageSize,
+                          int pageMargin,
+                          int lineWidth) {
         this.terminal = terminal;
         this.terminalBuffer = new TerminalBuffer(terminal);
         this.prompt = prompt;
         this.entries = entries;
         this.commands = commands;
+        this.clock = clock;
 
         this.commandMap = new HashMap<>();
         for (Command<E> cmd : commands) {
@@ -212,7 +237,6 @@ public class InputSelection<E> {
 
         this.printer = printer;
         this.pageSize = pageSize;
-        this.pageMargin = pageMargin;
         if (lineWidth == 0) {
             if (terminal.getTTY().isInteractive()) {
                 this.lineWidth = terminal.getTTY().getTerminalSize().cols;
@@ -332,7 +356,7 @@ public class InputSelection<E> {
 
     private boolean handleDigit(int ch) {
         if ('0' <= ch && ch <= '9') {
-            long ts = Clock.systemUTC().millis();
+            long ts = clock.millis();
             // Forget typed digits after 2 seconds.
             if (ts > digitsTimestamp + 2000) {
                 digits = "";
@@ -340,7 +364,15 @@ public class InputSelection<E> {
             digitsTimestamp = ts;
 
             int pos = Integer.parseInt(digits + (char) ch);
-            digits = String.valueOf(pos);
+            // if this is not the first digit, AND the position has run past
+            // the last item, go back and make it the first digit.
+            if (digits.length() > 0 && pos >= entries.size()) {
+                digits = String.valueOf((char) ch);
+                pos = ch - '0';
+            } else {
+                digits = String.valueOf(pos);
+            }
+
             if (pos <= entries.size()) {
                 updateSelection(pos - 1);
             } else {
@@ -519,8 +551,8 @@ public class InputSelection<E> {
     private final List<Command<E>> commands;
     private final HashMap<Char, Command<E>> commandMap;
     private final EntryPrinter<E> printer;
+    private final Clock clock;
     private final int pageSize;
-    private final int pageMargin;
     private final int lineWidth;
 
     private final boolean paged;

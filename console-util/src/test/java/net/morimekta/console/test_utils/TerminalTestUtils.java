@@ -6,7 +6,6 @@ import net.morimekta.console.chr.Unicode;
 import net.morimekta.console.util.STTY;
 import net.morimekta.console.util.STTYMode;
 import net.morimekta.console.util.STTYModeSwitcher;
-
 import org.mockito.stubbing.OngoingStubbing;
 
 import java.io.ByteArrayInputStream;
@@ -31,9 +30,7 @@ public class TerminalTestUtils {
     public static Terminal getTerminal(STTY tty, OutputStream out, Object... in) throws IOException {
         ByteArrayOutputStream tmp = new ByteArrayOutputStream();
         for (Object c : in) {
-            if (c instanceof Character) {
-                tmp.write((Character) c);
-            } else if (c instanceof Char || c instanceof CharSequence) {
+            if (c instanceof Character || c instanceof Char || c instanceof CharSequence) {
                 tmp.write(c.toString().getBytes(UTF_8));
             } else if (c instanceof Integer) {
                 // raw unicode codepoint.
