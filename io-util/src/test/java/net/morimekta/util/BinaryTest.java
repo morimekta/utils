@@ -21,7 +21,6 @@
 package net.morimekta.util;
 
 import net.morimekta.util.io.IOUtils;
-
 import org.junit.Before;
 import org.junit.Test;
 
@@ -32,6 +31,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.TreeSet;
+import java.util.UUID;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
@@ -143,6 +143,29 @@ public class BinaryTest {
                      Binary.wrap(a1)
                            .toBase64());
         assertEquals(Binary.wrap(a2), Binary.fromBase64(a));
+    }
+
+    @Test
+    public void testUUID() {
+        UUID uuid = UUID.randomUUID();
+        Binary binary = Binary.fromUUID(uuid);
+
+        assertThat(binary.toUUID(), is(equalTo(uuid)));
+        assertThat(binary.toHexString(), is(equalTo(uuid.toString().replaceAll("-", ""))));
+
+        try {
+            Binary.wrap(a1).toUUID();
+            fail("no exception");
+        } catch (IllegalStateException e) {
+            assertThat(e.getMessage(), is("Length not compatible with UUID: 3 != 16"));
+        }
+
+        try {
+            Binary.fromUUID(null);
+            fail("no exception");
+        } catch (IllegalArgumentException e) {
+            assertThat(e.getMessage(), is("Null UUID for binary"));
+        }
     }
 
     @Test

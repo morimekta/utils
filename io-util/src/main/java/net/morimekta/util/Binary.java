@@ -21,15 +21,22 @@
 package net.morimekta.util;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import net.morimekta.util.io.BigEndianBinaryReader;
+import net.morimekta.util.io.BigEndianBinaryWriter;
+import net.morimekta.util.io.BinaryReader;
+import net.morimekta.util.io.BinaryWriter;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
+import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Locale;
+import java.util.UUID;
 
 /**
  * Simplistic byte sequence wrapper with lots of convenience methods. Used to
@@ -143,6 +150,53 @@ public class Binary implements Comparable<Binary>, Stringable, Serializable {
      */
     public String toBase64() {
         return Base64.encodeToString(bytes);
+    }
+
+    /**
+     * Get a binary representation of a UUID. The UUID binary representation is
+     * equivalent to the hexadecimal representation of the UUID (sans dashes).
+     * See {@link UUID#toString()} and {@link UUID#fromString(String)}.
+     *
+     * @param uuid The UUID to make binary representation of.
+     * @return The Binary representation.
+     * @throws IllegalArgumentException If a null UUID is given.
+     */
+    public static Binary fromUUID(UUID uuid) {
+        if (uuid == null) {
+            throw new IllegalArgumentException("Null UUID for binary");
+        }
+        ByteArrayOutputStream buf = new ByteArrayOutputStream(16);
+        try (BinaryWriter w = new BigEndianBinaryWriter(buf)) {
+            w.writeLong(uuid.getMostSignificantBits());
+            w.writeLong(uuid.getLeastSignificantBits());
+        } catch (IOException ignore) {
+            // Actually not possible, just hiding exception
+            throw new UncheckedIOException(ignore);
+        }
+        return wrap(buf.toByteArray());
+    }
+
+    /**
+     * Get a UUID from the binary data.The UUID binary representation is
+     * equivalent to the hexadecimal representation of the UUID (sans dashes).
+     * See {@link UUID#toString()} and {@link UUID#fromString(String)}.
+     *
+     * @return The UUID representation of the 16 bytes.
+     * @throws IllegalStateException If the binary does not have the correct
+     *                               size for holding a UUID, 16 bytes.
+     */
+    public UUID toUUID() {
+        if (length() != 16) {
+            throw new IllegalStateException("Length not compatible with UUID: " + length() + " != 16");
+        }
+        try (BinaryReader reader = new BigEndianBinaryReader(getInputStream())) {
+            long mostSig = reader.expectLong();
+            long leastSig = reader.expectLong();
+            return new UUID(mostSig, leastSig);
+        } catch (IOException ignore) {
+            // Actually not possible, just hiding exception
+            throw new UncheckedIOException(ignore);
+        }
     }
 
     /**

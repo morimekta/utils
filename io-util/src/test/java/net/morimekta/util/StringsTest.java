@@ -31,8 +31,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -44,7 +46,7 @@ public class StringsTest {
     public void testJavaEscape() {
         assertEquals("abcde", Strings.escape("abcde"));
         assertEquals("a\\nb\\rc\\fd\\te\\b.", Strings.escape("a\nb\rc\fd\te\b."));
-        assertEquals("\\u2002.䀂.\\\".\\'.", Strings.escape("\u2002.\u4002.\".\'."));
+        assertEquals("\\u2002.\\\\䀂.\\\".\\'.", Strings.escape("\u2002.\\\u4002.\".\'."));
         assertEquals("\\000\\177\\033",
                      Strings.escape("\000\177\033"));
     }
@@ -213,6 +215,13 @@ public class StringsTest {
         // Some overly clever languages (C#) may treat ligatures as equal to their
         // component letters.  E.g. U+FB01 == 'fi'
         assertEquals("diff_commonOverlap: Unicode.", 0, Strings.commonOverlap("fi", "\ufb01i"));
+    }
+
+    @Test
+    public void testUnescapeForUriEncodeCompatibility() {
+        String un = Strings.unescapeForEncodeUriCompatability("%3D%3d");
+        // unescaped the uppercase variant, not the lowercase.
+        assertThat(un, is("=%3d"));
     }
 
 
