@@ -21,7 +21,6 @@
 package net.morimekta.util.io;
 
 import net.morimekta.util.Binary;
-
 import org.junit.Before;
 import org.junit.Test;
 
@@ -30,9 +29,13 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Random;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyZeroInteractions;
@@ -563,5 +566,33 @@ public class BigEndianBinaryIOTest {
         assertEquals(bytes, out.size());
         BinaryReader reader = getReader();
         assertEquals(value, reader.readLongVarint());
+    }
+
+    @Test
+    public void tesExpectLarge() throws IOException {
+        byte[] arr = new byte[1024 * 1024]; // 1 MB.
+        new Random().nextBytes(arr);
+        ByteArrayInputStream in = new ByteArrayInputStream(arr);
+        BigEndianBinaryReader reader = new BigEndianBinaryReader(in);
+
+        byte[] res = reader.expectBytes(arr.length);
+
+        assertThat(arr, is(equalTo(res)));
+    }
+
+
+    @Test
+    public void tesExpectTooLarge() throws IOException {
+        byte[] arr = new byte[1024 * 10]; // 10 kB.
+        new Random().nextBytes(arr);
+        ByteArrayInputStream in = new ByteArrayInputStream(arr);
+        BigEndianBinaryReader reader = new BigEndianBinaryReader(in);
+
+        try {
+            reader.expectBytes(1024 * 1024 * 10);
+            fail("no exception");
+        } catch (IOException e) {
+            assertThat(e.getMessage(), is("Not enough data available on stream: 10240 < 10485760"));
+        }
     }
 }

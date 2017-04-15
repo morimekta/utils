@@ -22,6 +22,7 @@ package net.morimekta.util.io;
 
 import net.morimekta.util.Binary;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -235,6 +236,21 @@ public abstract class BinaryReader extends InputStream {
      * @throws IOException if unable to read from stream.
      */
     public byte[] expectBytes(final int bytes) throws IOException {
+        if (bytes > (128 * 1024)) {  // more than 128 kB, be cautious.
+            ByteArrayOutputStream tmp = new ByteArrayOutputStream(128 * 1024);
+            int remaining = bytes;
+            byte[] buffer = new byte[4 * 1024];  // 1 page in memory.
+            int r;
+            while (remaining > 0 &&
+                   (r = in.read(buffer, 0, Math.min(remaining, buffer.length))) > 0) {
+                tmp.write(buffer, 0, r);
+                remaining -= r;
+            }
+            if (tmp.size() < bytes) {
+                throw new IOException("Not enough data available on stream: " + tmp.size() + " < " + bytes);
+            }
+            return tmp.toByteArray();
+        }
         byte[] out = new byte[bytes];
         expect(out);
         return out;
