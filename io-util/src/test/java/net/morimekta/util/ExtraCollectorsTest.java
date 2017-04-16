@@ -39,6 +39,51 @@ public class ExtraCollectorsTest {
     }
 
     @Test
+    public void testJoin() {
+        assertThat(ExtraStreams.range(0, 20, 3)
+                               .boxed()
+                               .collect(ExtraCollectors.join(", ")),
+                   is("0, 3, 6, 9, 12, 15, 18"));
+
+        assertThat(ExtraStreams.range(0, 20, 3)
+                               .mapToObj(OverridesToString::new)
+                               .parallel()
+                               .collect(ExtraCollectors.join(",\n")),
+                   is(",\n" +
+                      "xxx,\n" +
+                      "xxxxxx,\n" +
+                      "xxxxxxxxx,\n" +
+                      "xxxxxxxxxxxx,\n" +
+                      "xxxxxxxxxxxxxxx,\n" +
+                      "xxxxxxxxxxxxxxxxxx"));
+
+        assertThat(ExtraStreams.range(0, 20, 3)
+                               .boxed()
+                               .collect(ExtraCollectors.join(",\n", i -> "i" + i)),
+                   is("i0,\n" +
+                      "i3,\n" +
+                      "i6,\n" +
+                      "i9,\n" +
+                      "i12,\n" +
+                      "i15,\n" +
+                      "i18"));
+
+    }
+
+    private class OverridesToString {
+        private final int i;
+
+        public OverridesToString(int i) {
+            this.i = i;
+        }
+
+        @Override
+        public String toString() {
+            return Strings.times("x", i);
+        }
+    }
+
+    @Test
     public void testConstructor()
             throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
         Constructor<ExtraCollectors> c = ExtraCollectors.class.getDeclaredConstructor();

@@ -3,6 +3,8 @@ package net.morimekta.util;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 import java.util.stream.Collector;
 import java.util.stream.Stream;
 
@@ -46,6 +48,51 @@ public class ExtraCollectors {
                             },
                             // finalizer
                             Collection::stream);
+    }
+
+    /**
+     * Join the items of the stream into a string using the given separator
+     * for the items.
+     *
+     * @param sep The separator between items.
+     * @param <T> The item type.
+     * @return The joined string.
+     */
+    public static <T> Collector<T, Pair<StringBuilder, AtomicBoolean>, String> join(String sep) {
+        return join(sep, Object::toString);
+    }
+
+    /**
+     * Join the items of the stream into a string using the given separator
+     * and toString function for the items.
+     *
+     * @param sep The separator between items.
+     * @param f The toString function to use.
+     * @param <T> The item type.
+     * @return The joined string.
+     */
+    public static <T> Collector<T, Pair<StringBuilder, AtomicBoolean>, String> join(String sep, Function<T, String> f) {
+        return Collector.of(// instantiation
+                            () -> Pair.create(new StringBuilder(), new AtomicBoolean()),
+                            // accumulation
+                            (tmp, i) -> {
+                                if (tmp.second.getAndSet(true)) {
+                                    tmp.first.append(sep);
+                                }
+                                tmp.first.append(f.apply(i));
+                            },
+                            // combination
+                            (tmp1, tmp2) -> {
+                                // This might not be the case of filtered parallel streams.
+                                if (tmp1.second.get() && tmp2.second.get()) {
+                                    tmp1.first.append(sep);
+                                }
+                                tmp1.second.set(tmp1.second.get() || tmp2.second.get());
+                                tmp1.first.append(tmp2.first.toString());
+                                return tmp1;
+                            },
+                            // finalization
+                            tmp -> tmp.first.toString());
     }
 
     // PRIVATE constructor to defeat instantiation.
