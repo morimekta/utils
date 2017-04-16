@@ -64,6 +64,7 @@ public class CharReader {
                 return new Unicode(cp);
             }
 
+            // 'esc' was last char in stream.
             int c2 = in.read();
             if (c2 < 0) {
                 return new Unicode(cp);
@@ -96,10 +97,13 @@ public class CharReader {
                     // \033 [ (number...;) [su] (cursor save / restore, ...)
                     // \033 [ (number...;) m (color)
                     if (c3 == 'm') {
-                        return new Color(charBuilder.toString());
-                    } else {
-                        return new Control(charBuilder.toString());
+                        try {
+                            return new Color(charBuilder.toString());
+                        } catch (IllegalArgumentException e) {
+                            throw new IOException(e.getMessage(), e);
+                        }
                     }
+                    return new Control(charBuilder.toString());
                 }
             } else if (('a' <= c2 && c2 <= 'z') ||
                        ('A' <= c2 && c2 <= 'Z')) {
@@ -116,7 +120,7 @@ public class CharReader {
                 }
             }
 
-            throw new IOException("Invalid escape sequence: " + Strings.escape(charBuilder.toString()));
+            throw new IOException("Invalid escape sequence: \"" + Strings.escape(charBuilder.toString()) + "\"");
         } else {
             // Make sure to consume both surrogates on 32-bit code-points.
             if (Character.isHighSurrogate((char) cp)) {
