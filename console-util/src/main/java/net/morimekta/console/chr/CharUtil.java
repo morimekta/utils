@@ -22,7 +22,15 @@ package net.morimekta.console.chr;
 
 import net.morimekta.util.Strings;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static java.lang.String.format;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * Common character and console utilities. It can contain both standard unicode characters
@@ -126,7 +134,12 @@ public class CharUtil {
         StringBuilder builder = new StringBuilder();
         CharStream.stream(string).forEachOrdered(c -> {
             int pw = c.printableWidth();
-            if (pw <= remaining.get()) {
+            if (remaining.get() == 0) {
+                // Only add non-unicode after the end (control & color)
+                if (!(c instanceof Unicode)) {
+                    builder.append(c.toString());
+                }
+            } else if (pw <= remaining.get()) {
                 builder.append(c.toString());
                 remaining.addAndGet(-pw);
             } else {
@@ -450,5 +463,82 @@ public class CharUtil {
         throw new IllegalArgumentException("No circled numeric for " + num);
     }
 
+    /**
+     * Make a byte array representing the input bytes for generating
+     * the given input. See {@link CharReader}, {@link CharStream}.
+     * The input accepts: {@link Character} (char), {@link Integer}
+     * and any {@link Char} instance as input. And everything else is
+     * {@link Object#toString()}'ed and handled as a UTF-8 string.
+     *
+     * @param in The input objects.
+     * @return The input bytes.
+     */
+    public static byte[] inputBytes(Object... in) {
+        ByteArrayOutputStream tmp = new ByteArrayOutputStream();
+        try {
+            for (Object c : in) {
+                if (c instanceof Character) {
+                    if ((Character) c == Char.ESC) {
+                        tmp.write(Char.ESC);
+                    }
+                    tmp.write((Character) c);
+                } else if (c instanceof Integer) {
+                    if ((Integer) c == (int) Char.ESC) {
+                        tmp.write(Char.ESC);
+                    }
+                    // raw unicode codepoint.
+                    tmp.write(new Unicode((Integer) c).toString().getBytes(UTF_8));
+                } else if (c instanceof Char) {
+                    if (((Char) c).asInteger() == Char.ESC) {
+                        tmp.write(Char.ESC);
+                        tmp.write(Char.ESC);
+                    } else {
+                        tmp.write(c.toString().getBytes(UTF_8));
+                    }
+                } else {
+                    tmp.write(c.toString().getBytes(UTF_8));
+                }
+            }
+        } catch (IOException e) {
+            // Should be impossible.
+            throw new UncheckedIOException(e);
+        }
+        return tmp.toByteArray();
+    }
+
+    /**
+     * Make a list of input {@link Char}s that e.g. can be used
+     * in testing input or output.
+     *
+     * @param in the input objects.
+     * @return The char list representing the input.
+     */
+    public static List<Char> inputChars(Object... in) {
+        LinkedList<Char> list = new LinkedList<>();
+
+        for (Object c : in) {
+            /*  */ if (c instanceof Character) {
+                list.add(new Unicode((Character) c));
+            } else if (c instanceof Integer) {
+                list.add(new Unicode((Integer) c));
+            } else if (c instanceof Char) {
+                list.add((Char) c);
+            } else {
+                CharStream.stream(c.toString())
+                          .forEachOrdered(list::add);
+            }
+        }
+
+        return list;
+    }
+
+    public static Char alt(char c) {
+        if (c >= 'a' && c <= 'z') {
+            return new Control(format("\033%c", c));
+        }
+        throw new IllegalArgumentException("Not suitable for <alt> modifier: '" + Strings.escape(c) + "'");
+    }
+
+    // Defeat instantiation.
     private CharUtil() {}
 }
