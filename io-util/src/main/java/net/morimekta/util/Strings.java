@@ -26,6 +26,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
+import static java.lang.Character.isHighSurrogate;
+import static java.lang.Character.isLowSurrogate;
+
 /**
  * String utilities.
  */
@@ -67,7 +70,9 @@ public class Strings {
                 default:
                     if (c < 32 || c == 127) {
                         builder.append(String.format("\\%03o", (int) c));
-                    } else if ((127 < c && c < 160) || (8192 <= c && c < 8448) || !Character.isDefined(c)) {
+                    } else if (!isConsolePrintable(c) ||
+                               Character.isHighSurrogate(c) ||
+                               Character.isLowSurrogate(c)) {
                         builder.append(String.format("\\u%04x", (int) c));
                     } else {
                         builder.append(c);
@@ -106,11 +111,97 @@ public class Strings {
             default:
                 if (c < 32 || c == 127) {
                     return String.format("\\%03o", (int) c);
-                } else if ((127 < c && c < 160) || (8192 <= c && c < 8448) || !Character.isDefined(c)) {
+                } else if (!isConsolePrintable(c) ||
+                           isHighSurrogate(c) ||
+                           isLowSurrogate(c)) {
                     return String.format("\\u%04x", (int) c);
                 }
                 return String.valueOf(c);
         }
+    }
+
+    /**
+     * Utility to figure out if a character is printable to the console as
+     * a character. Returns false if one of:
+     * <ul>
+     *     <li>The character is a control character.
+     *     <li>The character is not defined.
+     *     <li>The character does not have a known representation.
+     * </ul>
+     *
+     * @param cp The character unicode code point.
+     * @return If it is printable.
+     */
+    public static boolean isConsolePrintable(int cp) {
+        return Character.isDefined(cp) &&
+               !(cp < 0x0020 ||
+                 (0x007F <= cp && cp <  0x00A0) ||
+                 Character.isIdentifierIgnorable(cp) ||
+                 (0x07e8 <= cp && cp <= 0x07f3) ||
+                 (0x07f6 <= cp && cp <= 0x0900) ||
+                 cp == 0x0ac6 ||
+                 (0x0bfc <= cp && cp <= 0x0d01) ||
+                 cp == 0x0f8c ||
+                 cp == 0x10cd ||
+                 cp == 0x10fd || cp == 0x10fe || cp == 0x10ff ||
+                 (0x1a20 <= cp && cp <= 0x1cff) ||
+                 cp == 0x1680 ||
+                 (0x1701 <= cp && cp <= 0x1711) ||
+                 (0x1740 <= cp && cp <= 0x1770) ||
+                 cp == 0x1772 || cp == 0x1773 ||
+                 (0x1800 <= cp && cp <= 0x18af) ||
+                 (0x1900 <= cp && cp <= 0x194f) ||
+                 (0x1980 <= cp && cp <= 0x19df) ||
+                 cp == 0x1dcd || cp == 0x1dce ||
+                 cp == 0x1dd0 ||
+                 cp == 0x2028 ||
+                 cp == 0x2c22 ||
+                 cp == 0x2c2b || cp == 0x2c2c || cp == 0x2c2d ||
+                 cp == 0x2c52 ||
+                 cp == 0x2c5b || cp == 0x2c5c || cp == 0x2c5d ||
+                 (0x2cb2 <= cp && cp <= 0x2cbf) ||
+                 (0x2cc2 <= cp && cp <= 0x2cc7) ||
+                 (0x2ccc <= cp && cp <= 0x2ce3) ||
+                 (0x2ceb <= cp && cp <= 0x2cee) ||
+                 (0x2cf0 <= cp && cp <= 0x2cfc) ||
+                 cp == 0x2d70 ||
+                 (0xa000 <= cp && cp <= 0xa4cf) ||
+                 (0xa674 <= cp && cp <= 0xa67b) ||
+                 (0xa698 <= cp && cp <= 0xa6ff) ||
+                 cp == 0xa754 || cp == 0xa755 ||
+                 cp == 0xa758 || cp == 0xa759 ||
+                 (0xa75c <= cp && cp <= 0xa763) ||
+                 (0xa76a <= cp && cp <= 0xa76d) ||
+                 (0xa771 <= cp && cp <= 0xa778) ||
+                 (0xa800 <= cp && cp <= 0xa8df) ||
+                 (0xa930 <= cp && cp <= 0xa95f) ||
+                 (0xa97d <= cp && cp <= 0xaa5e) ||
+                 (0xaa7c <= cp && cp <= 0xaaff) ||
+                 (0xab30 <= cp && cp <= 0xabff) ||
+                 (0xd7fc <= cp && cp <= 0xdfff) ||
+                 (0xe47f <= cp && cp <= 0xe48a) ||
+                 (0xe4c5 <= cp && cp <= 0xe4ff) ||
+                 cp == 0xe506 ||
+                 (0xe50b <= cp && cp <= 0xe50e) ||
+                 cp == 0xe52d ||
+                 (0xe534 <= cp && cp <= 0xe547) ||
+                 cp == 0xe55d ||
+                 (0xe560 <= cp && cp <= 0xe56f) ||
+                 cp == 0xe576 || cp == 0xe577 ||
+                 (0xe57d <= cp && cp <= 0xe583) ||
+                 (0xe588 <= cp && cp <= 0xe58c) ||
+                 cp == 0xe591 || cp == 0xe592 ||
+                 (0xe598 <= cp && cp <= 0xe67f) ||
+                 (0xe6a4 <= cp && cp <= 0xee68 &&
+                  cp != 0xec0b &&
+                  cp != 0xec96 && cp != 0xec97 &&
+                  cp != 0xec99 &&
+                  cp != 0xec9d) ||
+                 (0xee94 <= cp && cp <= 0xeeff) ||
+                 (0xef1a <= cp && cp <= 0xefec) ||
+
+                 (0xfd40 <= cp && cp <= 0xfdff)
+               );
     }
 
     /**

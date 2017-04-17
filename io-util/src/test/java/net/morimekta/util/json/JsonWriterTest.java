@@ -77,16 +77,16 @@ public class JsonWriterTest {
         // UTF-8 string.
         writer.reset();
         baos.reset();
-        writer.value("ßħ↓b…Ñıŋú®äþ\n");
+        writer.value("ßħ↓b\u0bfcÑıŋú®äþ\n");
         writer.flush();
-        assertJsonEquals("\"ßħ↓b\\u2026Ñıŋú®äþ\\n\"", baos);
+        assertJsonEquals("\"ßħ↓b\\u0bfcÑıŋú®äþ\\n\"", baos);
 
         // String escape chars
         writer.reset();
         baos.reset();
-        writer.value("…\n\r\f\t\b\"\\");
+        writer.value("\u0bfc\n\r\f\t\b\"\\");
         writer.flush();
-        assertJsonEquals("\"\\u2026\\n\\r\\f\\t\\b\\\"\\\\\"", baos);
+        assertJsonEquals("\"\\u0bfc\\n\\r\\f\\t\\b\\\"\\\\\"", baos);
 
         // Empty string.
         writer.reset();

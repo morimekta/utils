@@ -32,6 +32,7 @@ import java.util.Collections;
 import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
@@ -46,7 +47,7 @@ public class StringsTest {
     public void testJavaEscape() {
         assertEquals("abcde", Strings.escape("abcde"));
         assertEquals("a\\nb\\rc\\fd\\te\\b.", Strings.escape("a\nb\rc\fd\te\b."));
-        assertEquals("\\u2002.\\\\䀂.\\\".\\'.", Strings.escape("\u2002.\\\u4002.\".\'."));
+        assertEquals("\\u19df.\\\\䀂.\\\".\\'.", Strings.escape("\u19df.\\\u4002.\".\'."));
         assertEquals("\\000\\177\\033",
                      Strings.escape("\000\177\033"));
     }
@@ -65,6 +66,18 @@ public class StringsTest {
         assertEquals("\\016", Strings.escape('\016'));
         assertEquals("\\u0085", Strings.escape('\u0085'));
         assertEquals("a", Strings.escape('a'));
+    }
+
+    @Test
+    public void testIsConsolePrintable() {
+        int printable = 0;
+        for (int i = 0; i < 0x10000; ++i) {
+            if (Strings.isConsolePrintable(i)) {
+                ++printable;
+            }
+        }
+
+        assertThat(printable, is(greaterThan(50000)));
     }
 
     @Test

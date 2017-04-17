@@ -27,7 +27,9 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.Stack;
 
+import static java.lang.Character.isSurrogatePair;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static net.morimekta.util.Strings.isConsolePrintable;
 
 /**
  * IO-optimized JSON writer.
@@ -331,8 +333,8 @@ public class JsonWriter {
             writer.write('\"');
 
             for (int i = 0; i < len; ++i) {
-                char c = string.charAt(i);
-                switch (c) {
+                char cp = string.charAt(i);
+                switch (cp) {
                     case '\b':
                         writer.write("\\b");
                         break;
@@ -351,13 +353,18 @@ public class JsonWriter {
                     case '\"':
                     case '\\':
                         writer.write('\\');
-                        writer.write(c);
+                        writer.write(cp);
                         break;
                     default:
-                        if (c < 32 || (127 <= c && c < 160) || (8192 <= c && c < 8448) || !Character.isDefined(c)) {
-                            writer.format("\\u%04x", (int) c);
+                        char c2 = (i + 1) < string.length() ? string.charAt(i + 1) : 0;
+                        if (((i + 1) < string.length()) && isSurrogatePair(cp, c2)) {
+                            writer.format("\\u%04x", (int) cp);
+                            writer.format("\\u%04x", (int) c2);
+                            ++i;
+                        } else if (isConsolePrintable(cp)) {
+                            writer.write(cp);
                         } else {
-                            writer.write(c);
+                            writer.format("\\u%04x", (int) cp);
                         }
                         break;
                 }
