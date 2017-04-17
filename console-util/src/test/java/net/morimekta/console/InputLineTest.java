@@ -6,7 +6,6 @@ import net.morimekta.console.chr.Unicode;
 import net.morimekta.console.test_utils.TerminalTestUtils;
 import net.morimekta.console.util.STTY;
 import net.morimekta.util.Strings;
-
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;

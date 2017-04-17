@@ -27,6 +27,8 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.regex.Pattern;
 
+import static net.morimekta.console.chr.CharUtil.alt;
+
 /**
  * Class that handled reading a line from terminal input with
  * character and line validators, and optional tab completion.
@@ -420,10 +422,10 @@ public class InputLine {
         return delimiterPattern.matcher(String.valueOf(c)).matches();
     }
 
-    private static final Char ALT_D = new Control("\033d");  // delete word after
-    private static final Char ALT_W = new Control("\033w");  // delete word before
-    private static final Char ALT_K = new Control("\033k");  // delete line after
-    private static final Char ALT_U = new Control("\033u");  // delete line before
+    private static final Char ALT_D = alt('d');  // delete word after
+    private static final Char ALT_W = alt('w');  // delete word before
+    private static final Char ALT_K = alt('k');  // delete line after
+    private static final Char ALT_U = alt('u');  // delete line before
 
     private final Terminal terminal;
     private final String message;
