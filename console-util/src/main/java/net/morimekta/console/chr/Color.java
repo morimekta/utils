@@ -98,7 +98,7 @@ public class Color extends Control {
      *
      * @param ctrl Control sequence to make a color instance from.
      */
-    public Color(CharSequence ctrl) {
+    Color(CharSequence ctrl) {
         this(parseModSet(ctrl));
     }
 
