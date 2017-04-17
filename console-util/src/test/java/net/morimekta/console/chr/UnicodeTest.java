@@ -23,7 +23,7 @@ public class UnicodeTest {
     @Test
     public void testPrintableWidth() {
         assertThat(Unicode.NBSP.printableWidth(), is(1));
-        assertThat(Unicode.ALM.printableWidth(), is(0));
+        assertThat(new Unicode(0x0611).printableWidth(), is(0));
         assertThat(new Unicode(0x2A6B2).printableWidth(), is(2));
         assertThat(new Unicode('優').printableWidth(), is(2));
         assertThat(new Unicode('a').printableWidth(), is(1));
@@ -58,21 +58,21 @@ public class UnicodeTest {
         assertAsString(new Unicode(Char.US), "<US>");
         assertAsString(new Unicode(Char.DEL), "<DEL>");
 
-        assertAsString(new Unicode(Char.TAB), "'\\t'");
-        assertAsString(new Unicode(Char.LF), "'\\n'");
-        assertAsString(new Unicode(Char.FF), "'\\f'");
-        assertAsString(new Unicode(Char.CR), "'\\r'");
-        assertAsString(new Unicode('\"'), "'\\\"'");
-        assertAsString(new Unicode('\''), "'\\\''");
-        assertAsString(new Unicode('\\'), "'\\\\'");
+        assertAsString(new Unicode(Char.TAB), "\\t");
+        assertAsString(new Unicode(Char.LF), "\\n");
+        assertAsString(new Unicode(Char.FF), "\\f");
+        assertAsString(new Unicode(Char.CR), "\\r");
+        assertAsString(new Unicode('\"'), "\\\"");
+        assertAsString(new Unicode('\''), "\\\'");
+        assertAsString(new Unicode('\\'), "\\\\");
         assertAsString(Unicode.NBSP, "<nbsp>");
 
-        assertAsString(new Unicode(15), "'\\017'");
-        assertAsString(new Unicode(8192), "'\\u2000'");
-        assertAsString(new Unicode(81928192), "'\\u1048\\udc00'");
+        assertAsString(new Unicode(15), "\\017");
+        assertAsString(new Unicode(0x10cd), "\\u10cd");
+        assertAsString(new Unicode(0x20002000), "\\ud7c8\\udc00");
 
-        assertAsString(new Unicode(0x2A6B2), "'𪚲'");
-        assertAsString(new Unicode('優'), "'優'");
+        assertAsString(new Unicode(0x2A6B2), "𪚲");
+        assertAsString(new Unicode('優'), "優");
     }
 
     private void assertAsString(Unicode u, String expected) {
