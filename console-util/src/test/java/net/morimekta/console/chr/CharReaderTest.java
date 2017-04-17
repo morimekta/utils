@@ -67,6 +67,7 @@ public class CharReaderTest {
     public void testReadFailures() {
         assertFailure("\033O", "Unexpected end of stream.");
         assertFailure("\033[", "Unexpected end of stream.");
+        assertFailure("\033[5", "Unexpected end of stream.");
         assertFailure("\033[mb", "Invalid color control sequence: \"\\033[m\"");
         assertFailure("\033[.b", "Invalid escape sequence: \"\\033[.\"");
         assertFailure("\033O5b", "Invalid escape sequence: \"\\033O5\"");
@@ -80,21 +81,7 @@ public class CharReaderTest {
 
         CharReader reader = new CharReader();
 
-        List<Char> expected = new LinkedList<>();
-        for (Object o : out) {
-            if (o instanceof Char) {
-                expected.add((Char) o);
-            } else if (o instanceof Character ||
-                       o instanceof CharSequence) {
-                for (char c : o.toString().toCharArray()) {
-                    expected.add(new Unicode(c));
-                }
-            } else if (o instanceof Integer) {
-                expected.add(new Unicode((Integer) o));
-            } else {
-                fail("Oops: bad input");
-            }
-        }
+        List<Char> expected = CharUtil.inputChars(out);
         List<Char> actual = new LinkedList<>();
         Char c;
         while ((c = reader.read()) != null) {

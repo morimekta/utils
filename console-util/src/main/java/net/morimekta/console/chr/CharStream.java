@@ -20,6 +20,10 @@
  */
 package net.morimekta.console.chr;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.Spliterator;
 import java.util.Spliterators;
@@ -32,107 +36,55 @@ import java.util.stream.StreamSupport;
  */
 public class CharStream {
     public static Iterator<Char> iterator(CharSequence str) {
-        return Spliterators.iterator(new CharSpliterator(str));
+        return Spliterators.iterator(new CharSpliterator(str, false));
+    }
+
+    public static Iterator<Char> lenientIterator(CharSequence str) {
+        return Spliterators.iterator(new CharSpliterator(str, true));
     }
 
     public static Stream<Char> stream(CharSequence str) {
-        return StreamSupport.stream(new CharSpliterator(str), false);
+        return StreamSupport.stream(new CharSpliterator(str, false), false);
+    }
+
+    public static Stream<Char> lenientStream(CharSequence str) {
+        return StreamSupport.stream(new CharSpliterator(str, true), false);
     }
 
     private CharStream() {}
 
     private static class CharSpliterator implements Spliterator<Char> {
-        private final CharSequence cstr;
+        private final CharReader reader;
+        private final boolean lenient;
+        private final ByteArrayInputStream in;
 
-        private int pos;
-
-        private CharSpliterator(CharSequence cstr) {
-            this.cstr = cstr;
-            this.pos = 0;
+        private CharSpliterator(CharSequence cstr, boolean lenient) {
+            this.in = new ByteArrayInputStream(cstr.toString().getBytes(StandardCharsets.UTF_8));
+            this.reader = new CharReader(in);
+            this.lenient = lenient;
         }
 
         @Override
         public boolean tryAdvance(Consumer<? super Char> consumer) {
-            if (pos >= cstr.length()) {
+            try {
+                if (lenient) {
+                    in.mark(10);
+                }
+                Char c = reader.read();
+                if (c != null) {
+                    consumer.accept(c);
+                    return true;
+                }
                 return false;
-            }
-
-            char c = cstr.charAt(pos);
-            if (c == '\033') {  // esc, \033
-                int r = (cstr.length() - pos);
-                if (r == 1) {
-                    // just the escape char, and nothing else...
-                    consumer.accept(new Unicode(c));
-                    ++pos;
-                    return true;
-                }
-                char c2 = cstr.charAt(pos + 1);
-                if (r > 2 && c2 == '[') {
-                    char c3 = cstr.charAt(pos + 2);
-                    if ('A' <= c3 && c3 <= 'Z') {
-                        // \033 [ A-Z
-                        consumer.accept(new Control(cstr.subSequence(pos, pos + 3)));
-                        pos += 3;
+            } catch (IOException e) {
+                if (lenient) {
+                    in.reset();
+                    if (in.skip(1) > 0) {
+                        consumer.accept(new Unicode(Char.ESC));
                         return true;
                     }
-                    int n = 2;
-                    while (('0' <= c3 && c3 <= '9') || c3 == ';') {
-                        ++n;
-                        if ((pos + n) == cstr.length()) {
-                            // It just ended in the middle, use the single escape char and advance one.
-                            consumer.accept(new Unicode(c));
-                            ++pos;
-                            return true;
-                        }
-                        c3 = cstr.charAt(pos + n);
-                    }
-                    if (c3 == '~' ||
-                        ('a' <= c3 && c3 <= 'z') ||
-                        ('A' <= c3 && c3 <= 'Z')) {
-                        // \033 [ (number) ~ (F1, F2 ... Fx)
-                        // \033 [ (number...;) [A-D] (numbered cursor movement)
-                        // \033 [ (number...;) [su] (cursor save / restore, ...)
-                        // \033 [ (number...;) m (color)
-                        if (c3 == 'm') {
-                            consumer.accept(new Color(cstr.subSequence(pos, pos + n + 1)));
-                        } else {
-                            consumer.accept(new Control(cstr.subSequence(pos, pos + n + 1)));
-                        }
-                        pos += (n + 1);
-                        return true;
-                    }
-                } else if (('a' <= c2 && c2 <= 'z') ||
-                           ('A' <= c2 && c2 <= 'Z')) {
-                    if (r > 2 && c2 == 'O') {
-                        char c3 = cstr.charAt(pos + 2);
-                        if ('A' <= c3 && c3 <= 'Z') {
-                            // \033 O [A-Z]
-                            consumer.accept(new Control(cstr.subSequence(pos, pos + 3)));
-                            pos += 3;
-                            return true;
-                        }
-                    }
-                    // \033 [a-zA-NP-Z]
-                    consumer.accept(new Control(cstr.subSequence(pos, pos + 2)));
-                    pos += 3;
-                    return true;
                 }
-
-                // just use the escape char, and nothing else...
-                consumer.accept(new Unicode(c));
-                ++pos;
-                return true;
-            } else {
-                int cp = c;
-
-                // Make sure to consume both surrogates on 32-bit code-points.
-                if (Character.isHighSurrogate(c)) {
-                    ++pos;
-                    cp = Character.toCodePoint(c, cstr.charAt(pos));
-                }
-                consumer.accept(new Unicode(cp));
-                ++pos;
-                return true;
+                throw new UncheckedIOException(e);
             }
         }
 
