@@ -1,8 +1,8 @@
 package net.morimekta.testing.rules;
 
 import net.morimekta.console.Terminal;
+import net.morimekta.console.chr.CharUtil;
 import net.morimekta.console.chr.Color;
-import net.morimekta.console.chr.Unicode;
 import net.morimekta.console.util.STTY;
 import net.morimekta.console.util.STTYMode;
 import net.morimekta.console.util.STTYModeSwitcher;
@@ -18,8 +18,6 @@ import java.io.InputStream;
 import java.io.PrintStream;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
-
-import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * Printed output watcher rule.
@@ -211,26 +209,7 @@ public class ConsoleWatcher extends TestWatcher implements AutoCloseable {
      */
     public void setInput(Object... in) {
         assert in.length > 0 : "Require at least one input item";
-        try {
-            ByteArrayOutputStream tmp = new ByteArrayOutputStream();
-            for (Object c : in) {
-                if (c instanceof Character) {
-                    tmp.write((Character) c);
-                } else if (c instanceof Integer) {
-                    // raw unicode codepoint.
-                    tmp.write(new Unicode((Integer) c).toString().getBytes(UTF_8));
-                } else if (c instanceof Byte) {
-                    // raw unicode codepoint (byte value = ASCII).
-                    tmp.write(new Unicode((Byte) c).toString().getBytes(UTF_8));
-                } else {
-                    // Char, String,
-                    tmp.write(c.toString().getBytes(UTF_8));
-                }
-            }
-            setInput(tmp.toByteArray());
-        } catch (IOException e) {
-            throw new AssertionError(e.getMessage(), e);
-        }
+        setInput(CharUtil.inputBytes(in));
     }
 
     /**
