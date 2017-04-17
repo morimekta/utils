@@ -20,13 +20,26 @@
  */
 package net.morimekta.console.chr;
 
+import com.google.common.collect.ImmutableMap;
 import net.morimekta.util.Strings;
+
+import java.util.Map;
+
+import static java.lang.String.format;
 
 /**
  *
  * https://en.wikipedia.org/wiki/C0_and_C1_control_codes
  */
 public class Control implements Char {
+    private static final Map<String,String> _remapping =
+            ImmutableMap.<String,String>builder()
+                    .put("\033OH", "\033[1~")  // HOME mac
+                    .put("\033[H", "\033[1~")  // HOME alt-linux
+                    .put("\033OF", "\033[4~")  // END mac
+                    .put("\033[F", "\033[4~")  // END alt-linux
+                    .build();
+
     public static final Control UP    = new Control("\033[A");
     public static final Control DOWN  = new Control("\033[B");
     public static final Control RIGHT = new Control("\033[C");
@@ -62,11 +75,9 @@ public class Control implements Char {
 
     private final String str;
 
-    public Control(CharSequence str) {
-        if (str.equals("\033OH")) {
-            this.str = "\033[1~";  // HOME
-        } else if (str.equals("\033OF")) {
-            this.str = "\033[4~";  // END
+    Control(CharSequence str) {
+        if (_remapping.containsKey(str.toString())) {
+            this.str = _remapping.get(str.toString());
         } else {
             this.str = str.toString();
         }
@@ -77,23 +88,23 @@ public class Control implements Char {
     }
 
     public static Control cursorSetPos(int line, int col) {
-        return new Control(String.format("\033[%d;%dH", line, col));
+        return new Control(format("\033[%d;%dH", line, col));
     }
 
     public static Control cursorUp(int num) {
-        return new Control(String.format("\033[%dA", num));
+        return new Control(format("\033[%dA", num));
     }
 
     public static Control cursorDown(int num) {
-        return new Control(String.format("\033[%dB", num));
+        return new Control(format("\033[%dB", num));
     }
 
     public static Control cursorRight(int num) {
-        return new Control(String.format("\033[%dC", num));
+        return new Control(format("\033[%dC", num));
     }
 
     public static Control cursorLeft(int num) {
-        return new Control(String.format("\033[%dD", num));
+        return new Control(format("\033[%dD", num));
     }
 
     @Override
