@@ -46,7 +46,7 @@ public class ProcessExecutorTest {
     public void testRun() throws IOException {
         File sh = tmp.newFile("tmp.sh");
         try (OutputStream out = new FileOutputStream(sh)) {
-            out.write(("#!/usr/bin/env bash\n" +
+            out.write(("#!/bin/sh\n" +
                        "cd $(dirname $0)\n" +
                        "ls -1\n").getBytes(UTF_8));
         }
