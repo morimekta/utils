@@ -37,6 +37,7 @@ import static org.mockito.Mockito.when;
 /**
  * Tests for the integration executor.
  */
+@SuppressWarnings("ALL")
 public class ProcessExecutorTest {
     @Rule
     public  TemporaryFolder tmp = new TemporaryFolder();
@@ -307,6 +308,42 @@ public class ProcessExecutorTest {
             fail("no exception");
         } catch (IOException e) {
             assertThat(e.getCause().getMessage(), is("waitFor"));
+        }
+    }
+
+    @Test
+    public void testError_flushTimeout() throws IOException, InterruptedException {
+        ByteArrayOutputStream in = new ByteArrayOutputStream();
+        ByteArrayInputStream err = new ByteArrayInputStream(new byte[]{});
+        ByteArrayInputStream out = new ByteArrayInputStream(new byte[]{}) {
+            @Override
+            public synchronized int read(byte[] bytes) throws IOException {
+                try {
+                    Thread.sleep(1000L);
+                } catch (InterruptedException e) {
+                    throw new IOException(e.getMessage(), e);
+                }
+                return super.read(bytes);
+            }
+        };
+
+        Process process = mock(Process.class);
+        when(process.getErrorStream()).thenReturn(err);
+        when(process.getInputStream()).thenReturn(out);
+        when(process.getOutputStream()).thenReturn(in);
+        when(process.waitFor(anyLong(), eq(TimeUnit.MILLISECONDS)))
+                .thenReturn(true);
+
+        Runtime runtime = mock(Runtime.class);
+        when(runtime.exec(any(String[].class))).thenReturn(process);
+
+        ProcessExecutor sut = new ProcessExecutor(new String[]{
+                "ls", "-1"}, runtime, executor).setDeadlineFlushMs(1);
+        try {
+            sut.call();
+            fail("no exception");
+        } catch (IOException e) {
+            assertThat(e.getMessage(), is("IO thread handling timeout"));
         }
     }
 }

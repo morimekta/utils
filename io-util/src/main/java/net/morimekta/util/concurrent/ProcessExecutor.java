@@ -46,6 +46,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  *
  * int exitCode = i.get();
  * </pre>
+ * Each executor is made to handle one process, and can not be reused.
  *
  * The two output strings will be available as the program runs, so
  * calling <code>ex.getOutput()</code> or <code>ex.getError()</code>
@@ -70,6 +71,7 @@ public class ProcessExecutor implements Callable<Integer> {
     private final AtomicReference<InputStream> in;
 
     private long deadlineMs;
+    private long deadlineFlushMs;
 
     public ProcessExecutor(String... cmd) {
         this(cmd,
@@ -77,7 +79,7 @@ public class ProcessExecutor implements Callable<Integer> {
              Executors.newFixedThreadPool(3));
     }
 
-    protected ProcessExecutor(String[] cmd, Runtime runtime, ExecutorService executor) {
+    ProcessExecutor(String[] cmd, Runtime runtime, ExecutorService executor) {
         this.inException = new AtomicReference<>();
         this.outException = new AtomicReference<>();
         this.errException = new AtomicReference<>();
@@ -89,7 +91,8 @@ public class ProcessExecutor implements Callable<Integer> {
         this.out = new ByteArrayOutputStream();
         this.err = new ByteArrayOutputStream();
         this.in = new AtomicReference<>();
-        this.deadlineMs = TimeUnit.SECONDS.toMillis(1);
+        this.deadlineMs = TimeUnit.SECONDS.toMillis(1L);
+        this.deadlineFlushMs = 100L;
     }
 
     /**
@@ -111,8 +114,9 @@ public class ProcessExecutor implements Callable<Integer> {
      *
      * @param in The program input.
      */
-    public void setInput(InputStream in) {
+    public ProcessExecutor setInput(InputStream in) {
         this.in.set(in);
+        return this;
     }
 
     /**
@@ -122,8 +126,24 @@ public class ProcessExecutor implements Callable<Integer> {
      * @param deadlineMs The new deadline in milliseconds. 0 means to wait
      *                   forever. Default is 1 second.
      */
-    public void setDeadlineMs(long deadlineMs) {
+    public ProcessExecutor setDeadlineMs(long deadlineMs) {
         this.deadlineMs = deadlineMs;
+        return this;
+    }
+
+    /**
+     * Set the deadline for completing the IO threads. If not finished in this
+     * time interval, the run fails with an IOException.
+     *
+     * @param deadlineFlushMs The new deadline in milliseconds. 0 means to wait
+     *                       forever. Default is 1 second.
+     */
+    public ProcessExecutor setDeadlineFlushMs(long deadlineFlushMs) {
+        if (deadlineFlushMs < 0L) {
+            throw new IllegalArgumentException("Negative deadline for flushing output streams");
+        }
+        this.deadlineFlushMs = deadlineFlushMs;
+        return this;
     }
 
     /**
@@ -154,7 +174,13 @@ public class ProcessExecutor implements Callable<Integer> {
         }
     }
 
-    protected void handleTimeout(String[] cmd) throws IOException {
+    /**
+     * Handle timeout on the process finishing.
+     *
+     * @param cmd The command that was run.
+     * @throws IOException If not handled otherwise.
+     */
+    protected void handleProcessTimeout(String[] cmd) throws IOException {
         StringBuilder bld   = new StringBuilder();
         boolean       first = true;
         for (String c : cmd) {
@@ -195,7 +221,7 @@ public class ProcessExecutor implements Callable<Integer> {
             executor.submit(() -> handleOutputInternal(process.getInputStream()));
             executor.submit(() -> handleErrorInternal(process.getErrorStream()));
 
-            if (in != null) {
+            if (in.get() != null) {
                 executor.submit(() -> handleInputInternal(process.getOutputStream()));
             } else {
                 // Always close the program's input stream to force it to stop reading.
@@ -209,14 +235,16 @@ public class ProcessExecutor implements Callable<Integer> {
             if (deadlineMs > 0) {
                 if (!process.waitFor(deadlineMs, TimeUnit.MILLISECONDS)) {
                     process.destroyForcibly();
-                    handleTimeout(cmd);
+                    handleProcessTimeout(cmd);
                 }
             } else {
                 process.waitFor();
             }
 
             executor.shutdown();
-            if (!executor.awaitTermination(10, TimeUnit.MILLISECONDS)) {
+            long flushDeadline = deadlineFlushMs == 0 ? TimeUnit.MINUTES.toMillis(3L) : deadlineFlushMs;
+            if (!executor.awaitTermination(flushDeadline, TimeUnit.MILLISECONDS)) {
+                executor.shutdownNow();
                 throw new IOException("IO thread handling timeout");
             }
 
