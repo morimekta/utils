@@ -26,11 +26,12 @@ import net.morimekta.util.io.IOUtils;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UncheckedIOException;
+import java.io.OutputStream;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -62,20 +63,24 @@ public class ProcessExecutor implements Callable<Integer> {
     private final ByteArrayOutputStream out;
     private final ByteArrayOutputStream err;
 
-    private IOException           inException;
-    private IOException           outException;
-    private IOException           errException;
+    private AtomicReference<IOException> inException;
+    private AtomicReference<IOException> outException;
+    private AtomicReference<IOException> errException;
 
     private InputStream           in;
     private long                  deadlineMs;
 
-    public ProcessExecutor(String... cmd) throws IOException {
+    public ProcessExecutor(String... cmd) {
         this(cmd,
              Runtime.getRuntime(),
              Executors.newFixedThreadPool(3));
     }
 
     protected ProcessExecutor(String[] cmd, Runtime runtime, ExecutorService executor) {
+        this.inException = new AtomicReference<>();
+        this.outException = new AtomicReference<>();
+        this.errException = new AtomicReference<>();
+
         this.cmd = cmd;
         this.runtime = runtime;
         this.executor = executor;
@@ -124,15 +129,69 @@ public class ProcessExecutor implements Callable<Integer> {
         this.deadlineMs = deadlineMs;
     }
 
+    /**
+     * Handles the process' standard output stream.
+     *
+     * @param stdout The output stream reader.
+     * @throws IOException If reading stdout failed.
+     */
+    protected void handleOutput(InputStream stdout) throws IOException {
+        byte[] buffer = new byte[4 * 1024];
+        int    b;
+        while ((b = stdout.read(buffer)) > 0) {
+            synchronized (out) {
+                out.write(buffer, 0, b);
+            }
+        }
+    }
+
+    /**
+     * Handles the process' standard error stream.
+     *
+     * @param stderr The error stream reader.
+     * @throws IOException If reading stderr failed.
+     */
+    protected void handleError(InputStream stderr) throws IOException {
+        byte[] buffer = new byte[4 * 1024];
+        int    b;
+        while ((b = stderr.read(buffer)) > 0) {
+            synchronized (err) {
+                err.write(buffer, 0, b);
+            }
+        }
+    }
+
+    protected void handleTimeout(String[] cmd) throws IOException {
+        StringBuilder bld   = new StringBuilder();
+        boolean       first = true;
+        for (String c : cmd) {
+            if (first) {
+                first = false;
+            } else {
+                bld.append(" ");
+            }
+
+            String esc = Strings.escape(c);
+
+            // Quote where escaping is needed, OR the argument
+            // contains a literal space.
+            if (!c.equals(esc) || c.contains(" ")) {
+                bld.append('\"')
+                   .append(esc)
+                   .append('\"');
+            } else {
+                bld.append(c);
+            }
+        }
+
+        throw new IOException("Process took too long: " + bld.toString());
+    }
+
     @Override
-    public Integer call() {
+    public Integer call() throws IOException {
         try {
             out.reset();
             err.reset();
-
-            inException = null;
-            outException = null;
-            errException = null;
 
             Process process = runtime.exec(cmd);
 
@@ -140,106 +199,74 @@ public class ProcessExecutor implements Callable<Integer> {
             // the read and writing of both std-in and std-out/-err in separate
             // threads, while we at the same time we wait (to handle the
             // execution deadline).
-            executor.submit(() -> {
-                try {
-                    byte[] buffer = new byte[4 * 1024];
-                    int b;
-                    while ((b = process.getInputStream().read(buffer)) > 0) {
-                        synchronized (out) {
-                            out.write(buffer, 0, b);
-                        }
-                    }
-                } catch (IOException e) {
-                    outException = e;
-                }
-            });
-            executor.submit(() -> {
-                try {
-                    byte[] buffer = new byte[4 * 1024];
-                    int b;
-                    while ((b = process.getErrorStream().read(buffer)) > 0) {
-                        synchronized (err) {
-                            err.write(buffer, 0, b);
-                        }
-                    }
-                } catch (IOException e) {
-                    errException = e;
-                }
-            });
+            executor.submit(() -> handleOutputInternal(process.getInputStream()));
+            executor.submit(() -> handleErrorInternal(process.getErrorStream()));
 
             if (in != null) {
-                executor.submit(() -> {
-                    try {
-                        IOUtils.copy(in, process.getOutputStream());
-                        // Do not allow the std-in to have lingering bytes.
-                        process.getOutputStream().flush();
-                    } catch (IOException e) {
-                        inException = e;
-                    } finally {
-                        try {
-                            process.getOutputStream().close();
-                        } catch (IOException e) {
-                            if (inException != null) {
-                                inException.addSuppressed(e);
-                            }
-                        }
-                        in = null;
-                    }
-                });
+                executor.submit(() -> handleInputInternal(process.getOutputStream()));
             } else {
                 // Always close the program's input stream to force it to stop reading.
                 // NOTE: This is not identical to how interactive apps work, but avoids
                 // the test to halt because of problems reading from std input stream.
                 //
-                // TODO(morimekta): Figure out the correct behavior + deadline.
+                // TODO(morimekta): Figure out the correct default behavior + deadline.
                 process.getOutputStream().close();
             }
 
             if (deadlineMs > 0) {
                 if (!process.waitFor(deadlineMs, TimeUnit.MILLISECONDS)) {
                     process.destroyForcibly();
-
-                    StringBuilder bld   = new StringBuilder();
-                    boolean       first = true;
-                    for (String c : cmd) {
-                        if (first) {
-                            first = false;
-                        } else {
-                            bld.append(" ");
-                        }
-
-                        String esc = Strings.escape(c);
-
-                        // Quote where escaping is needed, OR the argument
-                        // contains a literal space.
-                        if (!c.equals(esc) || c.contains(" ")) {
-                            bld.append('\"')
-                               .append(esc)
-                               .append('\"');
-                        } else {
-                            bld.append(c);
-                        }
-                    }
-
-                    throw new IOException("Process took too long: " + bld.toString());
+                    handleTimeout(cmd);
                 }
             } else {
                 process.waitFor();
             }
 
-            if (inException != null) {
-                throw new IOException(inException.getMessage(), inException);
-            } else if (outException != null) {
-                throw new IOException(outException.getMessage(), outException);
-            } else if (errException != null) {
-                throw new IOException(errException.getMessage(), errException);
+            if (inException.get() != null) {
+                throw new IOException(inException.get().getMessage(), inException.get());
+            } else if (outException.get() != null) {
+                throw new IOException(outException.get().getMessage(), outException.get());
+            } else if (errException.get() != null) {
+                throw new IOException(errException.get().getMessage(), errException.get());
             }
 
             return process.exitValue();
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
         } catch (InterruptedException e) {
-            throw new RuntimeException(e.getMessage(), e);
+            throw new IOException(e.getMessage(), e);
+        }
+    }
+
+    private void handleOutputInternal(InputStream stdout) {
+        try {
+            handleOutput(stdout);
+        } catch (IOException e) {
+            outException.set(e);
+        }
+    }
+
+    private void handleErrorInternal(InputStream stderr) {
+        try {
+            handleError(stderr);
+        } catch (IOException e) {
+            errException.set(e);
+        }
+    }
+
+    private void handleInputInternal(OutputStream stdin) {
+        try {
+            IOUtils.copy(in, stdin);
+            // Do not allow the std-in to have lingering bytes.
+            stdin.flush();
+        } catch (IOException e) {
+            inException.set(e);
+        } finally {
+            try {
+                stdin.close();
+            } catch (IOException e) {
+                if (inException.get() != null) {
+                    inException.get().addSuppressed(e);
+                }
+            }
         }
     }
 }
