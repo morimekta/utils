@@ -114,8 +114,10 @@ public class CharUtil {
     public static String stripNonPrintable(String string) {
         StringBuilder builder = new StringBuilder();
         CharStream.stream(string).forEachOrdered(c -> {
-            if (c.printableWidth() > 0) {
-                builder.append(c.toString());
+            if (c instanceof Unicode) {
+                if (Strings.isConsolePrintable(c.asInteger())) {
+                    builder.append(c.toString());
+                }
             }
         });
         return builder.toString();
