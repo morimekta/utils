@@ -63,12 +63,13 @@ public class ProcessExecutor implements Callable<Integer> {
     private final ByteArrayOutputStream out;
     private final ByteArrayOutputStream err;
 
-    private AtomicReference<IOException> inException;
-    private AtomicReference<IOException> outException;
-    private AtomicReference<IOException> errException;
+    private final AtomicReference<IOException> inException;
+    private final AtomicReference<IOException> outException;
+    private final AtomicReference<IOException> errException;
 
-    private InputStream           in;
-    private long                  deadlineMs;
+    private final AtomicReference<InputStream> in;
+
+    private long deadlineMs;
 
     public ProcessExecutor(String... cmd) {
         this(cmd,
@@ -95,18 +96,14 @@ public class ProcessExecutor implements Callable<Integer> {
      * @return The programs stdout content.
      */
     public String getOutput() {
-        synchronized (out) {
-            return new String(out.toByteArray(), UTF_8);
-        }
+        return new String(out.toByteArray(), UTF_8);
     }
 
     /**
      * @return The programs stderr content.
      */
     public String getError() {
-        synchronized (err) {
-            return new String(err.toByteArray(), UTF_8);
-        }
+        return new String(err.toByteArray(), UTF_8);
     }
 
     /**
@@ -115,7 +112,7 @@ public class ProcessExecutor implements Callable<Integer> {
      * @param in The program input.
      */
     public void setInput(InputStream in) {
-        this.in = in;
+        this.in.set(in);
     }
 
     /**
@@ -139,9 +136,7 @@ public class ProcessExecutor implements Callable<Integer> {
         byte[] buffer = new byte[4 * 1024];
         int    b;
         while ((b = stdout.read(buffer)) > 0) {
-            synchronized (out) {
-                out.write(buffer, 0, b);
-            }
+            out.write(buffer, 0, b);
         }
     }
 
@@ -155,9 +150,7 @@ public class ProcessExecutor implements Callable<Integer> {
         byte[] buffer = new byte[4 * 1024];
         int    b;
         while ((b = stderr.read(buffer)) > 0) {
-            synchronized (err) {
-                err.write(buffer, 0, b);
-            }
+            err.write(buffer, 0, b);
         }
     }
 
@@ -222,6 +215,11 @@ public class ProcessExecutor implements Callable<Integer> {
                 process.waitFor();
             }
 
+            executor.shutdown();
+            if (!executor.awaitTermination(10, TimeUnit.MILLISECONDS)) {
+                throw new IOException("IO thread handling timeout");
+            }
+
             if (inException.get() != null) {
                 throw new IOException(inException.get().getMessage(), inException.get());
             } else if (outException.get() != null) {
@@ -254,7 +252,7 @@ public class ProcessExecutor implements Callable<Integer> {
 
     private void handleInputInternal(OutputStream stdin) {
         try {
-            IOUtils.copy(in, stdin);
+            IOUtils.copy(in.get(), stdin);
             // Do not allow the std-in to have lingering bytes.
             stdin.flush();
         } catch (IOException e) {

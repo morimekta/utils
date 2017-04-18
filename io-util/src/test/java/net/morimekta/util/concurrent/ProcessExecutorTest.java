@@ -70,13 +70,15 @@ public class ProcessExecutorTest {
             out.write(("#!/bin/sh\n" +
                        "ls -1 $1\n").getBytes(UTF_8));
         }
-        ProcessExecutor sut = new ProcessExecutor(
-                "sh", sh.getAbsolutePath(), tmp.getRoot().toString());
+        for (int i = 0; i < 100; ++i) {
+            ProcessExecutor sut = new ProcessExecutor(
+                    "sh", sh.getAbsolutePath(), tmp.getRoot().toString());
 
-        assertThat(sut.call(), is(0));
-        assertThat(sut.getOutput(), is("integration.jar\n" +
-                                       "tmp.sh\n"));
-        assertThat(sut.getError(), is(""));
+            assertThat("Run " + i, sut.call(), is(0));
+            assertThat("Run " + i, sut.getOutput(), is("integration.jar\n" +
+                                           "tmp.sh\n"));
+            assertThat("Run " + i, sut.getError(), is(""));
+        }
     }
 
     @Test
