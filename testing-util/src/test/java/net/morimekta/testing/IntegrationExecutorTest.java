@@ -1,7 +1,6 @@
 package net.morimekta.testing;
 
 import net.morimekta.util.io.IOUtils;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -13,10 +12,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
@@ -45,11 +42,6 @@ public class IntegrationExecutorTest {
             IOUtils.copy(in, out);
             out.flush();
         }
-
-        // It is bad practice to spawn threads in unit tests, but unless we do
-        // so, we will not actually test that the streaming IO works.
-        executor = Executors.newFixedThreadPool(3);
-        runtime  = Runtime.getRuntime();
     }
 
     @After
@@ -59,7 +51,7 @@ public class IntegrationExecutorTest {
 
     @Test
     public void testRun() throws IOException {
-        IntegrationExecutor sut = new IntegrationExecutor(integration, runtime, executor);
+        IntegrationExecutor sut = new IntegrationExecutor(integration);
 
         assertEquals(0, sut.run("a", "b"));
         assertEquals("", sut.getError());
@@ -70,7 +62,7 @@ public class IntegrationExecutorTest {
 
     @Test
     public void testRun_withDelay() throws IOException {
-        IntegrationExecutor sut = new IntegrationExecutor(integration, runtime, executor);
+        IntegrationExecutor sut = new IntegrationExecutor(integration);
 
         long now = Clock.systemUTC().millis();
 
@@ -86,7 +78,7 @@ public class IntegrationExecutorTest {
 
     @Test
     public void testRun_deadlineExceeded() throws IOException {
-        IntegrationExecutor sut = new IntegrationExecutor(integration, runtime, executor);
+        IntegrationExecutor sut = new IntegrationExecutor(integration);
         sut.setDeadlineMs(100);
 
         try {
@@ -99,7 +91,7 @@ public class IntegrationExecutorTest {
 
     @Test
     public void testRun_withInput() throws IOException {
-        IntegrationExecutor sut = new IntegrationExecutor(integration, runtime, executor);
+        IntegrationExecutor sut = new IntegrationExecutor(integration);
 
         ByteArrayInputStream in = new ByteArrayInputStream("one step ahead ;)".getBytes(UTF_8));
         sut.setInput(in);

@@ -20,65 +20,44 @@
  */
 package net.morimekta.testing;
 
-import net.morimekta.util.Strings;
-import net.morimekta.util.io.IOUtils;
+import net.morimekta.util.concurrent.ProcessExecutor;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-
-import static java.nio.charset.StandardCharsets.UTF_8;
+import java.io.UncheckedIOException;
 
 /**
  * Helper to handle process forking related to testing a jar file.
  */
 public class IntegrationExecutor {
-    private final File            jarFile;
-    private final Runtime         runtime;
-    private final ExecutorService executor;
-    private final ByteArrayOutputStream out;
-    private final ByteArrayOutputStream err;
-
-    private IOException           inException;
-    private IOException           outException;
-    private IOException           errException;
-
-    private InputStream           in;
-    private long                  deadlineMs;
+    private final File      jarFile;
+    private Long            deadlineMs;
+    private InputStream     inputStream;
+    private ProcessExecutor executor;
 
     public IntegrationExecutor(String module, String name) throws IOException {
-        this(findMavenTargetJar(module, name),
-             Runtime.getRuntime(),
-             Executors.newFixedThreadPool(3));
+        this(findMavenTargetJar(module, name));
     }
 
-    protected IntegrationExecutor(File jarFile, Runtime runtime, ExecutorService executor) {
+    protected IntegrationExecutor(File jarFile) {
         this.jarFile = jarFile;
-        this.runtime = runtime;
-        this.executor = executor;
-
-        this.out = new ByteArrayOutputStream();
-        this.err = new ByteArrayOutputStream();
-        this.in = null;
-        this.deadlineMs = TimeUnit.SECONDS.toMillis(1);
     }
 
     /**
      * @return The programs stdout content.
      */
     public String getOutput() {
-        return new String(out.toByteArray(), UTF_8);
+        if (executor == null) return "";
+        return executor.getOutput();
     }
 
     /**
      * @return The programs stderr content.
      */
     public String getError() {
-        return new String(err.toByteArray(), UTF_8);
+        if (executor == null) return "";
+        return executor.getError();
     }
 
     /**
@@ -87,7 +66,7 @@ public class IntegrationExecutor {
      * @param in The program input.
      */
     public void setInput(InputStream in) {
-        this.in = in;
+        this.inputStream = in;
     }
 
     /**
@@ -110,13 +89,6 @@ public class IntegrationExecutor {
      */
     public int run(String... args) throws IOException {
         try {
-            out.reset();
-            err.reset();
-
-            inException = null;
-            outException = null;
-            errException = null;
-
             String[] cmd = new String[args.length + 3];
             cmd[0] = "java";
             cmd[1] = "-jar";
@@ -125,96 +97,16 @@ public class IntegrationExecutor {
                 System.arraycopy(args, 0, cmd, 3, args.length);
             }
 
-            Process process = runtime.exec(cmd);
-
-            // T avoid the process running out of IO buffer, we need to handle
-            // the read and writing of both std-in and std-out/-err in separate
-            // threads, while we at the same time we wait (to handle the
-            // execution deadline).
-            executor.submit(() -> {
-                try {
-                    IOUtils.copy(process.getInputStream(), out);
-                } catch (IOException e) {
-                    outException = e;
-                }
-            });
-            executor.submit(() -> {
-                try {
-                    IOUtils.copy(process.getErrorStream(), err);
-                } catch (IOException e) {
-                    errException = e;
-                }
-            });
-
-            if (in != null) {
-                executor.submit(() -> {
-                    try {
-                        IOUtils.copy(in, process.getOutputStream());
-                        // Do not allow the std-in to have lingering bytes.
-                        process.getOutputStream().flush();
-                    } catch (IOException e) {
-                        inException = e;
-                    } finally {
-                        try {
-                            process.getOutputStream().close();
-                        } catch (IOException e2) {
-                            e2.printStackTrace();
-                        }
-                        in = null;
-                    }
-                });
-            } else {
-                // Always close the program's input stream to force it to stop reading.
-                // NOTE: This is not identical to how interactive apps work, but avoids
-                // the test to halt because of problems reading from std input stream.
-                //
-                // TODO(morimekta): Figure out the correct behavior + deadline.
-                process.getOutputStream().close();
+            executor = new ProcessExecutor(cmd);
+            if (inputStream != null) {
+                executor.setInput(inputStream);
             }
-
-            if (deadlineMs > 0) {
-                if (!process.waitFor(deadlineMs, TimeUnit.MILLISECONDS)) {
-                    process.destroyForcibly();
-
-                    StringBuilder bld = new StringBuilder();
-                    boolean first = true;
-                    for (String c : cmd) {
-                        if (first) {
-                            first = false;
-                        } else {
-                            bld.append(" ");
-                        }
-
-                        String esc = Strings.escape(c);
-
-                        // Quote where escaping is needed, OR the argument
-                        // contains a literal space.
-                        if (!c.equals(esc) || c.contains(" ")) {
-                            bld.append('\"')
-                               .append(esc)
-                               .append('\"');
-                        } else {
-                            bld.append(c);
-                        }
-                    }
-
-                    throw new IOException("Process took too long: " + bld.toString());
-                }
-            } else {
-                process.waitFor();
+            if (deadlineMs != null) {
+                executor.setDeadlineMs(deadlineMs);
             }
-
-            if (inException != null) {
-                throw new IOException(inException.getMessage(), inException);
-            } else if (outException != null) {
-                throw new IOException(outException.getMessage(), outException);
-            } else if (errException != null) {
-                throw new IOException(errException.getMessage(), errException);
-            }
-
-            return process.exitValue();
-        } catch (InterruptedException e) {
-            throw new IOException(e);
+            return executor.call();
+        } catch (UncheckedIOException e) {
+            throw e.getCause();
         }
     }
 
