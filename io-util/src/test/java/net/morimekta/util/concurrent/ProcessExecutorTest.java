@@ -68,10 +68,10 @@ public class ProcessExecutorTest {
         File sh = tmp.newFile("tmp.sh");
         try (OutputStream out = new FileOutputStream(sh)) {
             out.write(("#!/bin/sh\n" +
-                       "cd $(dirname $0)\n" +
-                       "ls -1\n").getBytes(UTF_8));
+                       "ls -1 $1\n").getBytes(UTF_8));
         }
-        ProcessExecutor sut = new ProcessExecutor("sh", sh.getAbsolutePath());
+        ProcessExecutor sut = new ProcessExecutor(
+                "sh", sh.getAbsolutePath(), tmp.getRoot().toString());
 
         assertThat(sut.call(), is(0));
         assertThat(sut.getOutput(), is("integration.jar\n" +
