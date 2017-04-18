@@ -88,7 +88,7 @@ public class ProcessExecutor implements Callable<Integer> {
 
         this.out = new ByteArrayOutputStream();
         this.err = new ByteArrayOutputStream();
-        this.in = null;
+        this.in = new AtomicReference<>();
         this.deadlineMs = TimeUnit.SECONDS.toMillis(1);
     }
 
@@ -263,6 +263,8 @@ public class ProcessExecutor implements Callable<Integer> {
             } catch (IOException e) {
                 if (inException.get() != null) {
                     inException.get().addSuppressed(e);
+                } else {
+                    inException.set(e);
                 }
             }
         }

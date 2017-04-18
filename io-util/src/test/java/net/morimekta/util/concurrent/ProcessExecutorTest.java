@@ -275,8 +275,9 @@ public class ProcessExecutorTest {
 
         ProcessExecutor sut = new ProcessExecutor(new String[]{
                 "ls", "-1"}, runtime, executor);
+        sut.setInput(new ByteArrayInputStream(new byte[]{0, 1, 2, 3}));
         try {
-            sut.call();
+            assertThat(sut.call(), is(0));
             fail("no exception");
         } catch (IOException e) {
             assertThat(e.getMessage(), is("close"));
