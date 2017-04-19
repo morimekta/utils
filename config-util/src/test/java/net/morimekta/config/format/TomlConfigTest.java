@@ -2,7 +2,6 @@ package net.morimekta.config.format;
 
 import net.morimekta.config.Config;
 import net.morimekta.config.ConfigException;
-
 import org.junit.Before;
 import org.junit.Test;
 

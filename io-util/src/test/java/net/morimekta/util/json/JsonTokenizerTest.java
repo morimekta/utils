@@ -22,7 +22,6 @@ package net.morimekta.util.json;
 
 import net.morimekta.util.Binary;
 import net.morimekta.util.Strings;
-
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -65,7 +64,7 @@ public class JsonTokenizerTest {
     @Test
     public void testExpectBad() {
         assertBad("Illegal character in JSON structure: '\\u00c3'", "æ");
-        assertBad("Unexpected end of file while __string__", "");
+        assertBad("Expected __string__: Got end of file", "");
     }
 
 
@@ -117,9 +116,9 @@ public class JsonTokenizerTest {
 
     @Test
     public void testBadString() {
-        assertBadString("Unexpected end of stream while __string__", "");
-        assertBadString("Expected string literal, but found number while __string__", "11");
-        assertBadString("Unexpected end of stream in string literal.", "\"11");
+        assertBadString("Expected __string__ (string literal): Got end of file", "");
+        assertBadString("Expected __string__ (string literal): but found '11'", "11");
+        assertBadString("Unexpected end of stream in string literal", "\"11");
     }
 
     private void assertBadString(String message, String str) {
@@ -165,12 +164,12 @@ public class JsonTokenizerTest {
 
     @Test
     public void testBadNumber() {
-        assertBadNumber("Unexpected end of stream while __string__", "");
-        assertBadNumber("Expected number, but found token while __string__", "false");
-        assertBadNumber("Expected number, but found literal while __string__", "\"string\"");
-        assertBadNumber("Wrongly terminated JSON number: x.", "1x");
-        assertBadNumber("Negative indicator without number.", "-");
-        assertBadNumber("No decimal after negative indicator.", "-,");
+        assertBadNumber("Expected __string__ (number): Got end of file", "");
+        assertBadNumber("Expected __string__ (number): but found 'false'", "false");
+        assertBadNumber("Expected __string__ (number): but found '\"string\"'", "\"string\"");
+        assertBadNumber("Wrongly terminated JSON number: '1x'", "1x");
+        assertBadNumber("Negative indicator without number", "-");
+        assertBadNumber("No decimal after negative indicator", "-,");
     }
 
     private void assertBadNumber(String message, String str) {
@@ -197,8 +196,8 @@ public class JsonTokenizerTest {
     @Test
     public void testExpectBadSymbol() {
         assertBadSymbol("No symbols to match.", "[");
-        assertBadSymbol("Expected one of \"]\", but found \"SYMBOL('[',1:1-2)\" while __string__", "[", ']');
-        assertBadSymbol("Unexpected end of stream while __string__", "", ']');
+        assertBadSymbol("Expected __string__ (one of [']']): but found '['", "[", ']');
+        assertBadSymbol("Expected __string__ (one of [']']): Got end of file", "", ']');
     }
 
     private void assertBadSymbol(String message, String str, char... symbols) {
@@ -228,7 +227,7 @@ public class JsonTokenizerTest {
             tokenizer.peek("__message__");
             fail("No exception on peek on end.");
         } catch (JsonException e) {
-            assertEquals("Unexpected end of stream while __message__", e.getMessage());
+            assertEquals("Expected __message__: Got end of file", e.getMessage());
         }
     }
 
@@ -244,12 +243,12 @@ public class JsonTokenizerTest {
 
             fail("No exception on bad expectation.");
         } catch (JsonException e) {
-            assertEquals("Expected number, but found literal while __number__", e.getMessage());
+            assertEquals("Expected __number__ (number): but found '\"first\"'", e.getMessage());
             assertEquals(2, e.getLineNo());
             assertEquals("    \"first\": \"value\",", e.getLine());
             assertEquals(5, e.getLinePos());
             assertEquals(7, e.getLen());
-            assertEquals("JsonException(JSON Error on line 2: Expected number, but found literal while __number__\n" +
+            assertEquals("JsonException(JSON Error on line 2: Expected __number__ (number): but found '\"first\"'\n" +
                          "#     \"first\": \"value\",\n" +
                          "#-----^^^^^^^)", e.toString().replaceAll("\\r\\n", "\n"));
 

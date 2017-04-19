@@ -87,7 +87,7 @@ public class JsonTokenizer {
      */
     public JsonToken expect(String message) throws JsonException, IOException {
         if (!hasNext()) {
-            throw newParseException("Unexpected end of file while %s", message);
+            throw newParseException("Expected %s: Got end of file", message);
         }
         return next();
     }
@@ -105,15 +105,14 @@ public class JsonTokenizer {
      */
     public JsonToken expectString(String message) throws IOException, JsonException {
         if (!hasNext()) {
-            throw newParseException("Unexpected end of stream while %s", message);
+            throw newParseException("Expected %s (string literal): Got end of file", message);
         } else {
             if (unreadToken.isLiteral()) {
                 return next();
             }
 
-            throw newMismatchException("Expected string literal, but found %s while %s",
-                                       unreadToken.type.toString().toLowerCase(),
-                                       message);
+            throw newMismatchException("Expected %s (string literal): but found '%s'",
+                                       message, unreadToken.asString());
         }
     }
 
@@ -133,14 +132,14 @@ public class JsonTokenizer {
      */
     public JsonToken expectNumber(String message) throws IOException, JsonException {
         if (!hasNext()) {
-            throw newParseException("Unexpected end of stream while %s", message);
+            throw newParseException("Expected %s (number): Got end of file", message);
         } else {
             if (unreadToken.isInteger() || unreadToken.isDouble()) {
                 return next();
             }
 
-            throw newMismatchException("Expected number, but found %s while %s",
-                                       unreadToken.type.toString().toLowerCase(),
+            throw newMismatchException("Expected %s (number): but found '%s'",
+                                       message, unreadToken.asString(),
                                        message);
         }
     }
@@ -162,7 +161,9 @@ public class JsonTokenizer {
             throw new IllegalArgumentException("No symbols to match.");
         }
         if (!hasNext()) {
-            throw newParseException("Unexpected end of stream while %s", message);
+            throw newParseException("Expected %s (one of ['%s']): Got end of file",
+                                    message,
+                                    Strings.joinP("', '", symbols));
         } else {
             for (char symbol : symbols) {
                 if (unreadToken.isSymbol(symbol)) {
@@ -171,10 +172,10 @@ public class JsonTokenizer {
                 }
             }
 
-            throw newMismatchException("Expected one of \"%s\", but found \"%s\" while %s",
-                                       Strings.joinP("", symbols),
-                                       unreadToken.toString(),
-                                       message);
+            throw newMismatchException("Expected %s (one of ['%s']): but found '%s'",
+                                       message,
+                                       Strings.joinP("', '", symbols),
+                                       unreadToken.asString());
         }
     }
 
@@ -206,7 +207,7 @@ public class JsonTokenizer {
      */
     public JsonToken peek(String message) throws IOException, JsonException {
         if (!hasNext()) {
-            throw newParseException("Unexpected end of stream while %s", message);
+            throw newParseException("Expected %s: Got end of file", message);
         }
         return unreadToken;
     }
@@ -341,7 +342,7 @@ public class JsonTokenizer {
         return new JsonToken(JsonToken.Type.TOKEN, lineBuffer.array(), startOffset, len, line, startPos);
     }
 
-    private JsonToken nextNumber() throws IOException, JsonException {
+    protected JsonToken nextNumber() throws IOException, JsonException {
         // NOTE: This code is pretty messy because it is a full state-engine
         // to ensure that the parsed number follows the JSON number syntax.
         // Alternatives are:
@@ -366,13 +367,13 @@ public class JsonTokenizer {
             ++len;
             lastByte = reader.read();
             if (lastByte < 0) {
-                throw newParseException("Negative indicator without number.");
+                throw newParseException("Negative indicator without number");
             }
             lineBuffer.put((byte) lastByte);
             ++linePos;
 
             if (!(lastByte == '.' || (lastByte >= '0' && lastByte <= '9'))) {
-                throw newParseException("No decimal after negative indicator.");
+                throw newParseException("No decimal after negative indicator");
             }
         }
 
@@ -454,7 +455,8 @@ public class JsonTokenizer {
             lastByte == JsonToken.kCarriageReturn) {
             return new JsonToken(JsonToken.Type.NUMBER, lineBuffer.array(), startOffset, len, line, startPos);
         } else {
-            throw newParseException("Wrongly terminated JSON number: %c.", lastByte);
+            String tmp = new String(lineBuffer.array(), startOffset, len + 1, StandardCharsets.UTF_8);
+            throw newParseException("Wrongly terminated JSON number: '%s'", tmp);
         }
     }
 
@@ -478,7 +480,7 @@ public class JsonTokenizer {
 
             lastByte = reader.read();
             if (lastByte < 0) {
-                throw newParseException("Unexpected end of stream in string literal.");
+                throw newParseException("Unexpected end of stream in string literal");
             }
 
             lineBuffer.put((byte) lastByte);
@@ -528,6 +530,6 @@ public class JsonTokenizer {
         if (params.length > 0) {
             format = String.format(format, params);
         }
-        return new JsonException(format, getLine(line), line, linePos, 0);
+        return new JsonException(format, getLine(line), line, linePos, 1);
     }
 }

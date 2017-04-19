@@ -20,6 +20,7 @@
  */
 package net.morimekta.config.format;
 
+import com.google.common.collect.ImmutableList;
 import net.morimekta.config.Config;
 import net.morimekta.config.ConfigBuilder;
 import net.morimekta.config.ConfigException;
@@ -30,8 +31,6 @@ import net.morimekta.util.io.IOUtils;
 import net.morimekta.util.json.JsonException;
 import net.morimekta.util.json.JsonToken;
 import net.morimekta.util.json.JsonTokenizer;
-
-import com.google.common.collect.ImmutableList;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
