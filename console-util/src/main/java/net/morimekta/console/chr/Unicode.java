@@ -350,33 +350,36 @@ public class Unicode implements Char {
                     return 0;
                 }
             }
-            if ((0x3000 <= cp && cp < 0x4dc0) ||  // CJK compatibility (square symbols), Extension A
-                (0x4e00 <= cp && cp < 0xa4c7) ||  // CJK Main group of ideographs) ￬ ￬
-                (0xa960 <= cp && cp < 0xa97d) ||
-                (0xac00 <= cp && cp < 0xd7a4) ||
-                (0xd800 <= cp && cp < 0xe000) ||
-                (0xf900 <= cp && cp < 0xfaff) ||
-                (0xfe10 <= cp && cp < 0xfe1a) ||
-                (0xfe30 <= cp && cp < 0xfe6c) ||
-                (0xff01 <= cp && cp < 0xff61) ||
-                (0xffe0 <= cp && cp < 0xffe7)) {
+            // CJK compatibility (square symbols), Extension A
+            if ((0x3000 <= cp && cp < 0x4dc0) && !(
+                    cp == 0x302a || cp == 0x302b || cp == 0x302c ||
+                    cp == 0x3040 ||
+                    (0x3097 <= cp && cp <= 0x309a) ||
+                    (0x3100 <= cp && cp <= 0x3104) ||
+                    // cp == 0x309a || 0-width
+                    cp == 0x312e ||
+                    cp == 0x312f ||
+                    cp == 0x3130 ||
+                    cp == 0x303f ||
+                    cp == 0x318f ||
+                    (0x31bb <= cp && cp <= 0x31bf) ||
+                    (0x31e4 <= cp && cp <= 0x31ef) ||
+                    cp == 0x321f ||
+                    cp == 0x32ff ||
+                    (0x3248 <= cp && cp <= 0x324f))) {
+                return 2;
+            } else if (
+                    (0x4e00 <= cp && cp < 0xa4c7) ||  // CJK Main group of ideographs) ￬ ￬
+                    (0xa960 <= cp && cp < 0xa97d) ||
+                    (0xac00 <= cp && cp < 0xd7a4) ||
+                    (0xd800 <= cp && cp < 0xe000) ||
+                    (0xf900 <= cp && cp < 0xfaff) ||
+                    (0xfe10 <= cp && cp < 0xfe1a) ||
+                    (0xfe30 <= cp && cp < 0xfe6c) ||
+                    (0xff01 <= cp && cp < 0xff61) ||
+                    (0xffe0 <= cp && cp < 0xffe7)) {
                 // Some excluded chars and ranges.
                 if (!(
-                        cp == 0x302a || cp == 0x302b || cp == 0x302c ||
-                        cp == 0x3040 ||
-                        (0x3097 <= cp && cp <= 0x309a) ||
-                        (0x3100 <= cp && cp <= 0x3104) ||
-                        // cp == 0x309a || 0-width
-                        cp == 0x312e ||
-                        cp == 0x312f ||
-                        cp == 0x3130 ||
-                        cp == 0x303f ||
-                        cp == 0x318f ||
-                        (0x31bb <= cp && cp <= 0x31bf) ||
-                        (0x31e4 <= cp && cp <= 0x31ef) ||
-                        cp == 0x321f ||
-                        cp == 0x32ff ||
-                        (0x3248 <= cp && cp <= 0x324f) ||
                         (0xa48d <= cp && cp <= 0xa48f) ||
                         cp == 0xfe53 ||
                         cp == 0xfe67)) {
