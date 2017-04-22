@@ -147,7 +147,7 @@ public class Color extends Control {
             } else {
                 builder.append(';');
             }
-            builder.append(String.format("%02d", i));
+            builder.append(String.format("%d", i));
         }
         builder.append("m");
         return builder.toString();

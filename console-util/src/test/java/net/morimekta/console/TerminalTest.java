@@ -78,18 +78,18 @@ public class TerminalTest {
 
         out.reset();
         terminal.info("test");
-        assertEquals("\\033[32m[info]\\033[00m test", Strings.escape(new String(out.toByteArray())));
+        assertEquals("\\033[32m[info]\\033[0m test", Strings.escape(new String(out.toByteArray())));
 
         out.reset();
         terminal.warn("test");
-        assertEquals("\\r\\n\\033[33m[warn]\\033[00m test", Strings.escape(new String(out.toByteArray())));
+        assertEquals("\\r\\n\\033[33m[warn]\\033[0m test", Strings.escape(new String(out.toByteArray())));
 
         out.reset();
         terminal.error("test");
-        assertEquals("\\r\\n\\033[31m[error]\\033[00m test", Strings.escape(new String(out.toByteArray())));
+        assertEquals("\\r\\n\\033[31m[error]\\033[0m test", Strings.escape(new String(out.toByteArray())));
 
         out.reset();
         terminal.fatal("test");
-        assertEquals("\\r\\n\\033[01;31m[FATAL]\\033[00m test", Strings.escape(new String(out.toByteArray())));
+        assertEquals("\\r\\n\\033[1;31m[FATAL]\\033[0m test", Strings.escape(new String(out.toByteArray())));
     }
 }

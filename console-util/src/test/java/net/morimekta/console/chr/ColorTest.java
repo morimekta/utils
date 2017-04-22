@@ -20,8 +20,6 @@
  */
 package net.morimekta.console.chr;
 
-import net.morimekta.console.chr.Color;
-
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -34,7 +32,7 @@ import static org.junit.Assert.fail;
 public class ColorTest {
     @Test
     public void testColorConstants() {
-        assertEquals("\033[00m", Color.CLEAR.toString());
+        assertEquals("\033[0m", Color.CLEAR.toString());
 
         assertEquals("\033[39m", Color.DEFAULT.toString());
         assertEquals("\033[30m", Color.BLACK.toString());
@@ -56,12 +54,12 @@ public class ColorTest {
         assertEquals("\033[46m", Color.BG_CYAN.toString());
         assertEquals("\033[47m", Color.BG_WHITE.toString());
 
-        assertEquals("\033[01m", Color.BOLD.toString());
-        assertEquals("\033[02m", Color.DIM.toString());
-        assertEquals("\033[04m", Color.UNDERLINE.toString());
-        assertEquals("\033[09m", Color.STROKE.toString());
-        assertEquals("\033[07m", Color.INVERT.toString());
-        assertEquals("\033[08m", Color.HIDDEN.toString());
+        assertEquals("\033[1m", Color.BOLD.toString());
+        assertEquals("\033[2m", Color.DIM.toString());
+        assertEquals("\033[4m", Color.UNDERLINE.toString());
+        assertEquals("\033[9m", Color.STROKE.toString());
+        assertEquals("\033[7m", Color.INVERT.toString());
+        assertEquals("\033[8m", Color.HIDDEN.toString());
 
         assertEquals("\033[21m", Color.UNSET_BOLD.toString());
         assertEquals("\033[22m", Color.UNSET_DIM.toString());
@@ -75,30 +73,28 @@ public class ColorTest {
     public void testConstructor() {
         Color br = new Color(31, 1);  // bold red.
 
-        assertEquals("\033[01;31m", br.toString());
+        assertEquals("\033[1;31m", br.toString());
 
         Color bg = new Color(32, 1);  // bold green
 
-        assertEquals("\033[01;32m", bg.toString());
+        assertEquals("\033[1;32m", bg.toString());
 
         assertEquals(new Color(Color.BOLD, Color.RED), br);
         assertNotEquals(new Color(Color.BOLD, Color.RED), bg);
 
         assertEquals(Color.CLEAR, new Color(Color.BOLD, Color.RED, Color.CLEAR));
         assertEquals(new Color(Color.RED, Color.UNSET_BOLD), new Color(new Color(Color.BOLD, Color.RED), Color.UNSET_BOLD));
-        assertEquals("\033[01;31;46m", new Color(Color.BOLD, Color.RED, Color.BG_CYAN).toString());
+        assertEquals("\033[1;31;46m", new Color(Color.BOLD, Color.RED, Color.BG_CYAN).toString());
     }
 
     @Test
     public void testConstructor_parser() {
-        Color br = new Color(Color.BOLD, Color.RED);  // bold red.
-
-        assertEquals(new Color(Color.BOLD, Color.RED), new Color("\033[01;31m"));
+        assertEquals(new Color(Color.BOLD, Color.RED), new Color("\033[1;31m"));
         try {
-            new Color("\033[01;m");
+            new Color("\033[1;m");
             fail("No exception on invalid color sequence.");
         } catch (IllegalArgumentException e) {
-            assertEquals("Invalid color control sequence: \"\\033[01;m\"", e.getMessage());
+            assertEquals("Invalid color control sequence: \"\\033[1;m\"", e.getMessage());
         }
     }
 
