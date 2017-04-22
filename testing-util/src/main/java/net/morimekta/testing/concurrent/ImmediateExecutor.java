@@ -5,7 +5,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -29,18 +28,8 @@ public class ImmediateExecutor implements ExecutorService {
         }
 
         @Override
-        public boolean equals(Object o) {
-            return this == o;
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(DoneTask.class, result, except);
-        }
-
-        @Override
         public boolean cancel(boolean b) {
-            return true;
+            return false;
         }
 
         @Override
@@ -63,10 +52,7 @@ public class ImmediateExecutor implements ExecutorService {
 
         @Override
         public V get(long l, @Nonnull TimeUnit timeUnit) throws InterruptedException, ExecutionException, TimeoutException {
-            if (except != null) {
-                throw new ExecutionException(except.getMessage(), except);
-            }
-            return result;
+            return get();
         }
     }
 

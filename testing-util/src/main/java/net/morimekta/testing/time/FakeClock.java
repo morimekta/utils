@@ -23,13 +23,16 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static java.lang.Math.max;
+import static java.lang.Math.min;
 
 /**
  * Fake clock implementation for testing.
@@ -39,49 +42,40 @@ public class FakeClock extends Clock {
         void newCurrentTimeUTC(long now);
     }
 
-    private static final Clock systemUTC = Clock.systemUTC();
-
-    private final AtomicReference<LocalDateTime> currentTimeUTC;
-    private final ZoneId                         zoneId;
-    private final List<TimeListener>             listeners;
-
     public FakeClock() {
-        currentTimeUTC = new AtomicReference<>(LocalDateTime.now(systemUTC));
-        zoneId = systemUTC.getZone();
-        listeners = new LinkedList<>();
-    }
-
-    private FakeClock(@Nonnull AtomicReference<LocalDateTime> currentTimeUTC,
-                      @Nonnull ZoneId zoneId,
-                      @Nonnull List<TimeListener> listeners) {
-        this.currentTimeUTC = currentTimeUTC;
-        this.zoneId = zoneId;
-        this.listeners = listeners;
+        this(systemUTC.millis());
     }
 
     public static FakeClock forCurrentTimeMillis(long millis) {
-        Clock clock = Clock.fixed(Instant.ofEpochMilli(millis), systemUTC.getZone());
-        return new FakeClock(
-                new AtomicReference<>(LocalDateTime.now(clock)),
-                Clock.systemUTC().getZone(),
-                new LinkedList<>());
+        return new FakeClock(Clock.fixed(Instant.ofEpochMilli(millis), systemUTC.getZone()));
     }
 
     /**
      * Tick the fake clock the given number of milliseconds.
      *
-     * @param millis Milliseconds to move the clock.
+     * @param tickMs Milliseconds to move the clock.
      */
-    public void tick(long millis) {
-        // Tick the clock along in 100 millis blocks. This is to be able to
-        // spread out the 'now' timestamps seen while ticking along.
-        while (millis > 0) {
-            long next = Math.min(100, millis);
-            millis -= next;
+    public void tick(final long tickMs) {
+        untilTimeUTC.updateAndGet(d -> d.plus(max(1, tickMs), ChronoUnit.MILLIS));
+        if (inTick.get()) {
+            // avoid recursion. Just let the other call (currently in the
+            // block below) take care of the extra time.
+            return;
+        }
+        inTick.set(true);
+        try {
+            // Tick the clock along in 100 millis blocks. This is to be able to
+            // spread out the 'now' timestamps seen while ticking along.
+            while (untilTimeUTC.get().isAfter(currentTimeUTC.get())) {
+                final long now   = currentTimeUTC.get().toInstant(ZoneOffset.UTC).toEpochMilli();
+                final long until = untilTimeUTC.get().toInstant(ZoneOffset.UTC).toEpochMilli();
+                final long skip  = min(100, until - now);
 
-            currentTimeUTC.updateAndGet(d -> d.plus(next, ChronoUnit.MILLIS));
-            long now = withZone(systemUTC.getZone()).millis();
-            listeners.forEach(l -> l.newCurrentTimeUTC(now));
+                currentTimeUTC.updateAndGet(d -> d.plus(skip, ChronoUnit.MILLIS));
+                listeners.forEach(l -> l.newCurrentTimeUTC(now + skip));
+            }
+        } finally {
+            inTick.set(false);
         }
     }
 
@@ -106,11 +100,49 @@ public class FakeClock extends Clock {
 
     @Override @Nonnull
     public FakeClock withZone(ZoneId zoneId) {
-        return new FakeClock(currentTimeUTC, zoneId, listeners);
+        return new FakeClock(currentTimeUTC, untilTimeUTC, zoneId, listeners, inTick);
     }
 
     @Override @Nonnull
     public Instant instant() {
         return currentTimeUTC.get().atZone(zoneId).toInstant();
+    }
+
+    // -----------------------
+
+    private static final Clock systemUTC = Clock.systemUTC();
+
+    private final AtomicReference<LocalDateTime> currentTimeUTC;
+    private final AtomicReference<LocalDateTime> untilTimeUTC;
+    private final ZoneId                         zoneId;
+    private final List<TimeListener>             listeners;
+    private final AtomicBoolean                  inTick;
+
+    private FakeClock(long millis) {
+        this(Clock.fixed(Instant.ofEpochMilli(millis), systemUTC.getZone()));
+    }
+
+    private FakeClock(Clock clock) {
+        this(LocalDateTime.now(clock));
+    }
+
+    private FakeClock(LocalDateTime now) {
+        this(new AtomicReference<>(now),
+             new AtomicReference<>(now),
+             systemUTC.getZone(),
+             new LinkedList<>(),
+             new AtomicBoolean());
+    }
+
+    private FakeClock(@Nonnull AtomicReference<LocalDateTime> currentTimeUTC,
+                      @Nonnull AtomicReference<LocalDateTime> untilTimeUTC,
+                      @Nonnull ZoneId zoneId,
+                      @Nonnull List<TimeListener> listeners,
+                      @Nonnull AtomicBoolean inTick) {
+        this.currentTimeUTC = currentTimeUTC;
+        this.untilTimeUTC = untilTimeUTC;
+        this.zoneId = zoneId;
+        this.listeners = listeners;
+        this.inTick = inTick;
     }
 }

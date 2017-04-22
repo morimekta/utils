@@ -3,8 +3,8 @@ package net.morimekta.testing.concurrent;
 import net.morimekta.testing.time.FakeClock;
 
 import javax.annotation.Nonnull;
-import java.time.Clock;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
@@ -17,6 +17,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -27,10 +28,10 @@ import java.util.stream.Collectors;
  * clock.
  */
 public class FakeScheduledExecutor implements ScheduledExecutorService, FakeClock.TimeListener {
-    private static class FakeTask<V> implements ScheduledFuture<V>, Runnable {
+    private class FakeTask<V> implements ScheduledFuture<V>, Runnable {
         private final long triggersAtMs;
         private final Callable<V> callable;
-        private final Clock clock;
+        private final int id;
         private V result;
         private Throwable except;
 
@@ -38,10 +39,9 @@ public class FakeScheduledExecutor implements ScheduledExecutorService, FakeCloc
         private boolean done;
 
         private FakeTask(long triggersAtMs,
-                         Clock clock,
                          Callable<V> callable) {
             this.triggersAtMs = triggersAtMs;
-            this.clock = clock;
+            this.id = nextId.incrementAndGet();
             this.callable = callable;
 
             this.cancelled = false;
@@ -51,31 +51,37 @@ public class FakeScheduledExecutor implements ScheduledExecutorService, FakeCloc
         }
 
         @Override
-        public boolean equals(Object o) {
-            return this == o;
-        }
-
-        @Override
         public int hashCode() {
-            return Objects.hash(FakeTask.class, clock, callable, triggersAtMs);
+            return Objects.hash(FakeTask.class, triggersAtMs, id);
         }
 
         @Override
         public int compareTo(@Nonnull Delayed delayed) {
-            return Long.compare(getDelay(TimeUnit.MILLISECONDS), delayed.getDelay(TimeUnit.MILLISECONDS));
+            if (delayed instanceof FakeTask) {
+                int c = Long.compare(triggersAtMs, ((FakeTask) delayed).triggersAtMs);
+                if (c == 0) {
+                    return Integer.compare(id, ((FakeTask) delayed).id);
+                }
+                return c;
+            }
+            return -1;
         }
 
         @Override
         public long getDelay(@Nonnull TimeUnit timeUnit) {
             long now = clock.millis();
-            return timeUnit.convert(triggersAtMs - now, TimeUnit.MILLISECONDS);
+            if (now < triggersAtMs) {
+                return timeUnit.convert(triggersAtMs - now, TimeUnit.MILLISECONDS);
+            }
+            return 0L;
         }
 
         @Override
-        public boolean cancel(boolean b) {
+        public boolean cancel(boolean mayInterruptIfRunning) {
             if (!done) {
                 cancelled = true;
                 done = true;
+                scheduledTasks.remove(this);
             }
             return cancelled;
         }
@@ -93,7 +99,7 @@ public class FakeScheduledExecutor implements ScheduledExecutorService, FakeCloc
         @Override
         public V get() throws InterruptedException, ExecutionException {
             if (!done) {
-                this.wait();
+                clock.tick(getDelay(TimeUnit.MILLISECONDS));
             }
             if (cancelled) {
                 throw new InterruptedException("Task cancelled");
@@ -107,9 +113,10 @@ public class FakeScheduledExecutor implements ScheduledExecutorService, FakeCloc
         @Override
         public V get(long l, @Nonnull TimeUnit timeUnit) throws InterruptedException, ExecutionException, TimeoutException {
             if (!done) {
-                this.wait(timeUnit.toMillis(l));
+                long maxWait = timeUnit.toMillis(l);
+                clock.tick(Math.min(maxWait, getDelay(TimeUnit.MILLISECONDS)));
                 if (!done) {
-                    throw new TimeoutException("Timed out after " + timeUnit.toMillis(l) + " millis.");
+                    throw new TimeoutException("Timed out after " + timeUnit.toMillis(l) + " millis");
                 }
             }
             if (cancelled) {
@@ -124,9 +131,6 @@ public class FakeScheduledExecutor implements ScheduledExecutorService, FakeCloc
         @Override
         public void run() {
             V result = null;
-            if (isDone()) {
-                return;
-            }
             try {
                 result = callable.call();
             } catch (Exception e) {
@@ -137,27 +141,124 @@ public class FakeScheduledExecutor implements ScheduledExecutorService, FakeCloc
         }
     }
 
+    private class FakeRecurringTask implements ScheduledFuture<Void> {
+        private final long delay;
+        private final Runnable callable;
+        private final AtomicReference<FakeTask> next;
+        AtomicLong nextExecution;
+
+        private boolean cancelled;
+
+        private FakeRecurringTask(long delay,
+                                  long initialDelay,
+                                  TimeUnit timeUnit,
+                                  Runnable callable,
+                                  AtomicReference<FakeTask> first) {
+            this.delay = timeUnit.toMillis(delay);
+            this.nextExecution = new AtomicLong(clock.millis() + timeUnit.toMillis(initialDelay));
+            this.callable = callable;
+            this.next = first;
+            this.cancelled = false;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            return this == o;
+        }
+
+        @Override
+        public int compareTo(@Nonnull Delayed delayed) {
+            return Long.compare(getDelay(TimeUnit.MILLISECONDS),
+                                delayed.getDelay(TimeUnit.MILLISECONDS));
+        }
+
+        @Override
+        public boolean cancel(boolean mayInterruptIfRunning) {
+            if (!cancelled) {
+                cancelled = true;
+                scheduledTasks.remove(next.get());
+            }
+            return cancelled;
+        }
+
+        @Override
+        public boolean isCancelled() {
+            return cancelled;
+        }
+
+        @Override
+        public boolean isDone() {
+            return cancelled;
+        }
+
+        @Override
+        public Void get() throws InterruptedException, ExecutionException {
+            if (cancelled) {
+                throw new InterruptedException("Task cancelled");
+            }
+            throw new IllegalStateException("Cannot wait for fake recurring tasks");
+        }
+
+        @Override
+        public Void get(long l, @Nonnull TimeUnit timeUnit) throws InterruptedException, ExecutionException, TimeoutException {
+            return get();
+        }
+
+        @Override
+        public long getDelay(@Nonnull TimeUnit timeUnit) {
+            return timeUnit.convert(delay, TimeUnit.MILLISECONDS);
+        }
+
+        void runWithDelay() {
+            try {
+                callable.run();
+            } catch (Exception e) {
+                // e.printStackTrace();
+                // keep going.
+            }
+            next.set(schedule(this::runWithDelay, delay, TimeUnit.MILLISECONDS));
+        }
+
+        void runWithRate() {
+            long now = clock.millis();
+
+            // Run the task for each time it should have been run in the
+            // time the last 'tick' should have triggered.
+            long nextRun = nextExecution.get();
+            while (nextRun <= now) {
+                try {
+                    callable.run();
+                } catch (Exception e) {
+                    // e.printStackTrace();
+                    // keep going.
+                }
+                nextRun = nextExecution.addAndGet(delay);
+            }
+            long delay = nextRun - now;
+
+            next.set(schedule(this::runWithRate, delay, TimeUnit.MILLISECONDS));
+        }
+    }
+
     private final FakeClock         clock;
-    private final TreeSet<FakeTask> scheduledTasks;
+    private final HashSet<FakeTask> scheduledTasks;
+    private final AtomicInteger     nextId = new AtomicInteger();
 
     private boolean shutdownCalled = false;
 
     public FakeScheduledExecutor(@Nonnull FakeClock clock) {
-        this.scheduledTasks = new TreeSet<>();
+        this.scheduledTasks = new HashSet<>();
         this.clock = clock;
         this.clock.addListener(this);
     }
 
     @Override
     public void newCurrentTimeUTC(long millis) {
-        while (!scheduledTasks.isEmpty()) {
-            FakeTask<?> first = scheduledTasks.first();
-            if (first.getDelay(TimeUnit.MILLISECONDS) > 0) {
-                break;
+        for (FakeTask<?> task : new TreeSet<>(scheduledTasks)) {
+            if (task.triggersAtMs <= millis) {
+                task.run();
+                scheduledTasks.remove(task);
             }
-
-            first.run();
-            scheduledTasks.remove(first);
         }
     }
 
@@ -172,63 +273,39 @@ public class FakeScheduledExecutor implements ScheduledExecutorService, FakeCloc
     @Override @Nonnull
     public <V> FakeTask<V> schedule(@Nonnull Callable<V> callable, long delay, @Nonnull TimeUnit timeUnit) {
         if (isShutdown()) {
-            throw new IllegalStateException("Executor is shut down.");
+            throw new IllegalStateException("Executor is shut down");
+        }
+        if (delay < 0) {
+            throw new IllegalArgumentException("Unable to schedule tasks in the past");
         }
 
         long now = clock.millis();
         long triggersAtMs = timeUnit.toMillis(delay) + now;
-        if (now > triggersAtMs) {
-            throw new IllegalArgumentException("Unable to schedule tasks in the past");
-        }
-        FakeTask<V> task = new FakeTask<>(triggersAtMs, clock, callable);
+        FakeTask<V> task = new FakeTask<>(triggersAtMs, callable);
         scheduledTasks.add(task);
         return task;
     }
 
     @Override @Nonnull
-    public FakeTask<?> scheduleAtFixedRate(@Nonnull Runnable runnable, long initialDelay, long period, @Nonnull TimeUnit timeUnit) {
+    public FakeRecurringTask scheduleAtFixedRate(@Nonnull Runnable runnable, long initialDelay, long period, @Nonnull TimeUnit timeUnit) {
         if (initialDelay < 0 || period < 1) {
             throw new IllegalArgumentException("Invalid initial delay or period: " + initialDelay + " / " + period);
         }
-        AtomicReference<Runnable> ref = new AtomicReference<>();
-        AtomicLong nextExecution = new AtomicLong(clock.millis() + timeUnit.toMillis(initialDelay));
-        ref.set(() -> {
-            long now = clock.millis();
-
-            // Run the task for each time it should have been run in the
-            // time the last 'tick' should have triggered.
-            long next = nextExecution.get();
-            while (next <= now) {
-                try {
-                    runnable.run();
-                } catch (Exception e) {
-                    // e.printStackTrace();
-                    // keep going.
-                }
-                next = nextExecution.addAndGet(timeUnit.toMillis(period));
-            }
-            long delay = next - now;
-            schedule(ref.get(), delay, TimeUnit.MILLISECONDS);
-        });
-        return schedule(ref.get(), initialDelay, timeUnit);
+        AtomicReference<FakeTask> first = new AtomicReference<>();
+        FakeRecurringTask recurring = new FakeRecurringTask(period, initialDelay, timeUnit, runnable, first);
+        first.set(schedule(recurring::runWithRate, initialDelay, timeUnit));
+        return recurring;
     }
 
     @Override @Nonnull
-    public FakeTask<?> scheduleWithFixedDelay(@Nonnull Runnable runnable, long initialDelay, long delay, @Nonnull TimeUnit timeUnit) {
+    public FakeRecurringTask scheduleWithFixedDelay(@Nonnull Runnable runnable, long initialDelay, long delay, @Nonnull TimeUnit timeUnit) {
         if (initialDelay < 0 || delay < 1) {
             throw new IllegalArgumentException("Invalid initial delay or intermediate delay: " + initialDelay + " / " + delay);
         }
-        AtomicReference<Runnable> ref = new AtomicReference<>();
-        ref.set(() -> {
-            try {
-                runnable.run();
-            } catch (Exception e) {
-                // e.printStackTrace();
-                // keep going.
-            }
-            schedule(ref.get(), delay, timeUnit);
-        });
-        return schedule(ref.get(), initialDelay, timeUnit);
+        AtomicReference<FakeTask> first = new AtomicReference<>();
+        FakeRecurringTask recurring = new FakeRecurringTask(delay, initialDelay, timeUnit, runnable, first);
+        first.set(schedule(recurring::runWithDelay, initialDelay, timeUnit));
+        return recurring;
     }
 
     @Override
@@ -259,12 +336,12 @@ public class FakeScheduledExecutor implements ScheduledExecutorService, FakeCloc
     @Override
     public boolean awaitTermination(long l, @Nonnull TimeUnit timeUnit) throws InterruptedException {
         if (!shutdownCalled) {
-            throw new IllegalStateException("Shutdown not triggered.");
+            throw new IllegalStateException("Shutdown not triggered");
         }
         long untilTotal = timeUnit.toMillis(l) + clock.millis();
 
         while (!scheduledTasks.isEmpty()) {
-            FakeTask<?> next = scheduledTasks.first();
+            FakeTask<?> next = new TreeSet<>(scheduledTasks).first();
 
             long now   = clock.millis();
             long delay = next.getDelay(TimeUnit.MILLISECONDS);
@@ -305,6 +382,9 @@ public class FakeScheduledExecutor implements ScheduledExecutorService, FakeCloc
         if (isShutdown()) {
             throw new IllegalStateException("Executor is shut down");
         }
+        if (collection.isEmpty()) {
+            throw new IllegalArgumentException("Empty invoke collection");
+        }
 
         List<Future<T>> results = new LinkedList<>();
         for (Callable<T> c : collection) {
@@ -314,18 +394,23 @@ public class FakeScheduledExecutor implements ScheduledExecutorService, FakeCloc
     }
 
     @Override @Nonnull
-    public <T> List<Future<T>> invokeAll(@Nonnull Collection<? extends Callable<T>> collection, long l, @Nonnull
-            TimeUnit timeUnit) throws InterruptedException {
+    public <T> List<Future<T>> invokeAll(
+            @Nonnull Collection<? extends Callable<T>> collection,
+            long l,
+            @Nonnull TimeUnit timeUnit) throws InterruptedException {
+        if (l < 0) {
+            throw new IllegalArgumentException("Negative timeout: " + l);
+        }
         return invokeAll(collection);
     }
 
     @Override @Nonnull
     public <T> T invokeAny(@Nonnull Collection<? extends Callable<T>> collection) throws InterruptedException, ExecutionException {
-        if (collection.isEmpty()) {
-            throw new IllegalArgumentException("Empty invoke collection");
-        }
         if (isShutdown()) {
             throw new IllegalStateException("Executor is shut down");
+        }
+        if (collection.isEmpty()) {
+            throw new IllegalArgumentException("Empty invoke collection");
         }
 
         ExecutionException ex = null;
@@ -344,7 +429,12 @@ public class FakeScheduledExecutor implements ScheduledExecutorService, FakeCloc
     }
 
     @Override
-    public <T> T invokeAny(@Nonnull Collection<? extends Callable<T>> collection, long l, @Nonnull TimeUnit timeUnit) throws InterruptedException, ExecutionException, TimeoutException {
+    public <T> T invokeAny(@Nonnull Collection<? extends Callable<T>> collection,
+                           long l,
+                           @Nonnull TimeUnit timeUnit) throws InterruptedException, ExecutionException, TimeoutException {
+        if (l < 0) {
+            throw new IllegalArgumentException("Negative timeout: " + l);
+        }
         return invokeAny(collection);
     }
 
