@@ -115,7 +115,9 @@ public class CharUtil {
         StringBuilder builder = new StringBuilder();
         CharStream.stream(string).forEachOrdered(c -> {
             if (c instanceof Unicode) {
-                if (Strings.isConsolePrintable(c.asInteger())) {
+                if (Strings.isConsolePrintable(c.asInteger()) ||
+                        c.asInteger() == Char.CR || c.asInteger() == Char.LF ||
+                        c.equals(Unicode.NBSP)) {
                     builder.append(c.toString());
                 }
             }
