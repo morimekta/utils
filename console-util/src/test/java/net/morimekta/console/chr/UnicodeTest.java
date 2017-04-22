@@ -30,6 +30,43 @@ public class UnicodeTest {
         // TAB is rather 'undefined', but put in the bucket with other
         // control chars.
         assertThat(new Unicode(Char.TAB).printableWidth(), is(0));
+
+        // Run statistics over printableWidth to cover all characters [ 0 .. 0x10000 >
+        int sum = 0;
+        for (int i = 0; i < 0x200; ++i) {
+            sum += new Unicode(i).printableWidth();
+        }
+        assertThat(sum, is(447));
+
+        sum = 0;
+        for (int i = 0x200; i < 0x1000; ++i) {
+            sum += new Unicode(i).printableWidth();
+        }
+        assertThat(sum, is(3038));
+
+        sum = 0;
+        for (int i = 0x1000; i < 0x2000; ++i) {
+            sum += new Unicode(i).printableWidth();
+        }
+        assertThat(sum, is(3774));
+
+        sum = 0;
+        for (int i = 0x2000; i < 0x4000; ++i) {
+            sum += new Unicode(i).printableWidth();
+        }
+        assertThat(sum, is(12487));
+
+        sum = 0;
+        for (int i = 0x4000; i < 0x8000; ++i) {
+            sum += new Unicode(i).printableWidth();
+        }
+        assertThat(sum, is(32704));
+
+        sum = 0;
+        for (int i = 0x8000; i < 0x10000; ++i) {
+            sum += new Unicode(i).printableWidth();
+        }
+        assertThat(sum, is(55976));
     }
 
     @Test
