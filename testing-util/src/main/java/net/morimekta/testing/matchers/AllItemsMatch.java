@@ -23,10 +23,12 @@ import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 
 import java.util.Collection;
-import java.util.Objects;
 
 /**
  * All items in a collection matches the given matcher.
+ *
+ * This is equivalent with a loop over all items in the collection
+ * and calling <code>assertThat(item, matcher)</code>
  */
 public class AllItemsMatch<T> extends BaseMatcher<Collection<T>> {
     private final Matcher<T> matcher;
@@ -49,26 +51,8 @@ public class AllItemsMatch<T> extends BaseMatcher<Collection<T>> {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (o == this) {
-            return true;
-        }
-        if (o == null || !(getClass().equals(o.getClass()))) {
-            return false;
-        }
-
-        AllItemsMatch other = (AllItemsMatch) o;
-        return Objects.equals(matcher, other.matcher);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(AllItemsMatch.class, matcher);
-    }
-
-    @Override
     public void describeTo(Description description) {
-        description.appendText("all match ");
+        description.appendText("all items match: ");
         matcher.describeTo(description);
     }
 

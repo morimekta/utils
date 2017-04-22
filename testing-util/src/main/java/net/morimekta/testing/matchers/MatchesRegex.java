@@ -21,40 +21,44 @@ package net.morimekta.testing.matchers;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 
-import java.util.Objects;
-
-import static org.junit.Assert.assertNotNull;
+import java.util.Collection;
+import java.util.regex.Pattern;
 
 /**
- * Equality matcher that ignores line indent. But matches all other spacing.
+ * Checks that the matching string matches the regex.
  */
-public class EqualIgnoreIndent extends BaseMatcher<String> {
-    private final String expected;
+public class MatchesRegex extends BaseMatcher<Collection<String>> {
+    private final Pattern pattern;
 
-    public EqualIgnoreIndent(String expected) {
-        assertNotNull("Missing expected.", expected);
+    public MatchesRegex(String regex) {
+        this(Pattern.compile(regex));
+    }
 
-        this.expected = expected;
-
+    public MatchesRegex(Pattern pattern) {
+        this.pattern = pattern;
     }
 
     @Override
-    public boolean matches(Object o) {
-        if (o == null || !(CharSequence.class.isAssignableFrom(o.getClass()))) return false;
-
-        String noIndentActual = o.toString().replaceAll("\\r?\\n[ \\t]*", "\n");
-        String noIndentExpected = this.expected.replaceAll("\\r?\\n[ \\t]*", "\n");
-
-        return noIndentActual.equals(noIndentExpected);
+    public boolean matches(Object item) {
+        if (!(item instanceof CharSequence)) {
+            return false;
+        }
+        return pattern.matcher(item.toString()).matches();
     }
 
     @Override
     public void describeTo(Description description) {
-        description.appendText("equalIgnoreIndent(" + expected + ")");
+        description.appendText("matches /" + pattern.toString() + "/");
     }
 
-    public void describeMismatch(Object actual, Description mismatchDescription) {
-        // TODO(show per-line mismatch).
-        mismatchDescription.appendText("was " + Objects.toString(actual));
+    @Override
+    @SuppressWarnings("unchecked")
+    public void describeMismatch(Object item, Description description) {
+        if (!(item instanceof CharSequence)) {
+            description.appendText("was not a string: ")
+                       .appendValue(item);
+            return;
+        }
+        description.appendText("was ").appendValue(item);
     }
 }
