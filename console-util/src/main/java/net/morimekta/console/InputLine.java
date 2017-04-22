@@ -22,6 +22,7 @@ package net.morimekta.console;
 
 import net.morimekta.console.chr.Char;
 import net.morimekta.console.chr.Control;
+import net.morimekta.util.Strings;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -127,9 +128,8 @@ public class InputLine {
                      Pattern delimiterPattern) {
         if (charValidator == null) {
             charValidator = (c, o) -> {
-                int ch = c.asInteger();
-                // Just check for printable ASCII character
-                if (ch < 0x20 || 0x7f <= ch) {
+                if (c.asInteger() < 0x20 ||
+                    !Strings.isConsolePrintable(c.asInteger())) {
                     o.println("Invalid character: " + c.asString());
                     return false;
                 }

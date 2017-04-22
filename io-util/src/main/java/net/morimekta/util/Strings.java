@@ -134,7 +134,7 @@ public class Strings {
      */
     public static boolean isConsolePrintable(int cp) {
         return Character.isDefined(cp) &&
-               !(cp < 0x0020 ||
+               !((cp < 0x0020 && cp != '\n') ||
                  (0x007F <= cp && cp <  0x00A0) ||
                  Character.isIdentifierIgnorable(cp) ||
                  (0x07e8 <= cp && cp <= 0x07f3) ||
