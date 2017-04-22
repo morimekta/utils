@@ -207,26 +207,27 @@ public class ConsoleWatcher extends TestWatcher implements AutoCloseable {
      * Set input with dynamic content.
      * @param in The input values.
      */
-    public void setInput(Object... in) {
+    public ConsoleWatcher setInput(Object... in) {
         assert in.length > 0 : "Require at least one input item";
-        setInput(CharUtil.inputBytes(in));
+        return setInput(CharUtil.inputBytes(in));
     }
 
     /**
      * Set input to return the given string content.
      * @param in The string input.
      */
-    public void setInput(@Nonnull String in) {
-        setInput(in.getBytes(StandardCharsets.UTF_8));
+    public ConsoleWatcher setInput(@Nonnull String in) {
+        return setInput(in.getBytes(StandardCharsets.UTF_8));
     }
 
     /**
      * Set input to return the given bytes.
      * @param in The bytes for input.
      */
-    public void setInput(@Nonnull byte[] in) {
+    public ConsoleWatcher setInput(@Nonnull byte[] in) {
         assert started : "Setting input on a non-started console";
         inStream = new ByteArrayInputStream(in);
+        return this;
     }
 
     /**
@@ -277,18 +278,18 @@ public class ConsoleWatcher extends TestWatcher implements AutoCloseable {
 
     @Override
     protected void failed(Throwable e, Description description) {
-        if (dumpOutputOnFailure) {
-            originalErr.println(Color.BOLD + " <<< --- stdout : " + description.getMethodName() + " --- >>> " + Color.CLEAR);
+        if (dumpOutputOnFailure && outStream.size() > 0) {
+            originalErr.println(Color.BOLD + " <<< --- stdout : " + description.getMethodName() + " --- >>>" + Color.CLEAR);
             originalErr.print(output());
-            originalErr.println(Color.BOLD + " <<< --- stdout : END --- >>> " + Color.CLEAR);
-            if (dumpErrorOnFailure) {
+            originalErr.println(Color.BOLD + " <<< --- stdout : END --- >>>" + Color.CLEAR);
+            if (dumpErrorOnFailure && errStream.size() > 0) {
                 originalErr.println();
             }
         }
-        if (dumpErrorOnFailure) {
-            originalErr.println(Color.BOLD + " <<< --- stderr : " + description.getMethodName() + " --- >>> " + Color.CLEAR);
+        if (dumpErrorOnFailure && errStream.size() > 0) {
+            originalErr.println(Color.BOLD + " <<< --- stderr : " + description.getMethodName() + " --- >>>" + Color.CLEAR);
             originalErr.print(error());
-            originalErr.println(Color.BOLD + " <<< --- stderr : END --- >>> " + Color.CLEAR);
+            originalErr.println(Color.BOLD + " <<< --- stderr : END --- >>>" + Color.CLEAR);
         }
     }
 
