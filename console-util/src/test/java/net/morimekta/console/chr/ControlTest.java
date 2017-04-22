@@ -58,7 +58,7 @@ public class ControlTest {
         assertThat(Control.F1.compareTo(Unicode.NBSP), is(-1));
         assertThat(Control.F1.equals(Control.F1), is(true));
         assertThat(Control.F1.equals(null), is(false));
-        assertThat(Control.F1.equals(new Object()), is(true));
+        assertThat(Control.F1.equals(new Object()), is(false));
 
     }
 }
