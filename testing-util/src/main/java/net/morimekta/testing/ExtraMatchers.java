@@ -23,13 +23,14 @@ import net.morimekta.testing.matchers.DistinctFrom;
 import net.morimekta.testing.matchers.EqualIgnoreIndent;
 import net.morimekta.testing.matchers.EqualToLines;
 import net.morimekta.testing.matchers.InRange;
-
+import net.morimekta.testing.matchers.MatchesRegex;
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 
 import javax.annotation.Nonnull;
 import java.util.Collection;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * Extra hamcrest matchers.
@@ -104,6 +105,26 @@ public class ExtraMatchers {
      */
     public static <T> Matcher<Collection<T>> allItemsMatch(Matcher<T> itemMatcher) {
         return new AllItemsMatch<>(itemMatcher);
+    }
+
+    /**
+     * Matcher that uses a pattern to match against a string.
+     *
+     * @param pattern The pattern to use.
+     * @return The matcher.
+     */
+    public static Matcher<String> matchesRegex(String pattern) {
+        return new MatchesRegex(pattern);
+    }
+
+    /**
+     * Matcher that uses a pattern to match against a string.
+     *
+     * @param pattern The pattern to use.
+     * @return The matcher.
+     */
+    public static Matcher<String> matchesRegex(Pattern pattern) {
+        return new MatchesRegex(pattern);
     }
 
     private ExtraMatchers() {}

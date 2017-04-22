@@ -4,7 +4,6 @@ import net.morimekta.testing.matchers.DistinctFrom;
 import net.morimekta.testing.matchers.EqualIgnoreIndent;
 import net.morimekta.testing.matchers.EqualToLines;
 import net.morimekta.testing.matchers.InRange;
-
 import org.hamcrest.Matcher;
 import org.hamcrest.collection.IsIn;
 import org.junit.Test;
@@ -15,7 +14,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.regex.Pattern;
 
+import static net.morimekta.testing.ExtraMatchers.matchesRegex;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.isOneOf;
@@ -100,6 +101,12 @@ public class ExtraMatchersTest {
         assertThat(matcher.matches("b"), is(true));
         assertThat(matcher.matches("c"), is(false));
         assertThat(matcher.matches(null), is(true));
+    }
+
+    @Test
+    public void testMatchesRegex() {
+        assertThat("ayb5", matchesRegex("a.*b[1-7]"));
+        assertThat("ayb5", matchesRegex(Pattern.compile("a.*b[1-7]")));
     }
 
     @Test

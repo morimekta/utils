@@ -21,13 +21,12 @@ package net.morimekta.testing.matchers;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 
-import java.util.Collection;
 import java.util.regex.Pattern;
 
 /**
  * Checks that the matching string matches the regex.
  */
-public class MatchesRegex extends BaseMatcher<Collection<String>> {
+public class MatchesRegex extends BaseMatcher<String> {
     private final Pattern pattern;
 
     public MatchesRegex(String regex) {
