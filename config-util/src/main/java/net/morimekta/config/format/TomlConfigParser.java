@@ -129,7 +129,7 @@ public class TomlConfigParser implements ConfigParser {
                     // JsonException which has detected the year-mm-dd
                     // separator char, we can manage to parse this
                     // correctly.
-                    if (je.getMessage().endsWith("Wrongly terminated JSON number: -.")) {
+                    if (je.getMessage().startsWith("Wrongly terminated JSON number:")) {
                         IOUtils.readString(bais, "\n");
                         // Since the tokenizer is in a bad state (unconsumed
                         // token char that should be ignored) it has to be
@@ -154,7 +154,7 @@ public class TomlConfigParser implements ConfigParser {
                                                     .toInstant()
                                                     .toEpochMilli()));
                         } catch (RuntimeException e) {
-                            throw new ConfigException("Value type not recognized: " + Strings.escape(date));
+                            throw new ConfigException(je, je.getMessage());
                         }
                     } else {
                         throw new ConfigException(je, je.getMessage());

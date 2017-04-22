@@ -18,6 +18,7 @@
  */
 package net.morimekta.config.util;
 
+import com.google.common.base.MoreObjects;
 import net.morimekta.config.Config;
 import net.morimekta.config.ConfigException;
 import net.morimekta.config.IncompatibleValueException;
@@ -28,8 +29,6 @@ import net.morimekta.config.format.TomlConfigParser;
 import net.morimekta.util.Numeric;
 import net.morimekta.util.Stringable;
 import net.morimekta.util.Strings;
-
-import com.google.common.base.MoreObjects;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -238,7 +237,7 @@ public class ConfigUtil {
                 return new Date(time.atZone(Clock.systemUTC()
                                                  .getZone()).toInstant().toEpochMilli());
             } catch (RuntimeException e) {
-                throw new ConfigException(e, "Unable to parse date: \"" + date + "\": " + e.getMessage());
+                throw new ConfigException(e, "Unable to parse date: " + e.getMessage());
             }
         } else if (value instanceof Long) {
             // Longs are assumed to be java time (millis since epoch).

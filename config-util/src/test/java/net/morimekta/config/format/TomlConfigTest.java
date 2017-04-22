@@ -9,9 +9,12 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * Tests for the JSON config format.
@@ -73,5 +76,35 @@ public class TomlConfigTest {
 
         assertNotNull(config.getCollection("section.value"));
         assertTrue(config.getCollection("section.value").isEmpty());
+    }
+
+    @Test
+    public void testBadToml() {
+        assertBad("boo",
+                  "Expected key/value separator (one of [':', '=']): Got end of file");
+        assertBad("[meh\n" +
+                  "so = 6008\n",
+                  "Expected  (one of [']']): but found 'so'");
+        assertBad("[meh] more\n" +
+                  "so = 6008\n",
+                  "Garbage after section: more");
+        assertBad("so = 2008 more\n",
+                  "Garbage after value: more");
+        assertBad("so = 2008more\n",
+                  "Wrongly terminated JSON number: '2008m'");
+        assertBad("so = more\n",
+                  "Unknown value token more");
+        assertBad("so = \n",
+                  "Expected TOML value: Got end of file");
+    }
+
+    private void assertBad(String toml, String message) {
+        try {
+            ByteArrayInputStream in = new ByteArrayInputStream(toml.getBytes(UTF_8));
+            parser.parse(in);
+            fail("No exception: " + message);
+        } catch (ConfigException e) {
+            assertThat(e.getMessage(), is(message));
+        }
     }
 }

@@ -20,6 +20,8 @@
  */
 package net.morimekta.config.util;
 
+import com.google.common.collect.ImmutableList;
+import net.morimekta.config.ConfigException;
 import net.morimekta.config.format.JsonConfigParser;
 import net.morimekta.config.format.PropertiesConfigParser;
 import net.morimekta.config.format.TomlConfigParser;
@@ -28,10 +30,10 @@ import net.morimekta.config.impl.SimpleConfig;
 import net.morimekta.util.Numeric;
 import net.morimekta.util.Stringable;
 import net.morimekta.util.Strings;
-
-import com.google.common.collect.ImmutableList;
 import org.junit.Test;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedList;
@@ -51,6 +53,8 @@ import static net.morimekta.config.util.ConfigUtil.asString;
 import static net.morimekta.config.util.ConfigUtil.asStringArray;
 import static net.morimekta.config.util.ConfigUtil.getParserForName;
 import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -73,6 +77,13 @@ public class ConfigUtilTest {
         assertThat(getParserForName("/home/test.ini"), instanceOf(TomlConfigParser.class));
         assertThat(getParserForName("c:\\my.properties.json"), instanceOf(JsonConfigParser.class));
         assertThat(getParserForName("/home/toml/json.properties"), instanceOf(PropertiesConfigParser.class));
+
+        try {
+            getParserForName("abba");
+            fail("no exception");
+        } catch (ConfigException e) {
+            assertThat(e.getMessage(), is("No file suffix in name: abba"));
+        }
     }
 
     @Test
@@ -121,6 +132,7 @@ public class ConfigUtilTest {
         assertEquals(1, asInteger(true));
         assertEquals(1, asInteger("1"));
         assertEquals(4, asInteger((Numeric) () -> 4));
+        assertEquals(1234567890, asInteger(new Date(1234567890000L)));
 
         assertException("Unable to parse string \"foo\" to an int", "foo", ConfigUtil::asInteger);
         assertException("Unable to convert LinkedList to an int", new LinkedList<>(), ConfigUtil::asInteger);
@@ -133,6 +145,7 @@ public class ConfigUtilTest {
         assertEquals(1L, asLong(true));
         assertEquals(1L, asLong("1"));
         assertEquals(4L, asLong((Numeric) () -> 4));
+        assertEquals(1234567890000L, asLong(new Date(1234567890000L)));
 
         assertException("Unable to parse string \"foo\" to a long", "foo", ConfigUtil::asLong);
         assertException("Unable to convert LinkedList to a long", new LinkedList<>(), ConfigUtil::asLong);
@@ -170,12 +183,28 @@ public class ConfigUtilTest {
 
     @Test
     public void testAsDate() {
-        Date date = new Date();
+        Date date = new Date(1461357665000L);
 
-        String str = asString(date);
-        Date parsed = asDate(str);
+        assertThat(asDate(asString(date)), is(date));
+        assertThat(asDate(date), is(sameInstance(date)));
+        assertThat(asDate("2016-04-22T20:41:05Z"), is(new Date(1461357665000L)));
+        assertThat(asDate("2016-04-22T20:41:05+02:00"), is(new Date(1461357665000L)));
+        assertThat(asDate(1461357665000L), is(new Date(1461357665000L)));
+        assertThat(asDate(1461357665), is(new Date(1461357665000L)));
 
-        assertEquals(date, parsed);
+        try {
+            asDate("2016-04-22T20:41:05+CET");
+            fail("no exception");
+        } catch (ConfigException e) {
+            assertThat(e.getMessage(), is("Unable to parse date: Text '2016-04-22T20:41:05+CET' could not be parsed at index 19"));
+        }
+
+        try {
+            asDate(ImmutableList.of(1, 2, 3));
+            fail("no exception");
+        } catch (ConfigException e) {
+            assertThat(e.getMessage(), is("Unable to convert RegularImmutableList to a date"));
+        }
     }
 
     @Test
@@ -218,6 +247,22 @@ public class ConfigUtilTest {
         assertException("Unable to convert String to a collection", "not a list", ConfigUtil::asStringArray);
     }
 
+    @Test
+    public void testEquals2() {
+        SimpleConfig a = new SimpleConfig();
+        a.putBoolean("b", true);
+
+        SimpleConfig am = new SimpleConfig(a);
+        SimpleConfig b = new SimpleConfig();
+        b.putBoolean("b", false);
+
+        assertThat(ConfigUtil.equals(a, a), is(true));
+        assertThat(ConfigUtil.equals(a, am), is(true));
+        assertThat(ConfigUtil.equals(a, b), is(false));
+        assertThat(ConfigUtil.equals(a, null), is(false));
+        assertThat(ConfigUtil.equals(null, null), is(true));
+    }
+
     void assertException(String message, Object value, Function<Object, Object> func) {
         try {
             func.apply(value);
@@ -225,5 +270,18 @@ public class ConfigUtilTest {
         } catch (Exception e) {
             assertEquals(message, e.getMessage());
         }
+    }
+
+    @Test
+    public void testConstructor() throws
+                                  NoSuchMethodException,
+                                  IllegalAccessException,
+                                  InvocationTargetException,
+                                  InstantiationException {
+        Constructor<ConfigUtil> c = ConfigUtil.class.getDeclaredConstructor();
+        assertThat(c.isAccessible(), is(false));
+        c.setAccessible(true);
+        assertThat(c.newInstance(), is(instanceOf(ConfigUtil.class)));
+        c.setAccessible(false);
     }
 }
