@@ -22,7 +22,7 @@ package net.morimekta.console.util;
 
 import com.google.common.annotations.VisibleForTesting;
 
-import java.io.UncheckedIOException;
+import java.util.Objects;
 
 /**
  * Column and row count for the current terminal.
@@ -35,6 +35,20 @@ public class TerminalSize {
     public TerminalSize(int rows, int cols) {
         this.rows = rows;
         this.cols = cols;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == this) return true;
+        if (o == null || !o.getClass().equals(getClass())) return false;
+        TerminalSize other = (TerminalSize) o;
+        return rows == other.rows &&
+               cols == other.cols;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(TerminalSize.class, rows, cols);
     }
 
     @Override

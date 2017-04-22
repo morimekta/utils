@@ -20,6 +20,8 @@
  */
 package net.morimekta.console.util;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.IOException;
@@ -113,6 +115,7 @@ public class STTYModeSwitcher implements Closeable {
      *
      * @param mode The mode to set.
      */
+    @VisibleForTesting
     protected void setSttyMode(STTYMode mode) throws IOException {
         String[] cmd;
         if (mode == STTYMode.COOKED) {

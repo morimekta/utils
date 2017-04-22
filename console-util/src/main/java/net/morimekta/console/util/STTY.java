@@ -22,11 +22,16 @@ package net.morimekta.console.util;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -35,6 +40,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  */
 public class STTY {
     private final Runtime runtime;
+    private final Supplier<TerminalSize> termSize;
+    private final AtomicReference<IOException> ex;
 
     public STTY() {
         this(Runtime.getRuntime());
@@ -43,12 +50,22 @@ public class STTY {
     @VisibleForTesting
     public STTY(Runtime runtime) {
         this.runtime = runtime;
+        this.ex = new AtomicReference<>();
+        this.termSize = Suppliers.memoizeWithExpiration(() -> {
+            try {
+                return getTerminalSize(runtime);
+            } catch (IOException e) {
+                ex.set(e);
+                return null;
+            }}, 1000L, TimeUnit.MILLISECONDS);
     }
 
     @Override
     public String toString() {
         return MoreObjects.toStringHelper(STTY.class)
-                          .add("tty", getTerminalSize())
+                          .omitNullValues()
+                          .add("interactive", isInteractive())
+                          .add("tty", isInteractive() ? getTerminalSize() : null)
                           .add("mode", STTYModeSwitcher.currentMode())
                           .toString();
     }
@@ -67,7 +84,6 @@ public class STTY {
         }
     }
 
-
     /**
      * Get the terminal size.
      *
@@ -75,28 +91,18 @@ public class STTY {
      * @throws UncheckedIOException If getting the terminal size failed.
      */
     public TerminalSize getTerminalSize() {
-        try {
-            return getTerminalSize(runtime);
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
+        return Optional.ofNullable(termSize.get())
+                       .orElseThrow(() -> new UncheckedIOException(ex.get()));
     }
 
     /**
      * @return True if this is an interactive TTY terminal.
      */
     public boolean isInteractive() {
-        try {
-            // Just check that is does not throw an exception.
-            getTerminalSize(runtime);
-            return true;
-        } catch (IOException e) {
-            return false;
-        }
+        return termSize.get() != null;
     }
 
-    @VisibleForTesting
-    protected static TerminalSize getTerminalSize(Runtime runtime) throws IOException {
+    private static TerminalSize getTerminalSize(Runtime runtime) throws IOException {
         String[] cmd = new String[]{"/bin/sh", "-c", "stty size </dev/tty"};
         Process p = runtime.exec(cmd);
         try {
