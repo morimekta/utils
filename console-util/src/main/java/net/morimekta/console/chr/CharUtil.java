@@ -194,9 +194,9 @@ public class CharUtil {
             throw new IllegalArgumentException(String.format("No border possible for %d,%d,%d,%d.", u, r, d, l));
         }
 
-        int id = (u << 24) |
-                 (r << 16) |
-                 (d << 8) |
+        int id = (u << 12) |
+                 (r << 8) |
+                 (d << 4) |
                  (l);
         switch (id) {
             // Stumps
