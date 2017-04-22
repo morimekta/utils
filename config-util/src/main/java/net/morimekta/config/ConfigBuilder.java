@@ -18,6 +18,8 @@
  */
 package net.morimekta.config;
 
+import net.morimekta.util.Stringable;
+
 import java.util.Collection;
 import java.util.Date;
 
@@ -34,6 +36,35 @@ public interface ConfigBuilder<Builder extends ConfigBuilder<Builder>> extends C
      * @return The value replaced if the key was already present.
      */
     Object put(String key, Object value);
+
+    /**
+     * Put a value into the config.
+     *
+     * @param key The config to put.
+     * @param value The value to put.
+     * @return The value replaced if the key was already present.
+     */
+    default Object put(Stringable key, Object value) {
+        return put(key.asString(), value);
+    }
+
+    /**
+     *
+     *
+     *
+     * @param key The key to remove.
+     * @return The value removed if any.
+     */
+    Object remove(String key);
+
+    /**
+     *
+     * @param key
+     * @return
+     */
+    default Object remove(Stringable key) {
+        return remove(key.asString());
+    }
 
     /**
      * Put all values from the 'other' config into this.
@@ -63,6 +94,18 @@ public interface ConfigBuilder<Builder extends ConfigBuilder<Builder>> extends C
     }
 
     /**
+     * Put a boolean value into the config.
+     *
+     * @param key The key to put at.
+     * @param value The value to put.
+     * @return The config.
+     */
+    @SuppressWarnings("unchecked")
+    default Builder putBoolean(Stringable key, boolean value) {
+        return putBoolean(key.asString(), value);
+    }
+
+    /**
      * Put an integer value into the config.
      *
      * @param key The key to put at.
@@ -73,6 +116,17 @@ public interface ConfigBuilder<Builder extends ConfigBuilder<Builder>> extends C
     default Builder putInteger(String key, int value) {
         put(key, value);
         return (Builder) this;
+    }
+
+    /**
+     * Put an integer value into the config.
+     *
+     * @param key The key to put at.
+     * @param value The value to put.
+     * @return The config.
+     */
+    default Builder putInteger(Stringable key, int value) {
+        return putInteger(key.asString(), value);
     }
 
     /**
@@ -89,6 +143,17 @@ public interface ConfigBuilder<Builder extends ConfigBuilder<Builder>> extends C
     }
 
     /**
+     * Put a long value into the config.
+     *
+     * @param key The key to put at.
+     * @param value The value to put.
+     * @return The config.
+     */
+    default Builder putLong(Stringable key, long value) {
+        return putLong(key.asString(), value);
+    }
+
+    /**
      * Put a double value into the config.
      *
      * @param key The key to put at.
@@ -99,6 +164,17 @@ public interface ConfigBuilder<Builder extends ConfigBuilder<Builder>> extends C
     default Builder putDouble(String key, double value) {
         put(key, value);
         return (Builder) this;
+    }
+
+    /**
+     * Put a double value into the config.
+     *
+     * @param key The key to put at.
+     * @param value The value to put.
+     * @return The config.
+     */
+    default Builder putDouble(Stringable key, double value) {
+        return putDouble(key.asString(), value);
     }
 
     /**
@@ -115,6 +191,17 @@ public interface ConfigBuilder<Builder extends ConfigBuilder<Builder>> extends C
     }
 
     /**
+     * Put a string value into the config.
+     *
+     * @param key The key to put at.
+     * @param value The value to put.
+     * @return The config.
+     */
+    default Builder putString(Stringable key, String value) {
+        return putString(key.asString(), value);
+    }
+
+    /**
      * Put a date value into the config.
      *
      * @param key The key to put at.
@@ -125,6 +212,18 @@ public interface ConfigBuilder<Builder extends ConfigBuilder<Builder>> extends C
     default Builder putDate(String key, Date value) {
         put(key, value);
         return (Builder) this;
+    }
+
+    /**
+     * Put a date value into the config.
+     *
+     * @param key The key to put at.
+     * @param value The value to put.
+     * @return The config.
+     */
+    @SuppressWarnings("unchecked")
+    default Builder putDate(Stringable key, Date value) {
+        return putDate(key.asString(), value);
     }
 
     /**
@@ -141,4 +240,15 @@ public interface ConfigBuilder<Builder extends ConfigBuilder<Builder>> extends C
         return (Builder) this;
     }
 
+    /**
+     * Put a collection value into the config.
+     *
+     * @param key The key to put at.
+     * @param value The value to put.
+     * @param <T> The collection item type.
+     * @return The config.
+     */
+    default <T> Builder putCollection(Stringable key, Collection<T> value) {
+        return putCollection(key.asString(), value);
+    }
 }

@@ -20,6 +20,7 @@ package net.morimekta.config;
 
 import net.morimekta.config.util.ConfigUtil;
 import net.morimekta.config.util.ValueConverter;
+import net.morimekta.util.Stringable;
 
 import java.util.Collection;
 import java.util.Date;
@@ -50,12 +51,32 @@ public interface Config {
     Object get(String key);
 
     /**
+     * Look up a single value from the config.
+     *
+     * @param key The key to look for.
+     * @return The value if found, null otherwise.
+     */
+    default Object get(Stringable key) {
+        return get(key.asString());
+    }
+
+    /**
      * Checks if the key exists in the config.
      *
      * @param key The key to look for.
      * @return True if the value exists. False otherwise.
      */
     boolean containsKey(String key);
+
+    /**
+     * Checks if the key exists in the config.
+     *
+     * @param key The key to look for.
+     * @return True if the value exists. False otherwise.
+     */
+    default boolean containsKey(Stringable key) {
+        return containsKey(key.asString());
+    }
 
     /**
      * Get the set of keys available in the config.
@@ -76,6 +97,16 @@ public interface Config {
 
     /**
      * @param key The key to look for.
+     * @return The string value.
+     * @throws IncompatibleValueException When a value cannot be converted to
+     *         requested type.
+     */
+    default String getString(Stringable key) {
+        return getString(key.asString());
+    }
+
+    /**
+     * @param key The key to look for.
      * @param def The default value if not found.
      * @return The string value.
      * @throws IncompatibleValueException When a value cannot be converted to
@@ -83,6 +114,17 @@ public interface Config {
      */
     default String getString(String key, String def) {
         return getWithDefault(key, ConfigUtil::asString, def);
+    }
+
+    /**
+     * @param key The key to look for.
+     * @param def The default value if not found.
+     * @return The string value.
+     * @throws IncompatibleValueException When a value cannot be converted to
+     *         requested type.
+     */
+    default String getString(Stringable key, String def) {
+        return getString(key.asString(), def);
     }
 
     /**
@@ -98,6 +140,17 @@ public interface Config {
 
     /**
      * @param key The key to look for.
+     * @return The boolean value.
+     * @throws KeyNotFoundException When the key does not exist.
+     * @throws IncompatibleValueException When a value cannot be converted to
+     *         requested type.
+     */
+    default boolean getBoolean(Stringable key) {
+        return getBoolean(key.asString());
+    }
+
+    /**
+     * @param key The key to look for.
      * @param def The default value if not found.
      * @return The boolean value.
      * @throws IncompatibleValueException When a value cannot be converted to
@@ -105,6 +158,17 @@ public interface Config {
      */
     default boolean getBoolean(String key, boolean def) {
         return getWithDefault(key, ConfigUtil::asBoolean, def);
+    }
+
+    /**
+     * @param key The key to look for.
+     * @param def The default value if not found.
+     * @return The boolean value.
+     * @throws IncompatibleValueException When a value cannot be converted to
+     *         requested type.
+     */
+    default boolean getBoolean(Stringable key, boolean def) {
+        return getBoolean(key.asString(), def);
     }
 
     /**
@@ -120,6 +184,17 @@ public interface Config {
 
     /**
      * @param key The key to look for.
+     * @return The integer value.
+     * @throws KeyNotFoundException When the key does not exist.
+     * @throws IncompatibleValueException When a value cannot be converted to
+     *         requested type.
+     */
+    default int getInteger(Stringable key) {
+        return getInteger(key.asString());
+    }
+
+    /**
+     * @param key The key to look for.
      * @param def The default value if not found.
      * @return The integer value.
      * @throws IncompatibleValueException When a value cannot be converted to
@@ -127,6 +202,17 @@ public interface Config {
      */
     default int getInteger(String key, int def) {
         return getWithDefault(key, ConfigUtil::asInteger, def);
+    }
+
+    /**
+     * @param key The key to look for.
+     * @param def The default value if not found.
+     * @return The integer value.
+     * @throws IncompatibleValueException When a value cannot be converted to
+     *         requested type.
+     */
+    default int getInteger(Stringable key, int def) {
+        return getInteger(key.asString(), def);
     }
 
     /**
@@ -142,6 +228,17 @@ public interface Config {
 
     /**
      * @param key The key to look for.
+     * @return The long value.
+     * @throws KeyNotFoundException When the key does not exist.
+     * @throws IncompatibleValueException When a value cannot be converted to
+     *         requested getType.
+     */
+    default long getLong(Stringable key) {
+        return getLong(key.asString());
+    }
+
+    /**
+     * @param key The key to look for.
      * @param def The default value if not found.
      * @return The long value.
      * @throws IncompatibleValueException When a value cannot be converted to
@@ -149,6 +246,17 @@ public interface Config {
      */
     default long getLong(String key, long def) {
         return getWithDefault(key, ConfigUtil::asLong, def);
+    }
+
+    /**
+     * @param key The key to look for.
+     * @param def The default value if not found.
+     * @return The long value.
+     * @throws IncompatibleValueException When a value cannot be converted to
+     *         requested type.
+     */
+    default long getLong(Stringable key, long def) {
+        return getLong(key.asString(), def);
     }
 
     /**
@@ -164,6 +272,17 @@ public interface Config {
 
     /**
      * @param key The key to look for.
+     * @return The double value.
+     * @throws KeyNotFoundException When the key does not exist.
+     * @throws IncompatibleValueException When a value cannot be converted to
+     *         requested getType.
+     */
+    default double getDouble(Stringable key) {
+        return getDouble(key.asString());
+    }
+
+    /**
+     * @param key The key to look for.
      * @param def The default value if not found.
      * @return The double value.
      * @throws IncompatibleValueException When a value cannot be converted to
@@ -171,6 +290,17 @@ public interface Config {
      */
     default double getDouble(String key, double def) {
         return getWithDefault(key, ConfigUtil::asDouble, def);
+    }
+
+    /**
+     * @param key The key to look for.
+     * @param def The default value if not found.
+     * @return The double value.
+     * @throws IncompatibleValueException When a value cannot be converted to
+     *         requested type.
+     */
+    default double getDouble(Stringable key, double def) {
+        return getDouble(key.asString(), def);
     }
 
     /**
@@ -186,6 +316,17 @@ public interface Config {
 
     /**
      * @param key The key to look for.
+     * @return The date value.
+     * @throws KeyNotFoundException When the key does not exist.
+     * @throws IncompatibleValueException When a value cannot be converted to
+     *         requested type.
+     */
+    default Date getDate(Stringable key) {
+        return getDate(key.asString());
+    }
+
+    /**
+     * @param key The key to look for.
      * @param def The default value if not found.
      * @return The date value.
      * @throws IncompatibleValueException When a value cannot be converted to
@@ -197,11 +338,31 @@ public interface Config {
 
     /**
      * @param key The key to look for.
+     * @param def The default value if not found.
+     * @return The date value.
+     * @throws IncompatibleValueException When a value cannot be converted to
+     *         requested type.
+     */
+    default Date getDate(Stringable key, Date def) {
+        return getDate(key.asString(), def);
+    }
+
+    /**
+     * @param key The key to look for.
      * @param <T> The collection entry type.
      * @return The collection.
      */
     default <T> Collection<T> getCollection(String key) {
         return asCollection(getValue(key));
+    }
+
+    /**
+     * @param key The key to look for.
+     * @param <T> The collection entry type.
+     * @return The collection.
+     */
+    default <T> Collection<T> getCollection(Stringable key) {
+        return getCollection(key.asString());
     }
 
     /**

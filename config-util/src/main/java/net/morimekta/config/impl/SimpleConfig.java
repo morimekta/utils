@@ -50,6 +50,11 @@ public class SimpleConfig extends TreeMap<String,Object> implements ConfigBuilde
     }
 
     @Override
+    public Object remove(String key) {
+        return remove((Object) key);
+    }
+
+    @Override
     public boolean containsKey(String key) {
         return super.containsKey(key);
     }
