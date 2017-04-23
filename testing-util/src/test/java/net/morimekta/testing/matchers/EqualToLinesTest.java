@@ -52,16 +52,16 @@ public class EqualToLinesTest {
 
         assertThat(describeMismatch(unixMatcher, diffWindows), is(equalTo(
                 ("has line-by-line diff:\n" +
-                "- Lorem ipsum dolor sit amet, consectetur adipiscing elit,\n" +
-                "+ Lorem ipsum dolor sit amet, kontectetur adipiscing elit,\n" +
-                "  sed do eiusmod tempor incididunt ut labore et dolore magna\n" +
-                "  aliqua. Ut enim ad minim veniam, quis nostrud exercitation\n" +
-                "- ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis\n" +
-                "+ ullamco laboris nisi ut aliquip ex ea commodo kontequat. Duis\n" +
-                "  aute irure dolor in reprehenderit in voluptate velit esse\n" +
-                "  cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat\n" +
-                "  cupidatat non proident, sunt in culpa qui officia deserunt\n" +
-                "  mollit anim id est laborum.\n").replaceAll("\\n", System.lineSeparator()))));
+                "-Lorem ipsum dolor sit amet, consectetur adipiscing elit,\n" +
+                "+Lorem ipsum dolor sit amet, kontectetur adipiscing elit,\n" +
+                " sed do eiusmod tempor incididunt ut labore et dolore magna\n" +
+                " aliqua. Ut enim ad minim veniam, quis nostrud exercitation\n" +
+                "-ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis\n" +
+                "+ullamco laboris nisi ut aliquip ex ea commodo kontequat. Duis\n" +
+                " aute irure dolor in reprehenderit in voluptate velit esse\n" +
+                " cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat\n" +
+                " cupidatat non proident, sunt in culpa qui officia deserunt\n" +
+                " mollit anim id est laborum.\n").replaceAll("\\n", System.lineSeparator()))));
     }
 
     private String describeTo(Matcher<?> matcher) {

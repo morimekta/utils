@@ -18,13 +18,9 @@
  */
 package net.morimekta.testing.matchers;
 
-import net.morimekta.diff.Change;
 import net.morimekta.diff.DiffLines;
-
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
-
-import java.util.List;
 
 /**
  * Equality matcher that that ignores changes in line separators, and shows
@@ -59,29 +55,10 @@ public class EqualToLines extends BaseMatcher<String> {
             return;
         }
 
-        List<Change> changes = new DiffLines(expected, normalize(item)).getChangeList();
+        DiffLines diff = new DiffLines(expected, normalize(item));
 
-        description.appendText("has line-by-line diff:" + System.lineSeparator());
-
-        for (Change change : changes) {
-            switch (change.operation) {
-                case EQUAL:
-                    description.appendText("  ")
-                               .appendText(change.text)
-                               .appendText(System.lineSeparator());
-                    break;
-                case DELETE:
-                    description.appendText("- ")
-                               .appendText(change.text)
-                               .appendText(System.lineSeparator());
-                    break;
-                case INSERT:
-                    description.appendText("+ ")
-                               .appendText(change.text)
-                               .appendText(System.lineSeparator());
-                    break;
-            }
-        }
+        description.appendText("has line-by-line diff:" + System.lineSeparator())
+                   .appendText(diff.fullDiff().replaceAll("\n", System.lineSeparator()));
     }
 
     private static String normalize(Object o) {
