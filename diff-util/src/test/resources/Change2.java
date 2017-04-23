@@ -48,14 +48,6 @@ public class Change implements Stringable {
     }
 
     /**
-     * Display a human-readable version of this DiffBase.
-     * @return text version.
-     */
-    public String toString() {
-        return "Change(" + this.operation + ",\"" + Strings.escape(this.text) + "\")";
-    }
-
-    /**
      * Create a numeric hash value for a DiffBase.
      * This function is not used by DMP.
      * @return Hash value.
@@ -81,6 +73,15 @@ public class Change implements Stringable {
         Change other = (Change) o;
         return operation == other.operation &&
                Objects.equals(text, other.text);
+    }
+
+    /**
+     * Display a human-readable version of this DiffBase.
+     * @return text version.
+     */
+    @Override
+    public String toString() {
+        return "Change(" + this.operation + ",\"" + Strings.escape(this.text) + "\")";
     }
 
     @Override

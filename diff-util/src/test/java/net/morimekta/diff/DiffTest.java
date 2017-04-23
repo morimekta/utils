@@ -419,13 +419,13 @@ public class DiffTest {
         // Since the resulting diff hasn't been normalized, it would be ok if
         // the insertion and deletion pairs are swapped.
         // If the order changes, tweak this test as required.
-        Bisect diffs = new Bisect(diffList(new Change(DELETE, "c"), new Change(INSERT, "m"), new Change(EQUAL, "a"), new Change(DELETE, "t"), new Change(INSERT, "p")), DiffOptions.defaults(), 0);
+        Bisect diffs = new Bisect(diffList(new Change(DELETE, "c"), new Change(INSERT, "m"), new Change(EQUAL, "a"), new Change(DELETE, "t"), new Change(INSERT, "p")));
         Assert.assertEquals("bisect: Normal.", diffs, new Bisect(a, b));
 
         dmp.getOptions()
            .withTimeout(0.000000001);
         // timeout.
-        diffs = new Bisect(diffList(new Change(DELETE, "cat"), new Change(INSERT, "map")), dmp.getOptions(), 0L);
+        diffs = new Bisect(diffList(new Change(DELETE, "cat"), new Change(INSERT, "map")));
 
         Assert.assertEquals("bisect: Timeout.", diffs, new Bisect(a, b, dmp.getOptions(), 0L));
     }

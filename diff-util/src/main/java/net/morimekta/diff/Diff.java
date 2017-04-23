@@ -18,8 +18,6 @@
  */
 package net.morimekta.diff;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
 import java.util.LinkedList;
 
 /**
@@ -67,73 +65,7 @@ public class Diff extends DiffBase {
      */
     public static Diff fromDelta(String text1, String delta)
             throws IllegalArgumentException {
-        LinkedList<Change> diffs = new LinkedList<>();
-        int pointer = 0;  // Cursor in text1
-        String[] tokens = delta.split("\t");
-        for (String token : tokens) {
-            if (token.length() == 0) {
-                // Blank tokens are ok (from a trailing \t).
-                continue;
-            }
-            // Each token begins with a one character parameter which specifies the
-            // operation of this token (delete, insert, equality).
-            String param = token.substring(1);
-            switch (token.charAt(0)) {
-                case '+':
-                    // decode would change all "+" to " "
-                    param = param.replace("+", "%2B");
-                    try {
-                        param = URLDecoder.decode(param, "UTF-8");
-                    } catch (UnsupportedEncodingException e) {
-                        // Not likely on modern system.
-                        throw new Error("This system does not support UTF-8.", e);
-                    } catch (IllegalArgumentException e) {
-                        // Malformed URI sequence.
-                        throw new IllegalArgumentException(
-                                "Illegal escape in diff_fromDelta: " + param, e);
-                    }
-                    diffs.add(new Change(Operation.INSERT, param));
-                    break;
-                case '-':
-                    // Fall through.
-                case '=':
-                    int n;
-                    try {
-                        n = Integer.parseInt(param);
-                    } catch (NumberFormatException e) {
-                        throw new IllegalArgumentException(
-                                "Invalid number in diff_fromDelta: " + param, e);
-                    }
-                    if (n < 0) {
-                        throw new IllegalArgumentException(
-                                "Negative number in diff_fromDelta: " + param);
-                    }
-                    String text;
-                    try {
-                        text = text1.substring(pointer, pointer += n);
-                    } catch (StringIndexOutOfBoundsException e) {
-                        throw new IllegalArgumentException("Delta length (" + pointer
-                                                           + ") larger than source text length (" + text1.length()
-                                                           + ").", e);
-                    }
-                    if (token.charAt(0) == '=') {
-                        diffs.add(new Change(Operation.EQUAL, text));
-                    } else {
-                        diffs.add(new Change(Operation.DELETE, text));
-                    }
-                    break;
-                default:
-                    // Anything else is an error.
-                    throw new IllegalArgumentException(
-                            "Invalid diff operation in diff_fromDelta: " + token.charAt(0));
-            }
-        }
-        if (pointer != text1.length()) {
-            throw new IllegalArgumentException("Delta length (" + pointer
-                                               + ") smaller than source text length (" + text1.length() + ").");
-        }
-
-        return new Diff(diffs, DiffOptions.defaults());
+        return new Diff(changesFromDelta(text1, delta), DiffOptions.defaults());
     }
 
     private final LinkedList<Change> changeList;

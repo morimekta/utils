@@ -18,61 +18,118 @@ public class DiffLines extends DiffBase {
         this.changeList = makeLineDiff(text1, text2);
     }
 
-    private LinkedList<Change> makeLineDiff(String text1, String text2) {
-        LinkedList<Change> changes = new LinkedList<>();
-        LinkedList<String> lines1 = new LinkedList<>();
-        LinkedList<String> lines2 = new LinkedList<>();
-        Collections.addAll(lines1, text1.split("\\r?\\n"));
-        Collections.addAll(lines2, text2.split("\\r?\\n"));
+    private LinkedList<Change> makeLineDiff(String source, String target) {
+        LinkedList<String> src_lines = new LinkedList<>();
+        LinkedList<String> trg_lines = new LinkedList<>();
+        Collections.addAll(src_lines, source.split("\\r?\\n"));
+        Collections.addAll(trg_lines, target.split("\\r?\\n"));
 
+        LinkedList<Change> beg = new LinkedList<>();
+        LinkedList<Change> end = new LinkedList<>();
         while (true) {
-            if (lines1.isEmpty() || lines2.isEmpty()) {
+            if (src_lines.isEmpty() || trg_lines.isEmpty()) {
                 break;
             }
-            String l1 = lines1.peekFirst();
-            String l2 = lines2.peekFirst();
 
-            if (l1.equals(l2)) {
-                changes.add(new Change(Operation.EQUAL, lines1.pollFirst()));
-                lines2.pollFirst();
+            // No change on all top lines -> beg (EQ).
+            String src_first = src_lines.peekFirst();
+            String trg_first = trg_lines.peekFirst();
+
+            if (src_first.equals(trg_first)) {
+                beg.add(new Change(Operation.EQUAL, src_lines.pollFirst()));
+                trg_lines.pollFirst();
                 continue;
             }
+
+            // No change in bottom lines -> end (EQ)
+            String src_last = src_lines.peekLast();
+            String trg_last = trg_lines.peekLast();
+            if (src_last.equals(trg_last)) {
+                end.add(0, new Change(Operation.EQUAL, src_lines.pollLast()));
+                trg_lines.pollLast();
+                continue;
+            }
+
             // a differing line.
-            int next1 = lines1.indexOf(l2);
-            int next2 = lines2.indexOf(l1);
-            if (next1 == -1 && next2 >= 0) {
+            int up_next = src_lines.indexOf(trg_first);
+            int down_next = trg_lines.indexOf(src_first);
+            if (up_next == -1 && down_next >= 0) {
                 // Added line.
-                changes.add(new Change(Operation.INSERT, lines2.pollFirst()));
+                beg.add(new Change(Operation.INSERT, trg_lines.pollFirst()));
                 continue;
             }
-            if (next2 == -1 && next1 >= 0) {
+            if (down_next == -1 && up_next >= 0) {
                 // Removed line.
-                changes.add(new Change(Operation.DELETE, lines1.pollFirst()));
+                beg.add(new Change(Operation.DELETE, src_lines.pollFirst()));
                 continue;
             }
-            if (next1 >= 0 && next2 >= 0) {
-                // Moved lines. Make diff on the *furthest* diff. The one that
-                // is close is most likely the next non-diff.
-                if (next1 > next2) {
-                    changes.add(new Change(Operation.DELETE, lines1.pollFirst()));
+
+            if (up_next >= 0 && down_next >= 0) {
+                // Check number of lines moved **UP** (top in target found in source)
+                int up_move = 1;
+                while (up_next + up_move < src_lines.size() &&
+                       up_move < trg_lines.size()) {
+                    if (src_lines.get(up_next + up_move)
+                              .equals(trg_lines.get(up_move))) {
+                        ++up_move;
+                    } else {
+                        break;
+                    }
+                }
+
+                // Check number of lines moved **DOWN** (top in source found in target)
+                int down_move = 1;
+                while (down_next + down_move < trg_lines.size() &&
+                       down_move < src_lines.size()) {
+                    if (trg_lines.get(down_next + down_move)
+                              .equals(src_lines.get(down_move))) {
+                        ++down_move;
+                    } else {
+                        break;
+                    }
+                }
+
+                // First choose the shorter consecutive diff.
+                if (up_move > down_move) {
+                    up_move = 0;
+                } else if (up_move < down_move) {
+                    down_move = 0;
                 } else {
-                    changes.add(new Change(Operation.INSERT, lines2.pollFirst()));
+                    // Then the closest diff.
+                    if (up_next > down_next){
+                        up_move = 0;
+                    } else {
+                        down_move = 0;
+                    }
+                }
+
+                if (down_move > 0) {
+                    while (down_move-- > 0) {
+                        beg.add(new Change(Operation.DELETE, src_lines.pollFirst()));
+                    }
+                } else {
+                    while (up_move-- > 0) {
+                        beg.add(new Change(Operation.INSERT, trg_lines.pollFirst()));
+                    }
                 }
                 continue;
             }
 
             // added AND removed, aka change.
-            changes.add(new Change(Operation.DELETE, lines1.pollFirst()));
-            changes.add(new Change(Operation.INSERT, lines2.pollFirst()));
+            beg.add(new Change(Operation.DELETE, src_lines.pollFirst()));
+            beg.add(new Change(Operation.INSERT, trg_lines.pollFirst()));
         }
 
-        while (!lines1.isEmpty()) {
-            changes.add(new Change(Operation.DELETE, lines1.pollFirst()));
+        while (!src_lines.isEmpty()) {
+            beg.add(new Change(Operation.DELETE, src_lines.pollFirst()));
+        }
+        while (!trg_lines.isEmpty()) {
+            beg.add(new Change(Operation.INSERT, trg_lines.pollFirst()));
         }
 
-        while (!lines2.isEmpty()) {
-            changes.add(new Change(Operation.INSERT, lines2.pollFirst()));
-        }
+        LinkedList<Change> changes = new LinkedList<>();
+        changes.addAll(beg);
+        changes.addAll(end);
 
         // Sort diff lines so that and continuous change of insert and delete becomes:
         // -- all deleted

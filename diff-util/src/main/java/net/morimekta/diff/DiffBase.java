@@ -21,6 +21,7 @@ package net.morimekta.diff;
 import net.morimekta.util.Strings;
 
 import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -249,6 +250,85 @@ public abstract class DiffBase {
 
     // --- internal methods
 
+    /**
+     * Given the original text1, and an encoded string which describes the
+     * operations required to transform text1 into text2, compute the full diff.
+     *
+     * @param text1 Source string for the diff.
+     * @param delta Delta text.
+     * @return Diff object.
+     * @throws IllegalArgumentException If invalid input.
+     */
+    static LinkedList<Change> changesFromDelta(String text1, String delta)
+            throws IllegalArgumentException {
+        LinkedList<Change> diffs = new LinkedList<>();
+        int pointer = 0;  // Cursor in text1
+        String[] tokens = delta.split("\t");
+        for (String token : tokens) {
+            if (token.length() == 0) {
+                // Blank tokens are ok (from a trailing \t).
+                continue;
+            }
+            // Each token begins with a one character parameter which specifies the
+            // operation of this token (delete, insert, equality).
+            String param = token.substring(1);
+            switch (token.charAt(0)) {
+                case '+':
+                    // decode would change all "+" to " "
+                    param = param.replace("+", "%2B");
+                    try {
+                        param = URLDecoder.decode(param, "UTF-8");
+                    } catch (UnsupportedEncodingException e) {
+                        // Not likely on modern system.
+                        throw new Error("This system does not support UTF-8.", e);
+                    } catch (IllegalArgumentException e) {
+                        // Malformed URI sequence.
+                        throw new IllegalArgumentException(
+                                "Illegal escape in diff_fromDelta: " + param, e);
+                    }
+                    diffs.add(new Change(Operation.INSERT, param));
+                    break;
+                case '-':
+                    // Fall through.
+                case '=':
+                    int n;
+                    try {
+                        n = Integer.parseInt(param);
+                    } catch (NumberFormatException e) {
+                        throw new IllegalArgumentException(
+                                "Invalid number in diff_fromDelta: " + param, e);
+                    }
+                    if (n < 0) {
+                        throw new IllegalArgumentException(
+                                "Negative number in diff_fromDelta: " + param);
+                    }
+                    String text;
+                    try {
+                        text = text1.substring(pointer, pointer += n);
+                    } catch (StringIndexOutOfBoundsException e) {
+                        throw new IllegalArgumentException("Delta length (" + pointer
+                                                           + ") larger than source text length (" + text1.length()
+                                                           + ").", e);
+                    }
+                    if (token.charAt(0) == '=') {
+                        diffs.add(new Change(Operation.EQUAL, text));
+                    } else {
+                        diffs.add(new Change(Operation.DELETE, text));
+                    }
+                    break;
+                default:
+                    // Anything else is an error.
+                    throw new IllegalArgumentException(
+                            "Invalid diff operation in diff_fromDelta: " + token.charAt(0));
+            }
+        }
+        if (pointer != text1.length()) {
+            throw new IllegalArgumentException("Delta length (" + pointer
+                                               + ") smaller than source text length (" + text1.length() + ").");
+        }
+        return diffs;
+    }
+
     LinkedList<Change> main(String text1, String text2, boolean checkLines) {
         LinkedList<Change> diffs;
         if (text1.equals(text2)) {
@@ -424,6 +504,7 @@ public abstract class DiffBase {
      * Find the 'middle snake' of a diff, split the problem in two
      * and return the recursively constructed diff.
      * See Myers 1986 paper: An O(ND) Difference Algorithm and Its Variations.
+     *
      * @param text1 Old string to be diffed.
      * @param text2 New string to be diffed.
      * @return LinkedList of DiffBase objects.
