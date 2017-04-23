@@ -27,30 +27,46 @@ import org.junit.runners.BlockJUnit4ClassRunner;
 
 import java.util.UUID;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertSame;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.sameInstance;
+import static org.junit.Assert.assertThat;
 
 @RunWith(BlockJUnit4ClassRunner.class)
 public class ParcelUuidTest {
     @Test
     public void testConstructor() {
-        UUID uuid = UUID.randomUUID();
+        UUID uuid1 = UUID.randomUUID();
+        UUID uuid2 = UUID.randomUUID();
 
-        ParcelUuid parcelUuid = new ParcelUuid(uuid);
+        ParcelUuid pu1 = new ParcelUuid(uuid1);
+        ParcelUuid pu2 = ParcelUuid.fromString(uuid1.toString());
+        ParcelUuid ne = new ParcelUuid(uuid2);
 
-        assertSame(uuid, parcelUuid.getUuid());
+        assertThat(pu1.getUuid(), is(sameInstance(uuid1)));
+        assertThat(pu1, is(pu2));
+        assertThat(pu1.toString(), is(uuid1.toString()));
+        assertThat(pu1.hashCode(), is(uuid1.hashCode()));
+        assertThat(pu1.describeContents(), is(0));
+
+        assertThat(pu1, is(not(ne)));
+        assertThat(pu1.hashCode(), is(not(ne.hashCode())));
     }
 
     @Test
     public void testParcelable() {
         Parcel parcel = Parcel.obtain();
 
-        ParcelUuid parcelUuid = new ParcelUuid(UUID.randomUUID());
+        ParcelUuid uuid1 = new ParcelUuid(UUID.randomUUID());
+        ParcelUuid uuid2 = ParcelUuid.fromString(UUID.randomUUID().toString());
 
-        parcelUuid.writeToParcel(parcel, 0);
+        uuid1.writeToParcel(parcel, 0);
+        parcel.writeParcelable(uuid2, 0);
 
-        ParcelUuid other = parcel.readTypedObject(ParcelUuid.CREATOR);
+        ParcelUuid parsed1 = parcel.readTypedObject(ParcelUuid.CREATOR);
+        ParcelUuid parsed2 = parcel.readParcelable(getClass().getClassLoader());
 
-        assertEquals(parcelUuid, other);
+        assertThat(parsed1, is(uuid1));
+        assertThat(parsed2, is(uuid2));
     }
 }

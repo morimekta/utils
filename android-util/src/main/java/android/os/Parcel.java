@@ -26,7 +26,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
 
-import static java.lang.Math.ceil;
 import static java.lang.Math.min;
 import static java.lang.System.arraycopy;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -47,7 +46,7 @@ import static java.util.Arrays.fill;
  * Size, SizeF, IBinder).
  * <p>
  * The main reason for porting this is to be able to extensively test parcelable
- * classes without needing the whole
+ * classes without needing the whole android system to do the testing.
  * <p>
  * Parcel: http://developer.android.com/reference/android/os/Parcel.html
  * Parcelable: http://developer.android.com/reference/android/os/Parcelable.html
@@ -120,8 +119,12 @@ public final class Parcel {
     }
 
     public void setDataPosition(int pos) {
+        if (pos < 0) {
+            throw new IllegalArgumentException("Negative position " + pos);
+        }
         if (pos > size) {
-            throw new IllegalArgumentException("New position is after last known byte.");
+            throw new IllegalArgumentException(
+                    "New position " + pos + " is after last known byte: " + size);
         }
         position = pos;
     }
@@ -269,7 +272,6 @@ public final class Parcel {
     public void readByteArray(byte[] dest) {
         final int len = readInt();
         final int copyLen = min(dest.length, len);
-        position += 4;
         ensureAvailable(len);
         arraycopy(buffer, position, dest, 0, copyLen);
         position += len;
@@ -422,7 +424,14 @@ public final class Parcel {
     }
 
     public <T extends Parcelable> void writeParcelableArray(T[] arr, int flags) {
-        writeCreator(arr.getClass().getComponentType());
+        Class<?> klass = Null.class;
+        for (T t : arr) {
+            if (t == null) {
+                throw new IllegalArgumentException("null item in parcelable array");
+            }
+            klass = t.getClass();
+        }
+        writeCreator(klass);
         writeTypedArray(arr, flags);
     }
 
@@ -485,12 +494,36 @@ public final class Parcel {
 
     // --- PRIVATE AFTER HERE ---
 
+    private static class Null implements Parcelable {
+        @Override
+        public int describeContents() {
+            return 0;
+        }
+
+        @Override
+        public void writeToParcel(Parcel dest, int flags) {
+            // nothing
+        }
+
+        public static final Parcelable.Creator<Null> CREATOR = new Parcelable.Creator<Null>() {
+            @Override
+            public Null createFromParcel(Parcel source) {
+                return null;
+            }
+
+            @Override
+            public Null[] newArray(int size) {
+                return new Null[size];
+            }
+        };
+    }
+
     private byte[] buffer;
     private int    size;
     private int    position;
 
     private static final int kCapacityStep = 1 << 10;  // 1k per capacity step.
-    private static final int kMaxPoolSize  = 10;
+    static final int kMaxPoolSize  = 10;
     private static final Queue<Parcel> pool;
 
     static {
@@ -513,10 +546,7 @@ public final class Parcel {
 
     private void ensureCapacity(int capacity) {
         if (buffer.length < capacity) {
-            capacity = (int) ceil((float) capacity / kCapacityStep) * kCapacityStep;
-            byte[] newBuffer = new byte[capacity];
-            arraycopy(buffer, 0, newBuffer, 0, size);
-            buffer = newBuffer;
+            setDataCapacity(capacity);
         }
     }
 

@@ -298,7 +298,7 @@ public abstract class BaseBundle {
                 else
                     builder.append(',');
                 builder.append(entry.getKey())
-                        .append("=");
+                       .append("=");
                 switch (entry.getValue().first) {
                     case BOOLEAN_ARRAY:
                         builder.append(Arrays.toString((boolean[]) entry.getValue().second).replaceAll(" ", ""));
@@ -339,7 +339,7 @@ public abstract class BaseBundle {
                         break;
                     }
                     case PARCELABLE_ARRAY: {
-                        Object[] arr = (Object[]) entry.getValue().second;
+                        Parcelable[] arr = (Parcelable[]) entry.getValue().second;
                         if (arr == null) {
                             builder.append("null");
                         } else {

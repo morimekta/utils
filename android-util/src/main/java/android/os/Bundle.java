@@ -55,7 +55,7 @@ public final class Bundle extends BaseBundle implements Parcelable, Cloneable {
 
     public Bundle(PersistableBundle bundle) {
         this(null, bundle.size());
-        map.putAll(bundle.map);
+        putAll(bundle);
     }
 
     public Bundle(Bundle bundle) {
@@ -65,6 +65,17 @@ public final class Bundle extends BaseBundle implements Parcelable, Cloneable {
 
     public void putAll(Bundle bundle) {
         map.putAll(bundle.map);
+    }
+
+    @Override
+    public void putAll(PersistableBundle bundle) {
+        for (Map.Entry<String, Pair<Type, Object>> i : bundle.map.entrySet()) {
+            if (i.getValue().first == Type.PERSISTABLE_BUNDLE) {
+                putBundle(i.getKey(), new Bundle((PersistableBundle) i.getValue().second));
+            } else {
+                map.put(i.getKey(), i.getValue());
+            }
+        }
     }
 
     public boolean hasFileDescriptors() {

@@ -32,6 +32,6 @@ public class BadParcelableException
     }
 
     public BadParcelableException(Exception cause) {
-        super(cause);
+        super(cause.getMessage(), cause);
     }
 }

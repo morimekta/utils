@@ -64,13 +64,16 @@ public class ParcelUuid implements Parcelable {
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
-        dest.writeString(toString());
+        dest.writeLong(uuid.getMostSignificantBits());
+        dest.writeLong(uuid.getLeastSignificantBits());
     }
 
     public static final Creator<ParcelUuid> CREATOR = new Creator<ParcelUuid>() {
         @Override
         public ParcelUuid createFromParcel(Parcel source) {
-            return fromString(source.readString());
+            long most = source.readLong();
+            long least = source.readLong();
+            return new ParcelUuid(new UUID(most, least));
         }
 
         @Override

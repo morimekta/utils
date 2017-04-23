@@ -22,9 +22,7 @@
 package android.os;
 
 import android.util.Pair;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.BlockJUnit4ClassRunner;
 
@@ -35,12 +33,10 @@ import java.util.Set;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 @RunWith(BlockJUnit4ClassRunner.class)
 public class BaseBundleTest {
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
-
     @Test
     public void testConstructor() {
         BaseBundle bundle = new BaseBundleImpl(100);
@@ -60,9 +56,11 @@ public class BaseBundleTest {
         assertTrue(empty.isEmpty());
         assertFalse(empty.containsKey("KEY"));
 
-        // Check that its NOT writable.
-        thrown.expect(UnsupportedOperationException.class);
-        empty.putString("KEY", "value");
+        try {
+            empty.putString("KEY", "value");
+            fail("no exception");
+        } catch (UnsupportedOperationException ignore) {
+        }
     }
 
     @Test
