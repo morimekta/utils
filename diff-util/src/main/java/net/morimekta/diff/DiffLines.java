@@ -18,6 +18,67 @@ public class DiffLines extends DiffBase {
         this.changeList = makeLineDiff(text1, text2);
     }
 
+    public String fullDiff() {
+        StringBuilder builder = new StringBuilder();
+        for (Change ch : getChangeList()) {
+            builder.append(ch.patchLine())
+                   .append("\n");
+        }
+        return builder.toString();
+    }
+
+    public String patch() {
+        StringBuilder builder = new StringBuilder();
+        int src_pos = 1, trg_pos = 1;
+        LinkedList<Change> changes = new LinkedList<>(getChangeList());
+        while (!changes.isEmpty()) {
+            if (changes.peekFirst().operation == Operation.EQUAL) {
+                changes.pollFirst();
+                ++src_pos;
+                ++trg_pos;
+                continue;
+            }
+            LinkedList<Change> upcoming = new LinkedList<>();
+
+            int ins = 0;
+            int rms = 0;
+            while (!changes.isEmpty()) {
+                if (changes.peekFirst().operation == Operation.EQUAL) {
+                    break;
+                }
+                Change ch = changes.pollFirst();
+                upcoming.add(ch);
+                if (ch.operation == Operation.INSERT) {
+                    ++ins;
+                } else {
+                    ++rms;
+                }
+            }
+
+            builder.append("@@ -")
+                   .append(src_pos)
+                   .append(',')
+                   .append(rms)
+                   .append(" +")
+                   .append(trg_pos)
+                   .append(',')
+                   .append(ins)
+                   .append(" @@\n");
+
+            for (Change ch : upcoming) {
+                builder.append(ch.patchLine())
+                       .append("\n");
+                if (ch.operation == Operation.INSERT) {
+                    ++trg_pos;
+                } else {
+                    ++src_pos;
+                }
+            }
+        }
+
+        return builder.toString();
+    }
+
     private LinkedList<Change> makeLineDiff(String source, String target) {
         LinkedList<String> src_lines = new LinkedList<>();
         LinkedList<String> trg_lines = new LinkedList<>();
@@ -27,6 +88,7 @@ public class DiffLines extends DiffBase {
         LinkedList<Change> beg = new LinkedList<>();
         LinkedList<Change> end = new LinkedList<>();
         while (true) {
+            // This checks if the last change is a pure insert or delete.
             if (src_lines.isEmpty() || trg_lines.isEmpty()) {
                 break;
             }

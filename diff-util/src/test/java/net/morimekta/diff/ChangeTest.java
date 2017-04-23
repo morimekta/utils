@@ -13,7 +13,7 @@ public class ChangeTest {
         Change b = new Change(Operation.INSERT, "abba");
         Change c = new Change(Operation.DELETE, "aqua");
 
-        assertThat(a.asString(), is("+abba"));
+        assertThat(a.patchLine(), is("+abba"));
         assertThat(a.toString(), is("Change(INSERT,\"abba\")"));
         assertThat(a, is(a));
         assertThat(a, is(b));

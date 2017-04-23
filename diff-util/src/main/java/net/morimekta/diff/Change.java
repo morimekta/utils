@@ -18,7 +18,6 @@
  */
 package net.morimekta.diff;
 
-import net.morimekta.util.Stringable;
 import net.morimekta.util.Strings;
 
 import java.util.Objects;
@@ -26,7 +25,7 @@ import java.util.Objects;
 /**
  * Class representing one diff operation.
  */
-public class Change implements Stringable {
+public class Change {
     /**
      * One of: INSERT, DELETE or EQUAL.
      */
@@ -83,8 +82,7 @@ public class Change implements Stringable {
                Objects.equals(text, other.text);
     }
 
-    @Override
-    public String asString() {
+    public String patchLine() {
         switch (operation) {
             case DELETE: return "-" + text;
             case INSERT: return "+" + text;
