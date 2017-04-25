@@ -24,7 +24,6 @@ import net.morimekta.config.Config;
 import net.morimekta.config.ConfigException;
 import net.morimekta.util.Numeric;
 import net.morimekta.util.Stringable;
-import net.morimekta.util.json.JsonException;
 import net.morimekta.util.json.JsonWriter;
 import net.morimekta.util.json.PrettyJsonWriter;
 
@@ -61,13 +60,13 @@ public class JsonConfigFormatter implements ConfigFormatter {
             }
             writer.endObject();
             writer.flush();
-        } catch (JsonException e) {
+        } catch (IllegalArgumentException | IllegalStateException e) {
             throw new ConfigException(e, e.getMessage());
         }
     }
 
     private void writeValue(JsonWriter writer, Object value)
-            throws JsonException, ConfigException {
+            throws ConfigException {
         if (value instanceof Boolean) {
             writer.value((Boolean) value);
         } else if (value instanceof Double) {
