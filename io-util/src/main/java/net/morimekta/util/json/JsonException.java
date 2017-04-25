@@ -20,22 +20,19 @@
  */
 package net.morimekta.util.json;
 
+import net.morimekta.util.Stringable;
 import net.morimekta.util.Strings;
 
 import java.io.IOException;
 
 /**
- * Exception in JSON parsing or generation.
+ * Exception in parsing JSON.
  */
-public class JsonException extends Exception {
+public class JsonException extends Exception implements Stringable {
     private final String line;
     private final int    lineNo;
     private final int    linePos;
     private final int    len;
-
-    public JsonException(String message) {
-        this(message, null, 0, 0, 0);
-    }
 
     public JsonException(String message, String line, int lineNo, int linePos, int len) {
         super(message);
@@ -71,7 +68,8 @@ public class JsonException extends Exception {
         return len;
     }
 
-    public String describe() {
+    @Override
+    public String asString() {
         if (getLine() != null) {
             return String.format("JSON Error on line %d: %s%n" +
                                  "# %s%n" +
@@ -88,6 +86,6 @@ public class JsonException extends Exception {
 
     @Override
     public String toString() {
-        return String.format("JsonException(%s)", describe());
+        return "JSON Error: " + getMessage();
     }
 }

@@ -21,7 +21,6 @@
 package net.morimekta.util.json;
 
 import net.morimekta.util.Binary;
-
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
@@ -249,76 +248,36 @@ public class JsonWriterTest {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         final JsonWriter writer = new JsonWriter(baos);
         writer.object();
-        assertJsonException("Expected map key, but got value.", new JsonThrowable() {
-            @Override
-            public void run() throws JsonException {
-                writer.value((String) null);
-            }
-        });
+        assertJsonException("Expected map key, but got value.", () -> writer.value((String) null));
 
         writer.reset();
         writer.object();
-        assertJsonException("Expected map key, but got value.", new JsonThrowable() {
-            @Override
-            public void run() throws JsonException {
-                writer.object();
-            }
-        });
+        assertJsonException("Expected map key, but got value.", writer::object);
 
         writer.reset();
         writer.object();
-        assertJsonException("Expected map key, but got value.", new JsonThrowable() {
-            @Override
-            public void run() throws JsonException {
-                writer.array();
-            }
-        });
+        assertJsonException("Expected map key, but got value.", writer::array);
 
         writer.reset();
         writer.object();
-        assertJsonException("Expected map key, but got null.", new JsonThrowable() {
-            @Override
-            public void run() throws JsonException {
-                writer.key((String) null);
-            }
-        });
+        assertJsonException("Expected map key, but got null.", () -> writer.key((String) null));
 
         writer.reset();
         writer.object();
-        assertJsonException("Expected map key, but got null.", new JsonThrowable() {
-            @Override
-            public void run() throws JsonException {
-                writer.key((Binary) null);
-            }
-        });
+        assertJsonException("Expected map key, but got null.", () -> writer.key((Binary) null));
 
         writer.reset();
         writer.object();
-        assertJsonException("Expected map key, but got null.", new JsonThrowable() {
-            @Override
-            public void run() throws JsonException {
-                writer.keyLiteral(null);
-            }
-        });
+        assertJsonException("Expected map key, but got null.", () -> writer.keyLiteral(null));
 
         writer.object();
-        assertJsonException("Expected map key, but got null.", new JsonThrowable() {
-            @Override
-            public void run() throws JsonException {
-                writer.keyLiteral(null);
-            }
-        });
+        assertJsonException("Expected map key, but got null.", () -> writer.keyLiteral(null));
 
         writer.reset();
         writer.object();
         writer.key("key");
 
-        assertJsonException("Unexpected map key, expected value or end.", new JsonThrowable() {
-            @Override
-            public void run() throws JsonException {
-                writer.key("another");
-            }
-        });
+        assertJsonException("Unexpected map key, expected value or end.", () -> writer.key("another"));
     }
 
     @Test
@@ -326,20 +285,10 @@ public class JsonWriterTest {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         final JsonWriter writer = new JsonWriter(baos);
 
-        assertJsonException("Unexpected map key outside map.", new JsonThrowable() {
-            @Override
-            public void run() throws JsonException {
-                writer.key("key");
-            }
-        });
+        assertJsonException("Unexpected map key outside map.", () -> writer.key("key"));
 
         writer.value("value");
-        assertJsonException("Value already written, and not in container.", new JsonThrowable() {
-            @Override
-            public void run() throws JsonException {
-                writer.value("another");
-            }
-        });
+        assertJsonException("Value already written, and not in container.", () -> writer.value("another"));
     }
 
     @Test
@@ -348,66 +297,40 @@ public class JsonWriterTest {
         final JsonWriter writer = new JsonWriter(baos);
 
         // Ending without container state.
-        assertJsonException("Unexpected end, not in object.", new JsonThrowable() {
-            @Override
-            public void run() throws JsonException {
-                writer.endObject();
-            }
-        });
+        assertJsonException("Unexpected end, not in object.", writer::endObject);
 
-        assertJsonException("Unexpected end, not in list.", new JsonThrowable() {
-            @Override
-            public void run() throws JsonException {
-                writer.endArray();
-            }
-        });
+        assertJsonException("Unexpected end, not in list.", writer::endArray);
 
         // Ending wrong container state.
         writer.array();
-        assertJsonException("Unexpected end, not in object.", new JsonThrowable() {
-            @Override
-            public void run() throws JsonException {
-                writer.endObject();
-            }
-        });
+        assertJsonException("Unexpected end, not in object.", writer::endObject);
 
         writer.reset();
         writer.object();
-        assertJsonException("Unexpected end, not in list.", new JsonThrowable() {
-            @Override
-            public void run() throws JsonException {
-                writer.endArray();
-            }
-        });
+        assertJsonException("Unexpected end, not in list.", writer::endArray);
 
         // Ending after map key (not allowed).
         writer.key("key");
-        assertJsonException("Expected map value but got end.", new JsonThrowable() {
-            @Override
-            public void run() throws JsonException {
-                writer.endObject();
-            }
-        });
+        assertJsonException("Expected map value but got end.", writer::endObject);
     }
 
     // --- Helper Methods ---
 
-    private static void assertJsonException(String message, JsonThrowable f) {
+    private static void assertJsonException(String message, Runnable f) {
         try {
             f.run();
-            fail("Expected JsonExpection");
-        } catch (JsonException e) {
+            fail("no exception");
+        } catch (IllegalArgumentException e) {
             assertEquals(message, e.getMessage());
-            assertEquals("JsonException(JSON Error: " + message + ")", e.toString());
+            assertEquals("java.lang.IllegalArgumentException: " + message, e.toString());
+        } catch (IllegalStateException e) {
+            assertEquals(message, e.getMessage());
+            assertEquals("java.lang.IllegalStateException: " + message, e.toString());
         }
     }
 
     private static void assertJsonEquals(String expected, ByteArrayOutputStream actual) {
         String actualString = new String(actual.toByteArray(), UTF_8);
         assertEquals(expected, actualString);
-    }
-
-    private interface JsonThrowable {
-        void run() throws JsonException;
     }
 }

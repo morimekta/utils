@@ -300,7 +300,7 @@ public class JsonTokenizer {
      * @throws IllegalArgumentException If the line number requested is less
      *         than 1.
      */
-    public String getLine(int line) throws IOException {
+    String getLine(int line) throws IOException {
         if (line < 1) {
             throw new IllegalArgumentException("Invalid line number requested: " + line);
         }

@@ -65,7 +65,7 @@ public class JsonWriter {
         writer.flush();
     }
 
-    public JsonWriter object() throws JsonException {
+    public JsonWriter object() {
         startValue();
 
         stack.push(context);
@@ -75,7 +75,7 @@ public class JsonWriter {
         return this;
     }
 
-    public JsonWriter array() throws JsonException {
+    public JsonWriter array() {
         startValue();
 
         stack.push(context);
@@ -85,35 +85,35 @@ public class JsonWriter {
         return this;
     }
 
-    public JsonWriter endObject() throws JsonException {
+    public JsonWriter endObject() {
         if (!context.map()) {
-            throw new JsonException("Unexpected end, not in object.");
+            throw new IllegalStateException("Unexpected end, not in object.");
         }
         if (context.value()) {
-            throw new JsonException("Expected map value but got end.");
+            throw new IllegalStateException("Expected map value but got end.");
         }
         writer.write('}');
         context = stack.pop();
         return this;
     }
 
-    public JsonWriter endArray() throws JsonException {
+    public JsonWriter endArray() {
         if (!context.list()) {
-            throw new JsonException("Unexpected end, not in list.");
+            throw new IllegalStateException("Unexpected end, not in list.");
         }
         writer.write(']');
         context = stack.pop();
         return this;
     }
 
-    public JsonWriter key(boolean key) throws JsonException {
+    public JsonWriter key(boolean key) {
         startKey();
 
         writer.write(key ? "\"true\":" : "\"false\":");
         return this;
     }
 
-    public JsonWriter key(byte key) throws JsonException {
+    public JsonWriter key(byte key) {
         startKey();
 
         writer.write('\"');
@@ -123,7 +123,7 @@ public class JsonWriter {
         return this;
     }
 
-    public JsonWriter key(short key) throws JsonException {
+    public JsonWriter key(short key) {
         startKey();
 
         writer.write('\"');
@@ -133,7 +133,7 @@ public class JsonWriter {
         return this;
     }
 
-    public JsonWriter key(int key) throws JsonException {
+    public JsonWriter key(int key) {
         startKey();
 
         writer.write('\"');
@@ -143,7 +143,7 @@ public class JsonWriter {
         return this;
     }
 
-    public JsonWriter key(long key) throws JsonException {
+    public JsonWriter key(long key) {
         startKey();
 
         writer.write('\"');
@@ -153,7 +153,7 @@ public class JsonWriter {
         return this;
     }
 
-    public JsonWriter key(double key) throws JsonException {
+    public JsonWriter key(double key) {
         startKey();
 
         writer.write('\"');
@@ -168,11 +168,11 @@ public class JsonWriter {
         return this;
     }
 
-    public JsonWriter key(CharSequence key) throws JsonException {
+    public JsonWriter key(CharSequence key) {
         startKey();
 
         if (key == null) {
-            throw new JsonException("Expected map key, but got null.");
+            throw new IllegalArgumentException("Expected map key, but got null.");
         }
 
         writeQuoted(key);
@@ -180,11 +180,11 @@ public class JsonWriter {
         return this;
     }
 
-    public JsonWriter key(Binary key) throws JsonException {
+    public JsonWriter key(Binary key) {
         startKey();
 
         if (key == null) {
-            throw new JsonException("Expected map key, but got null.");
+            throw new IllegalArgumentException("Expected map key, but got null.");
         }
 
         writer.write('\"');
@@ -194,11 +194,11 @@ public class JsonWriter {
         return this;
     }
 
-    public JsonWriter keyLiteral(CharSequence key) throws JsonException {
+    public JsonWriter keyLiteral(CharSequence key) {
         startKey();
 
         if (key == null) {
-            throw new JsonException("Expected map key, but got null.");
+            throw new IllegalArgumentException("Expected map key, but got null.");
         }
 
         writer.write(key.toString());
@@ -206,42 +206,42 @@ public class JsonWriter {
         return this;
     }
 
-    public JsonWriter value(boolean value) throws JsonException {
+    public JsonWriter value(boolean value) {
         startValue();
 
         writer.write(value ? kTrue : kFalse);
         return this;
     }
 
-    public JsonWriter value(byte value) throws JsonException {
+    public JsonWriter value(byte value) {
         startValue();
 
         writer.print((int) value);
         return this;
     }
 
-    public JsonWriter value(short value) throws JsonException {
+    public JsonWriter value(short value) {
         startValue();
 
         writer.print((int) value);
         return this;
     }
 
-    public JsonWriter value(int value) throws JsonException {
+    public JsonWriter value(int value) {
         startValue();
 
         writer.print(value);
         return this;
     }
 
-    public JsonWriter value(long number) throws JsonException {
+    public JsonWriter value(long number) {
         startValue();
 
         writer.print(number);
         return this;
     }
 
-    public JsonWriter value(double number) throws JsonException {
+    public JsonWriter value(double number) {
         startValue();
 
         final long i = (long) number;
@@ -253,7 +253,7 @@ public class JsonWriter {
         return this;
     }
 
-    public JsonWriter value(CharSequence value) throws JsonException {
+    public JsonWriter value(CharSequence value) {
         startValue();
 
         if (value == null) {
@@ -264,7 +264,7 @@ public class JsonWriter {
         return this;
     }
 
-    public JsonWriter value(Binary value) throws JsonException {
+    public JsonWriter value(Binary value) {
         startValue();
 
         if (value == null) {
@@ -277,7 +277,7 @@ public class JsonWriter {
         return this;
     }
 
-    public JsonWriter valueLiteral(CharSequence value) throws JsonException {
+    public JsonWriter valueLiteral(CharSequence value) {
         startValue();
 
         if (value == null) {
@@ -288,12 +288,12 @@ public class JsonWriter {
         return this;
     }
 
-    protected void startKey() throws JsonException {
+    protected void startKey() {
         if (!context.map()) {
-            throw new JsonException("Unexpected map key outside map.");
+            throw new IllegalStateException("Unexpected map key outside map.");
         }
         if (!context.key()) {
-            throw new JsonException("Unexpected map key, expected value or end.");
+            throw new IllegalStateException("Unexpected map key, expected value or end.");
         }
 
         if (context.num > 0) {
@@ -304,12 +304,12 @@ public class JsonWriter {
         context.expect = JsonContext.Expect.VALUE;
     }
 
-    protected boolean startValue() throws JsonException {
+    protected boolean startValue() {
         if (!context.value()) {
             if (context.expect == JsonContext.Expect.VALUE) {
-                throw new JsonException("Value already written, and not in container.");
+                throw new IllegalStateException("Value already written, and not in container.");
             } else {
-                throw new JsonException("Expected map key, but got value.");
+                throw new IllegalStateException("Expected map key, but got value.");
             }
         }
         if (context.list()) {

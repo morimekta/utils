@@ -46,8 +46,8 @@ public class UncheckedJsonException extends RuntimeException {
         return getCause().getLen();
     }
 
-    public String describe() {
-        return getCause().describe();
+    public String asString() {
+        return getCause().asString();
     }
 
     @Override
@@ -62,6 +62,6 @@ public class UncheckedJsonException extends RuntimeException {
 
     @Override
     public String toString() {
-        return String.format("UncheckedJsonException(%s)", describe());
+        return String.format("Unchecked JSON Error: %s", getMessage());
     }
 }

@@ -248,9 +248,9 @@ public class JsonTokenizerTest {
             assertEquals("    \"first\": \"value\",", e.getLine());
             assertEquals(5, e.getLinePos());
             assertEquals(7, e.getLen());
-            assertEquals("JsonException(JSON Error on line 2: Expected __number__ (number): but found '\"first\"'\n" +
+            assertEquals("JSON Error on line 2: Expected __number__ (number): but found '\"first\"'\n" +
                          "#     \"first\": \"value\",\n" +
-                         "#-----^^^^^^^)", e.toString().replaceAll("\\r\\n", "\n"));
+                         "#-----^^^^^^^", e.asString().replaceAll("\\r\\n", "\n"));
 
             UncheckedJsonException ue = new UncheckedJsonException(e);
             assertEquals(e.getMessage(), ue.getMessage());
@@ -259,8 +259,8 @@ public class JsonTokenizerTest {
             assertEquals(e.getLineNo(), ue.getLineNo());
             assertEquals(e.getLinePos(), ue.getLinePos());
             assertEquals(e.getLen(), ue.getLen());
-            assertEquals(e.describe(), ue.describe());
-            assertEquals("Unchecked" + e.toString(), ue.toString());
+            assertEquals(e.asString(), ue.asString());
+            assertEquals("Unchecked " + e.toString(), ue.toString());
         }
 
         try {
