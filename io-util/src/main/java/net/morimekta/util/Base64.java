@@ -290,7 +290,8 @@ public class Base64 {
                                   int offset) {
         // Example: Dk or Dk==
         if (len == 2 || (src[2] == EQUALS_SIGN && src[3] == EQUALS_SIGN)) {
-            int outBuff = (validate(src[0]) << 18) | (validate(src[1]) << 12);
+            int outBuff = (validate(src[0]) << 18) |
+                          (validate(src[1]) << 12);
 
             dest[offset] = (byte) (outBuff >>> 16);
             return 1;
@@ -323,7 +324,8 @@ public class Base64 {
         byte b = DECODABET[from & 0x7F];
         if (b < 0) {
             throw new IllegalArgumentException(String.format(
-                    "Invalid base64 character \\u%04x", from));
+                    "Invalid base64 character '%s'",
+                    Strings.escape((char) from)));
         }
         return b;
     }
@@ -406,17 +408,10 @@ public class Base64 {
                 }
             } else {
                 // There's a bad input character in the Base64 stream.
-                if (source[i] > 0x20 && source[i] < 0x7f) {
-                    throw new IllegalArgumentException(String.format(
-                            "Bad Base64 input character '%c' in array position %d",
-                            (char) source[i],
-                            i));
-                } else {
-                    throw new IllegalArgumentException(String.format(
-                            "Bad Base64 input character decimal %d in array position %d",
-                            ((int) source[i]) & 0xFF,
-                            i));
-                }
+                throw new IllegalArgumentException(String.format(
+                        "Bad Base64 input character '%s' in array position %d",
+                        Strings.escape((char) source[i]),
+                        i));
             }
         }
 

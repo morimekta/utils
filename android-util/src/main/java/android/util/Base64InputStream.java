@@ -46,6 +46,7 @@ public class Base64InputStream extends FilterInputStream {
      */
     public Base64InputStream(InputStream in, int options) {
         super(in);
+        if (in == null) throw new IllegalArgumentException("null input stream");
         this.options = options; // Record for later
         this.buffer3 = new byte[3];
         this.buffer4 = new byte[4];
@@ -83,26 +84,26 @@ public class Base64InputStream extends FilterInputStream {
                 numSigBytes = 0;
                 return -1;
             }
-            numSigBytes = Base64.decode4to3(buffer4, 0, i, buffer3, 0, decodabet);
+            try {
+                numSigBytes = Base64.decode4to3(buffer4, i, buffer3, 0, decodabet);
+            } catch (IllegalArgumentException e) {
+                throw new IOException(e.getMessage(), e);
+            }
         }   // end else: get data
 
         // Got data?
-        if (position >= 0) {
-            if (position >= numSigBytes) {
-                return -1;
-            }
-
-            int b = buffer3[position++] & 0xFF;
-
-            if (position >= 3) {
-                position = -1;
-                numSigBytes = 0;
-            }
-
-            return b;
-        } else {
-            throw new IOException("Error in Base64 code reading stream.");
+        if (position >= numSigBytes) {
+            return -1;
         }
+
+        int b = buffer3[position++] & 0xFF;
+
+        if (position >= 3) {
+            position = -1;
+            numSigBytes = 0;
+        }
+
+        return b;
     }
 
     @Override
@@ -132,8 +133,9 @@ public class Base64InputStream extends FilterInputStream {
     }
 
     @Override
-    public int available() {
-        return (position >= 0 ? numSigBytes - position : 0);
+    public int available() throws IOException {
+        return (position >= 0 ? numSigBytes - position : 0) +
+               (in.available() > 0 ? 1 : 0);
     }
 
     @Override

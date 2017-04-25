@@ -143,12 +143,18 @@ public class Base64OutputStream extends FilterOutputStream {
                 if (close) {
                     out.close();
                 }
+            } catch (IOException e) {
+                if (ex != null) {
+                    ex.addSuppressed(e);
+                } else {
+                    throw e;
+                }
             } finally {
                 out = null;
             }
 
             if (ex != null) {
-                throw new IOException(ex);
+                throw ex;
             }
         }
     }

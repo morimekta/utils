@@ -114,11 +114,11 @@ public class Base64Test {
     public void testDecodeBad() {
         assertBad("Bad Base64 input character '.' in array position 16",
                   "With punctuation.");
-        assertBad("Bad Base64 input character '\"' in array position 0",
+        assertBad("Bad Base64 input character '\\\"' in array position 0",
                   "\"QUOTEDbase64\"");
-        assertBad("Invalid base64 character \\u003d",
+        assertBad("Invalid base64 character '='",
                   "Mis=matched padding=");
-        assertBad("Invalid base64 character \\u003d",
+        assertBad("Invalid base64 character '='",
                   // Too much padding
                   "YWFhYWFhYWE==");
         assertBad("Input string was null.",
