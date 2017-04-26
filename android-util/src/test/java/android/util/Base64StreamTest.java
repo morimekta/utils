@@ -37,7 +37,7 @@ public class Base64StreamTest {
             assertThat(bis.read(), is(0));
             fail("no exception");
         } catch (IOException e) {
-            assertThat(e.getMessage(), is("Invalid base64 character '-'"));
+            assertThat(e.getMessage(), is("Bad Base64 character '-'"));
         }
 
         bis.close();

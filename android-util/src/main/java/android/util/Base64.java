@@ -553,7 +553,7 @@ public class Base64 {
         byte b = decodabet[from & 0x7F];
         if (b < 0) {
             throw new IllegalArgumentException(String.format(
-                    "Invalid%s base64 character '%s'",
+                    "Bad Base64%s character '%s'",
                     (decodabet == _URL_SAFE_DECODABET ? " url safe" : ""),
                     escape(from)));
         }
@@ -573,6 +573,9 @@ public class Base64 {
      * @return decoded data
      */
     public static byte[] decode(byte[] source, int options) {
+        if (source == null) {
+            throw new IllegalArgumentException("Cannot decode null source array.");
+        }
         return decode(source, 0, source.length, options);
     }
 
@@ -592,7 +595,7 @@ public class Base64 {
      */
     public static byte[] decode(byte[] source, int offset, int len, int options) {
         if (source == null) {
-            throw new NullPointerException("Cannot decode null source array.");
+            throw new IllegalArgumentException("Cannot decode null source array.");
         }
         if (offset < 0 || offset + len > source.length) {
             throw new IllegalArgumentException(String.format(
@@ -633,9 +636,10 @@ public class Base64 {
                 }
             } else {
                 // There's a bad input character in the Base64 stream.
-                throw new IllegalArgumentException(
-                        String.format("Bad Base64 input character decimal %d in array position %d",
-                        ((int) source[i]) & 0xFF,
+                throw new IllegalArgumentException(String.format(
+                        "Bad%s Base64 character '%s' in array position %d",
+                        (decodabet == _URL_SAFE_DECODABET ? " url safe" : ""),
+                        escape(source[i]),
                         i));
             }
         }
@@ -663,7 +667,7 @@ public class Base64 {
      */
     public static byte[] decode(String s, int options) {
         if (s == null) {
-            throw new NullPointerException("Input string was null.");
+            throw new IllegalArgumentException("Input string was null.");
         }
 
         byte[] bytes = s.getBytes(UTF_8);
@@ -671,30 +675,15 @@ public class Base64 {
     }
 
     private static String escape(byte b) {
-        switch (b) {
-            case '\b':
-                return "\\b";
-            case '\t':
-                return "\\t";
-            case '\n':
-                return "\\n";
-            case '\f':
-                return "\\f";
-            case '\r':
-                return "\\r";
-            case '"':
-                return "\\\"";
-            case '\'':
-                return "\\'";
-            case '\\':
-                return "\\\\";
-            default:
-                if (b < 32 || b == 127) {
-                    return String.format("\\%03o", (int) b);
-                } else if (b < 0) {
-                    return String.format("\\u%04x", ((int) b % 0x100));
-                }
-                return String.valueOf((char) b);
+        if (b == '\"') {
+            return "\\\"";
+        } else if (b == '\'') {
+            return "\\\'";
+        } else if (b < 0) {
+            return String.format("\\u%04x", ((int) b + 0x100));
+        } else if (b < 32 || b == 127) {
+            return String.format("\\%03o", (int) b);
         }
+        return String.valueOf((char) b);
     }
 }

@@ -21,9 +21,14 @@ import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Random;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
 
 /**
  * Tests for base64 utilities. Updated from Android to match the current
@@ -48,11 +53,16 @@ public class Base64Test extends TestCase {
     }
 
     /** Assert that decoding 'in' throws IllegalArgumentException. */
-    private void assertBad(String in) throws Exception {
+    private void assertBad(String ex,
+                           String in) {
         try {
             byte[] out = Base64.decode(in, 0);
             fail("should have failed to decode");
         } catch (IllegalArgumentException e) {
+            if (!e.getMessage().equals(ex)) {
+                e.printStackTrace();
+            }
+            assertThat(e.getMessage(), is(ex));
         }
     }
 
@@ -64,15 +74,77 @@ public class Base64Test extends TestCase {
         }
     }
 
+
+    @Test
+    public void testDecodeBad() {
+        assertBad("Bad Base64 character '.' in array position 16",
+                  "With punctuation.");
+        assertBad("Bad Base64 character '\\\"' in array position 0",
+                  "\"QUOTEDbase64\"");
+        assertBad("Bad Base64 character '\\'' in array position 0",
+                  "\'");
+        assertBad("Bad Base64 character '\\u00a5' in array position 1",
+                  "å");
+        assertBad("Bad Base64 character '='",
+                  "Mis=matched padding=");
+        assertBad("Bad Base64 character '='",
+                  // Too much padding
+                  "YWFhYWFhYWE==");
+        assertBad("Input string was null.",
+                  null);
+
+        try {
+            Base64.decode("Boo".getBytes(UTF_8), -1, 3, 0);
+            fail();
+        } catch (IllegalArgumentException e) {
+            assertThat(e.getMessage(),
+                       is("Source array with length 3 cannot have offset of -1 and process 3 bytes."));
+        }
+        try {
+            Base64.decode("Boo".getBytes(UTF_8), 0, 5, 0);
+            fail();
+        } catch (IllegalArgumentException e) {
+            assertThat(e.getMessage(),
+                       is("Source array with length 3 cannot have offset of 0 and process 5 bytes."));
+        }
+        try {
+            Base64.decode(null, 0, 3, 0);
+            fail();
+        } catch (IllegalArgumentException e) {
+            assertThat(e.getMessage(),
+                       is("Cannot decode null source array."));
+        }
+        try {
+            Base64.decode((byte[]) null, 0);
+            fail();
+        } catch (IllegalArgumentException e) {
+            assertThat(e.getMessage(),
+                       is("Cannot decode null source array."));
+        }
+    }
+
+    @Test
+    public void testConstructor() throws
+                                  NoSuchMethodException,
+                                  IllegalAccessException,
+                                  InvocationTargetException,
+                                  InstantiationException {
+        Constructor<Base64> c = Base64.class.getDeclaredConstructor();
+        assertThat(c.isAccessible(), is(false));
+        c.setAccessible(true);
+        assertThat(c.newInstance(), is(instanceOf(Base64.class)));
+        c.setAccessible(false);
+    }
+
     @Test
     public void testDecodeExtraChars() throws Exception {
         // padding 0
         assertEquals("hello, world", decodeString("aGVsbG8sIHdvcmxk"));
-        assertBad("aGVsbG8sIHdvcmxk=");
-        assertBad("aGVsbG8sIHdvcmxk==");
-        assertBad("aGVsbG8sIHdvcmxk =");
-        assertBad("aGVsbG8sIHdvcmxk = = ");
-        assertBad("_a*G_V*s_b*G_8*s_I*H_d*v_c*m_x*k_");
+        assertBad("Bad Base64 character '='", "aGVsbG8sIHdvcmxk=");
+        assertBad("Bad Base64 character '='", "aGVsbG8sIHdvcmxk==");
+        assertBad("Bad Base64 character '='", "aGVsbG8sIHdvcmxk =");
+        assertBad("Bad Base64 character '='", "aGVsbG8sIHdvcmxk = = ");
+        assertBad("Bad Base64 character '_' in array position 0", "_a*G_V*s_b*G_8*s_I*H_d*v_c*m_x*k_");
         assertEquals("hello, world", decodeString(" aGVs bG8s IHdv cmxk  "));
         assertEquals("hello, world", decodeString(" aGV sbG8 sIHd vcmx k "));
         assertEquals("hello, world", decodeString(" aG VsbG 8sIH dvcm xk "));
@@ -83,9 +155,9 @@ public class Base64Test extends TestCase {
         // padding 1
         assertEquals("hello, world?!", decodeString("aGVsbG8sIHdvcmxkPyE="));
         assertEquals("hello, world?!", decodeString("aGVsbG8sIHdvcmxkPyE"));
-        assertBad("aGVsbG8sIHdvcmxkPyE==");
-        assertBad("aGVsbG8sIHdvcmxkPyE ==");
-        assertBad("aGVsbG8sIHdvcmxkPyE = = ");
+        assertBad("Bad Base64 character '='", "aGVsbG8sIHdvcmxkPyE==");
+        assertBad("Bad Base64 character '='", "aGVsbG8sIHdvcmxkPyE ==");
+        assertBad("Bad Base64 character '='", "aGVsbG8sIHdvcmxkPyE = = ");
         assertEquals("hello, world?!", decodeString("aGVsbG8sIHdvcmxkPy E="));
         assertEquals("hello, world?!", decodeString("aGVsbG8sIHdvcmxkPy E"));
         assertEquals("hello, world?!", decodeString("aGVsbG8sIHdvcmxkPy E ="));
@@ -96,9 +168,9 @@ public class Base64Test extends TestCase {
         // padding 2
         assertEquals("hello, world.", decodeString("aGVsbG8sIHdvcmxkLg=="));
         assertEquals("hello, world.", decodeString("aGVsbG8sIHdvcmxkLg"));
-        assertBad("aGVsbG8sIHdvcmxkLg=");
-        assertBad("aGVsbG8sIHdvcmxkLg =");
-        assertBad("aGVsbG8sIHdvcmxkLg = ");
+        assertBad("Bad Base64 character '='", "aGVsbG8sIHdvcmxkLg=");
+        assertBad("Bad Base64 character '='", "aGVsbG8sIHdvcmxkLg =");
+        assertBad("Bad Base64 character '='", "aGVsbG8sIHdvcmxkLg = ");
         assertEquals("hello, world.", decodeString("aGVsbG8sIHdvcmxkL g=="));
         assertEquals("hello, world.", decodeString("aGVsbG8sIHdvcmxkL g"));
         assertEquals("hello, world.", decodeString("aGVsbG8sIHdvcmxkL g =="));
