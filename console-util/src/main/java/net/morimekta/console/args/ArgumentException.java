@@ -29,11 +29,6 @@ import java.util.Locale;
 public class ArgumentException extends RuntimeException {
     public ArgumentException(String format, Object... args) {
         super(String.format(Locale.US, format, args));
-        for (Object o : args) {
-            if (o instanceof Throwable) {
-                throw new IllegalArgumentException("Exception in format args, must be first argument.");
-            }
-        }
     }
 
     public ArgumentException(Throwable cause, String format, Object... args) {
