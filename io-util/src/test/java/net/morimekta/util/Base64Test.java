@@ -116,6 +116,10 @@ public class Base64Test {
                   "With punctuation.");
         assertBad("Bad Base64 input character '\\\"' in array position 0",
                   "\"QUOTEDbase64\"");
+        assertBad("Bad Base64 input character '\\'' in array position 0",
+                  "\'");
+        assertBad("Bad Base64 input decimal 165 in array position 1",
+                  "å");
         assertBad("Invalid base64 character '='",
                   "Mis=matched padding=");
         assertBad("Invalid base64 character '='",

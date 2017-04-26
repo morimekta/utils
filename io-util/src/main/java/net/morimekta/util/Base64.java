@@ -19,6 +19,7 @@
 package net.morimekta.util;
 
 import static java.nio.charset.StandardCharsets.US_ASCII;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * Minimal Base64 utility. Will always encode with standard base64 encoding, no
@@ -408,6 +409,12 @@ public class Base64 {
                 }
             } else {
                 // There's a bad input character in the Base64 stream.
+                if (source[i] < 0) {
+                    throw new IllegalArgumentException(String.format(
+                            "Bad Base64 input decimal %d in array position %d",
+                            0x100 + (int) source[i],
+                            i));
+                }
                 throw new IllegalArgumentException(String.format(
                         "Bad Base64 input character '%s' in array position %d",
                         Strings.escape((char) source[i]),
@@ -439,7 +446,7 @@ public class Base64 {
             throw new NullPointerException("Input string was null.");
         }
 
-        byte[] bytes = s.getBytes(US_ASCII);
+        byte[] bytes = s.getBytes(UTF_8);
         return decode(bytes, 0, bytes.length);
     }
 }
