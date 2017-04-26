@@ -30,8 +30,12 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -118,6 +122,64 @@ public class BaseBundleTest {
         bundle.putLongArray("longA", new long[]{12L, 34L, 56L, 78L, 90L, 123L, 456L, 789L});
         bundle.putString("string", "String");
         bundle.putStringArray("stringA", new String[]{"S", "t", "r", "i", "ng"});
+
+        assertThat(bundle.get("bool"), is((Object) Boolean.TRUE));
+        assertThat(bundle.get("noop"), is(nullValue()));
+
+        assertThat(bundle.getBoolean("bool"), is(true));
+        assertThat(bundle.getBoolean("bool", false), is(true));
+        assertThat(bundle.getBoolean("noop", false), is(false));
+
+        assertThat(bundle.getDouble("double"), is(4.1234d));
+        assertThat(bundle.getDouble("double", 0.0), is(4.1234d));
+        assertThat(bundle.getDouble("noop", 1234.5), is(1234.5));
+
+        assertThat(bundle.getDoubleArray("doubleA"), is(new double[]{1.44,2.71,3.14,6.674}));
+
+        assertThat(bundle.getInt("int"), is(1234567890));
+        assertThat(bundle.getInt("int", 54321), is(1234567890));
+        assertThat(bundle.getInt("boop", 12345), is(12345));
+
+        assertThat(bundle.getIntArray("intA"), is(new int[]{1,2,3,4,5,6,7,8,9,0}));
+
+        assertThat(bundle.getLong("long"), is(1234567890123456789L));
+        assertThat(bundle.getLong("long", 987654321098765432L), is(1234567890123456789L));
+        assertThat(bundle.getLong("noop", 123456789876543210L), is(123456789876543210L));
+
+        assertThat(bundle.getLongArray("longA"), is(new long[]{12,34,56,78,90,123,456,789}));
+
+        assertThat(bundle.getStringArray("stringA"), is(new String[]{"S", "t", "r", "i", "ng"}));
+
+        BaseBundle other = new BaseBundleImpl(100);
+        other.map.putAll(bundle.map);
+
+        assertThat(bundle, is(other));
+        assertThat(bundle, is(bundle));
+        assertThat(bundle, is(not(new Object())));
+
+        assertThat(bundle.toString(), is(
+                "BaseBundleImpl(" +
+                "intA=[1,2,3,4,5,6,7,8,9,0]," +
+                "stringA=[\"S\",\"t\",\"r\",\"i\",\"ng\"]," +
+                "boolA=[true,false]," +
+                "double=4.1234," +
+                "bool=true," +
+                "string=String," +
+                "long=1234567890123456789," +
+                "longA=[12,34,56,78,90,123,456,789]," +
+                "doubleA=[1.44,2.71,3.14,6.674]," +
+                "int=1234567890)"));
+
+        assertThat(bundle.hashCode(), is(other.hashCode()));
+
+        assertThat(bundle.containsKey("long"), is(true));
+        bundle.remove("long");
+        assertThat(bundle.containsKey("long"), is(false));
+
+        assertThat(bundle.hashCode(), is(not(other.hashCode())));
+
+        bundle.clear();
+        assertThat(bundle.containsKey("int"), is(false));
     }
 
     private class BaseBundleImpl
