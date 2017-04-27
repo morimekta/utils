@@ -20,15 +20,22 @@
  */
 package net.morimekta.console.args;
 
+import com.google.common.collect.ImmutableList;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.LinkedList;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static net.morimekta.console.util.Parser.i32;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsEqual.equalTo;
@@ -36,11 +43,15 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * Tests for the Argument Parser.
  */
 public class ArgumentParserTest {
+    @Rule
+    public TemporaryFolder tmp = new TemporaryFolder();
+
     @Test
     public void testConstructor() {
         ArgumentParser parser = new ArgumentParser("gt", "0.2.5", "Git Tools");
@@ -52,7 +63,7 @@ public class ArgumentParserTest {
     }
 
     @Test
-    public void testParse() {
+    public void testParse_simple() {
         ArgumentParser parser = new ArgumentParser("gt", "0.2.5", "Git Tools");
 
         AtomicInteger ai = new AtomicInteger(55);
@@ -135,6 +146,127 @@ public class ArgumentParserTest {
         assertTrue(b1.get());
         assertFalse(b2.get());
         assertTrue(b3.get());
+    }
+
+    @Test
+    public void testParse_args() {
+        AtomicBoolean      b      = new AtomicBoolean(false);
+        LinkedList<String> arg    = new LinkedList<>();
+        ArgumentParser     parser = new ArgumentParser("gt", "0.2.5", "Git Tools");
+        parser.add(new Flag("--bool", "b", "Bool", b::set));
+        parser.add(new Argument("arg", "A", arg::add, "", null, true, true, false));
+        parser.parse("first", "--", "--bool");
+
+        assertThat(arg, is(ImmutableList.of("first", "--bool")));
+        assertThat(b.get(), is(false));
+    }
+
+    @Test
+    public void testParse_fails() {
+        AtomicBoolean      b      = new AtomicBoolean(false);
+        LinkedList<String> arg    = new LinkedList<>();
+
+        ArgumentParser     parser = new ArgumentParser("gt", "0.2.5", "Git Tools");
+        parser.add(new Flag("--bool", "b", "Bool", b::set));
+        parser.add(new Argument("arg", "A", arg::add, "",
+                                s -> !s.equals("bcd"), true, true, false));
+
+        try {
+            parser.parse("--boo");
+            fail("no exception");
+        } catch (ArgumentException e) {
+            assertThat(e.getMessage(), is("No option for --boo"));
+        }
+
+        try {
+            parser.parse("-bcd");
+            fail("no exception");
+        } catch (ArgumentException e) {
+            assertThat(e.getMessage(), is("No short opt for -c"));
+        }
+
+        try {
+            parser.parse("bcd");
+            fail("no exception");
+        } catch (ArgumentException e) {
+            assertThat(e.getMessage(), is("No option found for bcd"));
+        }
+
+        try {
+            parser.parse("--", "bcd");
+            fail("no exception");
+        } catch (ArgumentException e) {
+            assertThat(e.getMessage(), is("No argument found for bcd"));
+        }
+    }
+
+    @Test
+    public void testFlagsFile() throws IOException {
+        File flags = tmp.newFile("flags");
+        try (FileOutputStream fos = new FileOutputStream(flags)) {
+            fos.write(("--bool\n" +
+                       "--opt the-opt\n" +
+                       "\n" +
+                       "# comment\n" +
+                       "boo\n").getBytes(UTF_8));
+        }
+
+        AtomicBoolean      b      = new AtomicBoolean(false);
+        LinkedList<String> arg    = new LinkedList<>();
+        AtomicReference<String> opt = new AtomicReference<>();
+
+        ArgumentParser     parser = new ArgumentParser("gt", "0.2.5", "Git Tools");
+        parser.add(new Flag("--bool", "b", "Bool", b::set));
+        parser.add(new Option("--opt", "o", "OPT", "Usage", opt::set));
+        parser.add(new Argument("arg", "A", arg::add, "", null, true, true, false));
+
+        parser.parse("@" + flags.getCanonicalPath());
+
+        assertThat(b.get(), is(true));
+        assertThat(opt.get(), is("the-opt"));
+        assertThat(arg, is(ImmutableList.of("boo")));
+
+        try (FileOutputStream fos = new FileOutputStream(flags)) {
+            fos.write(("--boo\n").getBytes(UTF_8));
+        }
+
+        try {
+            parser.parse("@" + flags.getCanonicalPath());
+            fail("no exception");
+        } catch (ArgumentException e) {
+            assertThat(e.getMessage(), is("Argument file flags: No option for --boo"));
+        }
+    }
+
+    @Test
+    public void testValidate() {
+        AtomicBoolean      b      = new AtomicBoolean(false);
+        LinkedList<String> arg    = new LinkedList<>();
+        AtomicReference<String> opt = new AtomicReference<>();
+
+        ArgumentParser     parser = new ArgumentParser("gt", "0.2.5", "Git Tools");
+        parser.add(new Option("--opt", "o", "OPT", "Usage", opt::set, null, false, true, false));
+        parser.add(new Argument("arg", "A", arg::add, "", null, false, true, false));
+
+        try {
+            parser.validate();
+            fail("no exception");
+        } catch (ArgumentException e) {
+            assertThat(e.getMessage(), is("Option --opt is required"));
+        }
+
+        parser.parse("--opt", "O");
+
+        try {
+            parser.validate();
+            fail("no exception");
+        } catch (ArgumentException e) {
+            assertThat(e.getMessage(), is("Argument arg is required"));
+        }
+
+        parser.parse("arg");
+
+        parser.validate();
     }
 
     @Test
@@ -332,5 +464,45 @@ public class ArgumentParserTest {
         parser.add(subs);
 
         assertEquals("gt [-a I] [-Dkey=val ...] [--arg2] [type] [sub1 | sub2] [...]", parser.getSingleLineUsage());
+    }
+
+
+    @Test
+    public void testAdd_fails() {
+        AtomicBoolean b = new AtomicBoolean();
+
+        ArgumentParser parser = new ArgumentParser("gt", "v0.1", "GitTool");
+        parser.add(new Flag("--exists", "e", "", b::set));
+
+        try {
+            parser.add(new Flag("--exists", "n", "", b::set));
+            fail("no exception");
+        } catch (IllegalArgumentException e) {
+            assertThat(e.getMessage(), is("Option --exists already exists"));
+        }
+
+        try {
+            parser.add(new Flag("--new", "e", "", b::set));
+            fail("no exception");
+        } catch (IllegalArgumentException e) {
+            assertThat(e.getMessage(), is("Short option -e already exists"));
+        }
+
+        try {
+            parser.add((BaseArgument) new Flag("--new2", "-2", "", b::set, null, "--exists"));
+            fail("no exception");
+        } catch (IllegalArgumentException e) {
+            assertThat(e.getMessage(), is("Flag --exists already exists"));
+        }
+
+        AtomicReference<String> fish = new AtomicReference<>();
+
+        parser.add(new SubCommandSet<>("fish", "Fish", fish::set));
+        try {
+            parser.add(new Argument("fish", "Fish", fish::set));
+            fail("no exception");
+        } catch (IllegalArgumentException e) {
+            assertThat(e.getMessage(), is("No arguments can be added after a sub-command set"));
+        }
     }
 }

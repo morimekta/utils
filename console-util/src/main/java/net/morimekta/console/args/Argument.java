@@ -115,7 +115,7 @@ public class Argument extends BaseArgument {
     @Override
     public void validate() throws ArgumentException {
         if (isRequired() && !applied) {
-            throw new ArgumentException("Argument \"" + getName() + "\" is required");
+            throw new ArgumentException("Argument " + getName() + " is required");
         }
     }
 

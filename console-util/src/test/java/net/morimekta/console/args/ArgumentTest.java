@@ -46,7 +46,7 @@ public class ArgumentTest {
             arg.validate();
             fail("no exception");
         } catch (ArgumentException e) {
-            assertEquals("Argument \"name\" is required", e.getMessage());
+            assertEquals("Argument name is required", e.getMessage());
         }
 
         arg = new Argument("name", "Set name", ref::set, "foo");

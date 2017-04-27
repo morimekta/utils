@@ -33,6 +33,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -119,7 +120,7 @@ public class ArgumentParser {
         this.options.add(option);
         if (option.getName() != null) {
             if (longNameOptions.containsKey(option.getName())) {
-                throw new IllegalArgumentException("Option " + option.getName() + " already exists.");
+                throw new IllegalArgumentException("Option " + option.getName() + " already exists");
             }
 
             longNameOptions.put(option.getName(), option);
@@ -129,7 +130,7 @@ public class ArgumentParser {
             String negate = ((Flag) option).getNegateName();
             if (negate != null) {
                 if (longNameOptions.containsKey(negate)) {
-                    throw new IllegalArgumentException("Flag " + negate + " already exists.");
+                    throw new IllegalArgumentException("Flag " + negate + " already exists");
                 }
 
                 longNameOptions.put(negate, option);
@@ -141,7 +142,7 @@ public class ArgumentParser {
             for (char s : option.getShortNames()
                                 .toCharArray()) {
                 if (shortOptions.containsKey(s)) {
-                    throw new IllegalArgumentException("Short option -" + s + " already exists.");
+                    throw new IllegalArgumentException("Short option -" + s + " already exists");
                 }
 
                 shortOptions.put(s, option);
@@ -165,7 +166,7 @@ public class ArgumentParser {
 
         // No arguments can be added after a sub-command-set.
         if (arguments.size() > 0 && arguments.getLast() instanceof SubCommandSet) {
-            throw new IllegalArgumentException("No arguments can be added after a sub-command set.");
+            throw new IllegalArgumentException("No arguments can be added after a sub-command set");
         }
 
         arguments.add(arg);
@@ -229,7 +230,11 @@ public class ArgumentParser {
                              BufferedReader reader = new BufferedReader(new InputStreamReader(fis, UTF_8))) {
                             List<String> lines = reader.lines()
                                                        .map(String::trim)
+                                                       // strip empty lines and commented lines
                                                        .filter(l -> !(l.isEmpty() || l.startsWith("#")))
+                                                       // split on the first space,
+                                                       // and treat each part an arg entry
+                                                       .flatMap(l -> Arrays.stream(l.split(" ", 2)))
                                                        .collect(Collectors.toList());
                             if (lines.size() > 0) {
                                 ArgumentList list = new ArgumentList(lines.toArray(new String[lines.size()]));
