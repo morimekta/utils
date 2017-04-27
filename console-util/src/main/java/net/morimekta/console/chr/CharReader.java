@@ -34,10 +34,6 @@ import java.io.Reader;
 public class CharReader {
     private final Reader in;
 
-    public CharReader() {
-        this(System.in);
-    }
-
     public CharReader(InputStream in) {
         this(new Utf8StreamReader(in));
     }
@@ -105,19 +101,21 @@ public class CharReader {
                     }
                     return new Control(charBuilder.toString());
                 }
-            } else if (('a' <= c2 && c2 <= 'z') ||
-                       ('A' <= c2 && c2 <= 'Z')) {
-                if (c2 == 'O') {
-                    char c3 = expect();
-                    charBuilder.append(c3);
-                    if ('A' <= c3 && c3 <= 'Z') {
-                        // \033 O [A-Z]
-                        return new Control(charBuilder.toString());
-                    }
-                } else {
-                    // \033 [a-zA-NP-Z]
+            } else if (c2 == 'O') {
+                char c3 = expect();
+                charBuilder.append(c3);
+                if ('A' <= c3 && c3 <= 'Z') {
+                    // \033 O [A-Z]
                     return new Control(charBuilder.toString());
                 }
+            } else if (('a' <= c2 && c2 <= 'z') ||
+                       ('0' <= c2 && c2 <= '9') ||
+                       ('A' <= c2 && c2 <= 'Z')) {
+                // \033 [a-z]: <alt-{c}> aka <M-{c}>.
+                // \033 [0-9]: <alt-{c}> aka <M-{c}>.
+                // \033 [A-N]: <alt-shift-{c}> aka <M-S-{c}>.
+                // \033 [P-Z]: <alt-shift-{c}> aka <M-S-{c}>.
+                return new Control(charBuilder.toString());
             }
 
             throw new IOException("Invalid escape sequence: \"" + Strings.escape(charBuilder.toString()) + "\"");

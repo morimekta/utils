@@ -65,7 +65,7 @@ public class Unicode implements Char {
             case GS:  return "<GS>";
             case RS:  return "<RS>";
             case US:  return "<US>";
-            case DEL: return "<DEL>";
+            case DEL: return "<DEL>";  // backspace??
             case NBSP_CP:
                 return "<nbsp>";
             case TAB:

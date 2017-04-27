@@ -38,7 +38,7 @@ public interface Char extends Stringable, Numeric, Comparable<Char> {
     char EOF = '\004';
     /** Bell. */
     char BEL = '\007';
-    /** Backspace. */
+    /** Backspace: Not used on Linux */
     char BS  = '\010';
     /** Horizontal Tab. */
     char TAB = '\t';
@@ -61,7 +61,13 @@ public interface Char extends Stringable, Numeric, Comparable<Char> {
     char RS  = '\036';
     /** Unit Separator. */
     char US  = '\037';
-    /** Delete */
+    /**
+     * DEL, A.K.A. "Backspace"
+     *
+     * Note: This is a Linux keyboard weirdness, that backspace key returns
+     * DEL (\0177), not BS (\010), which is the ASCII control char made
+     * specifically to represent that key...
+     */
     char DEL = '\177';
 
     /**

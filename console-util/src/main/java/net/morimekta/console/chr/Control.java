@@ -72,6 +72,10 @@ public class Control implements Char {
     public static final Control F7 = new Control("\033[18~");
     public static final Control F8 = new Control("\033[19~");
     public static final Control F9 = new Control("\033[20~");
+    public static final Control F10 = new Control("\033[21~");
+    /** NOTE: It is common to use F11 to mean 'fullscreen'. */
+    public static final Control F11 = new Control("\033[23~");
+    public static final Control F12 = new Control("\033[24~");
 
     private final String str;
 
@@ -168,10 +172,19 @@ public class Control implements Char {
             return "<F8>";
         } else if (str.equals(F9.str)) {
             return "<F9>";
+        } else if (str.equals(F10.str)) {
+            return "<F10>";
+        } else if (str.equals(F11.str)) {
+            return "<F11>";
+        } else if (str.equals(F12.str)) {
+            return "<F12>";
         } else if (str.length() == 2 &&
-                   str.charAt(1) >= 'a' &&
-                   str.charAt(1) <= 'z') {
-            return "<M-" + str.charAt(1) + '>';
+                   (('a' <= str.charAt(1) && str.charAt(1) <= 'z') ||
+                    ('0' <= str.charAt(1) && str.charAt(1) <= '9'))) {
+            return "<alt-" + str.charAt(1) + '>';
+        } else if (str.length() == 2 &&
+                   (('A' <= str.charAt(1) && str.charAt(1) <= 'Z'))) {
+            return "<alt-shift-" +  str.toLowerCase().charAt(1) + '>';
         }
         return Strings.escape(str);
     }

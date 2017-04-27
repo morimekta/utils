@@ -537,7 +537,9 @@ public class CharUtil {
     }
 
     public static Char alt(char c) {
-        if (c >= 'a' && c <= 'z') {
+        if (('a' <= c && c <= 'z') ||
+            ('A' <= c && c <= 'Z' && c != 'O') ||
+            ('0' <= c && c <= '9')) {
             return new Control(format("\033%c", c));
         }
         throw new IllegalArgumentException("Not suitable for <alt> modifier: '" + Strings.escape(c) + "'");

@@ -44,7 +44,7 @@ public class CharStreamTest {
 
         @Test
     public void testIteratorFailure() {
-        Iterator<Char> it = CharStream.iterator("a\0333,");
+        Iterator<Char> it = CharStream.iterator("a\033.,");
 
         assertTrue(it.hasNext());
         assertEquals("a", it.next().toString());
@@ -52,23 +52,23 @@ public class CharStreamTest {
             it.hasNext();
             fail("No exception");
         } catch (UncheckedIOException e) {
-            assertThat(e.getCause().getMessage(), is("Invalid escape sequence: \"\\0333\""));
+            assertThat(e.getCause().getMessage(), is("Invalid escape sequence: \"\\033.\""));
         }
         // After this is undefined.
     }
 
     @Test
     public void testLenientIterator() {
-        Iterator<Char> it = CharStream.lenientIterator("a\0333,");
+        Iterator<Char> it = CharStream.lenientIterator("a\03333,");
 
         assertTrue(it.hasNext());
-        assertEquals("a", it.next().toString());
+        assertEquals("a", it.next().asString());
         assertTrue(it.hasNext());
-        assertEquals("\033", it.next().toString());
+        assertEquals("<alt-3>", it.next().asString());
         assertTrue(it.hasNext());
-        assertEquals("3", it.next().toString());
+        assertEquals("3", it.next().asString());
         assertTrue(it.hasNext());
-        assertEquals(",", it.next().toString());
+        assertEquals(",", it.next().asString());
         assertFalse(it.hasNext());
     }
 
@@ -121,7 +121,7 @@ public class CharStreamTest {
         assertFailure("\033[mb", "Invalid color control sequence: \"\\033[m\"");
         assertFailure("\033[.b", "Invalid escape sequence: \"\\033[.\"");
         assertFailure("\033O5b", "Invalid escape sequence: \"\\033O5\"");
-        assertFailure("\0335b", "Invalid escape sequence: \"\\0335\"");
+        assertFailure("\033.b", "Invalid escape sequence: \"\\033.\"");
     }
 
     @Test
@@ -132,7 +132,20 @@ public class CharStreamTest {
         assertNoLenientFailure("\033[mb", new Unicode('\033'), "[mb");
         assertNoLenientFailure("\033[.b", new Unicode('\033'), "[.b");
         assertNoLenientFailure("\033O5b", new Unicode('\033'), "O5b");
-        assertNoLenientFailure("\0335b", new Unicode('\033'), "5b");
+        assertNoLenientFailure("\033.b", new Unicode('\033'), ".b");
+    }
+
+    @Test
+    public void testParallelStream() {
+        List<Char> chars = CharStream.stream("ðđł”µ¾").parallel().collect(Collectors.toList());
+
+        assertThat(chars, is(ImmutableList.of(
+                new Unicode('ð'),
+                new Unicode('đ'),
+                new Unicode('ł'),
+                new Unicode('”'),
+                new Unicode('µ'),
+                new Unicode('¾'))));
     }
 
     private void assertInput(String in, Object... out) throws IOException {

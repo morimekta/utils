@@ -71,7 +71,6 @@ public class CharReaderTest {
         assertFailure("\033[mb", "Invalid color control sequence: \"\\033[m\"");
         assertFailure("\033[.b", "Invalid escape sequence: \"\\033[.\"");
         assertFailure("\033O5b", "Invalid escape sequence: \"\\033O5\"");
-        assertFailure("\0335b", "Invalid escape sequence: \"\\0335\"");
     }
 
     private void assertInput(String in, Object... out) throws IOException {
@@ -79,7 +78,7 @@ public class CharReaderTest {
                 in.getBytes(UTF_8));
         System.setIn(bais);
 
-        CharReader reader = new CharReader();
+        CharReader reader = new CharReader(System.in);
 
         List<Char> expected = CharUtil.inputChars(out);
         List<Char> actual = new LinkedList<>();
@@ -96,7 +95,7 @@ public class CharReaderTest {
                 in.getBytes(UTF_8));
         System.setIn(bais);
 
-        CharReader reader = new CharReader();
+        CharReader reader = new CharReader(System.in);
 
         try {
             while (reader.read() != null);

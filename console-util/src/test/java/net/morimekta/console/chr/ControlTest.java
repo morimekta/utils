@@ -45,8 +45,11 @@ public class ControlTest {
         assertThat(Control.F7.asString(), is("<F7>"));
         assertThat(Control.F8.asString(), is("<F8>"));
         assertThat(Control.F9.asString(), is("<F9>"));
-        assertThat(new Control("\033f").asString(), is("<M-f>"));
-        assertThat(new Control("\033c").asString(), is("<M-c>"));
+        assertThat(Control.F10.asString(), is("<F10>"));
+        assertThat(Control.F11.asString(), is("<F11>"));
+        assertThat(Control.F12.asString(), is("<F12>"));
+        assertThat(new Control("\033f").asString(), is("<alt-f>"));
+        assertThat(new Control("\033C").asString(), is("<alt-shift-c>"));
         assertThat(new Control("\033[G").asString(), is("\\033[G"));
     }
 
