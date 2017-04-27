@@ -1,6 +1,6 @@
 package net.morimekta.testing.rules;
 
-import net.morimekta.console.Terminal;
+import net.morimekta.console.terminal.Terminal;
 import net.morimekta.console.chr.CharUtil;
 import net.morimekta.console.chr.Color;
 import net.morimekta.console.util.STTY;

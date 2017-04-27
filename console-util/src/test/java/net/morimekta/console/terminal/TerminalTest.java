@@ -1,5 +1,6 @@
-package net.morimekta.console;
+package net.morimekta.console.terminal;
 
+import net.morimekta.console.terminal.Terminal;
 import net.morimekta.console.util.STTY;
 import net.morimekta.console.util.STTYMode;
 import net.morimekta.console.util.STTYModeSwitcher;

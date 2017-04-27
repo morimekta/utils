@@ -1,7 +1,9 @@
-package net.morimekta.console;
+package net.morimekta.console.terminal;
 
 import net.morimekta.console.chr.Char;
 import net.morimekta.console.chr.Control;
+import net.morimekta.console.terminal.InputSelection;
+import net.morimekta.console.terminal.Terminal;
 import net.morimekta.console.test_utils.TerminalTestUtils;
 import net.morimekta.console.util.STTY;
 import net.morimekta.console.util.TerminalSize;

@@ -1,7 +1,7 @@
 package net.morimekta.testapp;
 
-import net.morimekta.console.InputSelection;
-import net.morimekta.console.Terminal;
+import net.morimekta.console.terminal.InputSelection;
+import net.morimekta.console.terminal.Terminal;
 import net.morimekta.console.chr.Char;
 import net.morimekta.console.chr.CharUtil;
 import net.morimekta.console.chr.Unicode;

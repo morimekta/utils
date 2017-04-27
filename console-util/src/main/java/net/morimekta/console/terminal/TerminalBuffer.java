@@ -18,10 +18,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package net.morimekta.console.util;
+package net.morimekta.console.terminal;
 
 import com.google.common.collect.ImmutableList;
-import net.morimekta.console.Terminal;
 
 import java.util.ArrayList;
 import java.util.Collection;

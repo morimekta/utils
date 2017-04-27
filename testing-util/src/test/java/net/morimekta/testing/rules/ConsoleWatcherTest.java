@@ -1,6 +1,6 @@
 package net.morimekta.testing.rules;
 
-import net.morimekta.console.Terminal;
+import net.morimekta.console.terminal.Terminal;
 import net.morimekta.console.chr.Char;
 import net.morimekta.console.util.STTYMode;
 import org.junit.Rule;

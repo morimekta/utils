@@ -18,14 +18,13 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package net.morimekta.console;
+package net.morimekta.console.terminal;
 
 import net.morimekta.console.chr.Char;
 import net.morimekta.console.chr.CharUtil;
 import net.morimekta.console.chr.Color;
 import net.morimekta.console.chr.Control;
 import net.morimekta.console.chr.Unicode;
-import net.morimekta.console.util.TerminalBuffer;
 import net.morimekta.util.Strings;
 
 import java.io.IOException;

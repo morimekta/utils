@@ -1,8 +1,8 @@
 package net.morimekta.console.test_utils;
 
-import net.morimekta.console.Terminal;
 import net.morimekta.console.chr.Char;
-import net.morimekta.console.chr.Unicode;
+import net.morimekta.console.chr.CharUtil;
+import net.morimekta.console.terminal.Terminal;
 import net.morimekta.console.util.STTY;
 import net.morimekta.console.util.STTYMode;
 import net.morimekta.console.util.STTYModeSwitcher;
@@ -14,7 +14,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
@@ -28,19 +27,7 @@ public class TerminalTestUtils {
     }
 
     public static Terminal getTerminal(STTY tty, OutputStream out, Object... in) throws IOException {
-        ByteArrayOutputStream tmp = new ByteArrayOutputStream();
-        for (Object c : in) {
-            if (c instanceof Character || c instanceof Char || c instanceof CharSequence) {
-                tmp.write(c.toString().getBytes(UTF_8));
-            } else if (c instanceof Integer) {
-                // raw unicode codepoint.
-                tmp.write(new Unicode((Integer) c).toString().getBytes(UTF_8));
-            } else {
-                throw new IllegalArgumentException("Unknown input class: " + c.getClass().getSimpleName());
-            }
-        }
-
-        return getTerminal(tty, out, new ByteArrayInputStream(tmp.toByteArray()));
+        return getTerminal(tty, out, new ByteArrayInputStream(CharUtil.inputBytes(in)));
     }
 
     public static Terminal getTerminal(STTY tty, OutputStream out, InputStream in) {

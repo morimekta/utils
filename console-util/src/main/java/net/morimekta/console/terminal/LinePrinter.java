@@ -18,7 +18,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package net.morimekta.console;
+package net.morimekta.console.terminal;
 
 import net.morimekta.console.chr.Color;
 
