@@ -33,7 +33,7 @@ import static net.morimekta.console.chr.Control.cursorRight;
 import static net.morimekta.console.chr.Control.cursorUp;
 
 /**
- * Class that holds a set of buffer, that are printed to the terminal, and
+ * Class that holds a set of lines, that are printed to the terminal, and
  * methods to dynamically update those buffer. It will keep the cursor at
  * the bottom line (end of printed line) for easy continuation.
  *
@@ -41,16 +41,16 @@ import static net.morimekta.console.chr.Control.cursorUp;
  * makes sure that a list of lines can be updated and printed properly to
  * the terminal in the most efficient order.
  */
-public class TerminalBuffer {
+public class LineBuffer {
     private final Terminal          terminal;
     private final ArrayList<String> buffer;
 
     /**
-     * Create a TerminalBuffer instance.
+     * Create a LineBuffer instance.
      *
      * @param terminal The terminal to wrap.
      */
-    public TerminalBuffer(Terminal terminal) {
+    public LineBuffer(Terminal terminal) {
         this.terminal = terminal;
         this.buffer = new ArrayList<>();
     }

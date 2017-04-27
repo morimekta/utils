@@ -223,7 +223,7 @@ public class InputSelection<E> {
                           int pageMargin,
                           int lineWidth) {
         this.terminal = terminal;
-        this.terminalBuffer = new TerminalBuffer(terminal);
+        this.lineBuffer = new LineBuffer(terminal);
         this.prompt = prompt;
         this.entries = entries;
         this.commands = commands;
@@ -266,22 +266,22 @@ public class InputSelection<E> {
 
         // Initialize lines:
         // - prompt line
-        terminalBuffer.add(makePromptLine());
+        lineBuffer.add(makePromptLine());
         // - if (paged): hidden entries line
         if (paged) {
-            terminalBuffer.add(makeMoreEntriesLine());
+            lineBuffer.add(makeMoreEntriesLine());
         }
         // - shownEntries * (entry)
         for (int i = 0; i < shownEntries; ++i) {
-            terminalBuffer.add(makeEntryLine(i));
+            lineBuffer.add(makeEntryLine(i));
         }
 
         // - if (paged): hidden entries line
         if (paged) {
-            terminalBuffer.add(makeMoreEntriesLine());
+            lineBuffer.add(makeMoreEntriesLine());
         }
         // - selection line
-        terminalBuffer.add(makeSelectionLine());
+        lineBuffer.add(makeSelectionLine());
 
         try {
             for (;;) {
@@ -316,7 +316,7 @@ public class InputSelection<E> {
                         case STAY: {
                             // Updates the selected line only.
                             int off = paged ? 2 : 1;
-                            terminalBuffer.update(off + index, makeEntryLine(index));
+                            lineBuffer.update(off + index, makeEntryLine(index));
                             break;
                         }
                         case UPDATE_KEEP_ITEM: {
@@ -326,19 +326,19 @@ public class InputSelection<E> {
 
                             int off = 1;
                             if (paged) {
-                                terminalBuffer.update(1, makeMoreEntriesLine());
-                                terminalBuffer.update(shownEntries + 2, makeMoreEntriesLine());
+                                lineBuffer.update(1, makeMoreEntriesLine());
+                                lineBuffer.update(shownEntries + 2, makeMoreEntriesLine());
                                 off = 2;
                             }
                             for (int i = 0; i < shownEntries; ++i) {
-                                terminalBuffer.update(off + i, makeEntryLine(i));
+                                lineBuffer.update(off + i, makeEntryLine(i));
                             }
                             break;
                         }
                         case UPDATE_KEEP_POSITION: {
                             int off = paged ? 2 : 1;
                             for (int i = 0; i < shownEntries; ++i) {
-                                terminalBuffer.update(off + i, makeEntryLine(i));
+                                lineBuffer.update(off + i, makeEntryLine(i));
                             }
                             break;
                         }
@@ -378,7 +378,7 @@ public class InputSelection<E> {
                 updateSelection(entries.size() - 1);
             }
             int off = (paged ? 3 : 1) + shownEntries;
-            terminalBuffer.update(off, makeSelectionLine());
+            lineBuffer.update(off, makeSelectionLine());
 
             return true;
         } else {
@@ -386,7 +386,7 @@ public class InputSelection<E> {
             digitsTimestamp = 0;
 
             int off = (paged ? 3 : 1) + shownEntries;
-            terminalBuffer.update(off, makeSelectionLine());
+            lineBuffer.update(off, makeSelectionLine());
         }
 
         return false;
@@ -417,13 +417,13 @@ public class InputSelection<E> {
 
     private void clearExtraLines() {
         if (extraLines > 0) {
-            terminalBuffer.clearLast(extraLines);
+            lineBuffer.clearLast(extraLines);
         }
         extraLines = 0;
     }
 
     private void printExtraLine(String line) {
-        terminalBuffer.add(line);
+        lineBuffer.add(line);
         ++extraLines;
     }
 
@@ -440,16 +440,16 @@ public class InputSelection<E> {
                 currentIndex = index;
                 currentOffset = offset;
 
-                terminalBuffer.update(1, makeMoreEntriesLine());
+                lineBuffer.update(1, makeMoreEntriesLine());
                 for (int i = 0; i < shownEntries; ++i) {
-                    terminalBuffer.update(off + i, makeEntryLine(i));
+                    lineBuffer.update(off + i, makeEntryLine(i));
                 }
-                terminalBuffer.update(shownEntries + 2, makeMoreEntriesLine());
+                lineBuffer.update(shownEntries + 2, makeMoreEntriesLine());
             } else {
                 int oldIndex = currentIndex;
                 currentIndex = index;
-                terminalBuffer.update(off + oldIndex, makeEntryLine(oldIndex));
-                terminalBuffer.update(off + currentIndex, makeEntryLine(currentIndex));
+                lineBuffer.update(off + oldIndex, makeEntryLine(oldIndex));
+                lineBuffer.update(off + currentIndex, makeEntryLine(currentIndex));
             }
         }
     }
@@ -554,16 +554,16 @@ public class InputSelection<E> {
         return 20;
     }
 
-    private final Terminal terminal;
-    private final TerminalBuffer terminalBuffer;
-    private final String prompt;
-    private final List<E> entries;
-    private final List<Command<E>> commands;
+    private final Terminal                  terminal;
+    private final LineBuffer                lineBuffer;
+    private final String                    prompt;
+    private final List<E>                   entries;
+    private final List<Command<E>>          commands;
     private final HashMap<Char, Command<E>> commandMap;
-    private final EntryPrinter<E> printer;
-    private final Clock clock;
-    private final int pageSize;
-    private final int lineWidth;
+    private final EntryPrinter<E>           printer;
+    private final Clock                     clock;
+    private final int                       pageSize;
+    private final int                       lineWidth;
 
     private final boolean paged;
     private final int shownEntries;
