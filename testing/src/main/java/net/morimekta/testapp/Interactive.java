@@ -1,14 +1,16 @@
 package net.morimekta.testapp;
 
-import net.morimekta.console.terminal.InputSelection;
-import net.morimekta.console.terminal.Terminal;
 import net.morimekta.console.chr.Char;
 import net.morimekta.console.chr.CharUtil;
 import net.morimekta.console.chr.Unicode;
+import net.morimekta.console.terminal.InputSelection;
+import net.morimekta.console.terminal.Progress;
+import net.morimekta.console.terminal.Terminal;
 import net.morimekta.util.ExtraStreams;
 import net.morimekta.util.Strings;
 
 import java.io.IOException;
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -22,8 +24,15 @@ import static java.lang.String.format;
  * terminal to work, it cannot be truly tested in a unit.
  */
 public class Interactive {
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, InterruptedException {
         try (Terminal term = new Terminal()) {
+            Progress progress = new Progress(term, Clock.systemUTC(), "Progress", 1234567890);
+            for (int i = 1; i <= 1234567890; i += 123456) {
+                Thread.sleep(5L);
+                progress.update(i);
+            }
+            term.println();
+
             List<String> entries = ExtraStreams.range(0x0000, 0x10000, 4)
                                                .mapToObj(i -> {
                                                    StringBuilder builder = new StringBuilder();
