@@ -36,24 +36,46 @@ import static net.morimekta.console.chr.Control.cursorUp;
  * Class that holds a set of buffer, that are printed to the terminal, and
  * methods to dynamically update those buffer. It will keep the cursor at
  * the bottom line (end of printed line) for easy continuation.
+ *
+ * The class acts as a wrapper around a {@link Terminal} instance, and
+ * makes sure that a list of lines can be updated and printed properly to
+ * the terminal in the most efficient order.
  */
 public class TerminalBuffer {
     private final Terminal          terminal;
     private final ArrayList<String> buffer;
 
+    /**
+     * Create a TerminalBuffer instance.
+     *
+     * @param terminal The terminal to wrap.
+     */
     public TerminalBuffer(Terminal terminal) {
         this.terminal = terminal;
         this.buffer = new ArrayList<>();
     }
 
+    /**
+     * @return Number of lines in the buffer.
+     */
     public int count() {
         return buffer.size();
     }
 
+    /**
+     * Add new lines to the end of the buffer, and print them out.
+     *
+     * @param lines The lines to add.
+     */
     public void add(String ... lines) {
         add(ImmutableList.copyOf(lines));
     }
 
+    /**
+     * Add new lines to the end of the buffer, and print them out.
+     *
+     * @param lines The lines to add.
+     */
     public void add(Collection<String> lines) {
         for (String line : lines) {
             buffer.add(line);
@@ -62,8 +84,9 @@ public class TerminalBuffer {
     }
 
     /**
-     * Update a specific line.
-     * @param i The line index.
+     * Update a specific line to show new content.
+     *
+     * @param i The line index (0-indexed to count).
      * @param line The new line content.
      */
     public void update(int i, String line) {
@@ -95,7 +118,7 @@ public class TerminalBuffer {
     }
 
     /**
-     * Clear the entire buffer.
+     * Clear the entire buffer, and the terminal area it represents.
      */
     public void clear() {
         if (buffer.size() > 0) {
@@ -108,7 +131,8 @@ public class TerminalBuffer {
     }
 
     /**
-     * Clear the last N lines.
+     * Clear the last N lines, and move the cursor to the end of the last
+     * remaining line.
      *
      * @param N Number of lines to clear.
      */
@@ -138,6 +162,9 @@ public class TerminalBuffer {
         }
     }
 
+    /**
+     * @return The content of the last line in the buffer.
+     */
     private String lastLine() {
         return buffer.get(buffer.size() - 1);
     }
