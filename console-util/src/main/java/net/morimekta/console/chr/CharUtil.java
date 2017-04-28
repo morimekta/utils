@@ -485,7 +485,7 @@ public class CharUtil {
                     if ((Character) c == Char.ESC) {
                         tmp.write(Char.ESC);
                     }
-                    tmp.write((Character) c);
+                    tmp.write(new Unicode((Character) c).toString().getBytes(UTF_8));
                 } else if (c instanceof Integer) {
                     if ((Integer) c == (int) Char.ESC) {
                         tmp.write(Char.ESC);
@@ -499,6 +499,14 @@ public class CharUtil {
                     } else {
                         tmp.write(c.toString().getBytes(UTF_8));
                     }
+                } else if (c instanceof CharSequence) {
+                    CharStream.stream((CharSequence) c).forEach(ch -> {
+                        try {
+                            tmp.write(ch.toString().getBytes(UTF_8));
+                        } catch (IOException e) {
+                            throw new UncheckedIOException(e);
+                        }
+                    });
                 } else {
                     tmp.write(c.toString().getBytes(UTF_8));
                 }
