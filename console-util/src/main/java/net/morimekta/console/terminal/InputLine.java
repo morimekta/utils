@@ -73,6 +73,9 @@ public class InputLine {
         /**
          * Try to complete the given string.
          *
+         * The function should <b>only</b> print to the line printer if there
+         * is <b>no</b> selected completion.
+         *
          * @param before The string to be completed. What is before the carriage.
          * @param errorPrinter Print errors or alternatives to this line printer.
          * @return the completed string, or null if no completion.
@@ -130,7 +133,7 @@ public class InputLine {
             charValidator = (c, o) -> {
                 if (c.asInteger() < 0x20 ||
                     !Strings.isConsolePrintable(c.asInteger())) {
-                    o.println("Invalid character: " + c.asString());
+                    o.println("Invalid character: '" + c.asString() + "'");
                     return false;
                 }
                 return true;
