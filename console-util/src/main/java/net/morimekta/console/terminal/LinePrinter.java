@@ -34,6 +34,16 @@ public interface LinePrinter {
     void println(String message);
 
     /**
+     * Format and print a string message.
+     *
+     * @param format The message format.
+     * @param params Printf like params to format.
+     */
+    default void formatln(String format, Object... params) {
+        println(String.format(format, params));
+    }
+
+    /**
      * Print an info string message.
      *
      * @param format The info message.
@@ -87,15 +97,5 @@ public interface LinePrinter {
                               new Color(Color.RED, Color.BOLD),
                               Color.CLEAR,
                               message));
-    }
-
-    /**
-     * Format and print a string message.
-     *
-     * @param format The message format.
-     * @param params Printf like params to format.
-     */
-    default void formatln(String format, Object... params) {
-        println(String.format(format, params));
     }
 }
