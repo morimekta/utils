@@ -1,7 +1,7 @@
 package net.morimekta.testing.rules;
 
-import net.morimekta.console.terminal.Terminal;
 import net.morimekta.console.chr.Char;
+import net.morimekta.console.terminal.Terminal;
 import net.morimekta.console.util.STTYMode;
 import org.junit.Rule;
 import org.junit.Test;
@@ -21,7 +21,8 @@ import static org.junit.Assert.fail;
 public class ConsoleWatcherTest {
     @Rule
     public ConsoleWatcher console = new ConsoleWatcher()
-            .withTerminalSize(20, 80);
+            .withTerminalSize(20, 80)
+            .dumpOnFailure();
 
     @Test
     public void testConsole() {
@@ -60,7 +61,7 @@ public class ConsoleWatcherTest {
 
     @Test
     public void testTerminal() {
-        Terminal terminal = console.terminal(STTYMode.RAW);
+        Terminal terminal = new Terminal(console.tty());
 
         console.setInput("y");
 
@@ -87,7 +88,7 @@ public class ConsoleWatcherTest {
 
         assertThat(console.output(),
                    is("Do ya? [Y/n]: Yes.\r\n" +
-                      "O'Really? [Y/n]: No."));
+                      "O'Really? [Y/n]: No.\r\n"));
     }
 
     @Test
@@ -133,7 +134,7 @@ public class ConsoleWatcherTest {
 
     @Test
     public void testTTY() {
-        Terminal terminal = console.terminal(STTYMode.COOKED);
+        Terminal terminal = new Terminal(console.tty(), STTYMode.COOKED);
 
         assertThat(terminal.getTTY(), sameInstance(console.tty()));
         assertThat(terminal.getTTY().getTerminalSize().rows, is(20));
@@ -142,5 +143,40 @@ public class ConsoleWatcherTest {
         console.withTerminalSize(55, 123);
         assertThat(terminal.getTTY().getTerminalSize().rows, is(55));
         assertThat(terminal.getTTY().getTerminalSize().cols, is(123));
+    }
+
+    @Test
+    public void testInputStream() throws IOException {
+        console.setInput("abcdef");
+        byte[] arr = new byte[10];
+        assertThat(System.in.read(arr), is(6));
+        assertThat(arr, is(new byte[]{'a', 'b', 'c', 'd', 'e', 'f', 0, 0, 0, 0}));
+
+        console.setInput("abcdef");
+        arr = new byte[10];
+        System.in.skip(2);
+        assertThat(System.in.read(arr, 2, 8), is(4));
+        assertThat(arr, is(new byte[]{0, 0, 'c', 'd', 'e', 'f', 0, 0, 0, 0}));
+        System.in.close();
+    }
+
+    @Test
+    public void testErrorStream() throws IOException {
+        byte[] bytes = new byte[]{'a', 'c', 'e'};
+        System.err.write('b');
+        System.err.write(bytes);
+        System.err.write(bytes, 1, 1);
+
+        assertThat(console.error(), is("bacec"));
+    }
+
+    @Test
+    public void testOutputStream() throws IOException {
+        byte[] bytes = new byte[]{'a', 'c', 'e'};
+        System.out.write('b');
+        System.out.write(bytes);
+        System.out.write(bytes, 1, 1);
+
+        assertThat(console.output(), is("bacec"));
     }
 }

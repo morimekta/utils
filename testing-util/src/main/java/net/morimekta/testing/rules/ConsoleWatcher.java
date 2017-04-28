@@ -1,6 +1,5 @@
 package net.morimekta.testing.rules;
 
-import net.morimekta.console.terminal.Terminal;
 import net.morimekta.console.chr.CharUtil;
 import net.morimekta.console.chr.Color;
 import net.morimekta.console.util.STTY;
@@ -15,6 +14,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
@@ -44,13 +44,13 @@ public class ConsoleWatcher extends TestWatcher implements AutoCloseable {
     private final InputStream originalIn;
     private final STTY tty;
     private final InputStream in;
+    private final PrintStream out;
+    private final PrintStream err;
 
     private ByteArrayOutputStream outStream = null;
     private ByteArrayOutputStream errStream = null;
     private ByteArrayInputStream inStream = null;
-    private PrintStream out;
 
-    private PrintStream err;
     private TerminalSize terminalSize = DEFAULT_TERMINAL_SIZE;
     private TerminalSize defaultTerminalSize = DEFAULT_TERMINAL_SIZE;
     private boolean interactive = true;
@@ -60,6 +60,7 @@ public class ConsoleWatcher extends TestWatcher implements AutoCloseable {
     private boolean defaultDumpOutputOnFailure = false;
     private boolean defaultDumpErrorOnFailure = false;
     private boolean started = false;
+    private STTYModeSwitcher switcher;
 
     public ConsoleWatcher() {
         originalErr = System.err;
@@ -67,6 +68,8 @@ public class ConsoleWatcher extends TestWatcher implements AutoCloseable {
         originalIn = System.in;
 
         in = new WrappedInputStream();
+        out = new PrintStream(new WrappedOutputStream());
+        err = new PrintStream(new WrappedErrorStream());
 
         tty = new STTY() {
             @Override
@@ -176,17 +179,10 @@ public class ConsoleWatcher extends TestWatcher implements AutoCloseable {
     }
 
     /**
-     * Reset stream console.
+     * Reset all the streams for the console.
      */
     public void reset() {
-        if (!started) {
-            throw new AssertionError("Resetting a non-started console watcher.");
-        }
         setUpStreams();
-
-        System.setIn(in);
-        System.setErr(err);
-        System.setOut(out);
     }
 
     /**
@@ -204,6 +200,15 @@ public class ConsoleWatcher extends TestWatcher implements AutoCloseable {
     }
 
     /**
+     * Set input to return the given bytes.
+     * @param in The bytes for input.
+     */
+    public ConsoleWatcher setInput(@Nonnull byte[] in) {
+        inStream = new ByteArrayInputStream(in);
+        return this;
+    }
+
+    /**
      * Set input with dynamic content.
      * @param in The input values.
      */
@@ -213,56 +218,37 @@ public class ConsoleWatcher extends TestWatcher implements AutoCloseable {
     }
 
     /**
-     * Set input to return the given string content.
-     * @param in The string input.
-     */
-    public ConsoleWatcher setInput(@Nonnull String in) {
-        return setInput(in.getBytes(StandardCharsets.UTF_8));
-    }
-
-    /**
-     * Set input to return the given bytes.
-     * @param in The bytes for input.
-     */
-    public ConsoleWatcher setInput(@Nonnull byte[] in) {
-        assert started : "Setting input on a non-started console";
-        inStream = new ByteArrayInputStream(in);
-        return this;
-    }
-
-    /**
      * @return The testing TTY
      */
     public STTY tty() {
         return tty;
     }
 
-    /**
-     * Make a terminal for testing.
-     * @param mode The output mode of the terminal.
-     * @return The testing terminal
-     */
-    public Terminal terminal(STTYMode mode) {
+    @Override
+    public void close() {
         try {
-            return new Terminal(tty,
-                                in,
-                                outStream,
-                                null,
-                                makeSttyModeSwitcher(mode));
+            if (switcher != null) {
+                switcher.close();
+            }
         } catch (IOException e) {
-            throw new AssertionError(e.getMessage(), e);
+            // OOPS. But *should* be impossible.
+            throw new AssertionError(e.getMessage());
+        } finally {
+            switcher = null;
+            System.setErr(originalErr);
+            System.setOut(originalOut);
+            System.setIn(originalIn);
         }
     }
 
     @Override
-    public void close() {
-        System.setErr(originalErr);
-        System.setOut(originalOut);
-        System.setIn(originalIn);
-    }
-
-    @Override
     protected void starting(Description description) {
+        try {
+            switcher = makeSttyModeSwitcher(STTYMode.COOKED);
+        } catch (IOException e) {
+            // OOPS. But *should* be impossible.
+            throw new AssertionError(e.getMessage());
+        }
         setUpStreams();
 
         started = true;
@@ -302,9 +288,6 @@ public class ConsoleWatcher extends TestWatcher implements AutoCloseable {
         outStream = new ByteArrayOutputStream();
         errStream = new ByteArrayOutputStream();
         inStream = new ByteArrayInputStream(new byte[0]);
-
-        out = new PrintStream(outStream);
-        err = new PrintStream(errStream);
     }
 
     private STTYModeSwitcher makeSttyModeSwitcher(STTYMode mode) throws IOException {
@@ -314,6 +297,30 @@ public class ConsoleWatcher extends TestWatcher implements AutoCloseable {
                 // Do nothing.
             }
         };
+    }
+
+    private class WrappedOutputStream extends OutputStream {
+        @Override
+        public void write(int i) throws IOException {
+            outStream.write(i);
+        }
+
+        @Override
+        public void write(@Nonnull byte[] bytes, int off, int len) throws IOException {
+            outStream.write(bytes, off, len);
+        }
+    }
+
+    private class WrappedErrorStream extends OutputStream {
+        @Override
+        public void write(int i) throws IOException {
+            errStream.write(i);
+        }
+
+        @Override
+        public void write(@Nonnull byte[] bytes, int off, int len) throws IOException {
+            errStream.write(bytes, off, len);
+        }
     }
 
     private class WrappedInputStream extends InputStream {
@@ -333,28 +340,18 @@ public class ConsoleWatcher extends TestWatcher implements AutoCloseable {
         }
 
         @Override
-        public boolean markSupported() {
-            return inStream.markSupported();
-        }
-
-        @Override
         public long skip(long l) throws IOException {
             return inStream.skip(l);
         }
 
         @Override
-        public void mark(int i) {
-            inStream.mark(i);
-        }
-
-        @Override
-        public void reset() throws IOException {
-            inStream.reset();
-        }
-
-        @Override
         public void close() throws IOException {
-            inStream.close();
+            inStream = new ByteArrayInputStream(new byte[0]);
+        }
+
+        @Override
+        public int available() throws IOException {
+            return inStream.available();
         }
     }
 }
