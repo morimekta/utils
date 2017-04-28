@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.Collections;
 import java.util.LinkedList;
+import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -88,22 +89,30 @@ public class InputSelectionTest {
             builder.add("entry " + i);
         }
 
+        List<InputSelection.Command<String>> commands =
+                ImmutableList.of(new InputSelection.Command<>('a', "Action", action),
+                                 new InputSelection.Command<>(Control.DELETE, "Delete", (s, lp) -> {
+                                     Collections.reverse(builder);
+                                     return InputSelection.Reaction.UPDATE_KEEP_ITEM;
+                                 }),
+                                 new InputSelection.Command<>(Control.DPAD_MID, "Delete", (s, lp) -> {
+                                     Collections.reverse(builder);
+                                     return InputSelection.Reaction.UPDATE_KEEP_POSITION;
+                                 }),
+                                 new InputSelection.Command<>('x', "Delete", (s, lp) -> InputSelection.Reaction.EXIT),
+                                 new InputSelection.Command<>(Char.TAB,
+                                                              "Delete",
+                                                              (s, t) -> InputSelection.Reaction.STAY),
+                                 new InputSelection.Command<>('\r',
+                                                              "Select",
+                                                              (s, t) -> InputSelection.Reaction.SELECT,
+                                                              true));
+
         // There is a bug in oracle JDK 8 that fails this <> generic check.
         return new InputSelection<>(new Terminal(console.tty()),
                                     "select",
                                     builder,
-                                    ImmutableList.of(new InputSelection.Command<>('a', "Action", action),
-                                                     new InputSelection.Command<>(Control.DELETE, "Delete", (s, lp) -> {
-                                                         Collections.reverse(builder);
-                                                         return InputSelection.Reaction.UPDATE_KEEP_ITEM;
-                                                     }),
-                                                     new InputSelection.Command<>(Control.DPAD_MID, "Delete", (s, lp) -> {
-                                                         Collections.reverse(builder);
-                                                         return InputSelection.Reaction.UPDATE_KEEP_POSITION;
-                                                     }),
-                                                     new InputSelection.Command<>('x', "Delete", (s, lp) -> InputSelection.Reaction.EXIT),
-                                                     new InputSelection.Command<>(Char.TAB, "Delete", (s, t) -> InputSelection.Reaction.STAY),
-                                                     new InputSelection.Command<>('\r', "Select", (s, t) -> InputSelection.Reaction.SELECT, true)),
+                                    commands,
                                     (s, c) -> s);
     }
 }
