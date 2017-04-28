@@ -26,16 +26,18 @@ import static java.lang.String.format;
 public class Interactive {
     public static void main(String[] args) throws IOException, InterruptedException {
         try (Terminal term = new Terminal()) {
-            Progress progress = new Progress(term, Clock.systemUTC(), "Progress", 1234567890);
-            for (int i = 1; i <= 1234567890; i += 1234567) {
+            Progress progress = new Progress(term, Clock.systemUTC(), Progress.Spinner.BLOCKS, "Progress", 1234567890);
+            for (int i = 1; i <= 1234567890; i += 123456) {
                 Thread.sleep(5L);
                 progress.update(i);
             }
             progress.update(1234567890);
             term.println();
 
-            List<String> entries = ExtraStreams.range(0x0000, 0x10000, 4)
+            List<String> entries = ExtraStreams.range(0x0000, 0x20000, 4)
                                                .mapToObj(i -> {
+                                                   // [ 0xd000 -> 0xe000 > is reserved for utf-16 funkyness.
+                                                   if (0xd000 <= i && i < 0xe000) return "";
                                                    StringBuilder builder = new StringBuilder();
                                                    for (int c = i; c < i + 4; ++c) {
                                                        Unicode u = new Unicode(c);
@@ -55,7 +57,7 @@ public class Interactive {
                                                    }
                                                    builder.append('|');
                                                    return builder.toString();
-                                               }).collect(Collectors.toList());
+                                               }).filter(f -> !f.isEmpty()).collect(Collectors.toList());
             List<InputSelection.Command<String>> commands = new ArrayList<>();
 
             commands.add(new InputSelection.Command<>(Char.CR, "select", (e, p) -> InputSelection.Reaction.SELECT, true));

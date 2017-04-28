@@ -11,9 +11,68 @@ import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 
 /**
- * Created by morimekta on 28.04.17.
+ * Show progress on a single task in how many percent (with spinner and
+ * progress-bar). Spinner type is configurable.
  */
 public class Progress {
+    /**
+     * Which spinner to show. Some may require extended unicode font to
+     * be used in the console without just showing '?'.
+     */
+    public enum Spinner {
+        /**
+         * Simple ASCII spinner using '|', '/', '-', '\'. This variant will
+         * <b>always</b> work.
+         */
+        ASCII,
+        /**
+         * Using a block
+         */
+        BLOCKS,
+        /**
+         * Use Unicode clock symbols, 0x1f550 -&gt; 0x1f55b:
+         * '🕐', '🕑', '🕒', '🕓', '🕔', '🕕', '🕖', '🕗', '🕘', '🕙', '🕚', '🕛'
+         */
+        CLOCK,
+    }
+
+    private static final Char[] ascii_spinner = {
+            new Unicode('|'),
+            new Unicode('/'),
+            new Unicode('-'),
+            new Unicode('\\')
+    };
+    private static final Char[] block_spinner = {
+            new Unicode(0x2581),  // 1/8 block
+            new Unicode(0x2582),  // 2/8 block
+            new Unicode(0x2583),  // ...
+            new Unicode(0x2584),  //
+            new Unicode(0x2585),  //
+            new Unicode(0x2586),  // ...
+            new Unicode(0x2587),  // 7/8 block
+            new Unicode(0x2588),  // 8/8 (full) block
+            new Unicode(0x2587),  // 7/8 block
+            new Unicode(0x2586),  // ...
+            new Unicode(0x2585),  //
+            new Unicode(0x2584),  //
+            new Unicode(0x2583),  // ...
+            new Unicode(0x2582)   // 2/8 block
+    };
+    private static final Char[] clock_spinner = {
+            new Unicode(0x1f550),  // 1 o'clock
+            new Unicode(0x1f551),  // ...
+            new Unicode(0x1f552),
+            new Unicode(0x1f553),
+            new Unicode(0x1f554),
+            new Unicode(0x1f555),
+            new Unicode(0x1f556),
+            new Unicode(0x1f557),
+            new Unicode(0x1f558),
+            new Unicode(0x1f559),
+            new Unicode(0x1f55a),  // ...
+            new Unicode(0x1f55b)   // 12 o'clock
+    };
+
     private final Terminal terminal;
     private final Char[]   spinner;
     private final long     total;
@@ -25,20 +84,36 @@ public class Progress {
     private long last_update;
 
     public Progress(Terminal terminal,
+                    String what,
+                    long total) {
+        this(terminal, Clock.systemUTC(), Spinner.ASCII, what, total);
+    }
+
+    public Progress(Terminal terminal,
                     Clock clock,
+                    Spinner spinner,
                     String what,
                     long total) {
         this.terminal = terminal;
-        this.spinner = new Char[]{
-                new Unicode('○'),
-                new Unicode('◔'),
-                new Unicode('◑'),
-                new Unicode('◕'),
-                new Unicode('●'),
-                new Unicode('◕'),
-                new Unicode('◑'),
-                new Unicode('◔')
-        };
+        if (spinner == null) {
+            this.spinner = ascii_spinner;
+        } else {
+            switch (spinner) {
+                case ASCII:
+                    this.spinner = ascii_spinner;
+                    break;
+                case BLOCKS:
+                    this.spinner = block_spinner;
+                    break;
+                case CLOCK:
+                    this.spinner = clock_spinner;
+                    break;
+                default:
+                    this.spinner = ascii_spinner;
+                    break;
+            }
+        }
+
         this.what = what;
         this.spinner_pos = 0;
         this.total = total;
