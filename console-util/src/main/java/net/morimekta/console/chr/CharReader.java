@@ -43,6 +43,20 @@ public class CharReader {
     }
 
     /**
+     * Read a single char if ready (something is available in the input
+     * stream), otherwise return null.
+     *
+     * @return The read char or null of not ready.
+     * @throws IOException If failed to read from input.
+     */
+    public Char readIfAvailable() throws IOException {
+        if (in.ready()) {
+            return read();
+        }
+        return null;
+    }
+
+    /**
      * Read the next char.
      *
      * @return The next char, or null of input stream is closed.
