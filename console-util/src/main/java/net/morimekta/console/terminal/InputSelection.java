@@ -148,7 +148,8 @@ public class InputSelection<E> {
         }
 
         public Command(Char key, String name, Action<E> action, boolean hidden) {
-            this.key = key;
+            // Since '\r' and 'n' are basically interchangeable.
+            this.key = key.asInteger() == '\r' ? new Unicode('\n') : key;
             this.name = name;
             this.action = action;
             this.hidden = hidden;
@@ -237,12 +238,7 @@ public class InputSelection<E> {
         this.printer = printer;
         this.pageSize = pageSize;
         if (lineWidth == 0) {
-            if (terminal.getTTY().isInteractive()) {
-                this.lineWidth = terminal.getTTY().getTerminalSize().cols;
-            } else {
-                // Fallback for non-interactive terminals.
-                this.lineWidth = 100;
-            }
+            this.lineWidth = terminal.getTTY().getTerminalSize().cols;
         } else {
             this.lineWidth = lineWidth;
         }
@@ -294,6 +290,10 @@ public class InputSelection<E> {
                 if (ch == Char.EOF || ch == Char.ESC || ch == Char.ABR) {
                     throw new IOException("User interrupted: " + c.asString());
                 }
+                if (ch == Char.CR) {
+                    ch = Char.LF;
+                    c = new Unicode(Char.LF);
+                }
 
                 if (handleDigit(ch) ||
                     handleControl(c)) {
@@ -316,7 +316,7 @@ public class InputSelection<E> {
                         case STAY: {
                             // Updates the selected line only.
                             int off = paged ? 2 : 1;
-                            lineBuffer.update(off + index, makeEntryLine(index));
+                            lineBuffer.update(off + currentOffset, makeEntryLine(index));
                             break;
                         }
                         case UPDATE_KEEP_ITEM: {
