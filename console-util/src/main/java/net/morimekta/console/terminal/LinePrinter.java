@@ -88,4 +88,14 @@ public interface LinePrinter {
                               Color.CLEAR,
                               message));
     }
+
+    /**
+     * Format and print a string message.
+     *
+     * @param format The message format.
+     * @param params Printf like params to format.
+     */
+    default void formatln(String format, Object... params) {
+        println(String.format(format, params));
+    }
 }

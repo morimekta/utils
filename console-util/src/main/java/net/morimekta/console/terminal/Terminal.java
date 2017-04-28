@@ -20,14 +20,13 @@
  */
 package net.morimekta.console.terminal;
 
+import com.google.common.annotations.VisibleForTesting;
 import net.morimekta.console.chr.Char;
 import net.morimekta.console.chr.CharReader;
 import net.morimekta.console.chr.Control;
 import net.morimekta.console.util.STTY;
 import net.morimekta.console.util.STTYMode;
 import net.morimekta.console.util.STTYModeSwitcher;
-
-import com.google.common.annotations.VisibleForTesting;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -198,10 +197,6 @@ public class Terminal extends CharReader implements Closeable, LinePrinter {
 
     public void format(String format, Object... args) {
         print(String.format(format, args));
-    }
-
-    public void formatln(String format, Object... args) {
-        println(String.format(format, args));
     }
 
     public void print(Char ch) {

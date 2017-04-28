@@ -1,5 +1,6 @@
 package net.morimekta.console.terminal;
 
+import com.google.common.annotations.VisibleForTesting;
 import net.morimekta.console.chr.Char;
 import net.morimekta.console.chr.Color;
 import net.morimekta.console.chr.Control;
@@ -79,48 +80,52 @@ public class Progress {
     private final long     start;
     private final Clock    clock;
     private final String   what;
+    private final LinePrinter updater;
 
     private int spinner_pos;
     private long last_update;
 
     public Progress(Terminal terminal,
-                    String what,
-                    long total) {
-        this(terminal, Clock.systemUTC(), Spinner.ASCII, what, total);
-    }
-
-    public Progress(Terminal terminal,
-                    Clock clock,
                     Spinner spinner,
                     String what,
                     long total) {
-        this.terminal = terminal;
-        if (spinner == null) {
-            this.spinner = ascii_spinner;
-        } else {
-            switch (spinner) {
-                case ASCII:
-                    this.spinner = ascii_spinner;
-                    break;
-                case BLOCKS:
-                    this.spinner = block_spinner;
-                    break;
-                case CLOCK:
-                    this.spinner = clock_spinner;
-                    break;
-                default:
-                    this.spinner = ascii_spinner;
-                    break;
-            }
-        }
+        this(terminal, null, Clock.systemUTC(), spinner, what, total);
+    }
 
+    public Progress(LinePrinter updater,
+                    Spinner spinner,
+                    String what,
+                    long total) {
+        this(null, updater, Clock.systemUTC(), spinner, what, total);
+    }
+
+    /**
+     * Create a progress updater. Note that <b>either</b> terminal or the
+     * updater param must be set.
+     *
+     * @param terminal The terminal to print to.
+     * @param updater The updater to write to.
+     * @param clock The clock to use for timing.
+     * @param spinner The spinner type.
+     * @param what What progresses.
+     * @param total The total value to be 'progressed'.
+     */
+    @VisibleForTesting
+    protected Progress(Terminal terminal,
+                       LinePrinter updater,
+                       Clock clock,
+                       Spinner spinner,
+                       String what,
+                       long total) {
+        this.terminal = terminal;
+        this.spinner = getSpinner(spinner);
+        this.updater = updater != null ? updater : this::println;
         this.what = what;
         this.spinner_pos = 0;
         this.total = total;
         this.start = clock.millis();
         this.clock = clock;
 
-        terminal.finish();
         update(0);
     }
 
@@ -138,53 +143,71 @@ public class Progress {
 
             int remaining_pct = 100 - pct;
 
-            long duration_ms = clock.millis() - start;
-            Duration remaining = null;
+            long     duration_ms = clock.millis() - start;
+            Duration remaining   = null;
             if (duration_ms > 3000) {
                 long assumed_total = (long) (((double) duration_ms) / fraction);
-                long remaining_ms = assumed_total - duration_ms;
+                long remaining_ms  = assumed_total - duration_ms;
                 remaining = Duration.of(remaining_ms, ChronoUnit.MILLIS);
             }
 
             spinner_pos = (spinner_pos + 1) % spinner.length;
 
             if (pct < 100) {
-                terminal.format("\r%s%s: [%s%s%s%s%s%s%s%s] %3d%%%s",
-                                Control.CURSOR_ERASE,
-                                what,
-                                Color.GREEN,
-                                Strings.times("#", pct),
-                                new Color(Color.YELLOW, Color.BOLD),
-                                spinner[spinner_pos],
-                                Color.CLEAR, Color.YELLOW,
-                                Strings.times("-", remaining_pct - 1),
-                                Color.CLEAR,
-                                pct,
-                                remaining == null ? "" : " +(" + format(remaining) + ")");
+                updater.formatln("%s: [%s%s%s%s%s%s%s%s] %3d%%%s",
+                                 what,
+                                 Color.GREEN,
+                                 Strings.times("#", pct),
+                                 new Color(Color.YELLOW, Color.BOLD),
+                                 spinner[spinner_pos],
+                                 Color.CLEAR, Color.YELLOW,
+                                 Strings.times("-", remaining_pct - 1),
+                                 Color.CLEAR,
+                                 pct,
+                                 remaining == null ? "" : " +(" + format(remaining) + ")");
             } else {
-                terminal.format("\r%s%s: [%s%s%s%s%s] 100%%%s",
-                                Control.CURSOR_ERASE,
-                                what,
-                                Color.GREEN,
-                                Strings.times("#", 99),
-                                new Color(Color.YELLOW, Color.BOLD),
-                                spinner[spinner_pos],
-                                Color.CLEAR,
-                                remaining == null ? "" : " +(" + format(remaining) + ")");
+                updater.formatln("%s: [%s%s%s%s%s] 100%%%s",
+                                 what,
+                                 Color.GREEN,
+                                 Strings.times("#", 99),
+                                 new Color(Color.YELLOW, Color.BOLD),
+                                 spinner[spinner_pos],
+                                 Color.CLEAR,
+                                 remaining == null ? "" : " +(" + format(remaining) + ")");
             }
             last_update = now;
         } else {
             if (now >= last_update) {
-                terminal.format("\r%s%s: [%s%s%s] 100%% @ %s",
-                                Control.CURSOR_ERASE,
-                                what,
-                                Color.GREEN,
-                                Strings.times("#", 100),
-                                Color.CLEAR,
-                                format(Duration.of(now - start, ChronoUnit.MILLIS)));
+                updater.formatln("%s: [%s%s%s] 100%% @ %s",
+                                 what,
+                                 Color.GREEN,
+                                 Strings.times("#", 100),
+                                 Color.CLEAR,
+                                 format(Duration.of(now - start, ChronoUnit.MILLIS)));
             }
             last_update = Long.MAX_VALUE;
         }
+    }
+
+    private Char[] getSpinner(Spinner spinner) {
+        if (spinner == null) {
+            return ascii_spinner;
+        } else {
+            switch (spinner) {
+                case ASCII:
+                    return ascii_spinner;
+                case BLOCKS:
+                    return block_spinner;
+                case CLOCK:
+                    return clock_spinner;
+                default:
+                    return ascii_spinner;
+            }
+        }
+    }
+
+    private void println(String format, Object... args) {
+        terminal.format("\r" + Control.CURSOR_ERASE + format, args);
     }
 
     private String format(Duration duration) {

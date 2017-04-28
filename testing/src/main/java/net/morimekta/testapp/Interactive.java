@@ -10,7 +10,6 @@ import net.morimekta.util.ExtraStreams;
 import net.morimekta.util.Strings;
 
 import java.io.IOException;
-import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -26,7 +25,7 @@ import static java.lang.String.format;
 public class Interactive {
     public static void main(String[] args) throws IOException, InterruptedException {
         try (Terminal term = new Terminal()) {
-            Progress progress = new Progress(term, Clock.systemUTC(), Progress.Spinner.BLOCKS, "Progress", 1234567890);
+            Progress progress = new Progress(term, Progress.Spinner.BLOCKS, "Progress", 1234567890);
             for (int i = 1; i <= 1234567890; i += 123456) {
                 Thread.sleep(5L);
                 progress.update(i);
