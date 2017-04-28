@@ -29,15 +29,15 @@ public class Progress {
                     String what,
                     long total) {
         this.terminal = terminal;
-        this.spinner = new Char[] {
-                new Unicode('┤'),
-                new Unicode('┘'),
-                new Unicode('┴'),
-                new Unicode('└'),
-                new Unicode('├'),
-                new Unicode('┌'),
-                new Unicode('┬'),
-                new Unicode('┐')
+        this.spinner = new Char[]{
+                new Unicode('○'),
+                new Unicode('◔'),
+                new Unicode('◑'),
+                new Unicode('◕'),
+                new Unicode('●'),
+                new Unicode('◕'),
+                new Unicode('◑'),
+                new Unicode('◔')
         };
         this.what = what;
         this.spinner_pos = 0;
@@ -123,6 +123,6 @@ public class Progress {
             return String.format("%2d:%02d min", m, s);
         }
         long ms = duration.minusHours(h).minusMinutes(m).minusSeconds(s).toMillis();
-        return String.format("%2d.%03d s ", s, ms);
+            return String.format("%3d.%1d s  ", s, ms / 100);
     }
 }

@@ -27,10 +27,11 @@ public class Interactive {
     public static void main(String[] args) throws IOException, InterruptedException {
         try (Terminal term = new Terminal()) {
             Progress progress = new Progress(term, Clock.systemUTC(), "Progress", 1234567890);
-            for (int i = 1; i <= 1234567890; i += 123456) {
+            for (int i = 1; i <= 1234567890; i += 1234567) {
                 Thread.sleep(5L);
                 progress.update(i);
             }
+            progress.update(1234567890);
             term.println();
 
             List<String> entries = ExtraStreams.range(0x0000, 0x10000, 4)
