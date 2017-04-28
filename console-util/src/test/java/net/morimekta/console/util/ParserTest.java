@@ -57,21 +57,15 @@ import static org.junit.Assert.fail;
  */
 public class ParserTest {
     @Rule
-    public TemporaryFolder tmp;
+    public TemporaryFolder tmp = new TemporaryFolder();
 
     private File tempFile;
     private File tempDir;
 
     @Before
     public void setUp() throws IOException {
-        tmp = new TemporaryFolder();
-        tmp.create();
-
         tempFile = tmp.newFile("file");
         tempDir = tmp.newFolder("dir");
-
-        tempFile.createNewFile();
-        tempDir.mkdirs();
     }
 
     @Test
@@ -174,8 +168,7 @@ public class ParserTest {
         assertEquals(tempFile, f.get());
 
         try {
-            File not = tmp.newFile("exists.not");
-            not.delete();
+            File not = new File(tmp.getRoot(), "exists.not");
 
             file(f::set).accept(not.getAbsolutePath());
             fail("No exception on invalid value.");
@@ -193,8 +186,7 @@ public class ParserTest {
         assertEquals(tempDir, f.get());
 
         try {
-            File not = tmp.newFile("exists.not");
-            not.delete();
+            File not = new File(tmp.getRoot(), "exists.not");
 
             dir(f::set).accept(not.getAbsolutePath());
             fail("No exception on invalid value.");
@@ -210,11 +202,11 @@ public class ParserTest {
         outputFile(f::set).accept(tempFile.getAbsolutePath());
         assertEquals(tempFile, f.get());
 
-        tempFile.delete();
+        File not = new File(tmp.getRoot(), "exists.not");
         f.set(null);
 
-        outputFile(f::set).accept(tempFile.getAbsolutePath());
-        assertEquals(tempFile, f.get());
+        outputFile(f::set).accept(not.getAbsolutePath());
+        assertEquals(not, f.get());
 
         try {
             outputFile(f::set).accept(tempDir.getAbsolutePath());

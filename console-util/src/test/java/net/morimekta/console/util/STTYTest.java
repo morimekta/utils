@@ -1,6 +1,8 @@
 package net.morimekta.console.util;
 
+import net.morimekta.console.test_utils.ConsoleWatcher;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
@@ -22,6 +24,9 @@ import static org.mockito.Mockito.when;
  * Tests for the terminal size utility.
  */
 public class STTYTest {
+    @Rule
+    public ConsoleWatcher console = new ConsoleWatcher();
+
     private Runtime runtime;
     private Process process;
     private String output;

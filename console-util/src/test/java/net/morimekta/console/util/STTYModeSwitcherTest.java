@@ -1,5 +1,7 @@
 package net.morimekta.console.util;
 
+import net.morimekta.console.test_utils.ConsoleWatcher;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
@@ -19,6 +21,9 @@ import static org.mockito.Mockito.when;
  * Testing the TTY Mode switcher.
  */
 public class STTYModeSwitcherTest {
+    @Rule
+    public ConsoleWatcher console = new ConsoleWatcher();
+
     @Test
     public void testSwitch() throws IOException, InterruptedException {
         Runtime runtime = mock(Runtime.class);
