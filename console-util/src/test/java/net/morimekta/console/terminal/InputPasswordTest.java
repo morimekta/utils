@@ -2,65 +2,51 @@ package net.morimekta.console.terminal;
 
 import net.morimekta.console.chr.Char;
 import net.morimekta.console.chr.Control;
-import net.morimekta.console.chr.Unicode;
-import net.morimekta.console.terminal.InputPassword;
-import net.morimekta.console.terminal.Terminal;
-import net.morimekta.console.test_utils.TerminalTestUtils;
-import net.morimekta.console.util.STTY;
-import net.morimekta.util.Strings;
-
+import net.morimekta.console.test_utils.ConsoleWatcher;
+import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.UncheckedIOException;
 
-import static net.morimekta.console.test_utils.TerminalTestUtils.mockInput;
-import static org.junit.Assert.assertArrayEquals;
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.verifyZeroInteractions;
 
 /**
  * Testing the line input.
  */
 public class InputPasswordTest {
+    @Rule
+    public ConsoleWatcher console = new ConsoleWatcher();
+    private Terminal terminal;
+
+    @Before
+    public void setUp() {
+        terminal = new Terminal(console.tty());
+    }
+
     @Test
     public void testReadLine() throws IOException {
-        InputStream in = mock(InputStream.class);
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-
-        Terminal terminal = TerminalTestUtils.getTerminal(new STTY(), out, in);
-
         InputPassword li = new InputPassword(terminal, "Test");
 
-        verifyZeroInteractions(in);
-        reset(in);
+        console.setInput('a',
+                         Control.LEFT,
+                         'b',
+                         Char.CR);
 
-        assertArrayEquals(new byte[]{}, out.toByteArray());
-
-        mockInput(in,
-                  new Unicode('a'),
-                  Control.LEFT,
-                  new Unicode('b'),
-                  new Unicode(Char.CR));
-
-        assertEquals("ba", li.readPassword());
-
-        assertEquals("Test: " +
-                     "\\r\\033[KTest: *" +
-                     "\\r\\033[KTest: *\\033[1D" +
-                     "\\r\\033[KTest: **\\033[1D",
-                     Strings.escape(new String(out.toByteArray())));
+        assertThat(li.readPassword(), is("ba"));
+        assertThat(console.output(),
+                   is("Test: " +
+                      "\r\033[KTest: *" +
+                      "\r\033[KTest: *\033[1D" +
+                      "\r\033[KTest: **\033[1D"));
     }
 
     @Test
     public void testEOF() throws IOException {
-        Terminal terminal = TerminalTestUtils.getTerminal(new STTY());
-
         try {
             new InputPassword(terminal, "test").readPassword();
             fail("No exception");
@@ -71,20 +57,34 @@ public class InputPasswordTest {
 
     @Test
     public void testMovements() throws IOException {
-        Terminal terminal = TerminalTestUtils.getTerminal(new STTY(),
-                                                          "aba",
-                                                          Control.LEFT,
-                                                          Control.LEFT,
-                                                          "cd",
-                                                          Control.CTRL_LEFT,
-                                                          Char.DEL,
-                                                          "e",
-                                                          Control.RIGHT,
-                                                          "f",
-                                                          Control.CTRL_RIGHT,
-                                                          "g",
-                                                          Char.CR);
+        console.setInput(
+                "aba",
+                Control.LEFT,
+                'b',
+                Control.HOME,
+                '-',
+                Control.RIGHT,
+                Control.END,
+                Char.DEL,
+                Control.LEFT,
+                "e\t",
+                Control.DELETE,
+                "fg",
+                Char.CR);
 
-        assertEquals("acebfga", new InputPassword(terminal, "test").readPassword());
+        assertThat(new InputPassword(terminal, "test").readPassword(),
+                   is("-abefg"));
+    }
+
+    @Test
+    public void testInterrupt() {
+        console.setInput("ab", Char.ESC);
+        try {
+            new InputPassword(terminal, "test").readPassword();
+            fail();
+        } catch (UncheckedIOException e) {
+            assertThat(e.getMessage(),
+                       is("java.io.IOException: User interrupted: <ESC>"));
+        }
     }
 }
