@@ -16,6 +16,7 @@ import java.time.temporal.ChronoUnit;
  * progress-bar). Spinner type is configurable.
  */
 public class Progress {
+
     /**
      * Which spinner to show. Some may require extended unicode font to
      * be used in the console without just showing '?'.
@@ -26,10 +27,22 @@ public class Progress {
          * <b>always</b> work.
          */
         ASCII,
+
         /**
-         * Using a block
+         * Using a block char that bounces up and down to show progress.
+         * Not exactly <i>spinning</i>, but does the job. Using unicode
+         * chars 0x2581 -&gt; 0x2588;
+         *
+         * '▁', '▂', '▃', '▄', '▅', '▆', '▇', '█'
          */
         BLOCKS,
+
+        /**
+         * A spinning arrow. Using 0x.... -&gt; 0x....:
+         * '⭠', '⭦', '⭡', '⭧', '⭢', '⭨', '⭣', '⭩'
+         */
+        ARROWS,
+
         /**
          * Use Unicode clock symbols, 0x1f550 -&gt; 0x1f55b:
          * '🕐', '🕑', '🕒', '🕓', '🕔', '🕕', '🕖', '🕗', '🕘', '🕙', '🕚', '🕛'
@@ -59,6 +72,16 @@ public class Progress {
             new Unicode(0x2583),  // ...
             new Unicode(0x2582)   // 2/8 block
     };
+    private static final Char[] arrow_spinner = {
+                new Unicode('⭠'),
+                new Unicode('⭦'),
+                new Unicode('⭡'),
+                new Unicode('⭧'),
+                new Unicode('⭢'),
+                new Unicode('⭨'),
+                new Unicode('⭣'),
+                new Unicode('⭩')
+    };
     private static final Char[] clock_spinner = {
             new Unicode(0x1f550),  // 1 o'clock
             new Unicode(0x1f551),  // ...
@@ -76,6 +99,8 @@ public class Progress {
 
     private final Terminal terminal;
     private final Char[]   spinner;
+    private final Char     done_chr;
+    private final Char     remain_chr;
     private final long     total;
     private final long     start;
     private final Clock    clock;
@@ -119,6 +144,8 @@ public class Progress {
                        long total) {
         this.terminal = terminal;
         this.spinner = getSpinner(spinner);
+        this.done_chr = getDoneChar();
+        this.remain_chr = getRemainChar(spinner);
         this.updater = updater != null ? updater : this::println;
         this.what = what;
         this.spinner_pos = 0;
@@ -126,7 +153,23 @@ public class Progress {
         this.start = clock.millis();
         this.clock = clock;
 
+        if (terminal != null) {
+            terminal.finish();
+        }
         update(0);
+    }
+
+    private Char getRemainChar(Spinner spinner) {
+        if (spinner == null ||
+            spinner == Spinner.ASCII) {
+            return new Unicode('-');
+        } else {
+            return new Unicode('\u22c5');
+        }
+    }
+
+    private Char getDoneChar() {
+        return new Unicode('#');
     }
 
     public void update(long current) {
@@ -157,11 +200,11 @@ public class Progress {
                 updater.formatln("%s: [%s%s%s%s%s%s%s%s] %3d%%%s",
                                  what,
                                  Color.GREEN,
-                                 Strings.times("#", pct),
+                                 Strings.times(done_chr.toString(), pct),
                                  new Color(Color.YELLOW, Color.BOLD),
                                  spinner[spinner_pos],
                                  Color.CLEAR, Color.YELLOW,
-                                 Strings.times("-", remaining_pct - 1),
+                                 Strings.times(remain_chr.toString(), remaining_pct - 1),
                                  Color.CLEAR,
                                  pct,
                                  remaining == null ? "" : " +(" + format(remaining) + ")");
@@ -169,7 +212,7 @@ public class Progress {
                 updater.formatln("%s: [%s%s%s%s%s] 100%%%s",
                                  what,
                                  Color.GREEN,
-                                 Strings.times("#", 99),
+                                 Strings.times(done_chr.toString(), 99),
                                  new Color(Color.YELLOW, Color.BOLD),
                                  spinner[spinner_pos],
                                  Color.CLEAR,
@@ -181,7 +224,7 @@ public class Progress {
                 updater.formatln("%s: [%s%s%s] 100%% @ %s",
                                  what,
                                  Color.GREEN,
-                                 Strings.times("#", 100),
+                                 Strings.times(done_chr.toString(), 100),
                                  Color.CLEAR,
                                  format(Duration.of(now - start, ChronoUnit.MILLIS)));
             }
@@ -198,6 +241,8 @@ public class Progress {
                     return ascii_spinner;
                 case BLOCKS:
                     return block_spinner;
+                case ARROWS:
+                    return arrow_spinner;
                 case CLOCK:
                     return clock_spinner;
                 default:
@@ -206,8 +251,8 @@ public class Progress {
         }
     }
 
-    private void println(String format, Object... args) {
-        terminal.format("\r" + Control.CURSOR_ERASE + format, args);
+    private void println(String line) {
+        terminal.print("\r" + Control.CURSOR_ERASE + line);
     }
 
     private String format(Duration duration) {
