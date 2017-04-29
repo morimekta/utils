@@ -22,6 +22,8 @@ package net.morimekta.console.terminal;
 
 import net.morimekta.console.chr.Color;
 
+import static java.lang.String.format;
+
 /**
  * LinePrinter interface.
  */
@@ -40,7 +42,7 @@ public interface LinePrinter {
      * @param params Printf like params to format.
      */
     default void formatln(String format, Object... params) {
-        println(String.format(format, params));
+        println(format(format, params));
     }
 
     /**
@@ -50,11 +52,11 @@ public interface LinePrinter {
      * @param params Printf like params to format.
      */
     default void info(String format, Object... params) {
-        String message = params.length > 0 ? format : String.format(format, params);
-        println(String.format("%s[info]%s %s",
-                              Color.GREEN,
-                              Color.CLEAR,
-                              message));
+        String message = params.length == 0 ? format : format(format, params);
+        println(format("%s[info]%s %s",
+                       Color.GREEN,
+                       Color.CLEAR,
+                       message));
     }
 
     /**
@@ -64,11 +66,11 @@ public interface LinePrinter {
      * @param params Printf like params to format.
      */
     default void warn(String format, Object... params) {
-        String message = params.length > 0 ? format : String.format(format, params);
-        println(String.format("%s[warn]%s %s",
-                              Color.YELLOW,
-                              Color.CLEAR,
-                              message));
+        String message = params.length == 0 ? format : format(format, params);
+        println(format("%s[warn]%s %s",
+                       Color.YELLOW,
+                       Color.CLEAR,
+                       message));
     }
 
     /**
@@ -78,11 +80,11 @@ public interface LinePrinter {
      * @param params Printf like params to format.
      */
     default void error(String format, Object... params) {
-        String message = params.length > 0 ? format : String.format(format, params);
-        println(String.format("%s[error]%s %s",
-                              Color.RED,
-                              Color.CLEAR,
-                              message));
+        String message = params.length == 0 ? format : format(format, params);
+        println(format("%s[error]%s %s",
+                       Color.RED,
+                       Color.CLEAR,
+                       message));
     }
 
     /**
@@ -92,10 +94,10 @@ public interface LinePrinter {
      * @param params Printf like params to format.
      */
     default void fatal(String format, Object... params) {
-        String message = params.length > 0 ? format : String.format(format, params);
-        println(String.format("%s[FATAL]%s %s",
-                              new Color(Color.RED, Color.BOLD),
-                              Color.CLEAR,
-                              message));
+        String message = params.length == 0 ? format : format(format, params);
+        println(format("%s[FATAL]%s %s",
+                       new Color(Color.RED, Color.BOLD),
+                       Color.CLEAR,
+                       message));
     }
 }
