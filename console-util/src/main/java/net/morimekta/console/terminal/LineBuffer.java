@@ -24,6 +24,7 @@ import com.google.common.collect.ImmutableList;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 import static net.morimekta.console.chr.CharUtil.printableWidth;
 import static net.morimekta.console.chr.Control.CURSOR_ERASE;
@@ -40,6 +41,9 @@ import static net.morimekta.console.chr.Control.cursorUp;
  * The class acts as a wrapper around a {@link Terminal} instance, and
  * makes sure that a list of lines can be updated and printed properly to
  * the terminal in the most efficient order.
+ *
+ * Example uses are for showing a list of {@link Progress}'es, or
+ * handling the internals of a {@link InputSelection}.
  */
 public class LineBuffer {
     private final Terminal          terminal;
@@ -84,30 +88,51 @@ public class LineBuffer {
     }
 
     /**
-     * Update a specific line to show new content.
+     * Update a number of lines starting at a specific offset.
      *
-     * @param i The line index (0-indexed to count).
-     * @param line The new line content.
+     * @param offset The line offset (0-indexed to count).
+     * @param lines The new line content.
      */
-    public void update(int i, String line) {
-        if (i >= count() || i < 0) {
-            throw new IndexOutOfBoundsException("Index: " + i + ", Size: " + count());
-        }
-        String old = buffer.get(i);
-        if (old.equals(line)) {
-            // No change.
-            return;
-        }
-        buffer.set(i, line);
+    public void update(int offset, String... lines) {
+        update(offset, ImmutableList.copyOf(lines));
+    }
 
-        int up = count() - i - 1;
-
-        terminal.print("\r");
-        if (up > 0) {
-            terminal.print(cursorUp(up));
+    /**
+     * Update a number of lines starting at a specific offset.
+     *
+     * @param offset The line offset (0-indexed to count).
+     * @param lines The new line content.
+     */
+    public void update(int offset, List<String> lines) {
+        if (lines.isEmpty()) {
+            throw new IllegalArgumentException("Empty line set");
         }
-        terminal.print(CURSOR_ERASE);
-        terminal.print(line);
+        if (offset >= count() || offset < 0) {
+            throw new IndexOutOfBoundsException("Index: " + offset + ", Size: " + count());
+        }
+
+        int up = count() - offset - 1;
+        for (int i = 0; i < lines.size(); ++i) {
+            String line = lines.get(i);
+            if (i == 0) {
+                terminal.print("\r");
+                if (up > 0) {
+                    terminal.print(cursorUp(up));
+                }
+            } else {
+                terminal.println();
+                --up;
+            }
+
+            String old = buffer.get(offset);
+            if (old.equals(line)) {
+                // No change.
+                continue;
+            }
+            buffer.set(offset, line);
+            terminal.print(CURSOR_ERASE);
+            terminal.print(line);
+        }
 
         // Move the cursor back to the end of the last line.
         if (up > 0) {
@@ -115,6 +140,7 @@ public class LineBuffer {
                             cursorDown(up),
                             cursorRight(printableWidth(lastLine())));
         }
+
     }
 
     /**
@@ -155,11 +181,9 @@ public class LineBuffer {
             buffer.remove(buffer.size() - 1);
         }
 
-        if (count() > 0) {
-            terminal.format("\r%s%s",
-                            UP,
-                            cursorRight(printableWidth(lastLine())));
-        }
+        terminal.format("%s\r%s",
+                        UP,
+                        cursorRight(printableWidth(lastLine())));
     }
 
     /**
