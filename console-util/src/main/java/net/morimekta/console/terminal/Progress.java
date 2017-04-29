@@ -108,6 +108,7 @@ public class Progress {
     private final LinePrinter updater;
 
     private int spinner_pos;
+    private int last_pct;
     private long last_update;
 
     public Progress(Terminal terminal,
@@ -180,7 +181,7 @@ public class Progress {
         int pct = (int) (fraction * 100.0);
 
         if (current < total) {
-            if (now - last_update < 100) {
+            if (now - last_update < 100 && pct == last_pct) {
                 return;
             }
 
@@ -218,6 +219,7 @@ public class Progress {
                                  Color.CLEAR,
                                  remaining == null ? "" : " +(" + format(remaining) + ")");
             }
+            last_pct = pct;
             last_update = now;
         } else {
             if (now >= last_update) {
