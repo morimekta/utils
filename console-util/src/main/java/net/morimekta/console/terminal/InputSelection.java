@@ -31,11 +31,14 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.time.Clock;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static java.lang.Math.ceil;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
+import static java.lang.String.format;
 
 /**
  * Tabular selection with simple navigation.
@@ -324,22 +327,27 @@ public class InputSelection<E> {
                             // remain the same.
                             updateSelectionIndex(current);
 
-                            int off = 1;
+                            LinkedList<String> updates = new LinkedList<>();
+
                             if (paged) {
-                                lineBuffer.update(1, makeMoreEntriesLine());
-                                lineBuffer.update(shownEntries + 2, makeMoreEntriesLine());
-                                off = 2;
+                                updates.add(makeMoreEntriesLine());
                             }
                             for (int i = 0; i < shownEntries; ++i) {
-                                lineBuffer.update(off + i, makeEntryLine(i));
+                                updates.add(makeEntryLine(i));
                             }
+                            if (paged) {
+                                updates.add(makeMoreEntriesLine());
+                            }
+                            lineBuffer.update(1, updates);
                             break;
                         }
                         case UPDATE_KEEP_POSITION: {
                             int off = paged ? 2 : 1;
+                            LinkedList<String> updates = new LinkedList<>();
                             for (int i = 0; i < shownEntries; ++i) {
-                                lineBuffer.update(off + i, makeEntryLine(i));
+                                updates.add(makeEntryLine(i));
                             }
+                            lineBuffer.update(off, updates);
                             break;
                         }
                     }
@@ -440,11 +448,13 @@ public class InputSelection<E> {
                 currentIndex = index;
                 currentOffset = offset;
 
-                lineBuffer.update(1, makeMoreEntriesLine());
+                LinkedList<String> updates = new LinkedList<>();
+                updates.add(makeMoreEntriesLine());
                 for (int i = 0; i < shownEntries; ++i) {
-                    lineBuffer.update(off + i, makeEntryLine(i));
+                    updates.add(makeEntryLine(i));
                 }
-                lineBuffer.update(shownEntries + 2, makeMoreEntriesLine());
+                updates.add(makeMoreEntriesLine());
+                lineBuffer.update(1, updates);
             } else {
                 int oldIndex = currentIndex;
                 currentIndex = index;
@@ -467,22 +477,22 @@ public class InputSelection<E> {
     }
 
     private String makePromptLine() {
-        return String.format("%s [%s]",
+        return format("%s [%s]",
                              prompt,
                              Strings.join(", ",
                                           commands.stream()
                                                   .filter(c -> !c.hidden)
-                                                  .map(c -> String.format("%s=%s", c.key, c.name))
+                                                  .map(c -> format("%s=%s", c.key, c.name))
                                                   .collect(Collectors.toList())));
     }
 
     private String makeSelectionLine() {
-        return String.format("Your choice (%d..%d or %s): %s",
+        return format("Your choice (%d..%d or %s): %s",
                              1, entries.size(),
                              Strings.join(",",
                                           commands.stream()
                                                   .filter(c -> !c.hidden)
-                                                  .map(c -> String.format("%s", c.key))
+                                                  .map(c -> format("%s", c.key))
                                                   .collect(Collectors.toList())),
                              digits);
     }
@@ -490,13 +500,15 @@ public class InputSelection<E> {
     private String makeMoreEntriesLine() {
         int before = currentOffset;
         int after = max(0, entries.size() - currentOffset - pageSize);
+        int pagesBefore = currentOffset / pageSize;
+        int pagesAfter = (int) ceil(after / pageSize);
 
         String seeBefore = CharUtil.leftJust(
-                before == 0 ? "" : String.format("<-- (%d more)", before), 38);
+                before == 0 ? "" : format("<-- (pages: %d, items: %d)", pagesBefore, before), 38);
         String seeAfter = CharUtil.rightJust(
-                after == 0 ? "" : String.format("(%d more) -->", after), 38);
+                after == 0 ? "" : format("(pages: %d, items: %d) -->", pagesAfter, after), 38);
 
-        return String.format("  %s%s  ", seeBefore, seeAfter);
+        return format("  %s%s  ", seeBefore, seeAfter);
     }
 
     private String makeEntryLine(int index) {
