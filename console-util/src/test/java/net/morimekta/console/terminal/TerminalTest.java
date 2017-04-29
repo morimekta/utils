@@ -1,96 +1,80 @@
 package net.morimekta.console.terminal;
 
-import net.morimekta.console.terminal.Terminal;
-import net.morimekta.console.util.STTY;
+import net.morimekta.console.chr.Char;
+import net.morimekta.console.test_utils.ConsoleWatcher;
 import net.morimekta.console.util.STTYMode;
-import net.morimekta.console.util.STTYModeSwitcher;
-import net.morimekta.util.Strings;
-
+import org.junit.Rule;
 import org.junit.Test;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
+import java.io.UncheckedIOException;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.verifyZeroInteractions;
-import static org.mockito.Mockito.when;
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
 
-/**
- * Created by morimekta on 6/18/16.
- */
 public class TerminalTest {
+    @Rule
+    public ConsoleWatcher console = new ConsoleWatcher();
+
     @Test
     public void testConfirm() throws IOException {
-        STTYModeSwitcher switcher = mock(STTYModeSwitcher.class);
-        InputStream in = mock(InputStream.class);
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        assertConfirm("Test", "Test [Y/n]: Yes.", true, 'y');
+        assertConfirm("Boo", "Boo [Y/n]: Yes.", true, '\n');
+        assertConfirm("Test", "Test [Y/n]: No.", false, 'n');
+        assertConfirm("Test", "Test [Y/n]: No.", false, ' ', 'n');
 
-        when(switcher.didChangeMode()).thenReturn(true);
-        when(switcher.getBefore()).thenReturn(STTYMode.COOKED);
+        assertConfirm("Test",
+                      "Test [Y/n]:" +
+                      "\r\033[KTest [Y/n]: 'g' is not valid input. No.", false, 'g', 'n');
 
-        STTY tty = mock(STTY.class);
+        try {
+            console.reset();
+            console.setInput('\t', Char.ESC);
+            new Terminal(console.tty()).confirm("Test");
+            fail("no exception");
+        } catch (UncheckedIOException e) {
+            assertThat(e.getMessage(), is("java.io.IOException: User interrupted: <ESC>"));
+        }
 
-        Terminal terminal = new Terminal(tty, in, out, null, switcher);
+        try {
+            console.reset();
+            new Terminal(console.tty()).confirm("Test");
+            fail("no exception");
+        } catch (UncheckedIOException e) {
+            assertThat(e.getMessage(), is("java.io.IOException: End of stream."));
+        }
+    }
 
-        verify(switcher).didChangeMode();
-        verify(switcher).getBefore();
-        verifyNoMoreInteractions(switcher);
-        verifyZeroInteractions(in);
+    private void assertConfirm(String msg,
+                               String out,
+                               boolean value,
+                               Object... in) {
+        console.reset();
+        console.setInput(in);
 
-        assertArrayEquals(new byte[]{}, out.toByteArray());
-
-        reset(switcher, in);
-
-        when(switcher.getCurrentMode()).thenReturn(STTYMode.RAW);
-
-        when(in.read()).thenReturn((int) 'y');
-
-        assertTrue(terminal.confirm("Test"));
-
-        verify(in).read();
-        verify(switcher).getCurrentMode();
-
-        verifyNoMoreInteractions(in);
-        verifyNoMoreInteractions(switcher);
-
-        assertEquals("Test [Y/n]: Yes.", Strings.escape(new String(out.toByteArray())));
+        assertThat(new Terminal(console.tty()).confirm(msg), is(value));
+        assertThat(console.output(), is(out));
     }
 
     @Test
-    public void testLineReader() {
-        STTYModeSwitcher switcher = mock(STTYModeSwitcher.class);
-        InputStream in = mock(InputStream.class);
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
+    public void testOpenClose() throws IOException {
+        try (Terminal outer = new Terminal(console.tty())) {
+            assertThat(console.output(), is(""));
+            console.reset();
 
-        STTY tty = mock(STTY.class);
+            try (Terminal inner = new Terminal(console.tty(), STTYMode.COOKED)) {
+                assertThat(console.output(), is("\n"));
 
-        when(switcher.didChangeMode()).thenReturn(true);
-        when(switcher.getCurrentMode()).thenReturn(STTYMode.RAW);
-        when(switcher.getBefore()).thenReturn(STTYMode.COOKED);
+                inner.println("foo");
+                console.reset();
+            }
 
-        Terminal terminal = new Terminal(tty, in, out, null, switcher);
+            assertThat(console.output(), is(""));
+            outer.println("bar");
+            console.reset();
+        }
 
-        out.reset();
-        terminal.info("test");
-        assertEquals("\\033[32m[info]\\033[0m test", Strings.escape(new String(out.toByteArray())));
-
-        out.reset();
-        terminal.warn("test");
-        assertEquals("\\r\\n\\033[33m[warn]\\033[0m test", Strings.escape(new String(out.toByteArray())));
-
-        out.reset();
-        terminal.error("test");
-        assertEquals("\\r\\n\\033[31m[error]\\033[0m test", Strings.escape(new String(out.toByteArray())));
-
-        out.reset();
-        terminal.fatal("test");
-        assertEquals("\\r\\n\\033[1;31m[FATAL]\\033[0m test", Strings.escape(new String(out.toByteArray())));
+        assertThat(console.output(), is("\r\n"));
     }
 }

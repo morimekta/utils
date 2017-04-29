@@ -168,7 +168,7 @@ public class Terminal extends CharReader implements Closeable, LinePrinter {
                     throw new IOException("End of stream.");
                 }
                 int cp = c.asInteger();
-                if (cp == Char.CR) {
+                if (cp == Char.CR || cp == Char.LF) {
                     print(def ? " Yes." : " No.");
                     return def;
                 }
@@ -186,7 +186,7 @@ public class Terminal extends CharReader implements Closeable, LinePrinter {
                 if (cp == ' ' || cp == '\t') {
                     continue;
                 }
-                format("\r%s%s [%s]: %s is not valid input.",
+                format("\r%s%s [%s]: '%s' is not valid input.",
                        Control.CURSOR_ERASE,
                        what, yn, c.asString());
             }
