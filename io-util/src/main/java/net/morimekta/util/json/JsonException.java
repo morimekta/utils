@@ -49,36 +49,62 @@ public class JsonException extends Exception implements Stringable {
         line = tokenizer.getLine(token.lineNo);
         lineNo = token.lineNo;
         linePos = token.linePos;
-        len = token.length();
+        len = token.asString().length();
     }
 
+    /**
+     * @return The full utf-8 line (no ending line break) of the exception.
+     */
     public String getLine() {
         return line;
     }
 
+    /**
+     * @return The 1-indexed line number of the exception.
+     *         If not representing a token, will be 0.
+     */
     public int getLineNo() {
         return lineNo;
     }
 
+    /**
+     * Get the line position, 1-indexed of the first character that is part
+     * of the exception. If not representing a token, will be 0.
+     *
+     * @return Line position.
+     */
     public int getLinePos() {
         return linePos;
     }
 
+    /**
+     * @return The number of chars representing the token causing the exception.
+     *         Will be at least 1 for anything representing a token.
+     *         If not representing a token, will be 0.
+     */
     public int getLen() {
         return len;
     }
 
     @Override
     public String asString() {
-        if (getLine() != null) {
+        if (len > 0) {
             return String.format("JSON Error on line %d: %s%n" +
-                                 "# %s%n" +
-                                 "#%s%s",
+                                 "%s%n" +
+                                 "%s%s",
                                  getLineNo(),
                                  getLocalizedMessage(),
                                  getLine(),
-                                 Strings.times("-", getLinePos()),
+                                 Strings.times("-", getLinePos() - 1),
                                  Strings.times("^", getLen()));
+        } else if (lineNo > 0) {
+            return String.format("JSON Error on line %d: %s%n" +
+                                 "%s%n" +
+                                 "%s^",
+                                 getLineNo(),
+                                 getLocalizedMessage(),
+                                 getLine(),
+                                 Strings.times("-", getLinePos()));
         } else {
             return String.format("JSON Error: %s", getLocalizedMessage());
         }

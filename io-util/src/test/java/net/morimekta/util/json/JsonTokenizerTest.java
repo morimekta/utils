@@ -228,6 +228,9 @@ public class JsonTokenizerTest {
             fail("No exception on peek on end.");
         } catch (JsonException e) {
             assertEquals("Expected __message__: Got end of file", e.getMessage());
+            assertEquals("JSON Error on line 3: Expected __message__: Got end of file\n" +
+                         "}\n" +
+                         "-^", e.asString());
         }
     }
 
@@ -249,8 +252,8 @@ public class JsonTokenizerTest {
             assertEquals(5, e.getLinePos());
             assertEquals(7, e.getLen());
             assertEquals("JSON Error on line 2: Expected __number__ (number): but found '\"first\"'\n" +
-                         "#     \"first\": \"value\",\n" +
-                         "#-----^^^^^^^", e.asString().replaceAll("\\r\\n", "\n"));
+                         "    \"first\": \"value\",\n" +
+                         "----^^^^^^^", e.asString().replaceAll("\\r\\n", "\n"));
 
             UncheckedJsonException ue = new UncheckedJsonException(e);
             assertEquals(e.getMessage(), ue.getMessage());

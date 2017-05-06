@@ -234,6 +234,7 @@ public class JsonTokenizer {
 
                 lastByte = reader.read();
                 if (lastByte < 0) {
+                    ++linePos;
                     break;
                 }
 

@@ -129,7 +129,7 @@ public class Utf8StreamReader extends Reader {
     }
 
     private char convert(final int[] arr, final int num) throws IOException {
-        int cp = 0;
+        int cp;
         switch (num) {
             case 2:
                 cp = (arr[0] & 0x1f);
