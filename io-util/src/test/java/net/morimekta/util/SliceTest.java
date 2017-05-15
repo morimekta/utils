@@ -71,6 +71,7 @@ public class SliceTest {
         Slice slice = new Slice(data, 11, 3);
 
         assertEquals(3, slice.length());
+        assertEquals(11, slice.offset());
         assertEquals("123", slice.asString());
         assertEquals("slice([11..14>/56)", slice.toString());
         assertEquals('1', slice.charAt(0));

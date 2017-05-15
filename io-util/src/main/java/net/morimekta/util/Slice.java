@@ -53,6 +53,15 @@ public class Slice implements Comparable<Slice>, Stringable {
     }
 
     /**
+     * Get the offset of the buffer.
+     *
+     * @return The slice offset.
+     */
+    public final int offset() {
+        return off;
+    }
+
+    /**
      * Get the total length of the slice.
      *
      * @return The slice length.
@@ -149,7 +158,7 @@ public class Slice implements Comparable<Slice>, Stringable {
      * @param a The array to compare with.
      * @return True if equal.
      */
-    public boolean strEquals(byte[] a) {
+    public final boolean strEquals(byte[] a) {
         return strEquals(a, 0, a.length);
     }
 
@@ -161,7 +170,7 @@ public class Slice implements Comparable<Slice>, Stringable {
      * @param aLen The length to compare with.
      * @return True if equal.
      */
-    public boolean strEquals(byte[] a, int aOff, int aLen) {
+    public final boolean strEquals(byte[] a, int aOff, int aLen) {
         if (aLen != len) {
             return false;
         }
@@ -179,7 +188,7 @@ public class Slice implements Comparable<Slice>, Stringable {
      * @param a Bytes to find in the slice.
      * @return True if any of the bytes were found.
      */
-    public boolean containsAny(byte... a) {
+    public final boolean containsAny(byte... a) {
         for (int i = 0; i < len; ++i) {
             for (byte b : a) {
                 if (b == fb[off + i]) {
@@ -196,7 +205,7 @@ public class Slice implements Comparable<Slice>, Stringable {
      * @param a The byte array to find.
      * @return True if the byte array was found.
      */
-    public boolean contains(byte[] a) {
+    public final boolean contains(byte[] a) {
         final int last_pos = off + len - a.length;
         outer:
         for (int pos = off; pos <= last_pos; ++pos) {
@@ -216,7 +225,7 @@ public class Slice implements Comparable<Slice>, Stringable {
      * @param a The byte to find.
      * @return True of the byte was found.
      */
-    public boolean contains(byte a) {
+    public final boolean contains(byte a) {
         for (int i = off; i < (off + len); ++i) {
             if (fb[i] == a) {
                 return true;
