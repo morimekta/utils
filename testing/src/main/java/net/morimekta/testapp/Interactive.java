@@ -9,13 +9,11 @@ import net.morimekta.console.terminal.Terminal;
 import net.morimekta.util.ExtraStreams;
 import net.morimekta.util.Strings;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 import static java.lang.String.format;
@@ -31,10 +29,10 @@ public class Interactive {
             term.println("Press any char to continue... After done.");
             term.println();
             ExecutorService exec = Executors.newSingleThreadExecutor();
-            Future<?> task = exec.submit(() -> {
+            term.executeAbortable(exec, () -> {
                 try {
                     Progress progress = new Progress(term, Progress.Spinner.ARROWS, "Progress", 1234567890);
-                    for (int i = 1; i <= 1234567890; i += 123456) {
+                    for (int i = 1; i <= 1234567890; i += 1234567) {
                         Thread.sleep(5L);
                         progress.update(i);
                     }
@@ -44,21 +42,10 @@ public class Interactive {
                     throw new RuntimeException(e.getMessage(), e);
                 }
             });
-            while (!task.isDone()) {
-                Char c = term.readIfAvailable();
-                if (c == null) {
-                    Thread.sleep(10L);
-                    continue;
-                }
-                if (c.asInteger() == Char.ABR) {
-                    task.cancel(true);
-                    throw new IOException("Boo");
-                }
-            }
 
             term.println();
 
-            List<String> entries = ExtraStreams.range(0x0000, 0x20000, 4)
+            List<String> entries = ExtraStreams.range(0x0000, 0x1000, 4)
                                                .mapToObj(i -> {
                                                    // [ 0xd000 -> 0xe000 > is reserved for utf-16 funkyness.
                                                    if (0xd000 <= i && i < 0xe000) return "";

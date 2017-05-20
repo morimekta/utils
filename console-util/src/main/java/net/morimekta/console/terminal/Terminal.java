@@ -34,6 +34,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 
 /**
  * Terminal interface. It sets proper TTY mode and reads complex characters
@@ -192,6 +196,65 @@ public class Terminal extends CharReader implements Closeable, LinePrinter {
             }
         } catch (IOException e) {
             throw new UncheckedIOException(e);
+        }
+    }
+
+    /**
+     * Execute callable, which may not be interruptable by itself, but listen to
+     * terminal input and abort the task if CTRL-C is pressed.
+     *
+     * @param exec The executor to run task on.
+     * @param callable The callable function.
+     * @param <T> The return type of the callable.
+     * @return The result of the callable.
+     * @throws IOException If aborted or read failure.
+     * @throws InterruptedException If interrupted while waiting.
+     * @throws ExecutionException If execution failed.
+     */
+    public <T> T executeAbortable(ExecutorService exec, Callable<T> callable)
+            throws IOException, InterruptedException, ExecutionException {
+        Future<T> task = exec.submit(callable);
+        waitAbortable(task);
+        return task.get();
+    }
+
+    /**
+     * Execute runnable, which may not be interruptable by itself, but listen to
+     * terminal input and abort the task if CTRL-C is pressed.
+     *
+     * @param exec The executor to run task on.
+     * @param callable The runnable function.
+     * @throws IOException If aborted or read failure.
+     * @throws InterruptedException If interrupted while waiting.
+     * @throws ExecutionException If execution failed.
+     */
+    public void executeAbortable(ExecutorService exec, Runnable callable)
+            throws IOException, InterruptedException, ExecutionException {
+        Future<?> task = exec.submit(callable);
+        waitAbortable(task);
+        task.get();
+    }
+
+    /**
+     * Wait for future task to be done or canceled. React to terminal
+     * induced abort (ctrl-C) and cancel the task if so.
+     *
+     * @param task The task to wait for.
+     * @param <T> The task generic type.
+     * @throws IOException On aborted or read failure.
+     * @throws InterruptedException On thread interrupted.
+     */
+    public <T> void waitAbortable(Future<T> task) throws IOException, InterruptedException {
+        while (!task.isDone() && !task.isCancelled()) {
+            Char c = readIfAvailable();
+            if (c == null) {
+                Thread.sleep(10L);
+                continue;
+            }
+            if (c.asInteger() == Char.ABR) {
+                task.cancel(true);
+                throw new IOException("Aborted with '" + c.asString() + "'");
+            }
         }
     }
 

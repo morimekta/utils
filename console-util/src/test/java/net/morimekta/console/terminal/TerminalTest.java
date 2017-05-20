@@ -8,6 +8,9 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -55,6 +58,51 @@ public class TerminalTest {
 
         assertThat(new Terminal(console.tty()).confirm(msg), is(value));
         assertThat(console.output(), is(out));
+    }
+
+    @Test
+    public void testExecuteAbortable() throws IOException, ExecutionException, InterruptedException {
+        ExecutorService service = Executors.newSingleThreadExecutor();
+        try (Terminal term = new Terminal(console.tty())) {
+            term.executeAbortable(service, () -> {
+                // no-op
+            });
+            String s = term.executeAbortable(service, () -> "test");
+            assertThat(s, is("test"));
+            // TODO: Also test that the abort works.
+        }
+    }
+
+    @Test
+    public void testExecuteAbortable_aborted() throws IOException, ExecutionException, InterruptedException {
+        ExecutorService service = Executors.newSingleThreadExecutor();
+
+        console.setInput(Char.ABR);
+        try (Terminal term = new Terminal(console.tty())) {
+            term.executeAbortable(service, () -> {
+                try {
+                    Thread.sleep(100L);
+                } catch (InterruptedException ignore) {
+                }
+            });
+            fail("no exception");
+        } catch (IOException e) {
+            assertThat(e.getMessage(), is("Aborted with '<ABR>'"));
+        }
+
+        console.setInput(Char.ABR);
+        try (Terminal term = new Terminal(console.tty())) {
+            String s = term.executeAbortable(service, () -> {
+                try {
+                    Thread.sleep(100L);
+                } catch (InterruptedException ignore) {
+                }
+                return "";
+            });
+            fail("no exception");
+        } catch (IOException e) {
+            assertThat(e.getMessage(), is("Aborted with '<ABR>'"));
+        }
     }
 
     @Test
