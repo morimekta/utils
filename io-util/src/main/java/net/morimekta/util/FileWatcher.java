@@ -134,7 +134,7 @@ public class FileWatcher implements AutoCloseable {
         synchronized (watchers) {
             watchers.clear();
         }
-        watcherExecutor.shutdownNow();
+        watcherExecutor.shutdown();
         try {
             watchService.close();
         } catch (IOException e) {
@@ -146,6 +146,14 @@ public class FileWatcher implements AutoCloseable {
             }
         } catch (InterruptedException e) {
             LOGGER.error("WatcherExecutor termination interrupted", e);
+        }
+        callbackExecutor.shutdown();
+        try {
+            if (!callbackExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
+                LOGGER.warn("CallbackExecutor failed to terminate in 10 seconds");
+            }
+        } catch (InterruptedException e) {
+            LOGGER.error("CallbackExecutor termination interrupted", e);
         }
     }
 
