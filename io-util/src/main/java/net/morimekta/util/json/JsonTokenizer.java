@@ -21,15 +21,19 @@
 package net.morimekta.util.json;
 
 import net.morimekta.util.Strings;
+import net.morimekta.util.io.ByteBufferOutputStream;
 import net.morimekta.util.io.IOUtils;
 import net.morimekta.util.io.Utf8StreamReader;
+import net.morimekta.util.io.Utf8StreamWriter;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Writer;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * Class for tokenizing a JSON document and return one token at a time. It is
@@ -41,14 +45,15 @@ import java.util.ArrayList;
 public class JsonTokenizer {
     private static final int CONSOLIDATE_LINE_ON = 1 << 7;  // 128
 
-    private final InputStream           reader;
+    private final Utf8StreamReader      reader;
     private final ArrayList<String>     lines;
     private final ByteBuffer            lineBuffer;
+    private final Writer                lineWriter;
     private final ByteArrayOutputStream stringBuffer;
 
     private int line;
     private int linePos;
-    private int lastByte;
+    private int lastChar;
 
     private StringBuilder lineBuilder;
     private JsonToken     unreadToken;
@@ -62,12 +67,13 @@ public class JsonTokenizer {
      * @param in Input stream to parse.
      */
     public JsonTokenizer(InputStream in) {
-        this.reader = in;
+        this.reader = new Utf8StreamReader(in);
         this.line = 1;
         this.linePos = 0;
-        this.lastByte = 0;
+        this.lastChar = 0;
 
         this.lineBuffer = ByteBuffer.allocate(1 << 16);  // 64k
+        this.lineWriter = new Utf8StreamWriter(new ByteBufferOutputStream(lineBuffer));
         this.stringBuffer = new ByteArrayOutputStream(1 << 12);  // 4k
         this.lines = new ArrayList<>(1024);
 
@@ -226,27 +232,27 @@ public class JsonTokenizer {
             return tmp;
         }
 
-        while (lastByte >= 0) {
-            if (lastByte == 0) {
+        while (lastChar >= 0) {
+            if (lastChar == 0) {
                 if (lineBuffer.position() == (lineBuffer.capacity() - CONSOLIDATE_LINE_ON)) {
                     flushLineBuffer();
                 }
 
-                lastByte = reader.read();
-                if (lastByte < 0) {
+                lastChar = reader.read();
+                if (lastChar < 0) {
                     ++linePos;
                     break;
                 }
 
-                if (lastByte != JsonToken.kNewLine &&
-                    lastByte != JsonToken.kCarriageReturn) {
-                    lineBuffer.put((byte) lastByte);
+                if (lastChar != JsonToken.kNewLine &&
+                    lastChar != JsonToken.kCarriageReturn) {
+                    lineWriter.write(lastChar);
                     ++linePos;
                 }
             }
 
-            if (lastByte == JsonToken.kNewLine ||
-                lastByte == JsonToken.kCarriageReturn) {
+            if (lastChar == JsonToken.kNewLine ||
+                lastChar == JsonToken.kCarriageReturn) {
                 // New line
                 flushLineBuffer();
 
@@ -256,35 +262,35 @@ public class JsonTokenizer {
                 ++line;
 
                 // Handle CR-LF character pairs as a single newline.
-                if (lastByte == JsonToken.kCarriageReturn) {
-                    lastByte = reader.read();
-                    if (lastByte == JsonToken.kNewLine) {
-                        lastByte = 0;
-                    } else if (lastByte != JsonToken.kCarriageReturn){
-                        lineBuffer.put((byte) lastByte);
+                if (lastChar == JsonToken.kCarriageReturn) {
+                    lastChar = reader.read();
+                    if (lastChar == JsonToken.kNewLine) {
+                        lastChar = 0;
+                    } else if (lastChar != JsonToken.kCarriageReturn){
+                        lineWriter.write((char) lastChar);
                         ++linePos;
                     }
                 } else {
-                    lastByte = 0;
+                    lastChar = 0;
                 }
-            } else if (lastByte == JsonToken.kSpace ||
-                       lastByte == JsonToken.kTab) {
-                lastByte = 0;
-            } else if (lastByte == JsonToken.kDoubleQuote) {
+            } else if (lastChar == JsonToken.kSpace ||
+                       lastChar == JsonToken.kTab) {
+                lastChar = 0;
+            } else if (lastChar == JsonToken.kDoubleQuote) {
                 return nextString();
-            } else if (lastByte == '-' || (lastByte >= '0' && lastByte <= '9')) {
+            } else if (lastChar == '-' || (lastChar >= '0' && lastChar <= '9')) {
                 return nextNumber();
-            } else if (lastByte == JsonToken.kListStart ||
-                       lastByte == JsonToken.kListEnd ||
-                       lastByte == JsonToken.kMapStart ||
-                       lastByte == JsonToken.kMapEnd ||
-                       lastByte == JsonToken.kKeyValSep ||
-                       lastByte == JsonToken.kListSep ||
-                       lastByte == '=') {
+            } else if (lastChar == JsonToken.kListStart ||
+                       lastChar == JsonToken.kListEnd ||
+                       lastChar == JsonToken.kMapStart ||
+                       lastChar == JsonToken.kMapEnd ||
+                       lastChar == JsonToken.kKeyValSep ||
+                       lastChar == JsonToken.kListSep ||
+                       lastChar == '=') {
                 return nextSymbol();
-            } else if (lastByte < 0x20 || lastByte >= 0x7F) {
+            } else if (lastChar < 0x20 || lastChar >= 0x7F) {
                 // UTF-8 characters are only allowed inside JSON string literals.
-                throw newParseException("Illegal character in JSON structure: '\\u%04x'", lastByte);
+                throw newParseException("Illegal character in JSON structure: '\\u%04x'", lastChar);
             } else {
                 return nextToken();
             }
@@ -309,7 +315,7 @@ public class JsonTokenizer {
             return lines.get(line - 1);
         } else {
             flushLineBuffer();
-            lineBuilder.append(IOUtils.readString(new Utf8StreamReader(reader), JsonToken.kNewLine));
+            lineBuilder.append(IOUtils.readString(reader, JsonToken.kNewLine));
             String ln = lineBuilder.toString();
             lines.add(ln);
             return ln;
@@ -319,7 +325,7 @@ public class JsonTokenizer {
     // --- INTERNAL ---
 
     private JsonToken nextSymbol() {
-        lastByte = 0;
+        lastChar = 0;
         return new JsonToken(JsonToken.Type.SYMBOL, lineBuffer.array(), lineBuffer.position() - 1, 1, line, linePos);
     }
 
@@ -327,16 +333,16 @@ public class JsonTokenizer {
         int startPos = linePos;
         int startOffset = lineBuffer.position() - 1;
         int len = 0;
-        while (lastByte == '_' || lastByte == '.' ||
-               (lastByte >= '0' && lastByte <= '9') ||
-               (lastByte >= 'a' && lastByte <= 'z') ||
-               (lastByte >= 'A' && lastByte <= 'Z')) {
+        while (lastChar == '_' || lastChar == '.' ||
+               (lastChar >= '0' && lastChar <= '9') ||
+               (lastChar >= 'a' && lastChar <= 'z') ||
+               (lastChar >= 'A' && lastChar <= 'Z')) {
             ++len;
-            lastByte = reader.read();
-            if (lastByte < 0) {
+            lastChar = reader.read();
+            if (lastChar < 0) {
                 break;
             }
-            lineBuffer.put((byte) lastByte);
+            lineWriter.write((char) lastChar);
             ++linePos;
         }
 
@@ -363,82 +369,82 @@ public class JsonTokenizer {
         // number (any type).
         int len = 0;
 
-        if (lastByte == '-') {
+        if (lastChar == '-') {
             // only base 10 decimals can be negative.
             ++len;
-            lastByte = reader.read();
-            if (lastByte < 0) {
+            lastChar = reader.read();
+            if (lastChar < 0) {
                 throw newParseException("Negative indicator without number");
             }
-            lineBuffer.put((byte) lastByte);
+            lineWriter.write((char) lastChar);
             ++linePos;
 
-            if (!(lastByte == '.' || (lastByte >= '0' && lastByte <= '9'))) {
+            if (!(lastChar == '.' || (lastChar >= '0' && lastChar <= '9'))) {
                 throw newParseException("No decimal after negative indicator");
             }
         }
 
         // decimal part.
-        while (lastByte >= '0' && lastByte <= '9') {
+        while (lastChar >= '0' && lastChar <= '9') {
             ++len;
             // numbers are terminated by first non-numeric character.
-            lastByte = reader.read();
-            if (lastByte < 0) {
+            lastChar = reader.read();
+            if (lastChar < 0) {
                 break;
             }
-            lineBuffer.put((byte) lastByte);
+            lineWriter.write((char) lastChar);
             ++linePos;
         }
         // fraction part.
-        if (lastByte == '.') {
+        if (lastChar == '.') {
             ++len;
             // numbers are terminated by first non-numeric character.
-            lastByte = reader.read();
-            if (lastByte >= 0) {
-                lineBuffer.put((byte) lastByte);
+            lastChar = reader.read();
+            if (lastChar >= 0) {
+                lineWriter.write((char) lastChar);
                 ++linePos;
 
-                while (lastByte >= '0' && lastByte <= '9') {
+                while (lastChar >= '0' && lastChar <= '9') {
                     ++len;
                     // numbers are terminated by first non-numeric character.
-                    lastByte = reader.read();
-                    if (lastByte < 0) {
+                    lastChar = reader.read();
+                    if (lastChar < 0) {
                         break;
                     }
-                    lineBuffer.put((byte) lastByte);
+                    lineWriter.write((char) lastChar);
                     ++linePos;
                 }
             }
         }
         // exponent part.
-        if (lastByte == 'e' || lastByte == 'E') {
+        if (lastChar == 'e' || lastChar == 'E') {
             ++len;
             // numbers are terminated by first non-numeric character.
-            lastByte = reader.read();
-            if (lastByte >= 0) {
-                lineBuffer.put((byte) lastByte);
+            lastChar = reader.read();
+            if (lastChar >= 0) {
+                lineWriter.write((char) lastChar);
                 ++linePos;
 
                 // The exponent can be explicitly prefixed with both '+'
                 // and '-'.
-                if (lastByte == '-' || lastByte == '+') {
+                if (lastChar == '-' || lastChar == '+') {
                     ++len;
                     // numbers are terminated by first non-numeric character.
-                    lastByte = reader.read();
-                    if (lastByte >= 0) {
-                        lineBuffer.put((byte) lastByte);
+                    lastChar = reader.read();
+                    if (lastChar >= 0) {
+                        lineWriter.write((char) lastChar);
                         ++linePos;
                     }
                 }
 
-                while (lastByte >= '0' && lastByte <= '9') {
+                while (lastChar >= '0' && lastChar <= '9') {
                     ++len;
                     // numbers are terminated by first non-numeric character.
-                    lastByte = reader.read();
-                    if (lastByte < 0) {
+                    lastChar = reader.read();
+                    if (lastChar < 0) {
                         break;
                     }
-                    lineBuffer.put((byte) lastByte);
+                    lineWriter.write((char) lastChar);
                     ++linePos;
                 }
             }
@@ -446,17 +452,17 @@ public class JsonTokenizer {
 
         // A number must be terminated correctly: End of stream, space or a
         // symbol that may be after a value: ',' '}' ']'.
-        if (lastByte < 0 ||
-            lastByte == JsonToken.kListSep ||
-            lastByte == JsonToken.kMapEnd ||
-            lastByte == JsonToken.kListEnd ||
-            lastByte == JsonToken.kSpace ||
-            lastByte == JsonToken.kTab ||
-            lastByte == JsonToken.kNewLine ||
-            lastByte == JsonToken.kCarriageReturn) {
+        if (lastChar < 0 ||
+            lastChar == JsonToken.kListSep ||
+            lastChar == JsonToken.kMapEnd ||
+            lastChar == JsonToken.kListEnd ||
+            lastChar == JsonToken.kSpace ||
+            lastChar == JsonToken.kTab ||
+            lastChar == JsonToken.kNewLine ||
+            lastChar == JsonToken.kCarriageReturn) {
             return new JsonToken(JsonToken.Type.NUMBER, lineBuffer.array(), startOffset, len, line, startPos);
         } else {
-            String tmp = new String(lineBuffer.array(), startOffset, len + 1, StandardCharsets.UTF_8);
+            String tmp = new String(lineBuffer.array(), startOffset, len + 1, UTF_8);
             throw newParseException("Wrongly terminated JSON number: '%s'", tmp);
         }
     }
@@ -464,7 +470,7 @@ public class JsonTokenizer {
     private JsonToken nextString() throws IOException, JsonException {
         // string literals may be longer than 128 bytes. We may need to build it.
         stringBuffer.reset();
-        stringBuffer.write(lastByte);
+        stringBuffer.write(lastChar);
 
         int startPos = linePos;
         int startOffset = lineBuffer.position();
@@ -479,24 +485,24 @@ public class JsonTokenizer {
                 flushLineBuffer();
             }
 
-            lastByte = reader.read();
-            if (lastByte < 0) {
+            lastChar = reader.read();
+            if (lastChar < 0) {
                 throw newParseException("Unexpected end of stream in string literal");
             }
 
-            lineBuffer.put((byte) lastByte);
+            lineWriter.write((char) lastChar);
             ++linePos;
 
             if (esc) {
                 esc = false;
-            } else if (lastByte == JsonToken.kEscape) {
+            } else if (lastChar == JsonToken.kEscape) {
                 esc = true;
-            } else if (lastByte == JsonToken.kDoubleQuote) {
+            } else if (lastChar == JsonToken.kDoubleQuote) {
                 break;
             }
         }
 
-        lastByte = 0;
+        lastChar = 0;
         if (consolidated) {
             stringBuffer.write(lineBuffer.array(), 0, lineBuffer.position());
             return new JsonToken(JsonToken.Type.LITERAL,
@@ -516,7 +522,7 @@ public class JsonTokenizer {
     }
 
     private void flushLineBuffer() {
-        lineBuilder.append(new String(lineBuffer.array(), 0, lineBuffer.position(), StandardCharsets.UTF_8));
+        lineBuilder.append(new String(lineBuffer.array(), 0, lineBuffer.position(), UTF_8));
         lineBuffer.clear();
     }
 

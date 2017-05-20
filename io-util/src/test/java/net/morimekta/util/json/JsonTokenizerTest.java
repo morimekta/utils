@@ -63,7 +63,7 @@ public class JsonTokenizerTest {
 
     @Test
     public void testExpectBad() {
-        assertBad("Illegal character in JSON structure: '\\u00c3'", "æ");
+        assertBad("Illegal character in JSON structure: '\\u00e6'", "æ");
         assertBad("Expected __string__: Got end of file", "");
     }
 
@@ -73,6 +73,9 @@ public class JsonTokenizerTest {
             makeTokenizer(str).expect("__string__");
             fail("no exception on bad string: \"" + str + "\"");
         } catch (JsonException|IOException e) {
+            if (!e.getMessage().equals(message)) {
+                e.printStackTrace();
+            }
             assertEquals(message, e.getMessage());
         }
     }
@@ -291,7 +294,8 @@ public class JsonTokenizerTest {
     }
 
     private JsonTokenizer makeTokenizer(String content) {
-        ByteArrayInputStream bais = new ByteArrayInputStream(content.getBytes(UTF_8));
+        byte[] src = content.getBytes(UTF_8);
+        ByteArrayInputStream bais = new ByteArrayInputStream(src);
         return new JsonTokenizer(bais);
     }
 }
