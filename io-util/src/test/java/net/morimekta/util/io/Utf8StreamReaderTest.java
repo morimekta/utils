@@ -20,15 +20,18 @@
  */
 package net.morimekta.util.io;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * @author Stein Eldar Johnsen
@@ -39,6 +42,19 @@ public class Utf8StreamReaderTest {
     // It is the highest unicode codepoint that also has a valid printable
     // character on most platforms.
     // https://en.wikipedia.org/wiki/List_of_CJK_Unified_Ideographs_Extension_B_(Part_7_of_7)
+
+    @Test
+    public void testReady() throws IOException {
+        byte[] data = new byte[]{'a', 'b', 'c'};
+
+        Utf8StreamReader reader = new Utf8StreamReader(new ByteArrayInputStream(data));
+
+        assertThat(reader.ready(), is(true));
+
+        reader.close();
+
+        assertThat(reader.ready(), is(false));
+    }
 
     @Test
     public void testRead_ASCII() throws IOException {
@@ -55,12 +71,12 @@ public class Utf8StreamReaderTest {
     public void testRead_UTF8_longString() throws IOException {
         String original = "ü$Ѹ~OӐW| \\rBֆc}}ӂဂG3>㚉EGᖪǙ\\t;\\tၧb}H(πи-ˁ&H59XOqr/,?DרB㡧-Үyg9i/?l+ႬЁjZr=#DC+;|ԥ'f9VB5|8]cOEሹrĐaP.ѾҢ/^nȨޢ\\\"u";
         byte[] data = original.getBytes(UTF_8);
-        char[] out = new char[original.length()];
+        char[] out = new char[data.length];
 
         Utf8StreamReader reader = new Utf8StreamReader(new ByteArrayInputStream(data));
 
-        assertEquals(out.length, reader.read(out));
-        assertEquals(original, String.valueOf(out));
+        assertEquals(original.length(), reader.read(out));
+        assertEquals(original, String.valueOf(out, 0, original.length()));
     }
 
     @Test
@@ -77,9 +93,9 @@ public class Utf8StreamReaderTest {
     }
 
     @Test
-    @Ignore("We're missing good data to test with surrogate pair unicode")
     public void testReadSurrogatePair() throws IOException {
-        byte[] src = new byte[]{};
+        byte[] src = "輸".getBytes(UTF_8);
+
         ByteArrayInputStream bais = new ByteArrayInputStream(src);
 
         Utf8StreamReader reader = new Utf8StreamReader(bais);
@@ -87,8 +103,51 @@ public class Utf8StreamReaderTest {
         char a = (char) reader.read();
         char b = (char) reader.read();
 
+        assertThat(reader.read(), is(-1));
+
         assertTrue(Character.isHighSurrogate(a));
         assertTrue(Character.isLowSurrogate(b));
-        assertEquals(0x2A6B2, Character.toCodePoint(a, b));
+        assertEquals(195039, Character.toCodePoint(a, b));
+
+        reader = new Utf8StreamReader(new ByteArrayInputStream(new byte[]{-4, -81, -81, -81, -81, -81}));
+        assertThat(Character.toCodePoint((char) reader.read(),
+                                         (char) reader.read()),
+                   is(-4260881));
+        reader = new Utf8StreamReader(new ByteArrayInputStream(new byte[]{-8, -81, -81, -81, -81}));
+        assertThat(Character.toCodePoint((char) reader.read(),
+                                         (char) reader.read()),
+                   is(-54592529));
+    }
+
+    @Test
+    public void testBadUnicode() throws IOException {
+        assertBadUnicode_IO(new byte[]{-16, -81, -89},
+                            "End of stream inside utf-8 encoded entity.");
+        assertBadUnicode_UE(new byte[]{-16, 81, 0, 0, 0},
+                            "Unexpected non-entity utf-8 char in entity extra bytes: 0x51");
+        assertBadUnicode_UE(new byte[]{-81},
+                            "Unexpected utf-8 entity char: 0xaf");
+        assertBadUnicode_UE(new byte[]{-2},
+                            "Unexpected utf-8 non-entity char: 0xfe");
+    }
+
+    private void assertBadUnicode_IO(byte[] src, String message) {
+        try {
+            ByteArrayInputStream bais = new ByteArrayInputStream(src);
+            new Utf8StreamReader(bais).read();
+            fail("no exception");
+        } catch (IOException e) {
+            assertThat(e.getMessage(), is(message));
+        }
+    }
+
+    private void assertBadUnicode_UE(byte[] src, String message) throws IOException {
+        try {
+            ByteArrayInputStream bais = new ByteArrayInputStream(src);
+            new Utf8StreamReader(bais).read();
+            fail("no exception");
+        } catch (UnsupportedEncodingException e) {
+            assertThat(e.getMessage(), is(message));
+        }
     }
 }

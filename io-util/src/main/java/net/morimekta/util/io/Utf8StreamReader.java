@@ -53,14 +53,14 @@ public class Utf8StreamReader extends Reader {
     }
 
     @Override
-    public int read(char[] cbuf, int off, int len) throws IOException {
+    public int read(char[] char_buffer, int off, int len) throws IOException {
         if (in == null) {
             throw new IOException("Reading from a closed stream.");
         }
 
         for (int i = 0; i < len; ++i) {
             if (surrogate != 0) {
-                cbuf[off + i] = surrogate;
+                char_buffer[off + i] = surrogate;
                 surrogate = 0;
                 continue;
             }
@@ -69,19 +69,21 @@ public class Utf8StreamReader extends Reader {
             if (r < 0) {
                 if (i == 0) {
                     return -1;
-                } else {
-                    return i;
                 }
+                return i;
             } else if (r < 0x80) {
-                cbuf[off + i] = (char) r;
+                char_buffer[off + i] = (char) r;
             } else if ((r & 0xC0) == 0x80) {
                 // 10xxxxxx: This byte pattern should not be here.
-                cbuf[off + i] = '?';
+                throw new UnsupportedEncodingException(String.format(Locale.ENGLISH,
+                                                                     "Unexpected utf-8 entity char: 0x%02x",
+                                                                     r));
             } else {
                 // invalid utf-8 starting byte.
                 if ((r & 0xFE) == 0xFE) {
-                    cbuf[off + i] = '?';
-                    continue;
+                    throw new UnsupportedEncodingException(String.format(Locale.ENGLISH,
+                                                                         "Unexpected utf-8 non-entity char: 0x%02x",
+                                                                         r));
                 }
 
                 buffer[0] = r;
@@ -112,7 +114,7 @@ public class Utf8StreamReader extends Reader {
                     }
                 }
 
-                cbuf[off + i] = convert(buffer, c);
+                char_buffer[off + i] = convert(buffer, c);
             }
         }
         return len;
@@ -120,7 +122,11 @@ public class Utf8StreamReader extends Reader {
 
     @Override
     public void close() throws IOException {
-        in.close();
+        try {
+            in.close();
+        } finally {
+            in = null;
+        }
     }
 
     @Override
@@ -147,6 +153,8 @@ public class Utf8StreamReader extends Reader {
                 cp = (arr[0] & 0x01);
                 break;
             default:
+                // Should be impossible, but you never know.
+                // See and fix read() method if this ever happens.
                 throw new IOException("Unhandled utf-8 char length: " + num);
         }
         for (int i = 1; i < num; ++i) {
@@ -155,7 +163,7 @@ public class Utf8StreamReader extends Reader {
             }
             if ((arr[i] & 0xC0) != 0x80) {
                 throw new UnsupportedEncodingException(String.format(Locale.ENGLISH,
-                                                                     "Unexpected non-entity utf-8 char in entity extra bytes: %2x",
+                                                                     "Unexpected non-entity utf-8 char in entity extra bytes: 0x%02x",
                                                                      arr[i]));
             }
             cp = (cp << 6) | (arr[i] & 0x3f);
