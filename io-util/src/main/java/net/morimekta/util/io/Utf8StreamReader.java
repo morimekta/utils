@@ -41,15 +41,21 @@ import java.util.Locale;
  */
 public class Utf8StreamReader extends Reader {
     private final int[]       buffer;
+    private final boolean     strict;
 
     private InputStream in;
 
     private char surrogate;
 
     public Utf8StreamReader(InputStream in) {
+        this(in, true);
+    }
+
+    public Utf8StreamReader(InputStream in, boolean strict) {
         this.in = in;
         this.buffer = new int[6];
         this.surrogate = 0;
+        this.strict = strict;
     }
 
     @Override
@@ -75,17 +81,21 @@ public class Utf8StreamReader extends Reader {
                 char_buffer[off + i] = (char) r;
             } else if ((r & 0xC0) == 0x80) {
                 // 10xxxxxx: This byte pattern should not be here.
-                throw new UnsupportedEncodingException(String.format(Locale.ENGLISH,
-                                                                     "Unexpected utf-8 entity char: 0x%02x",
-                                                                     r));
-            } else {
+                if (strict) {
+                    throw new UnsupportedEncodingException(String.format(Locale.ENGLISH,
+                                                                         "Unexpected utf-8 entity char: 0x%02x",
+                                                                         r));
+                }
+                char_buffer[off + i] = '?';
+            } else if ((r & 0xFE) == 0xFE) {
                 // invalid utf-8 starting byte.
-                if ((r & 0xFE) == 0xFE) {
+                if (strict) {
                     throw new UnsupportedEncodingException(String.format(Locale.ENGLISH,
                                                                          "Unexpected utf-8 non-entity char: 0x%02x",
                                                                          r));
                 }
-
+                char_buffer[off + i] = '?';
+            } else {
                 buffer[0] = r;
                 int c = 1;
 
@@ -162,9 +172,12 @@ public class Utf8StreamReader extends Reader {
                 throw new IOException("End of stream inside utf-8 encoded entity.");
             }
             if ((arr[i] & 0xC0) != 0x80) {
-                throw new UnsupportedEncodingException(String.format(Locale.ENGLISH,
-                                                                     "Unexpected non-entity utf-8 char in entity extra bytes: 0x%02x",
-                                                                     arr[i]));
+                if (strict) {
+                    throw new UnsupportedEncodingException(String.format(Locale.ENGLISH,
+                                                                         "Unexpected non-entity utf-8 char in entity extra bytes: 0x%02x",
+                                                                         arr[i]));
+                }
+                return '?';
             }
             cp = (cp << 6) | (arr[i] & 0x3f);
         }
