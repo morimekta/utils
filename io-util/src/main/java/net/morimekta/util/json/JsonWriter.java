@@ -21,14 +21,13 @@
 package net.morimekta.util.json;
 
 import net.morimekta.util.Binary;
+import net.morimekta.util.io.Utf8StreamWriter;
 
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.Stack;
 
 import static java.lang.Character.isSurrogatePair;
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static net.morimekta.util.Strings.isConsolePrintable;
 
 /**
@@ -45,7 +44,7 @@ public class JsonWriter {
     protected JsonContext context;
 
     public JsonWriter(OutputStream out) {
-        this(new PrintWriter(new OutputStreamWriter(out, UTF_8)));
+        this(new PrintWriter(new Utf8StreamWriter(out)));
     }
 
     public JsonWriter(PrintWriter writer) {

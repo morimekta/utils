@@ -21,13 +21,10 @@
 package net.morimekta.util.io;
 
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.util.Locale;
 import java.util.Stack;
-
-import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * Print writer that prints lines with indent. In order to have full control
@@ -68,7 +65,7 @@ public class IndentedPrintWriter extends PrintWriter {
     }
 
     public IndentedPrintWriter(OutputStream out, String indent, String newline) {
-        this(new OutputStreamWriter(out, UTF_8), indent, newline);
+        this(new Utf8StreamWriter(out), indent, newline);
     }
 
     public IndentedPrintWriter(Writer out) {
