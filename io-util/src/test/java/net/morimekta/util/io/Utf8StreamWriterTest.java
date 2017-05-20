@@ -18,7 +18,7 @@ public class Utf8StreamWriterTest {
         writer.write("輸ü$Ѹ~");
 
         assertThat(out.toByteArray(), is(new byte[]{
-                -16, -81, -89, -97, -61, -68, 36, -32, -111, -72, 126
+                -16, -81, -89, -97, -61, -68, 36, -47, -72, 126
         }));
 
         writer.flush();

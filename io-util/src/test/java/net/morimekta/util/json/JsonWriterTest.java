@@ -80,6 +80,12 @@ public class JsonWriterTest {
         writer.flush();
         assertJsonEquals("\"ßħ↓b\\u0bfcÑıŋú®äþ\\n\"", baos);
 
+        writer.reset();
+        baos.reset();
+        writer.value("\ndƴ\u08392p14㋑څ3J");
+        writer.flush();
+        assertJsonEquals("\"\\ndƴ\\u08392p14㋑څ3J\"", baos);
+
         // String escape chars
         writer.reset();
         baos.reset();

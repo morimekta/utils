@@ -110,7 +110,7 @@ public class Utf8StreamWriter extends Writer {
         } else {
             // UTF-8 entity.
             int c = 0;
-            int lastOverLimit = 0x20;
+            int lastOverLimit = 0x40;
             while (cp >= lastOverLimit) {
                 buffer[c++] = (cp & 0x3f) | 0x80;
                 cp >>>= 6;
