@@ -1,49 +1,70 @@
 package net.morimekta.util;
 
-import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.Appender;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.ArgumentCaptor;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.WatchService;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import static java.lang.Thread.sleep;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 /**
  * TODO(steineldar): Make a proper class description.
  */
 public class FileWatcherTest {
-    public TemporaryFolder temp;
+    @Rule
+    public TemporaryFolder temp = new TemporaryFolder();
+
+    private Appender<ILoggingEvent>       appender;
+    private ArgumentCaptor<ILoggingEvent> eventCaptor;
 
     private FileWatcher sut;
 
     @Before
+    @SuppressWarnings("unchecked")
     public void setUp() throws IOException {
-        Logger logger = (Logger) LoggerFactory.getLogger(FileWatcher.class);
-        logger.setLevel(Level.ERROR);
+        eventCaptor = ArgumentCaptor.forClass(ILoggingEvent.class);
+        appender = mock(Appender.class);
+        doNothing().when(appender).doAppend(eventCaptor.capture());
 
-        temp = new TemporaryFolder();
-        temp.create();
+        Logger logger = (Logger) LoggerFactory.getLogger(FileWatcher.class);
+        logger.addAppender(appender);
 
         sut = new FileWatcher();
     }
 
     @After
     public void tearDown() throws IOException {
+        Logger logger = (Logger) LoggerFactory.getLogger(FileWatcher.class);
+        logger.detachAppender(appender);
+
         temp.delete();
         sut.close();
     }
@@ -270,6 +291,86 @@ public class FileWatcherTest {
         } catch (IllegalStateException e) {
             assertEquals("Starts to watch on closed FileWatcher", e.getMessage());
         }
+    }
+
+    @Test
+    public void testCloseInterrupted() throws IOException, InterruptedException {
+        sut.close();
+
+        WatchService service = mock(WatchService.class);
+        ExecutorService watcherService = mock(ExecutorService.class);
+        ExecutorService callbackService = mock(ExecutorService.class);
+
+        sut = new FileWatcher(service, watcherService, callbackService);
+
+        reset(service, watcherService, callbackService);
+
+        doThrow(new IOException("IO")).when(service).close();
+        when(watcherService.isShutdown()).thenReturn(false);
+        when(watcherService.awaitTermination(10, TimeUnit.SECONDS)).thenThrow(new InterruptedException("WS"));
+        when(callbackService.awaitTermination(10, TimeUnit.SECONDS)).thenThrow(new InterruptedException("WS"));
+
+        sut.close();
+
+        verify(service).close();
+        verify(watcherService).isShutdown();
+        verify(watcherService).shutdown();
+        verify(watcherService).awaitTermination(10, TimeUnit.SECONDS);
+        verify(callbackService).shutdown();
+        verify(callbackService).awaitTermination(10, TimeUnit.SECONDS);
+
+        verifyNoMoreInteractions(service, watcherService, callbackService);
+
+        assertThat(eventCaptor.getAllValues(), hasSize(3));
+        assertThat(eventCaptor.getAllValues().get(0).toString(),
+                   is("[ERROR] WatchService did not close"));
+        assertThat(eventCaptor.getAllValues().get(1).toString(),
+                   is("[ERROR] WatcherExecutor termination interrupted"));
+        assertThat(eventCaptor.getAllValues().get(2).toString(),
+                   is("[ERROR] CallbackExecutor termination interrupted"));
+
+        reset(service, watcherService, callbackService);
+
+        when(watcherService.isShutdown()).thenReturn(true);
+
+        sut.close();
+
+        verify(watcherService).isShutdown();
+        verifyNoMoreInteractions(service, watcherService, callbackService);
+    }
+
+    @Test
+    public void testCloseTimeout() throws IOException, InterruptedException {
+        sut.close();
+
+        WatchService service = mock(WatchService.class);
+        ExecutorService watcherService = mock(ExecutorService.class);
+        ExecutorService callbackService = mock(ExecutorService.class);
+
+        sut = new FileWatcher(service, watcherService, callbackService);
+
+        reset(service, watcherService, callbackService);
+
+        when(watcherService.isShutdown()).thenReturn(false);
+        when(watcherService.awaitTermination(10, TimeUnit.SECONDS)).thenReturn(false);
+        when(callbackService.awaitTermination(10, TimeUnit.SECONDS)).thenReturn(false);
+
+        sut.close();
+
+        verify(service).close();
+        verify(watcherService).isShutdown();
+        verify(watcherService).shutdown();
+        verify(watcherService).awaitTermination(10, TimeUnit.SECONDS);
+        verify(callbackService).shutdown();
+        verify(callbackService).awaitTermination(10, TimeUnit.SECONDS);
+
+        verifyNoMoreInteractions(service, watcherService, callbackService);
+
+        assertThat(eventCaptor.getAllValues(), hasSize(2));
+        assertThat(eventCaptor.getAllValues().get(0).toString(),
+                   is("[WARN] WatcherExecutor failed to terminate in 10 seconds"));
+        assertThat(eventCaptor.getAllValues().get(1).toString(),
+                   is("[WARN] CallbackExecutor failed to terminate in 10 seconds"));
     }
 
     private void write(String content, File file) throws IOException {

@@ -132,6 +132,10 @@ public class FileWatcher implements AutoCloseable {
     @Override
     public void close() throws IOException {
         synchronized (watchers) {
+            if (watcherExecutor.isShutdown()) {
+                return;
+            }
+
             watchers.clear();
         }
         watcherExecutor.shutdown();
