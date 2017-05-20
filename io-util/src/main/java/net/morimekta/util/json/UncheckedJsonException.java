@@ -18,10 +18,12 @@
  */
 package net.morimekta.util.json;
 
+import net.morimekta.util.Stringable;
+
 /**
  * Unchecked (runtime) JsonException wrapper that can be used in streams etc.
  */
-public class UncheckedJsonException extends RuntimeException {
+public class UncheckedJsonException extends RuntimeException implements Stringable {
     public UncheckedJsonException(JsonException e) {
         super(e);
     }
@@ -46,6 +48,7 @@ public class UncheckedJsonException extends RuntimeException {
         return getCause().getLen();
     }
 
+    @Override
     public String asString() {
         return getCause().asString();
     }
