@@ -125,6 +125,18 @@ public class IOUtils {
     }
 
     /**
+     * Read next string from input stream.
+     *
+     * @param is   The input stream to read.
+     * @param term Terminator character.
+     * @return The string up until, but not including the terminator.
+     * @throws IOException when unable to read from stream.
+     */
+    public static String readString(InputStream is, char term) throws IOException {
+        return readString(new Utf8StreamReader(is), term);
+    }
+
+    /**
      * Read next string from input stream. The terminator is read but not
      * included in the resulting string.
      *

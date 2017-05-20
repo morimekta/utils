@@ -187,7 +187,7 @@ public class IOUtilsTest {
         InputStream is = new ByteArrayInputStream(buffer);
 
         assertEquals("abc", IOUtils.readString(is, "\r\n"));
-        assertEquals("xyz", IOUtils.readString(is, "\r\n"));
+        assertEquals("xyz", IOUtils.readString(is, '\r'));
     }
 
     @Test
