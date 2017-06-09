@@ -86,6 +86,24 @@ public class JsonTokenTest {
     private final byte[] buffer = "[\"\\\\↓ÑI©ôðé\\b\\f\\r\\n\\t\\\"\\u4f92\",{\"key\":1337,123.45:null}]".getBytes(UTF_8);
 
     @Test
+    public void testRawJsonLiteral() {
+        JsonToken token = new JsonToken(JsonToken.Type.LITERAL, buffer, 1, 36, 1, 1);
+        assertEquals("\"\\\\↓ÑI©ôðé\\b\\f\\r\\n" +
+                     "\\t\\\"\\u4f92\"", token.asString());
+        assertEquals("\\\\↓ÑI©ôðé\\b\\f\\r\\n" +
+                     "\\t\\\"\\u4f92", token.rawJsonLiteral());
+
+        // and with illegal escape characters.
+        token = new JsonToken(JsonToken.Type.LITERAL, "\"\\0\"".getBytes(), 0, 4, 1, 1);
+        assertEquals("\\0", token.rawJsonLiteral());
+        // and with illecal escaped unicode.
+        token = new JsonToken(JsonToken.Type.LITERAL, "\"\\u01\"".getBytes(), 0, 6, 1, 1);
+        assertEquals("\\u01", token.rawJsonLiteral());
+        token = new JsonToken(JsonToken.Type.LITERAL, "\"\\ubals\"".getBytes(), 0, 8, 1, 1);
+        assertEquals("\\ubals", token.rawJsonLiteral());
+    }
+
+    @Test
     public void testDecodeJsonLiteral() {
         JsonToken token = new JsonToken(JsonToken.Type.LITERAL, buffer, 1, 36, 1, 1);
         assertEquals("\"\\\\↓ÑI©ôðé\\b\\f\\r\\n" +

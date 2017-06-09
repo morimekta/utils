@@ -147,14 +147,24 @@ public class JsonToken extends Slice {
     }
 
     /**
+     * Get the still quoted string literal content.
+     *
+     * @return The raw string literal.
+     */
+    public String rawJsonLiteral() {
+        if (!isLiteral()) throw new IllegalStateException("No a string literal");
+        return substring(1, -1).asString();
+    }
+
+    /**
      * Get the whole slice as a string.
      *
      * @return Slice decoded as UTF_8 string.
      */
     public String decodeJsonLiteral() {
         // This decodes the string from UTF_8 bytes.
-        String tmp = substring(1, -1).asString();
-        final int l = tmp.length();
+        String raw = rawJsonLiteral();
+        final int l = raw.length();
         StringBuilder out = new StringBuilder(l);
 
         boolean esc = false;
@@ -162,7 +172,7 @@ public class JsonToken extends Slice {
             if (esc) {
                 esc = false;
 
-                char ch = tmp.charAt(i);
+                char ch = raw.charAt(i);
                 switch (ch) {
                     case 'b':
                         out.append('\b');
@@ -187,7 +197,7 @@ public class JsonToken extends Slice {
                         if (l < i + 5) {
                             out.append('?');
                         } else {
-                            String n = tmp.substring(i + 1, i + 5);
+                            String n = raw.substring(i + 1, i + 5);
                             try {
                                 int cp = Integer.parseInt(n, 16);
                                 out.append((char) cp);
@@ -201,10 +211,10 @@ public class JsonToken extends Slice {
                         out.append('?');
                         break;
                 }
-            } else if (tmp.charAt(i) == '\\') {
+            } else if (raw.charAt(i) == '\\') {
                 esc = true;
             } else {
-                out.append(tmp.charAt(i));
+                out.append(raw.charAt(i));
             }
         }
         return out.toString();

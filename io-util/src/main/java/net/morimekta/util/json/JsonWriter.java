@@ -54,16 +54,27 @@ public class JsonWriter {
         context = new JsonContext(JsonContext.Mode.VALUE);
     }
 
+    /**
+     * Reset the state of the writer and flush already written content.
+     */
     protected void reset() {
         writer.flush();
         stack.clear();
         context = new JsonContext(JsonContext.Mode.VALUE);
     }
 
+    /**
+     * Flush the internal writer.
+     */
     public void flush() {
         writer.flush();
     }
 
+    /**
+     * Start an object value.
+     *
+     * @return The JSON Writer.
+     */
     public JsonWriter object() {
         startValue();
 
@@ -74,6 +85,11 @@ public class JsonWriter {
         return this;
     }
 
+    /**
+     * Start an array value.
+     *
+     * @return The JSON Writer.
+     */
     public JsonWriter array() {
         startValue();
 
@@ -84,6 +100,11 @@ public class JsonWriter {
         return this;
     }
 
+    /**
+     * The the ongoing object.
+     *
+     * @return The JSON Writer.
+     */
     public JsonWriter endObject() {
         if (!context.map()) {
             throw new IllegalStateException("Unexpected end, not in object.");
@@ -96,6 +117,11 @@ public class JsonWriter {
         return this;
     }
 
+    /**
+     * End the ongoing array.
+     *
+     * @return The JSON Writer.
+     */
     public JsonWriter endArray() {
         if (!context.list()) {
             throw new IllegalStateException("Unexpected end, not in list.");
@@ -105,6 +131,12 @@ public class JsonWriter {
         return this;
     }
 
+    /**
+     * Write the boolean as object key.
+     *
+     * @param key The boolean key.
+     * @return The JSON Writer.
+     */
     public JsonWriter key(boolean key) {
         startKey();
 
@@ -112,6 +144,12 @@ public class JsonWriter {
         return this;
     }
 
+    /**
+     * Write the byte as object key.
+     *
+     * @param key The byte key.
+     * @return The JSON Writer.
+     */
     public JsonWriter key(byte key) {
         startKey();
 
@@ -122,6 +160,12 @@ public class JsonWriter {
         return this;
     }
 
+    /**
+     * Write the short as object key.
+     *
+     * @param key The short key.
+     * @return The JSON Writer.
+     */
     public JsonWriter key(short key) {
         startKey();
 
@@ -132,6 +176,12 @@ public class JsonWriter {
         return this;
     }
 
+    /**
+     * Write the int as object key.
+     *
+     * @param key The int key.
+     * @return The JSON Writer.
+     */
     public JsonWriter key(int key) {
         startKey();
 
@@ -142,6 +192,12 @@ public class JsonWriter {
         return this;
     }
 
+    /**
+     * Write the long as object key.
+     *
+     * @param key The long key.
+     * @return The JSON Writer.
+     */
     public JsonWriter key(long key) {
         startKey();
 
@@ -152,6 +208,12 @@ public class JsonWriter {
         return this;
     }
 
+    /**
+     * Write the double as object key.
+     *
+     * @param key The double key.
+     * @return The JSON Writer.
+     */
     public JsonWriter key(double key) {
         startKey();
 
@@ -167,6 +229,12 @@ public class JsonWriter {
         return this;
     }
 
+    /**
+     * Write the string as object key.
+     *
+     * @param key The string key.
+     * @return The JSON Writer.
+     */
     public JsonWriter key(CharSequence key) {
         startKey();
 
@@ -174,11 +242,38 @@ public class JsonWriter {
             throw new IllegalArgumentException("Expected map key, but got null.");
         }
 
-        writeQuoted(key);
+        writeQuotedAndEscaped(key);
         writer.write(':');
         return this;
     }
 
+    /**
+     * Write the string as object key without escaping.
+     *
+     * @param key The string key.
+     * @return The JSON Writer.
+     */
+    public JsonWriter keyUnescaped(CharSequence key) {
+        startKey();
+
+        if (key == null) {
+            throw new IllegalArgumentException("Expected map key, but got null.");
+        }
+
+        writer.write('\"');
+        writer.write(key.toString());
+        writer.write('\"');
+        writer.write(':');
+        return this;
+
+    }
+
+    /**
+     * Write the binary as object key.
+     *
+     * @param key The binary key.
+     * @return The JSON Writer.
+     */
     public JsonWriter key(Binary key) {
         startKey();
 
@@ -193,6 +288,12 @@ public class JsonWriter {
         return this;
     }
 
+    /**
+     * Write the string key without quoting or escaping.
+     *
+     * @param key The raw string key.
+     * @return The JSON Writer.
+     */
     public JsonWriter keyLiteral(CharSequence key) {
         startKey();
 
@@ -205,6 +306,12 @@ public class JsonWriter {
         return this;
     }
 
+    /**
+     * Write boolean value.
+     *
+     * @param value The boolean value.
+     * @return The JSON Writer.
+     */
     public JsonWriter value(boolean value) {
         startValue();
 
@@ -212,6 +319,12 @@ public class JsonWriter {
         return this;
     }
 
+    /**
+     * Write byte value.
+     *
+     * @param value The byte value.
+     * @return The JSON Writer.
+     */
     public JsonWriter value(byte value) {
         startValue();
 
@@ -219,6 +332,12 @@ public class JsonWriter {
         return this;
     }
 
+    /**
+     * Write short value.
+     *
+     * @param value The short value.
+     * @return The JSON Writer.
+     */
     public JsonWriter value(short value) {
         startValue();
 
@@ -226,6 +345,12 @@ public class JsonWriter {
         return this;
     }
 
+    /**
+     * Write int value.
+     *
+     * @param value The int value.
+     * @return The JSON Writer.
+     */
     public JsonWriter value(int value) {
         startValue();
 
@@ -233,36 +358,79 @@ public class JsonWriter {
         return this;
     }
 
-    public JsonWriter value(long number) {
+    /**
+     * Write long value.
+     *
+     * @param value The long value.
+     * @return The JSON Writer.
+     */
+    public JsonWriter value(long value) {
         startValue();
 
-        writer.print(number);
+        writer.print(value);
         return this;
     }
 
-    public JsonWriter value(double number) {
+    /**
+     * Write double value.
+     *
+     * @param value The double value.
+     * @return The JSON Writer.
+     */
+    public JsonWriter value(double value) {
         startValue();
 
-        final long i = (long) number;
-        if (number == (double) i) {
+        final long i = (long) value;
+        if (value == (double) i) {
             writer.print(i);
         } else {
-            writer.print(number);
+            writer.print(value);
         }
         return this;
     }
 
+    /**
+     * Write unicode string value.
+     *
+     * @param value The string value.
+     * @return The JSON Writer.
+     */
     public JsonWriter value(CharSequence value) {
         startValue();
 
         if (value == null) {
             writer.write(kNull);
         } else {
-            writeQuoted(value);
+            writeQuotedAndEscaped(value);
         }
         return this;
     }
 
+    /**
+     * Write a string unescaped value.
+     *
+     * @param value The string value.
+     * @return The JSON Writer.
+     */
+    public JsonWriter valueUnescaped(CharSequence value) {
+        startValue();
+
+        if (value == null) {
+            writer.write(kNull);
+        } else {
+            writer.write('\"');
+            writer.write(value.toString());
+            writer.write('\"');
+        }
+        return this;
+    }
+
+    /**
+     * Write binary value.
+     *
+     * @param value The binary value.
+     * @return The JSON Writer.
+     */
     public JsonWriter value(Binary value) {
         startValue();
 
@@ -276,6 +444,12 @@ public class JsonWriter {
         return this;
     }
 
+    /**
+     * Write a literal string as value. Not quoted and not escaped.
+     *
+     * @param value The raw string value.
+     * @return The JSON Writer.
+     */
     public JsonWriter valueLiteral(CharSequence value) {
         startValue();
 
@@ -326,7 +500,7 @@ public class JsonWriter {
     }
 
     // Ported from org.json JSONObject.quote and modified for local use.
-    private void writeQuoted(CharSequence string) {
+    private void writeQuotedAndEscaped(CharSequence string) {
         if (string != null && string.length() != 0) {
             int len = string.length();
             writer.write('\"');

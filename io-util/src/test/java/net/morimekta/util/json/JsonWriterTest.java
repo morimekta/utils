@@ -120,6 +120,18 @@ public class JsonWriterTest {
         writer.endObject();
         writer.flush();
         assertJsonEquals("{the_key:the_value}", baos);
+
+        writer.reset();
+        baos.reset();
+
+        // Literal values break the JSON standard, as they are free-form
+        // strings inserted unquoted (and unescaped).
+        writer.object();
+        writer.keyUnescaped("\033");
+        writer.valueUnescaped("\033");
+        writer.endObject();
+        writer.flush();
+        assertJsonEquals("{\"\033\":\"\033\"}", baos);
     }
 
     @Test
