@@ -124,12 +124,14 @@ public class LineBuffer {
                 --up;
             }
 
-            String old = buffer.get(offset);
-            if (old.equals(line)) {
+            String old = offset + i < buffer.size()
+                         ? buffer.get(offset + i)
+                         : null;
+            buffer.set(offset + i, line);
+            if (line.equals(old) && !line.isEmpty()) {
                 // No change.
                 continue;
             }
-            buffer.set(offset, line);
             terminal.print(CURSOR_ERASE);
             terminal.print(line);
         }
