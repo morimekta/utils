@@ -159,6 +159,13 @@ public class PrettyJsonWriter extends JsonWriter {
     }
 
     @Override
+    public PrettyJsonWriter keyUnescaped(CharSequence key) {
+        super.keyUnescaped(key);
+        writer.write(SPACE);
+        return this;
+    }
+
+    @Override
     public PrettyJsonWriter value(boolean value) {
         super.value(value);
         return this;
@@ -209,6 +216,12 @@ public class PrettyJsonWriter extends JsonWriter {
     @Override
     public PrettyJsonWriter valueLiteral(CharSequence value) {
         super.valueLiteral(value);
+        return this;
+    }
+
+    @Override
+    public PrettyJsonWriter valueUnescaped(CharSequence value) {
+        super.valueUnescaped(value);
         return this;
     }
 
