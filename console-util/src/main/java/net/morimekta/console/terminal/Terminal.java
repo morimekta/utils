@@ -247,14 +247,11 @@ public class Terminal extends CharReader implements Closeable, LinePrinter {
     public <T> void waitAbortable(Future<T> task) throws IOException, InterruptedException {
         while (!task.isDone() && !task.isCancelled()) {
             Char c = readIfAvailable();
-            if (c == null) {
-                Thread.sleep(10L);
-                continue;
-            }
-            if (c.asInteger() == Char.ABR) {
+            if (c != null && c.asInteger() == Char.ABR) {
                 task.cancel(true);
                 throw new IOException("Aborted with '" + c.asString() + "'");
             }
+            Thread.sleep(79L);
         }
     }
 
