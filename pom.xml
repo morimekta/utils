@@ -316,6 +316,9 @@
                         </goals>
                         <configuration>
                             <additionalparam>-Xdoclint:all</additionalparam>
+                            <failOnError>true</failOnError>
+                            <nodeprecatedlist>true</nodeprecatedlist>
+                            <notimestamp>true</notimestamp>
                         </configuration>
                     </execution>
                 </executions>
@@ -511,6 +514,7 @@
                     <reportSet>
                         <reports>
                             <report>javadoc</report>
+                            <report>aggregate</report>
                         </reports>
                     </reportSet>
                 </reportSets>

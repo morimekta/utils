@@ -49,8 +49,7 @@ public interface ConfigBuilder<Builder extends ConfigBuilder<Builder>> extends C
     }
 
     /**
-     *
-     *
+     * Remove entry key from the config.
      *
      * @param key The key to remove.
      * @return The value removed if any.
@@ -58,9 +57,10 @@ public interface ConfigBuilder<Builder extends ConfigBuilder<Builder>> extends C
     Object remove(String key);
 
     /**
+     * Remove entry key from the config.
      *
-     * @param key
-     * @return
+     * @param key The key to remove.
+     * @return The value removed if any.
      */
     default Object remove(Stringable key) {
         return remove(key.asString());

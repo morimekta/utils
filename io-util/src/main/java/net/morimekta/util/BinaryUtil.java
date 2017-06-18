@@ -10,14 +10,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 /**
- * Utility class for Binary converstion from and to binary array from Collections.
+ * Utility class for Binary conversion from and to binary array from Collections.
  */
 public class BinaryUtil {
-
     /**
      * Method to convert a Collection of Binary to a byte array.
      *
      * @param binaryList Collection containing Binary elements.
+     * @throws IOException If unable to write binary to bytes, e.g. on buffer overflow.
      * @return Array of bytes.
      */
     public static byte[] fromBinaryCollection(Collection<Binary> binaryList) throws IOException {
@@ -26,7 +26,7 @@ public class BinaryUtil {
             writer.writeInt(binaryList.size());
             for (Binary binary : binaryList) {
                 writer.writeInt(binary.length());
-                writer.write(binary.get());
+                writer.writeBinary(binary);
             }
             return baos.toByteArray();
         }
@@ -36,6 +36,7 @@ public class BinaryUtil {
      * Method to convert a byte array to a Collection of Binary.
      *
      * @param bytes Array of bytes.
+     * @throws IOException If unable to read the binary collection.
      * @return Collection of Binary.
      */
     public static Collection<Binary> toBinaryCollection(byte[] bytes) throws IOException {
@@ -45,7 +46,7 @@ public class BinaryUtil {
             Collection<Binary> result = new ArrayList<>();
             for( int i = 0; i < size; i++ ) {
                 int length = reader.expectInt();
-                result.add(Binary.wrap(reader.expectBytes(length)));
+                result.add(reader.expectBinary(length));
             }
             return result;
         }

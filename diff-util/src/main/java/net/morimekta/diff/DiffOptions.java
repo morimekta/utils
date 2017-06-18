@@ -88,23 +88,29 @@ public class DiffOptions {
     }
 
     /**
-     * Number of seconds to map a diff before giving up (0 for infinity).
+     * @return Number of seconds to map a diff before giving up (0 for infinity).
      */
     public double getTimeout() {
         return timeout;
     }
 
     /**
-     * Cost of an empty edit operation in terms of edit characters.
+     * @return Cost of an empty edit operation in terms of edit characters.
      */
     public int getEditCost() {
         return editCost;
     }
 
+    /**
+     * @return If the diff should first check line-by-line changes.
+     */
     public boolean getCheckLines() {
         return checkLines;
     }
 
+    /**
+     * @return The system clock used.
+     */
     public Clock getClock() {
         return clock;
     }

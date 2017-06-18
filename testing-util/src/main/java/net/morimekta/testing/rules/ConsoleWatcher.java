@@ -202,6 +202,7 @@ public class ConsoleWatcher extends TestWatcher implements AutoCloseable {
     /**
      * Set input to return the given bytes.
      * @param in The bytes for input.
+     * @return The console watcher.
      */
     public ConsoleWatcher setInput(@Nonnull byte[] in) {
         inStream = new ByteArrayInputStream(in);
@@ -211,6 +212,7 @@ public class ConsoleWatcher extends TestWatcher implements AutoCloseable {
     /**
      * Set input with dynamic content.
      * @param in The input values.
+     * @return The console watcher.
      */
     public ConsoleWatcher setInput(Object... in) {
         assert in.length > 0 : "Require at least one input item";

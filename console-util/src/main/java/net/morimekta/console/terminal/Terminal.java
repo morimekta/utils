@@ -105,6 +105,7 @@ public class Terminal extends CharReader implements Closeable, LinePrinter {
      * @param in The input stream.
      * @param out The output stream.
      * @param lp The line printer or null.
+     * @param switcher TTY mode switcher.
      * @throws UncheckedIOException If unable to set TTY mode.
      */
     @VisibleForTesting

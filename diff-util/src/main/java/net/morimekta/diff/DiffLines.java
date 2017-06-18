@@ -18,6 +18,9 @@ public class DiffLines extends DiffBase {
         this.changeList = makeLineDiff(text1, text2);
     }
 
+    /**
+     * @return The full diff including unchanged lines.
+     */
     public String fullDiff() {
         StringBuilder builder = new StringBuilder();
         for (Change ch : getChangeList()) {
@@ -27,6 +30,10 @@ public class DiffLines extends DiffBase {
         return builder.toString();
     }
 
+    /**
+     * @return Make a diff description usable by unix <code>patch</code>
+     *         program.
+     */
     public String patch() {
         StringBuilder builder = new StringBuilder();
         int src_pos = 1, trg_pos = 1;
@@ -220,8 +227,7 @@ public class DiffLines extends DiffBase {
     }
 
     /**
-     * Get the list of changes per line. The lines does NOT
-     * @return
+     * @return The list of change and non-change entries, one per line.
      */
     @Override
     public LinkedList<Change> getChangeList() {

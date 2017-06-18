@@ -27,6 +27,7 @@ public class ResourceUtils {
      *
      * @param resource The resource path.
      * @param dir Target directory.
+     * @return File created and written to.
      */
     public static File copyResourceTo(String resource, File dir) {
         if (!dir.exists()) {
@@ -55,6 +56,7 @@ public class ResourceUtils {
      *
      * @param content The file content.
      * @param target The file to write to.
+     * @return File written to.
      */
     public static File writeContentTo(String content, File target) {
         assertNotNull("Content is null", content);

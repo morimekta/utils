@@ -388,6 +388,7 @@ public interface Config {
      * value. Convert the value using the given converter function.
      *
      * @param key The key to look for.
+     * @param convert Value converter function.
      * @param def The default value.
      * @param <T> The value type.
      * @return The value if found, otherwise the default.

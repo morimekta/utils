@@ -114,6 +114,7 @@ public class STTYModeSwitcher implements Closeable {
      * Set terminal mode.
      *
      * @param mode The mode to set.
+     * @throws IOException If setting mode failed.
      */
     @VisibleForTesting
     protected void setSttyMode(STTYMode mode) throws IOException {

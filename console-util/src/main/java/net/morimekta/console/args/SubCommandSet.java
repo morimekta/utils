@@ -130,7 +130,8 @@ public class SubCommandSet<SubCommandDef> extends BaseArgument {
      * @param subCommands The sub-commands to add.
      * @return The sub-command-set.
      */
-    public SubCommandSet addAll(SubCommand<SubCommandDef>... subCommands) {
+    @SafeVarargs
+    public final SubCommandSet addAll(SubCommand<SubCommandDef>... subCommands) {
         for (SubCommand<SubCommandDef> subCommand : subCommands) {
             add(subCommand);
         }
@@ -210,6 +211,7 @@ public class SubCommandSet<SubCommandDef> extends BaseArgument {
      * Get the single line usage string for a given sub-command.
      *
      * @param name The sub-command to print help for.
+     * @return The usage string.
      */
     public String getSingleLineUsage(String name) {
         for (SubCommand<SubCommandDef> cmd : subCommands) {
