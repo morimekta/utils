@@ -308,44 +308,27 @@
             </plugin>
             <plugin>
                 <artifactId>maven-javadoc-plugin</artifactId>
+                <configuration>
+                    <additionalparam>-Xdoclint:all</additionalparam>
+                    <failOnError>true</failOnError>
+                    <nodeprecatedlist>true</nodeprecatedlist>
+                    <notimestamp>true</notimestamp>
+                    <quiet>true</quiet>
+                </configuration>
                 <executions>
+                    <execution>
+                        <id>default</id>
+                        <goals>
+                            <goal>javadoc-no-fork</goal>
+                        </goals>
+                        <phase>process-sources</phase>
+                    </execution>
                     <execution>
                         <id>attach-javadocs</id>
                         <goals>
                             <goal>jar</goal>
                         </goals>
-                        <configuration>
-                            <additionalparam>-Xdoclint:all</additionalparam>
-                            <failOnError>true</failOnError>
-                            <nodeprecatedlist>true</nodeprecatedlist>
-                            <notimestamp>true</notimestamp>
-                            <groups>
-                                <group>
-                                    <title>Android Utils</title>
-                                    <packages>android.*</packages>
-                                </group>
-                                <group>
-                                    <title>Config Utils</title>
-                                    <packages>net.morimekta.config*</packages>
-                                </group>
-                                <group>
-                                    <title>Console Utils</title>
-                                    <packages>net.morimekta.console*</packages>
-                                </group>
-                                <group>
-                                    <title>Diff Utils</title>
-                                    <packages>net.morimekta.diff*</packages>
-                                </group>
-                                <group>
-                                    <title>IO Utils</title>
-                                    <packages>net.morimekta.util*</packages>
-                                </group>
-                                <group>
-                                    <title>Testing Utils</title>
-                                    <packages>net.morimekta.testing*</packages>
-                                </group>
-                            </groups>
-                        </configuration>
+                        <phase>package</phase>
                     </execution>
                 </executions>
             </plugin>
@@ -542,6 +525,39 @@
                             <report>javadoc</report>
                             <report>aggregate</report>
                         </reports>
+                        <configuration>
+                            <additionalparam>-Xdoclint:all</additionalparam>
+                            <failOnError>true</failOnError>
+                            <nodeprecatedlist>true</nodeprecatedlist>
+                            <notimestamp>true</notimestamp>
+                            <quiet>true</quiet>
+                            <groups>
+                                <group>
+                                    <title>Android Utils</title>
+                                    <packages>android.*</packages>
+                                </group>
+                                <group>
+                                    <title>Config Utils</title>
+                                    <packages>net.morimekta.config*</packages>
+                                </group>
+                                <group>
+                                    <title>Console Utils</title>
+                                    <packages>net.morimekta.console*</packages>
+                                </group>
+                                <group>
+                                    <title>Diff Utils</title>
+                                    <packages>net.morimekta.diff*</packages>
+                                </group>
+                                <group>
+                                    <title>IO Utils</title>
+                                    <packages>net.morimekta.util*</packages>
+                                </group>
+                                <group>
+                                    <title>Testing Utils</title>
+                                    <packages>net.morimekta.testing*</packages>
+                                </group>
+                            </groups>
+                        </configuration>
                     </reportSet>
                 </reportSets>
             </plugin>
@@ -566,6 +582,13 @@
     </reporting>
 
     <profiles>
+        <profile>
+            <!--
+              Simply by activating this profile, the 'it' profile will be disabled, as
+              some profile locally has been activated.
+             -->
+            <id>lib</id>
+        </profile>
         <profile>
             <id>it</id>
             <activation>
