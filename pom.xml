@@ -319,6 +319,32 @@
                             <failOnError>true</failOnError>
                             <nodeprecatedlist>true</nodeprecatedlist>
                             <notimestamp>true</notimestamp>
+                            <groups>
+                                <group>
+                                    <title>Android Utils</title>
+                                    <packages>android.*</packages>
+                                </group>
+                                <group>
+                                    <title>Config Utils</title>
+                                    <packages>net.morimekta.config*</packages>
+                                </group>
+                                <group>
+                                    <title>Console Utils</title>
+                                    <packages>net.morimekta.console*</packages>
+                                </group>
+                                <group>
+                                    <title>Diff Utils</title>
+                                    <packages>net.morimekta.diff*</packages>
+                                </group>
+                                <group>
+                                    <title>IO Utils</title>
+                                    <packages>net.morimekta.util*</packages>
+                                </group>
+                                <group>
+                                    <title>Testing Utils</title>
+                                    <packages>net.morimekta.testing*</packages>
+                                </group>
+                            </groups>
                         </configuration>
                     </execution>
                 </executions>
