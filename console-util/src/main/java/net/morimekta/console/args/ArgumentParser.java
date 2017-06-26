@@ -87,9 +87,10 @@ public class ArgumentParser {
 
     /**
      * Create a sub-command argument parser for the given sub-command.
-     * @param parent
-     * @param subCommand
-     * @param description
+     *
+     * @param parent Parent argument parser to defer with on unknown options.
+     * @param subCommand The name of the sub-command the parser is created for.
+     * @param description The sub-command description.
      */
     public ArgumentParser(ArgumentParser parent, String subCommand, String description) {
         this.program = parent.program + " " + subCommand;
