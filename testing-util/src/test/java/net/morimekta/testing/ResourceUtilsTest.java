@@ -16,8 +16,10 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static net.morimekta.testing.ResourceUtils.getResourceAsByteBuffer;
 import static net.morimekta.testing.ResourceUtils.getResourceAsString;
 import static net.morimekta.util.io.IOUtils.readString;
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -29,13 +31,22 @@ public class ResourceUtilsTest {
     public TemporaryFolder temp = new TemporaryFolder();
 
     @Test
-    public void testCopyResourceTo() throws IOException {
-        ResourceUtils.copyResourceTo("/net/morimekta/testing/test.txt", temp.getRoot());
-
-        File test = new File(temp.getRoot(), "test.txt");
+    public void testCopyResourceTo_dir() throws IOException {
+        File test = ResourceUtils.copyResourceTo("/net/morimekta/testing/test.txt", temp.getRoot());
 
         assertTrue(test.exists());
         assertTrue(test.isFile());
+        assertThat(test.getName(), is("test.txt"));
+        assertEquals("Test!\n", readString(new FileInputStream(test)));
+    }
+
+    @Test
+    public void testCopyResourceTo_file() throws IOException {
+        File test = ResourceUtils.copyResourceTo("/net/morimekta/testing/test.txt", temp.newFile("boo.txt"));
+
+        assertTrue(test.exists());
+        assertTrue(test.isFile());
+        assertThat(test.getName(), is("boo.txt"));
         assertEquals("Test!\n", readString(new FileInputStream(test)));
     }
 
@@ -46,17 +57,6 @@ public class ResourceUtilsTest {
             fail("No exception on no such resource");
         } catch (AssertionError e) {
             assertEquals("Trying to read non-existing resource /net/morimekta/testing/does-not-exist.txt",
-                         e.getMessage());
-        }
-
-        File tmp = temp.newFile();
-        tmp.createNewFile();
-        try {
-            ResourceUtils.copyResourceTo("/net/morimekta/testing/test.txt", tmp);
-            fail("No exception on target is file");
-        } catch (AssertionError e) {
-            assertEquals("Trying to copy resource '/net/morimekta/testing/test.txt' to file: '" + tmp.getAbsolutePath() +
-                         "', directory required",
                          e.getMessage());
         }
 
@@ -72,12 +72,11 @@ public class ResourceUtilsTest {
 
     @Test
     public void testWriteContentTo() throws IOException {
-        ResourceUtils.writeContentTo("/net/morimekta/testing/test.txt", temp.newFile("test2.txt"));
-
-        File test = new File(temp.getRoot(), "test2.txt");
+        File test = ResourceUtils.writeContentTo("/net/morimekta/testing/test.txt", temp.newFile("test2.txt"));
 
         assertTrue(test.exists());
         assertTrue(test.isFile());
+        assertThat(test.getName(), is("test2.txt"));
         assertEquals("/net/morimekta/testing/test.txt", readString(new FileInputStream(test)));
     }
 
@@ -85,7 +84,7 @@ public class ResourceUtilsTest {
     public void testWriteContentTo_fails() throws IOException {
         File file = new File(temp.getRoot(), "a/b/c");
         try {
-            ResourceUtils.writeContentTo("/net/morimekta/testing/test.txt", file);
+            ResourceUtils.writeContentTo("/net/morimekta/testing/test2.txt", file);
             fail("No exception on unable to write to file.");
         } catch (UncheckedIOException e) {
             assertEquals("java.io.FileNotFoundException: " + file.getAbsolutePath() + " (No such file or directory)",

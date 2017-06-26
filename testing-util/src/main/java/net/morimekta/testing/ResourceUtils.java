@@ -23,23 +23,23 @@ import static org.junit.Assert.fail;
 public class ResourceUtils {
     /**
      * Copy a resource to the target directory. The resource file retains it's
-     * name.
+     * name. If the target is a file, the file is overwritten with the content
+     * of the resource file.
      *
      * @param resource The resource path.
-     * @param dir Target directory.
+     * @param target Target file or directory.
      * @return File created and written to.
      */
-    public static File copyResourceTo(String resource, File dir) {
-        if (!dir.exists()) {
-            fail("Trying to copy resource '" + resource + "' to non-existing directory: '" + dir + "'");
+    public static File copyResourceTo(String resource, File target) {
+        if (!target.exists()) {
+            fail("Trying to copy resource '" + resource + "' to non-existing directory: '" + target + "'");
         }
-        if (dir.isFile()) {
-            fail("Trying to copy resource '" + resource + "' to file: '" + dir + "', directory required");
+        if (target.isDirectory()) {
+            int i = resource.lastIndexOf('/');
+            target = new File(target, resource.substring(i + 1));
         }
-        int i = resource.lastIndexOf('/');
-        File file = new File(dir, resource.substring(i + 1));
 
-        try (FileOutputStream fos = new FileOutputStream(file);
+        try (FileOutputStream fos = new FileOutputStream(target);
              BufferedOutputStream out = new BufferedOutputStream(fos);
              InputStream in = getResourceAsStream(resource)) {
             IOUtils.copy(in, out);
@@ -48,7 +48,7 @@ public class ResourceUtils {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
-        return file;
+        return target;
     }
 
     /**
