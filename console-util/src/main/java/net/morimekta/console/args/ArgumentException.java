@@ -27,11 +27,22 @@ import java.util.Locale;
  * invalid initialization.
  */
 public class ArgumentException extends RuntimeException {
+    private ArgumentParser parser;
+
     public ArgumentException(String format, Object... args) {
         super(String.format(Locale.US, format, args));
     }
 
     public ArgumentException(Throwable cause, String format, Object... args) {
         super(String.format(Locale.US, format, args), cause);
+    }
+
+    public ArgumentParser getParser() {
+        return parser;
+    }
+
+    public ArgumentException setParser(ArgumentParser parser) {
+        this.parser = parser;
+        return this;
     }
 }

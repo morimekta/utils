@@ -222,6 +222,17 @@ public class ArgumentParser {
      * @param args The argument list.
      */
     public void parse(ArgumentList args) {
+        try {
+            parseInternal(args);
+        } catch (ArgumentException e) {
+            if (e.getParser() == null) {
+                e.setParser(this);
+            }
+            throw e;
+        }
+    }
+
+    private void parseInternal(ArgumentList args) {
         while (args.remaining() > 0) {
             String cur = args.get(0);
 
@@ -293,7 +304,8 @@ public class ArgumentParser {
                                 parse(list);
                             }
                         } catch (ArgumentException e) {
-                            throw new ArgumentException(e, "Argument file " + f.getName() + ": " + e.getMessage());
+                            throw new ArgumentException(e, "Argument file " + f.getName() + ": " + e.getMessage())
+                                    .setParser(e.getParser());
                         } catch (IOException e) {
                             throw new ArgumentException(e, e.getMessage());
                         }
