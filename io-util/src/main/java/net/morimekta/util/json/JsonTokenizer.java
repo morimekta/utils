@@ -29,6 +29,7 @@ import net.morimekta.util.io.Utf8StreamWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Reader;
 import java.io.Writer;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -45,7 +46,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public class JsonTokenizer {
     private static final int CONSOLIDATE_LINE_ON = 1 << 7;  // 128
 
-    private final Utf8StreamReader      reader;
+    private final Reader                reader;
     private final ArrayList<String>     lines;
     private final ByteBuffer            lineBuffer;
     private final Writer                lineWriter;
@@ -64,10 +65,22 @@ public class JsonTokenizer {
      * whether the document follows the JSON standard, but will only accept
      * JSON formatted tokens.
      *
-     * @param in Input stream to parse.
+     * @param in Input stream to parse from.
      */
     public JsonTokenizer(InputStream in) {
-        this.reader = new Utf8StreamReader(in);
+        this(new Utf8StreamReader(in));
+    }
+
+    /**
+     * Create a JSON tokenizer that reads from the char reader. It will only
+     * read as far as requested, and no bytes further. It has no checking of
+     * whether the document follows the JSON standard, but will only accept
+     * JSON formatted tokens.
+     *
+     * @param in Reader of content to parse.
+     */
+    public JsonTokenizer(Reader in) {
+        this.reader = in;
         this.line = 1;
         this.linePos = 0;
         this.lastChar = 0;
