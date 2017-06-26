@@ -113,6 +113,7 @@ public class ProcessExecutor implements Callable<Integer> {
      * Set input stream to write to the process as program input.
      *
      * @param in The program input.
+     * @return The process executor.
      */
     public ProcessExecutor setInput(InputStream in) {
         this.in.set(in);
@@ -125,6 +126,7 @@ public class ProcessExecutor implements Callable<Integer> {
      *
      * @param deadlineMs The new deadline in milliseconds. 0 means to wait
      *                   forever. Default is 1 second.
+     * @return The process executor.
      */
     public ProcessExecutor setDeadlineMs(long deadlineMs) {
         this.deadlineMs = deadlineMs;
@@ -137,6 +139,7 @@ public class ProcessExecutor implements Callable<Integer> {
      *
      * @param deadlineFlushMs The new deadline in milliseconds. 0 means to wait
      *                       forever. Default is 1 second.
+     * @return The process executor.
      */
     public ProcessExecutor setDeadlineFlushMs(long deadlineFlushMs) {
         if (deadlineFlushMs < 0L) {
