@@ -63,6 +63,42 @@ public class ArgumentParserTest {
     }
 
     @Test
+    public void testParentConstructor() {
+        AtomicBoolean help = new AtomicBoolean();
+        AtomicBoolean other = new AtomicBoolean();
+
+        ArgumentParser parent = new ArgumentParser("gt", "0.2.5", "Git Tools");
+        parent.add(new Flag("--help", "?h", "Help", help::set));
+
+        ArgumentParser parser = new ArgumentParser(parent, "tool", "A Tool");
+        parser.add(new Flag("--other", "o", "Other", other::set));
+
+        assertThat(parser.getProgramDescription(), is("A Tool - 0.2.5"));
+
+        parser.parse("--help", "-o");
+        assertThat(help.get(), is(true));
+        assertThat(other.get(), is(true));
+    }
+
+    @Test
+    public void testParentConstructor_2() {
+        AtomicBoolean help = new AtomicBoolean();
+        AtomicBoolean other = new AtomicBoolean();
+
+        ArgumentParser parent = new ArgumentParser("gt", "0.2.5", "Git Tools");
+        parent.add(new Flag("--help", "?h", "Help", help::set));
+
+        ArgumentParser parser = new ArgumentParser(parent, "tool", "A Tool");
+        parser.add(new Flag("--other", "o", "Other", other::set));
+
+        assertThat(parser.getProgramDescription(), is("A Tool - 0.2.5"));
+
+        parser.parse("-?", "--other");
+        assertThat(help.get(), is(true));
+        assertThat(other.get(), is(true));
+    }
+
+    @Test
     public void testParse_simple() {
         ArgumentParser parser = new ArgumentParser("gt", "0.2.5", "Git Tools");
 
@@ -208,7 +244,8 @@ public class ArgumentParserTest {
                        "--opt the-opt\n" +
                        "\n" +
                        "# comment\n" +
-                       "boo\n").getBytes(UTF_8));
+                       "\"foo\\tbar\"\n" +
+                       "      baz\n").getBytes(UTF_8));
         }
 
         AtomicBoolean      b      = new AtomicBoolean(false);
@@ -224,7 +261,7 @@ public class ArgumentParserTest {
 
         assertThat(b.get(), is(true));
         assertThat(opt.get(), is("the-opt"));
-        assertThat(arg, is(ImmutableList.of("boo")));
+        assertThat(arg, is(ImmutableList.of("foo\tbar", "baz")));
 
         try (FileOutputStream fos = new FileOutputStream(flags)) {
             fos.write(("--boo\n").getBytes(UTF_8));
@@ -471,7 +508,9 @@ public class ArgumentParserTest {
     public void testAdd_fails() {
         AtomicBoolean b = new AtomicBoolean();
 
-        ArgumentParser parser = new ArgumentParser("gt", "v0.1", "GitTool");
+        ArgumentParser parent = new ArgumentParser("gt", "v0.1", "GitTool");
+        parent.add(new Flag("--parent", "p", "", b::set));
+        ArgumentParser parser = new ArgumentParser(parent, "tool", "GitTool");
         parser.add(new Flag("--exists", "e", "", b::set));
 
         try {
@@ -482,10 +521,24 @@ public class ArgumentParserTest {
         }
 
         try {
+            parser.add(new Flag("--parent", "n", "", b::set));
+            fail("no exception");
+        } catch (IllegalArgumentException e) {
+            assertThat(e.getMessage(), is("Option --parent already exists in parent"));
+        }
+
+        try {
             parser.add(new Flag("--new", "e", "", b::set));
             fail("no exception");
         } catch (IllegalArgumentException e) {
             assertThat(e.getMessage(), is("Short option -e already exists"));
+        }
+
+       try {
+            parser.add(new Flag("--new3", "p", "", b::set));
+            fail("no exception");
+        } catch (IllegalArgumentException e) {
+            assertThat(e.getMessage(), is("Short option -p already exists in parent"));
         }
 
         try {

@@ -23,6 +23,8 @@ package net.morimekta.console.args;
 import net.morimekta.console.chr.CharUtil;
 import net.morimekta.util.Strings;
 import net.morimekta.util.io.IndentedPrintWriter;
+import net.morimekta.util.json.JsonException;
+import net.morimekta.util.json.JsonTokenizer;
 import org.apache.commons.lang3.text.WordUtils;
 
 import java.io.BufferedReader;
@@ -33,6 +35,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.io.StringReader;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -77,6 +80,28 @@ public class ArgumentParser {
         this.arguments = new LinkedList<>();
         this.longNameOptions = new HashMap<>();
         this.shortOptions = new HashMap<>();
+
+        this.parent = null;
+    }
+
+    /**
+     * Create a sub-command argument parser for the given sub-command.
+     * @param parent
+     * @param subCommand
+     * @param description
+     */
+    public ArgumentParser(ArgumentParser parent, String subCommand, String description) {
+        this.program = parent.program + " " + subCommand;
+        this.version = parent.version;
+        this.description = description;
+        this.argumentOptions = parent.argumentOptions;
+
+        this.options = new LinkedList<>();
+        this.arguments = new LinkedList<>();
+        this.longNameOptions = new HashMap<>();
+        this.shortOptions = new HashMap<>();
+
+        this.parent = parent;
     }
 
     /**
@@ -117,10 +142,12 @@ public class ArgumentParser {
      * @return The argument argumentParser.
      */
     public <O extends BaseOption> ArgumentParser add(O option) {
-        this.options.add(option);
         if (option.getName() != null) {
             if (longNameOptions.containsKey(option.getName())) {
                 throw new IllegalArgumentException("Option " + option.getName() + " already exists");
+            }
+            if (parent != null && parent.longNameOptions.containsKey(option.getName())) {
+                throw new IllegalArgumentException("Option " + option.getName() + " already exists in parent");
             }
 
             longNameOptions.put(option.getName(), option);
@@ -131,6 +158,9 @@ public class ArgumentParser {
             if (negate != null) {
                 if (longNameOptions.containsKey(negate)) {
                     throw new IllegalArgumentException("Flag " + negate + " already exists");
+                }
+                if (parent != null && parent.longNameOptions.containsKey(negate)) {
+                    throw new IllegalArgumentException("Flag " + negate + " already exists in parent");
                 }
 
                 longNameOptions.put(negate, option);
@@ -144,11 +174,15 @@ public class ArgumentParser {
                 if (shortOptions.containsKey(s)) {
                     throw new IllegalArgumentException("Short option -" + s + " already exists");
                 }
+                if (parent != null && parent.shortOptions.containsKey(s)) {
+                    throw new IllegalArgumentException("Short option -" + s + " already exists in parent");
+                }
 
                 shortOptions.put(s, option);
             }
         }
 
+        this.options.add(option);
         return this;
     }
 
@@ -200,7 +234,7 @@ public class ArgumentParser {
                 if (cur.contains("=")) {
                     cur = cur.substring(0, cur.indexOf("="));
                 }
-                BaseOption opt = longNameOptions.get(cur);
+                BaseOption opt = getLongNameOption(cur);
                 if (opt == null) {
                     throw new ArgumentException("No option for " + cur);
                 }
@@ -210,7 +244,7 @@ public class ArgumentParser {
                 String remaining = cur.substring(1);
                 int skip = 0;
                 while (remaining.length() > 0) {
-                    BaseOption opt = shortOptions.get(remaining.charAt(0));
+                    BaseOption opt = getShortNameOption(remaining.charAt(0));
                     if (opt == null) {
                         throw new ArgumentException("No short opt for -" + remaining.charAt(0));
                     }
@@ -232,9 +266,27 @@ public class ArgumentParser {
                                                        .map(String::trim)
                                                        // strip empty lines and commented lines
                                                        .filter(l -> !(l.isEmpty() || l.startsWith("#")))
-                                                       // split on the first space,
-                                                       // and treat each part an arg entry
-                                                       .flatMap(l -> Arrays.stream(l.split(" ", 2)))
+                                                       .flatMap(l -> {
+                                                           // If the line is double quoted (entirely), treat the whole
+                                                           // as a json-escaped string argument.
+                                                           if (l.startsWith("\"") && l.endsWith("\"")) {
+                                                               try (StringReader lin = new StringReader(l)) {
+                                                                   JsonTokenizer tokenizer = new JsonTokenizer(lin);
+                                                                   String val = tokenizer.expectString("argument").decodeJsonLiteral();
+                                                                   if (lin.read() != -1) {
+                                                                       throw new ArgumentException("Garbage after quoted string argument: " + l);
+                                                                   }
+
+                                                                   return Arrays.stream(new String[]{val});
+                                                               } catch (IOException | JsonException e) {
+                                                                   throw new ArgumentException(e, e.getMessage());
+                                                               }
+                                                           }
+                                                           // split on the first space,
+                                                           // and treat each part an arg entry
+                                                           return Arrays.stream(l.split("[ ]", 2))
+                                                                        .map(String::trim);
+                                                       })
                                                        .collect(Collectors.toList());
                             if (lines.size() > 0) {
                                 ArgumentList list = new ArgumentList(lines.toArray(new String[lines.size()]));
@@ -280,6 +332,22 @@ public class ArgumentParser {
             }
             args.consume(consumed);
         }
+    }
+
+    private BaseOption getLongNameOption(String name) {
+        BaseOption option = longNameOptions.get(name);
+        if (option == null && parent != null) {
+            option = parent.getLongNameOption(name);
+        }
+        return option;
+    }
+
+    private BaseOption getShortNameOption(char c) {
+        BaseOption option = shortOptions.get(c);
+        if (option == null && parent != null) {
+            option = parent.getShortNameOption(c);
+        }
+        return option;
     }
 
     /**
@@ -492,6 +560,8 @@ public class ArgumentParser {
     }
 
     static final int USAGE_EXTRA_CHARS = 4;
+
+    private final ArgumentParser parent;
 
     private final String                 program;
     private final String                 version;
