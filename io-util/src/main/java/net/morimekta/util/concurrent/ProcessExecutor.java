@@ -64,9 +64,7 @@ public class ProcessExecutor implements Callable<Integer> {
     private final ByteArrayOutputStream out;
     private final ByteArrayOutputStream err;
 
-    private final AtomicReference<IOException> inException;
-    private final AtomicReference<IOException> outException;
-    private final AtomicReference<IOException> errException;
+    private final AtomicReference<IOException> ioException;
 
     private final AtomicReference<InputStream> in;
 
@@ -80,9 +78,7 @@ public class ProcessExecutor implements Callable<Integer> {
     }
 
     ProcessExecutor(String[] cmd, Runtime runtime, ExecutorService executor) {
-        this.inException = new AtomicReference<>();
-        this.outException = new AtomicReference<>();
-        this.errException = new AtomicReference<>();
+        this.ioException = new AtomicReference<>();
 
         this.cmd = cmd;
         this.runtime = runtime;
@@ -251,12 +247,8 @@ public class ProcessExecutor implements Callable<Integer> {
                 throw new IOException("IO thread handling timeout");
             }
 
-            if (inException.get() != null) {
-                throw new IOException(inException.get().getMessage(), inException.get());
-            } else if (outException.get() != null) {
-                throw new IOException(outException.get().getMessage(), outException.get());
-            } else if (errException.get() != null) {
-                throw new IOException(errException.get().getMessage(), errException.get());
+            if (ioException.get() != null) {
+                throw new IOException(ioException.get().getMessage(), ioException.get());
             }
 
             return process.exitValue();
@@ -269,7 +261,7 @@ public class ProcessExecutor implements Callable<Integer> {
         try {
             handleOutput(stdout);
         } catch (IOException e) {
-            outException.set(e);
+            ioException.updateAndGet(old -> maybeSuppress(old, e));
         }
     }
 
@@ -277,7 +269,7 @@ public class ProcessExecutor implements Callable<Integer> {
         try {
             handleError(stderr);
         } catch (IOException e) {
-            errException.set(e);
+            ioException.updateAndGet(old -> maybeSuppress(old, e));
         }
     }
 
@@ -287,17 +279,21 @@ public class ProcessExecutor implements Callable<Integer> {
             // Do not allow the std-in to have lingering bytes.
             stdin.flush();
         } catch (IOException e) {
-            inException.set(e);
+            ioException.updateAndGet(old -> maybeSuppress(old, e));
         } finally {
             try {
                 stdin.close();
             } catch (IOException e) {
-                if (inException.get() != null) {
-                    inException.get().addSuppressed(e);
-                } else {
-                    inException.set(e);
-                }
+                ioException.updateAndGet(old -> maybeSuppress(old, e));
             }
         }
+    }
+
+    private static IOException maybeSuppress(IOException old, IOException e) {
+        if (old != null) {
+            old.addSuppressed(e);
+            return old;
+        }
+        return e;
     }
 }

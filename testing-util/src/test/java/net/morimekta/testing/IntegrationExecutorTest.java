@@ -16,7 +16,9 @@ import java.time.Clock;
 import java.util.concurrent.ExecutorService;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -100,5 +102,15 @@ public class IntegrationExecutorTest {
         assertEquals("len: 1\n" +
                      "one step ahead ;)\n" +
                      "+ cat\n", sut.getOutput());
+    }
+
+    @Test
+    public void testFindMavenTargetJar() {
+        try {
+            new IntegrationExecutor("src", "does-not-exist.1234567890.jar");
+            fail("No exception");
+        } catch (IOException e) {
+            assertThat(e.getMessage(), is("No such jar file: does-not-exist.1234567890.jar"));
+        }
     }
 }

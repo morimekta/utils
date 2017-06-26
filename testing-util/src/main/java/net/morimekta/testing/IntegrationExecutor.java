@@ -48,7 +48,9 @@ public class IntegrationExecutor {
      * @return The programs stdout content.
      */
     public String getOutput() {
-        if (executor == null) return "";
+        if (executor == null) {
+            return "";
+        }
         return executor.getOutput();
     }
 
@@ -56,7 +58,9 @@ public class IntegrationExecutor {
      * @return The programs stderr content.
      */
     public String getError() {
-        if (executor == null) return "";
+        if (executor == null) {
+            return "";
+        }
         return executor.getError();
     }
 
