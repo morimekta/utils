@@ -42,6 +42,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -277,27 +278,8 @@ public class ArgumentParser {
                                                        .map(String::trim)
                                                        // strip empty lines and commented lines
                                                        .filter(l -> !(l.isEmpty() || l.startsWith("#")))
-                                                       .flatMap(l -> {
-                                                           // If the line is double quoted (entirely), treat the whole
-                                                           // as a json-escaped string argument.
-                                                           if (l.startsWith("\"") && l.endsWith("\"")) {
-                                                               try (StringReader lin = new StringReader(l)) {
-                                                                   JsonTokenizer tokenizer = new JsonTokenizer(lin);
-                                                                   String val = tokenizer.expectString("argument").decodeJsonLiteral();
-                                                                   if (lin.read() != -1) {
-                                                                       throw new ArgumentException("Garbage after quoted string argument: " + l);
-                                                                   }
-
-                                                                   return Arrays.stream(new String[]{val});
-                                                               } catch (IOException | JsonException e) {
-                                                                   throw new ArgumentException(e, e.getMessage());
-                                                               }
-                                                           }
-                                                           // split on the first space,
-                                                           // and treat each part an arg entry
-                                                           return Arrays.stream(l.split("[ ]", 2))
-                                                                        .map(String::trim);
-                                                       })
+                                                       // be smart about splitting lines into single args.
+                                                       .flatMap(this::argFileLineStream)
                                                        .collect(Collectors.toList());
                             if (lines.size() > 0) {
                                 ArgumentList list = new ArgumentList(lines.toArray(new String[lines.size()]));
@@ -344,6 +326,31 @@ public class ArgumentParser {
             }
             args.consume(consumed);
         }
+    }
+
+    private Stream<String> argFileLineStream(String line) {
+        // If the line is double quoted (entirely), treat the whole
+        // as a json-escaped string argument.
+        if (line.startsWith("\"") && line.endsWith("\"")) {
+            try (StringReader lin = new StringReader(line)) {
+                JsonTokenizer tokenizer = new JsonTokenizer(lin);
+                String val = tokenizer.expectString("argument").decodeJsonLiteral();
+                if (lin.read() != -1) {
+                    throw new ArgumentException("Garbage after quoted string argument: " + line);
+                }
+
+                return Arrays.stream(new String[]{val});
+            } catch (IOException | JsonException e) {
+                throw new ArgumentException(e, e.getMessage());
+            }
+        }
+        // otherwise split on the first space,
+        // and treat each part an arg entry, so that
+        // "--something and more"
+        // becomes:
+        // ["--something", "and more"]
+        return Arrays.stream(line.split("[ ]", 2))
+                     .map(String::trim);
     }
 
     private BaseOption getLongNameOption(String name) {
