@@ -40,6 +40,48 @@ public class SubCommand<SubCommandDef> {
     private final Supplier<SubCommandDef>                 instanceFactory;
     private final Function<SubCommandDef, ArgumentParser> parserFactory;
 
+    /**
+     * Make a single sub-command.
+     *
+     * @param name The name of the sub-command. Must be unuque.
+     * @param usage The usage string describing the sub-command.
+     * @param instanceFactory The instance supplier.
+     * @param parserFactory The argument parser supplier for an instance.
+     * @param aliases String aliases for the sub-command. Must be uniqye.
+     */
+    public SubCommand(String name, String usage,
+                      Supplier<SubCommandDef> instanceFactory,
+                      Function<SubCommandDef, ArgumentParser> parserFactory,
+                      String... aliases) {
+        this(name, usage, false, instanceFactory, parserFactory, ImmutableList.copyOf(aliases));
+    }
+
+    /**
+     * Make a single sub-command.
+     *
+     * @param name The name of the sub-command. Must be unuque.
+     * @param usage The usage string describing the sub-command.
+     * @param instanceFactory The instance supplier.
+     * @param parserFactory The argument parser supplier for an instance.
+     * @param aliases String aliases for the sub-command. Must be uniqye.
+     */
+    public SubCommand(String name, String usage,
+                      Supplier<SubCommandDef> instanceFactory,
+                      Function<SubCommandDef, ArgumentParser> parserFactory,
+                      Iterable<String> aliases) {
+        this(name, usage, false, instanceFactory, parserFactory, ImmutableList.copyOf(aliases));
+    }
+
+    /**
+     * Make a single sub-command.
+     *
+     * @param name The name of the sub-command. Must be unuque.
+     * @param usage The usage string describing the sub-command.
+     * @param hidden True if the sub-command should not be visible by default.
+     * @param instanceFactory The instance supplier.
+     * @param parserFactory The argument parser supplier for an instance.
+     * @param aliases String aliases for the sub-command. Must be uniqye.
+     */
     public SubCommand(String name, String usage, boolean hidden,
                       Supplier<SubCommandDef> instanceFactory,
                       Function<SubCommandDef, ArgumentParser> parserFactory,
@@ -47,6 +89,16 @@ public class SubCommand<SubCommandDef> {
         this(name, usage, hidden, instanceFactory, parserFactory, ImmutableList.copyOf(aliases));
     }
 
+    /**
+     * Make a single sub-command.
+     *
+     * @param name The name of the sub-command. Must be unuque.
+     * @param usage The usage string describing the sub-command.
+     * @param hidden True if the sub-command should not be visible by default.
+     * @param instanceFactory The instance supplier.
+     * @param parserFactory The argument parser supplier for an instance.
+     * @param aliases String aliases for the sub-command. Must be uniqye.
+     */
     public SubCommand(String name, String usage, boolean hidden,
                       Supplier<SubCommandDef> instanceFactory,
                       Function<SubCommandDef, ArgumentParser> parserFactory,

@@ -27,9 +27,12 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintWriter;
 
 import static net.morimekta.console.util.Parser.i32;
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
 
 /**
  * Tests for the sub-command handling.
@@ -39,14 +42,37 @@ public class SubCommandSetTest {
     public void testConstructor() {
         @SuppressWarnings("unchecked")
         SubCommandSet<Sub> scs = new SubCommandSet<>("sub", "Subbety sub", this::setSub).addAll(
-                new SubCommand<>("cmd_1", "Test command 1", false, Command1::new, Sub::getParser),
-                new SubCommand<>("cmd_2", "Test command 1", false, Command2::new, Sub::getParser)
+                new SubCommand<>("cmd_1", "Test command 1", Command1::new, Sub::getParser),
+                new SubCommand<>("cmd_2", "Test command 1", Command2::new, Sub::getParser)
         );
 
         assertEquals("sub", scs.getName());
         assertEquals("[cmd_1 | cmd_2] [...]", scs.getSingleLineUsage());
         assertEquals("sub", scs.getPrefix());
         assertNull(scs.getDefaultValue());
+    }
+
+    @Test
+    public void testAddBad() {
+        @SuppressWarnings("unchecked")
+        SubCommandSet<Sub> scs = new SubCommandSet<>("sub", "Subbety sub", this::setSub).addAll(
+                new SubCommand<>("cmd_1", "Test command 1", Command1::new, Sub::getParser),
+                new SubCommand<>("cmd_2", "Test command 1", Command2::new, Sub::getParser)
+        );
+
+        try {
+            scs.add(new SubCommand<>("cmd_1", "Another cmd1", Command1::new, Sub::getParser));
+            fail("No exception");
+        } catch (IllegalArgumentException e) {
+            assertThat(e.getMessage(), is("SubCommand with name cmd_1 already exists"));
+        }
+
+        try {
+            scs.add(new SubCommand<>("cmd_3", "Another cmd1", Command1::new, Sub::getParser, "cmd_1"));
+            fail("No exception");
+        } catch (IllegalArgumentException e) {
+            assertThat(e.getMessage(), is("SubCommand (cmd_3) alias cmd_1 already exists"));
+        }
     }
 
     @Test
@@ -96,13 +122,88 @@ public class SubCommandSetTest {
         @SuppressWarnings("unchecked")
         SubCommandSet<Sub> scs = new SubCommandSet<>("sub", "Subbety sub", this::setSub).addAll(
                 new SubCommand<>("cmd_1", "Test command 1", false, Command1::new, Sub::getParser),
-                new SubCommand<>("cmd_2", "Test command 1", false, Command2::new, Sub::getParser)
-        );
+                new SubCommand<>("cmd_2", "Test command 1", false, Command2::new, Sub::getParser));
 
         assertEquals("test [...] cmd_1 [--param_1 str] [--param_2 int]", scs.getSingleLineUsage("cmd_1"));
         assertEquals("test [...] cmd_2 [--param_3 str] [--param_4 int]", scs.getSingleLineUsage("cmd_2"));
     }
 
+    @Test
+    public void testGetSingleLineUsage_long() {
+        @SuppressWarnings("unchecked")
+        SubCommandSet<Sub> scs = new SubCommandSet<>("sub", "Subbety sub", this::setSub).addAll(
+                new SubCommand<>("cmd_1", "Test command 1", false, Command1::new, Sub::getParser),
+                new SubCommand<>("cmd_2", "Test command 2", false, Command2::new, Sub::getParser),
+                new SubCommand<>("cmd_3", "Test command 3", false, Command1::new, Sub::getParser),
+                new SubCommand<>("cmd_4", "Test command 4", false, Command2::new, Sub::getParser),
+                new SubCommand<>("cmd_5", "Test command 5", false, Command1::new, Sub::getParser),
+                new SubCommand<>("cmd_6", "Test command 6", false, Command2::new, Sub::getParser));
+
+        assertEquals("sub [...]", scs.getSingleLineUsage());
+    }
+
+    @Test
+    public void testGetSingleLineUsage_short() {
+        @SuppressWarnings("unchecked")
+        SubCommandSet<Sub> scs = new SubCommandSet<>("sub", "Subbety sub", this::setSub).addAll(
+                new SubCommand<>("cmd_1", "Test command 1", false, Command1::new, Sub::getParser),
+                new SubCommand<>("cmd_2", "Test command 1", false, Command2::new, Sub::getParser));
+
+        assertEquals("[cmd_1 | cmd_2] [...]", scs.getSingleLineUsage());
+    }
+
+    @Test
+    public void testGetSingleLineUsage_bad() {
+        @SuppressWarnings("unchecked")
+        SubCommandSet<Sub> scs = new SubCommandSet<>("sub", "Subbety sub", this::setSub).addAll(
+                new SubCommand<>("cmd_1", "Test command 1", false, Command1::new, Sub::getParser),
+                new SubCommand<>("cmd_2", "Test command 1", false, Command2::new, Sub::getParser));
+
+        try {
+            scs.getSingleLineUsage("cmd_3");
+            fail("No exception");
+        } catch (ArgumentException e) {
+            assertThat(e.getMessage(), is("No such sub cmd_3"));
+        }
+    }
+
+    @Test
+    public void testPrintUsage_bad() {
+        @SuppressWarnings("unchecked")
+        SubCommandSet<Sub> scs = new SubCommandSet<>("sub", "Subbety sub", this::setSub).addAll(
+                new SubCommand<>("cmd_1", "Test command 1", false, Command1::new, Sub::getParser),
+                new SubCommand<>("cmd_2", "Test command 1", false, Command2::new, Sub::getParser));
+
+        try {
+            scs.printUsage(new ByteArrayOutputStream(), "cmd_3");
+            fail("No exception");
+        } catch (ArgumentException e) {
+            assertThat(e.getMessage(), is("No such sub cmd_3"));
+        }
+    }
+
+    @Test
+    public void testPipeline_fail() {
+        @SuppressWarnings("unchecked")
+        SubCommandSet<Sub> scs = new SubCommandSet<>("sub", "Subbety sub", this::setSub).addAll(
+                new SubCommand<>("cmd_1", "Test command 1", false, Command1::new, Sub::getParser),
+                new SubCommand<>("cmd_2", "Test command 1", false, Command2::new, Sub::getParser));
+
+        try {
+            scs.apply(new ArgumentList("boo"));
+            fail("No exception");
+        } catch (ArgumentException e) {
+            assertThat(e.getMessage(), is("No such sub: boo"));
+        }
+
+        scs.apply(new ArgumentList("cmd_1"));
+        try {
+            scs.apply(new ArgumentList("cms_2"));
+            fail("No exception");
+        } catch (ArgumentException e) {
+            assertThat(e.getMessage(), is("sub already selected"));
+        }
+    }
 
     @Test
     public void testPipeline() {

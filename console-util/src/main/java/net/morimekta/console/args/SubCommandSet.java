@@ -63,7 +63,21 @@ public class SubCommandSet<SubCommandDef> extends BaseArgument {
      */
     public SubCommandSet(String name, String usage,
                          Consumer<SubCommandDef> consumer) {
-        this(name, usage, consumer, null, true, ArgumentOptions.defaults());
+        this(name, usage, consumer, ArgumentOptions.defaults());
+    }
+
+    /**
+     * Create an optional sub-command set.
+     *
+     * @param name The name of the sub-command.
+     * @param usage The usage description.
+     * @param consumer The sub-command consumer.
+     * @param options Extra argument options.
+     */
+    public SubCommandSet(String name, String usage,
+                         Consumer<SubCommandDef> consumer,
+                         ArgumentOptions options) {
+        this(name, usage, consumer, null, true, options);
     }
 
     /**
@@ -77,7 +91,7 @@ public class SubCommandSet<SubCommandDef> extends BaseArgument {
     public SubCommandSet(String name, String usage,
                          Consumer<SubCommandDef> consumer,
                          String defaultValue) {
-        this(name, usage, consumer, defaultValue, false, ArgumentOptions.defaults());
+        this(name, usage, consumer, defaultValue, defaultValue != null, ArgumentOptions.defaults());
     }
 
     /**
@@ -173,7 +187,11 @@ public class SubCommandSet<SubCommandDef> extends BaseArgument {
      * @param showHidden Whether to show hidden options.
      */
     public void printUsage(PrintWriter writer, boolean showHidden) {
-        printUsageInternal(new IndentedPrintWriter(writer), showHidden);
+        if (writer instanceof IndentedPrintWriter) {
+            printUsageInternal((IndentedPrintWriter) writer, showHidden);
+        } else {
+            printUsageInternal(new IndentedPrintWriter(writer), showHidden);
+        }
     }
 
     /**

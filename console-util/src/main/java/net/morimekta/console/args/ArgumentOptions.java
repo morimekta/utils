@@ -31,6 +31,8 @@ public class ArgumentOptions {
     private final STTY tty;
 
     private boolean defaultsShown = true;
+    private boolean subCommandsShown = false;
+    private String subCommandsString = "Available Commands:";
     private int usageWidth = 80;
     private Comparator<BaseOption> optionComparator = null;
 
@@ -59,7 +61,7 @@ public class ArgumentOptions {
     /**
      * @return True if the default values should be printed in usage.
      */
-    public boolean getDefaultsShown() {
+    public boolean isDefaultsShown() {
         return defaultsShown;
     }
 
@@ -103,5 +105,23 @@ public class ArgumentOptions {
 
     public Comparator<BaseOption> getOptionComparator() {
         return optionComparator;
+    }
+
+    public boolean isSubCommandsShown() {
+        return subCommandsShown;
+    }
+
+    public ArgumentOptions withSubCommandsShown(boolean subCommandsShown) {
+        this.subCommandsShown = subCommandsShown;
+        return this;
+    }
+
+    public String getSubCommandsString() {
+        return subCommandsString;
+    }
+
+    public ArgumentOptions withSubCommandsString(String subCommandsString) {
+        this.subCommandsString = subCommandsString;
+        return this;
     }
 }

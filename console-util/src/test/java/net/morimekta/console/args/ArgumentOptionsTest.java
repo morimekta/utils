@@ -2,7 +2,6 @@ package net.morimekta.console.args;
 
 import net.morimekta.console.util.STTY;
 import net.morimekta.console.util.TerminalSize;
-
 import org.junit.Before;
 import org.junit.Test;
 
@@ -10,10 +9,12 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.Comparator;
 
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
@@ -35,13 +36,33 @@ public class ArgumentOptionsTest {
     @Test
     public void testDefaultsShown() {
         assertTrue(ArgumentOptions.defaults(tty)
-                                  .getDefaultsShown());
+                                  .isDefaultsShown());
         assertTrue(ArgumentOptions.defaults(tty)
                                   .withDefaultsShown(true)
-                                  .getDefaultsShown());
+                                  .isDefaultsShown());
         assertFalse(ArgumentOptions.defaults()
                                    .withDefaultsShown(false)
-                                   .getDefaultsShown());
+                                   .isDefaultsShown());
+    }
+
+    @Test
+    public void testSubSommandsShown() {
+        assertFalse(ArgumentOptions.defaults(tty)
+                                   .isSubCommandsShown());
+        assertTrue(ArgumentOptions.defaults(tty)
+                                  .withSubCommandsShown(true)
+                                  .isSubCommandsShown());
+        assertFalse(ArgumentOptions.defaults()
+                                   .withDefaultsShown(false)
+                                   .isSubCommandsShown());
+
+        assertThat(ArgumentOptions.defaults()
+                                  .getSubCommandsString(),
+                   is("Available Commands:"));
+        assertThat(ArgumentOptions.defaults()
+                                  .withSubCommandsString("Funny Name:")
+                                  .getSubCommandsString(),
+                   is("Funny Name:"));
     }
 
     @Test

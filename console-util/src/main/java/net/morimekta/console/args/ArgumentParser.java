@@ -410,7 +410,11 @@ public class ArgumentParser {
      * @param showHidden Whether to show hidden options.
      */
     public void printUsage(PrintWriter writer, boolean showHidden) {
-        printUsageInternal(new IndentedPrintWriter(writer), showHidden);
+        if (writer instanceof IndentedPrintWriter) {
+            printUsageInternal((IndentedPrintWriter) writer, showHidden);
+        } else {
+            printUsageInternal(new IndentedPrintWriter(writer), showHidden);
+        }
     }
 
     /**
@@ -491,7 +495,7 @@ public class ArgumentParser {
 
                 String prefix = opt.getPrefix();
                 String usage = opt.getUsage();
-                if (argumentOptions.getDefaultsShown() && opt.getDefaultValue() != null) {
+                if (argumentOptions.isDefaultsShown() && opt.getDefaultValue() != null) {
                     usage = usage + " (default: " + opt.getDefaultValue() + ")";
                 }
 
@@ -516,7 +520,7 @@ public class ArgumentParser {
 
                 String prefix = arg.getPrefix();
                 String usage = arg.getUsage();
-                if (argumentOptions.getDefaultsShown() && arg.getDefaultValue() != null) {
+                if (argumentOptions.isDefaultsShown() && arg.getDefaultValue() != null) {
                     usage = usage + " (default: " + arg.getDefaultValue() + ")";
                 }
 
@@ -531,13 +535,28 @@ public class ArgumentParser {
 
                 writer.end();
             }
+
+            if (arguments.peekLast() instanceof SubCommandSet &&
+                argumentOptions.isSubCommandsShown()) {
+                SubCommandSet scs = (SubCommandSet) arguments.peekLast();
+
+                if (!first) {
+                    writer.newline();
+                }
+                writer.appendln(argumentOptions.getSubCommandsString());
+                writer.newline();
+                writer.appendln();
+                scs.printUsage(writer, showHidden);
+
+                first = true;
+            }
         }
 
         // if nothing printed, complete nothing.
         if (!first) {
-            writer.newline()
-                  .flush();
+            writer.newline();
         }
+        writer.flush();
     }
 
     static void printSingleUsageEntry(IndentedPrintWriter writer,

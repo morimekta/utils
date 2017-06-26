@@ -466,7 +466,8 @@ public class ArgumentParserTest {
     public void testSingleLineUsage_withSubCommands() {
         ArgumentParser parser = new ArgumentParser("gt", "0.2.5", "Git Tools",
                                                    ArgumentOptions.defaults()
-                                                                  .withDefaultsShown(false));
+                                                                  .withDefaultsShown(false)
+                                                                  .withSubCommandsShown(true));
 
         AtomicInteger ai = new AtomicInteger(55);
         AtomicBoolean ab = new AtomicBoolean();
@@ -503,6 +504,62 @@ public class ArgumentParserTest {
         assertEquals("gt [-a I] [-Dkey=val ...] [--arg2] [type] [sub1 | sub2] [...]", parser.getSingleLineUsage());
     }
 
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testPrintUsage_withSubCommands() {
+        ArgumentParser parser = new ArgumentParser("gt", "0.2.5", "Git Tools",
+                                                   ArgumentOptions.defaults()
+                                                                  .withDefaultsShown(false)
+                                                                  .withSubCommandsString("Available Subs:")
+                                                                  .withSubCommandsShown(true));
+
+        AtomicInteger ai = new AtomicInteger(55);
+        AtomicBoolean ab = new AtomicBoolean();
+        AtomicReference<String> type = new AtomicReference<>("no-type");
+        AtomicReference<Sub> sub = new AtomicReference<>();
+        Properties properties = new Properties();
+
+        parser.add(new Option("--arg1", "a", "I", "Integer value", i32().andApply(ai::set), "55"));
+        parser.add(new Property('D', "key", "val", "System property", properties::setProperty));
+        parser.add(new Flag("--arg2", null, "Another boolean", ab::set));
+        parser.add(new Argument("type", "Some type", type::set, "no-type", s -> !s.startsWith("/"), false, false, false));
+
+        SubCommandSet<Sub> subs = new SubCommandSet<>("file", "Extra files", sub::set);
+        subs.add(new SubCommand<>("sub1", "Sub sub", false, Sub::new,
+                                  i -> new ArgumentParser("gt sub1", null, null).add(new Option("--int",
+                                                                                                "i",
+                                                                                                "I",
+                                                                                                "Integer",
+                                                                                                i32().andApply(i::setI),
+                                                                                                "12")),
+                                  "s"));
+        subs.add(new SubCommand<>("sub2",
+                                  "Sub sub",
+                                  false,
+                                  Sub::new,
+                                  i -> new ArgumentParser("gt sub2", null, null).add(new Option("--int",
+                                                                                                "i",
+                                                                                                "I",
+                                                                                                "Integer",
+                                                                                                i32().andApply(i::setI)))));
+
+        parser.add(subs);
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        parser.printUsage(out);
+
+        assertThat(out.toString(),
+                   is(" --arg1 (-a) I : Integer value\n" +
+                      " -Dkey=val     : System property\n" +
+                      " --arg2        : Another boolean\n" +
+                      " type          : Some type\n" +
+                      " file          : Extra files\n" +
+                      "\n" +
+                      "Available Subs:\n" +
+                      "\n" +
+                      " sub1 : Sub sub\n" +
+                      " sub2 : Sub sub\n"));
+    }
 
     @Test
     public void testAdd_fails() {
