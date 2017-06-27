@@ -101,20 +101,19 @@ public class SubCommandSetTest {
         @SuppressWarnings("unchecked")
         SubCommandSet<Sub> scs = new SubCommandSet<>("sub", "Subbety sub", this::setSub).addAll(
                 new SubCommand<>("cmd_1", "Test command 1", false, Command1::new, Sub::getParser),
-                new SubCommand<>("cmd_2", "Test command 1", false, Command2::new, Sub::getParser)
+                new SubCommand<>("cmd_2", "Test command 1", true, Command2::new, Sub::getParser)
         );
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         scs.printUsage(new PrintWriter(baos));
 
-        assertEquals(" cmd_1 : Test command 1\n" +
-                     " cmd_2 : Test command 1\n", baos.toString());
+        assertEquals(" cmd_1 : Test command 1\n", baos.toString());
 
         baos.reset();
-        scs.printUsage(new PrintWriter(baos), "cmd_1");
+        scs.printUsage(new PrintWriter(baos), "cmd_2");
 
-        assertEquals(" --param_1 str : Param 1\n" +
-                     " --param_2 int : Param 2\n", baos.toString());
+        assertEquals(" --param_3 str : Param 3\n" +
+                     " --param_4 int : Param 4\n", baos.toString());
     }
 
     @Test
@@ -145,11 +144,11 @@ public class SubCommandSetTest {
     @Test
     public void testGetSingleLineUsage_short() {
         @SuppressWarnings("unchecked")
-        SubCommandSet<Sub> scs = new SubCommandSet<>("sub", "Subbety sub", this::setSub).addAll(
+        SubCommandSet<Sub> scs = new SubCommandSet<>("sub", "Subbety sub", this::setSub, "sub_1").addAll(
                 new SubCommand<>("cmd_1", "Test command 1", false, Command1::new, Sub::getParser),
                 new SubCommand<>("cmd_2", "Test command 1", false, Command2::new, Sub::getParser));
 
-        assertEquals("[cmd_1 | cmd_2] [...]", scs.getSingleLineUsage());
+        assertEquals("[[cmd_1 | cmd_2] [...]]", scs.getSingleLineUsage());
     }
 
     @Test

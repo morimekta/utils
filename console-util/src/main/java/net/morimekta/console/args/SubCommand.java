@@ -53,7 +53,7 @@ public class SubCommand<SubCommandDef> {
                       Supplier<SubCommandDef> instanceFactory,
                       Function<SubCommandDef, ArgumentParser> parserFactory,
                       String... aliases) {
-        this(name, usage, false, instanceFactory, parserFactory, ImmutableList.copyOf(aliases));
+        this(name, usage, instanceFactory, parserFactory, ImmutableList.copyOf(aliases));
     }
 
     /**

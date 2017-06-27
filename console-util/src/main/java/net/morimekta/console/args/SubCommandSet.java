@@ -91,7 +91,7 @@ public class SubCommandSet<SubCommandDef> extends BaseArgument {
     public SubCommandSet(String name, String usage,
                          Consumer<SubCommandDef> consumer,
                          String defaultValue) {
-        this(name, usage, consumer, defaultValue, defaultValue != null, ArgumentOptions.defaults());
+        this(name, usage, consumer, defaultValue, defaultValue == null, ArgumentOptions.defaults());
     }
 
     /**

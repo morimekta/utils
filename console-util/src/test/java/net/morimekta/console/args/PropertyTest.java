@@ -26,7 +26,9 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import static net.morimekta.console.util.Parser.i32;
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
 /**
@@ -55,18 +57,21 @@ public class PropertyTest {
 
         assertEquals("val", map.get("key"));
 
+        p.applyShort("D", new ArgumentList("-D", "other=other"));
+        assertThat(map.get("other"), is("other"));
+
         try {
             p.applyShort("Dkey", new ArgumentList("-Dkey", "val"));
             fail("No exception on invalid applyShort");
         } catch (ArgumentException e) {
-            assertEquals("No key value sep for properties: key", e.getMessage());
+            assertEquals("No key value sep for properties on -D: \"-Dkey\"", e.getMessage());
         }
 
         try {
             p.applyShort("D=val", new ArgumentList("-D=val"));
             fail("No exception on invalid applyShort");
         } catch (ArgumentException e) {
-            assertEquals("Empty property key: \"-D=val\"", e.getMessage());
+            assertEquals("Empty property key on -D: \"-D=val\"", e.getMessage());
         }
     }
 
@@ -76,6 +81,27 @@ public class PropertyTest {
         Property            p   = new Property("--def", 'D', "Help", map::put);
         assertEquals(2, p.apply(new ArgumentList("--def", "key=val")));
         assertEquals("val", map.get("key"));
+
+        try {
+            p.apply(new ArgumentList("--def"));
+            fail("No exception");
+        } catch (ArgumentException e) {
+            assertThat(e.getMessage(), is("No value for --def"));
+        }
+
+        try {
+            p.apply(new ArgumentList("--def", "key"));
+            fail("No exception");
+        } catch (ArgumentException e) {
+            assertThat(e.getMessage(), is("No key value sep for properties on --def: \"key\""));
+        }
+
+        try {
+            p.apply(new ArgumentList("--def", "=value"));
+            fail("No exception");
+        } catch (ArgumentException e) {
+            assertThat(e.getMessage(), is("Empty property key on --def: \"=value\""));
+        }
     }
 
     @Test

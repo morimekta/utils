@@ -159,10 +159,12 @@ public class Property extends BaseOption {
 
         String[] parts = opts.substring(1).split("[=]", 2);
         if (parts.length != 2) {
-            throw new ArgumentException("No key value sep for properties: " + opts.substring(1));
+            throw new ArgumentException("No key value sep for properties on " +
+                                        nameOrShort() + ": \"-" + opts + "\"");
         }
         if (parts[0].length() == 0) {
-            throw new ArgumentException("Empty property key: \"-" + opts + "\"");
+            throw new ArgumentException("Empty property key on " +
+                                        nameOrShort() + ": \"-" + opts + "\"");
         }
         properties.put(parts[0], parts[1]);
         return 1;
@@ -175,10 +177,12 @@ public class Property extends BaseOption {
         }
         String[] parts = args.get(1).split("[=]", 2);
         if (parts.length != 2) {
-            throw new ArgumentException("No key value sep for properties: " + nameOrShort());
+            throw new ArgumentException("No key value sep for properties on " +
+                                        nameOrShort() + ": \"" + args.get(1) + "\"");
         }
         if (parts[0].length() == 0) {
-            throw new ArgumentException("Empty property key : " + args.get(1));
+            throw new ArgumentException("Empty property key on " +
+                                        nameOrShort() + ": \"" + args.get(1) + "\"");
         }
         properties.put(parts[0], parts[1]);
         return 2;
