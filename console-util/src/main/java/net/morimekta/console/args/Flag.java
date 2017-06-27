@@ -27,8 +27,6 @@ import java.util.function.Consumer;
  * toggle boolean values.
  */
 public class Flag extends BaseOption {
-    public static final String NEGATE = "--no_";
-
     private final Consumer<Boolean> setter;
     private final String negateName;
 
@@ -64,7 +62,7 @@ public class Flag extends BaseOption {
                 Consumer<Boolean> setter,
                 Boolean defaultValue,
                 boolean hidden) {
-        this(name, shortNames, usage, setter, defaultValue, makeNegateName(name), hidden);
+        this(name, shortNames, usage, setter, defaultValue, null, hidden);
     }
 
     public Flag(String name,
@@ -137,12 +135,5 @@ public class Flag extends BaseOption {
             throw new IllegalArgumentException("Argument not matching flag " + nameOrShort() + ": " + current);
         }
         return 1;
-    }
-
-    private static String makeNegateName(String name) {
-        if (name != null && name.startsWith("--")) {
-            return NEGATE + name.substring(2);
-        }
-        return null;
     }
 }

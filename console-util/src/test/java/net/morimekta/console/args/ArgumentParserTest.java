@@ -136,7 +136,7 @@ public class ArgumentParserTest {
 
         parser.add(new Option("--arg1", "a", "I", "Integer value", i32().andApply(ai::set)));
         parser.add(new Property('D', "key", "val", "System property", properties::setProperty));
-        parser.add(new Flag("--arg2", null, "Boolean Usage", ab::set));
+        parser.add(new Flag("--arg2", null, "Boolean Usage", ab::set, false, "--no_arg2"));
 
         parser.parse("--arg1=4", "--no_arg2");
 

@@ -40,7 +40,7 @@ public class FlagTest {
         Flag flag = new Flag("--stuff", "S", "Do stuff", ref::set);
 
         assertNull(flag.getSingleLineUsage());
-        assertEquals("--no_stuff", flag.getNegateName());
+        assertNull(flag.getNegateName());
         assertEquals("Do stuff", flag.getUsage());
         assertNull(flag.getDefaultValue());
         assertFalse(flag.isHidden());
@@ -78,7 +78,7 @@ public class FlagTest {
         flag.applyShort("S", new ArgumentList("-S"));
         assertTrue(ref.get());
 
-        flag = new Flag("--stuff", "S", "Do stuff", ref::set);
+        flag = new Flag("--stuff", "S", "Do stuff", ref::set, true, "--no_stuff");
         flag.apply(new ArgumentList("--no_stuff"));
         assertFalse(ref.get());
 
