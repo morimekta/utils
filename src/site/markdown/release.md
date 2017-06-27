@@ -34,7 +34,7 @@ git checkout HEAD~1 -b release
 # make the versions env variable:
 export utils_version=$(cat pom.xml | grep '^    <version>' | sed 's: *[<][/]\?version[>]::g')
 
-mvn clean verify site site:stage
+mvn clean verify site site:stage -Plib
 git checkout gh-pages && git pull -p && cp -R target/staging/* .
 git commit -a -m "Site release for ${utils_version}"
 git push
