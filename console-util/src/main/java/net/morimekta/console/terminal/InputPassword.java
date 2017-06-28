@@ -28,10 +28,14 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 
 /**
- * Class that handled reading a password (hidden string) from terminal
- * input with an optional character replacement char. If the replacement
- * string is empty, no input or output will show from entering the
- * password.
+ * Class that handled reading a password from terminal.
+ *
+ * It will not print out the password (hidden input) on the terminal,
+ * but may print out the length of it and current position based
+ * on char replacement. The char replacement must be a single char, or
+ * an empty string.
+ *
+ * See {@link InputLine} for details on input controls.
  */
 public class InputPassword {
     /**

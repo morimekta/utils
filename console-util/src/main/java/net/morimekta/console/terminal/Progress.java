@@ -16,7 +16,6 @@ import java.time.temporal.ChronoUnit;
  * progress-bar). Spinner type is configurable.
  */
 public class Progress {
-
     /**
      * Which spinner to show. Some may require extended unicode font to
      * be used in the console without just showing '?'.
@@ -32,19 +31,21 @@ public class Progress {
          * Using a block char that bounces up and down to show progress.
          * Not exactly <i>spinning</i>, but does the job. Using unicode
          * chars 0x2581 -&gt; 0x2588;
-         *
+         * <p>
          * '▁', '▂', '▃', '▄', '▅', '▆', '▇', '█'
          */
         BLOCKS,
 
         /**
          * A spinning arrow. Using 0x.... -&gt; 0x....:
+         * <p>
          * '⭠', '⭦', '⭡', '⭧', '⭢', '⭨', '⭣', '⭩'
          */
         ARROWS,
 
         /**
          * Use Unicode clock symbols, 0x1f550 -&gt; 0x1f55b:
+         * <p>
          * '🕐', '🕑', '🕒', '🕓', '🕔', '🕕', '🕖', '🕗', '🕘', '🕙', '🕚', '🕛'
          */
         CLOCK,

@@ -33,6 +33,19 @@ import static net.morimekta.console.chr.CharUtil.alt;
 /**
  * Class that handled reading a line from terminal input with
  * character and line validators, and optional tab completion.
+ * <p>
+ * When writing input into an app it is problematic if the app
+ * crashes or exits every time you makes invalid input. This can be
+ * solved with the {@link CharValidator} and {@link LineValidator}
+ * interfaces. The <code>CharValidator</code> validates that any single
+ * char input is valid, and will block if not. The <code>LineValidator</code>
+ * is triggered when the user finishes the input and checks if the
+ * line is valid as a whole, and blocks completion if not.
+ * <p>
+ * In addition a {@link TabCompletion} interface may be provided that
+ * can complete input based on the current content <i>before</i> the
+ * cursor. If the <code>complete()</code> method returns a string, it
+ * will <b>replace</b> what was before.
  */
 public class InputLine {
     /**

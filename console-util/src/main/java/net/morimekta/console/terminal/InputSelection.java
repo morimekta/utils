@@ -41,18 +41,26 @@ import static java.lang.Math.min;
 import static java.lang.String.format;
 
 /**
- * Tabular selection with simple navigation.
- *
- * <code>
+ * Tabular selection with simple navigation. It displays a list of
+ * items in a table that can be paginated and navigated between
+ * using the arrow keys, numbers, pg-up, pg-down etc.
+ * <p>
+ * <pre>{@code
  * {message}: [c=command, o=overview]
  *  1 {line 1}
  *  2 {line 2}
  *  3 {line 3}
  * Your choice (1..N or c,o):
- * </code>
- *
- * If extra messages are needed, they will be printed *below* the 'Your choice'
- * line with a LinePrinter connected back to this.
+ * }</pre>
+ * <p>
+ * When doing actions, it is possible to add extra output to the user, this
+ * will be printed <i>below</i> the `Your choice` line with a {@link LinePrinter}
+ * connected back to the {@link InputSelection} instance.
+ * <p>
+ * By default there are <b>no actions</b> on the items, even <code>exit</code> is
+ * not provided. Actions are specified using a list of "commands", that each have
+ * an action, where each action has a <code>Reaction</code>. Note that any runtime
+ * exception thrown while handling an action exits the selection.
  */
 public class InputSelection<E> {
     /**

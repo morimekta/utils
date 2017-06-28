@@ -4,7 +4,7 @@ Console Utilities
 Utilities for facilitating interactive command line interfaced (cli) targeted
 mainly at utilities used in the linux terminals.
 
-## Terminal
+### Terminal
 
 The `Terminal` class is the base of the main mean of interactive input in
 console-util. The terminal itself is mostly just handling the terminal itself,
@@ -23,7 +23,51 @@ try (Terminal term = new Terminal()) {
 }
 ```
 
-## Argument Parser
+The terminal also has methods for being able to abort or cancel ongoing tasks
+with the `executeAbortable` and `waitAbortable` methods. Those methods will
+let the task run in the background, but if the user presses `<ctrl>-C` (aka
+`abort`), then the task will be cancelled (allowing interrupt) and an IO exception
+is thrown.
+
+#### Advanced Input
+
+Controlled line input is done with the `InputLine` class. It has controls for
+limiting the set of allowed input characters, validating the line as a whole,
+and even using tab-completion to quickly complete strings. It can be navigated
+within using the arrow keys, and can be edited at any point in the string.
+There is also a `InputPassword` variant that does not print out the actual
+input, handy for writing in passwords.
+
+It is also possible to make a selection out of a number of pre-defined items pretty
+easily, but if the number of items is so large it cannot be displayed at once,
+or you want to be able to du actions on the items and repeatedly return to the
+same list, then you should use the `InputSelection`. It is complicated enough
+that you should look at the
+[documentation](http://www.morimekta.net/utils/console-util/apidocs/net/morimekta/console/terminal/InputSelection.html).
+
+#### Displaying Progress
+ 
+The console util also contains a utility class for displaying some ongoing
+progress. Is it pretty simple, only displaying how far that one task is
+progressing toward a fixed end-point, but with showing a remaining time and
+a progress-bar moving along as the task progress.
+
+#### Advanced Output
+
+The console util is mainly created to manage advanced output, including
+handling colors, special unicode characters etc. The classes related to this
+are managed in the `chr` sub-package. Notable classes:
+
+**Color**: Utility class for managing and displaying color output to
+the terminal. Colors are a specialization of the general **Control** character
+class, which encompass various non-printable chars like F-key and arrow
+key-presses, and terminal manipulation, e.g. cursor movement.
+
+**CharUtil**: Utility methods for figuring out printed lengths of strings and
+for manipulating strings to it is easier to know what is printed on screen. E.g.
+for stripping away non-printable characters, and expanding tabs to spaces.
+
+### Argument Parser
 
 There is also a proper argument parser library too. It does not use annotations,
 so you have to code up the arguments, but with heavy use of functional
@@ -51,7 +95,7 @@ parser.parse(args);
 
 Note that the interfaces may still change in the near future.
 
-### Sub-Commands
+#### Sub-Commands
 
 Sub-commands require a little more setup to work. But not too much. First you
 need some interface that all your sub-commands implement, and create a

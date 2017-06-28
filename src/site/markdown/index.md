@@ -5,35 +5,18 @@ Morimekta utilities is a collection of utility libraries for java. Ranging
 in functionality from emulating android libraries to handling high performance
 IO operations.
 
-## Android Util
+A lot of the libraries here sprung out from the needs of my other open source
+libraries, or tasks that I felt was needed but not prioritized at my workplace.
+It has been programmed mainly in my spare time. The main users of the
+utilities libraries are:
 
-Library containing a set of mirrored data-classes from the `android.os` and
-`android.util` packages. These classes are useful for data-keeping and
-transferring, so is nice to have available (also with real functionality)
-when testing common android libraries using these without including large
-systems like `robolectric`, or having it to run in a real phone.
+* [providence](http://www.morimekta.net/providence/): A pure java based
+  replacement for [Apache Thrift](https://thrift.apache.org/).
+* [idltool](https://github.com/morimekta/idltool): A java based port and
+  functionality-cleanup of Über's node.js based [idl](https://github.com/uber-node/idl)
+  tool.
 
-## Config Util
-
-Library for handling config files that are deeply structured in a simple and
-type-safe manner.
-
-## Console Util
-
-Library for handling advanced console (TTY) input and output. It is designed
-for unix style terminals with interactive keyboard interface, not web or
-GUI interface.
-
-## Diff Util
-
-Utility classes for diffing text.
-
-## IO Util
-
-Libraries for handling binary, JSON and human readable input and output. Only
-the "human readable input" is kept in the `console-util` module.
-
-## Testing Util
-
-Library with test-related classes. Extra hamcrest matchers, and some fake
-system classes to help with advanced testing.
+The project contains a wide variety of modules, from `io-util`, which is
+more akin to the commons-lang library of apache. To `android-util` which
+emulates a number of core libraries used by android related to I/O and
+storage.
