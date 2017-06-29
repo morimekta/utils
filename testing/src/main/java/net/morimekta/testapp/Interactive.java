@@ -45,7 +45,7 @@ public class Interactive {
 
             term.println();
 
-            List<String> entries = ExtraStreams.range(0x0000, 0x1000, 4)
+            List<String> entries = ExtraStreams.range(0x0000, 0x4000, 4)
                                                .mapToObj(i -> {
                                                    // [ 0xd000 -> 0xe000 > is reserved for utf-16 funkyness.
                                                    if (0xd000 <= i && i < 0xe000) return "";

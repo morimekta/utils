@@ -7,9 +7,11 @@ import net.morimekta.console.chr.Control;
 import net.morimekta.console.chr.Unicode;
 import net.morimekta.util.Strings;
 
+import javax.annotation.Nonnull;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
+import java.util.function.IntSupplier;
 
 /**
  * Show progress on a single task in how many percent (with spinner and
@@ -23,9 +25,16 @@ public class Progress {
     public enum Spinner {
         /**
          * Simple ASCII spinner using '|', '/', '-', '\'. This variant will
-         * <b>always</b> work.
+         * work in any terminal.
          */
-        ASCII,
+        ASCII(new Unicode('#'),
+              new Unicode('-'),
+              new Unicode[] {
+                      new Unicode('|'),
+                      new Unicode('/'),
+                      new Unicode('-'),
+                      new Unicode('\\')
+              }),
 
         /**
          * Using a block char that bounces up and down to show progress.
@@ -34,96 +43,139 @@ public class Progress {
          * <p>
          * '▁', '▂', '▃', '▄', '▅', '▆', '▇', '█'
          */
-        BLOCKS,
+        BLOCKS(new Unicode('▓'),
+               new Unicode('⋅'),
+               new Unicode[] {
+                       new Unicode('▁'),  // 1/8 block
+                       new Unicode('▂'),  // 2/8 block
+                       new Unicode('▃'),  // ...
+                       new Unicode('▄'),  //
+                       new Unicode('▅'),  //
+                       new Unicode('▆'),  // ...
+                       new Unicode('▇'),  // 7/8 block
+                       new Unicode('█'),  // 8/8 (full) block
+                       new Unicode('▇'),  // 7/8 block
+                       new Unicode('▆'),  // ...
+                       new Unicode('▅'),  //
+                       new Unicode('▄'),  //
+                       new Unicode('▂'),  // ...
+                       new Unicode('▁'),  // 2/8 block
+               }),
 
         /**
-         * A spinning arrow. Using 0x.... -&gt; 0x....:
+         * A spinning arrow. Using chars in range 0x2b60 -&gt; 0x2b69:
          * <p>
-         * '⭠', '⭦', '⭡', '⭧', '⭢', '⭨', '⭣', '⭩'
+         * '⭢', '⭨', '⭣', '⭩', '⭠', '⭦', '⭡', '⭧'
          */
-        ARROWS,
+        ARROWS(new Unicode('⬛'),
+               new Unicode('⋅'),
+               new Unicode[] {
+                       new Unicode('⭢'),
+                       new Unicode('⭨'),
+                       new Unicode('⭣'),
+                       new Unicode('⭩'),
+                       new Unicode('⭠'),
+                       new Unicode('⭦'),
+                       new Unicode('⭡'),
+                       new Unicode('⭧'),
+               }),
 
         /**
          * Use Unicode clock symbols, 0x1f550 -&gt; 0x1f55b:
          * <p>
          * '🕐', '🕑', '🕒', '🕓', '🕔', '🕕', '🕖', '🕗', '🕘', '🕙', '🕚', '🕛'
          */
-        CLOCK,
+        CLOCK(new Unicode('⬛'),
+              new Unicode('⋅'),
+              new Unicode[] {
+                      new Unicode(0x1f550),  // 1 o'clock
+                      new Unicode(0x1f551),  // ...
+                      new Unicode(0x1f552),
+                      new Unicode(0x1f553),
+                      new Unicode(0x1f554),
+                      new Unicode(0x1f555),
+                      new Unicode(0x1f556),
+                      new Unicode(0x1f557),
+                      new Unicode(0x1f558),
+                      new Unicode(0x1f559),
+                      new Unicode(0x1f55a),  // ...
+                      new Unicode(0x1f55b)   // 12 o'clock
+              }),
+
+        ;
+
+        private Char   done;
+        private Char   remain;
+        private Char[] spinner;
+
+        Spinner(Char done,
+                Char remain,
+                Char[] spinner) {
+            this.done = done;
+            this.spinner = spinner;
+            this.remain = remain;
+        }
     }
 
-    private static final Char[] ascii_spinner = {
-            new Unicode('|'),
-            new Unicode('/'),
-            new Unicode('-'),
-            new Unicode('\\')
-    };
-    private static final Char[] block_spinner = {
-            new Unicode(0x2581),  // 1/8 block
-            new Unicode(0x2582),  // 2/8 block
-            new Unicode(0x2583),  // ...
-            new Unicode(0x2584),  //
-            new Unicode(0x2585),  //
-            new Unicode(0x2586),  // ...
-            new Unicode(0x2587),  // 7/8 block
-            new Unicode(0x2588),  // 8/8 (full) block
-            new Unicode(0x2587),  // 7/8 block
-            new Unicode(0x2586),  // ...
-            new Unicode(0x2585),  //
-            new Unicode(0x2584),  //
-            new Unicode(0x2583),  // ...
-            new Unicode(0x2582)   // 2/8 block
-    };
-    private static final Char[] arrow_spinner = {
-                new Unicode('⭠'),
-                new Unicode('⭦'),
-                new Unicode('⭡'),
-                new Unicode('⭧'),
-                new Unicode('⭢'),
-                new Unicode('⭨'),
-                new Unicode('⭣'),
-                new Unicode('⭩')
-    };
-    private static final Char[] clock_spinner = {
-            new Unicode(0x1f550),  // 1 o'clock
-            new Unicode(0x1f551),  // ...
-            new Unicode(0x1f552),
-            new Unicode(0x1f553),
-            new Unicode(0x1f554),
-            new Unicode(0x1f555),
-            new Unicode(0x1f556),
-            new Unicode(0x1f557),
-            new Unicode(0x1f558),
-            new Unicode(0x1f559),
-            new Unicode(0x1f55a),  // ...
-            new Unicode(0x1f55b)   // 12 o'clock
-    };
-
-    private final Terminal terminal;
-    private final Char[]   spinner;
-    private final Char     done_chr;
-    private final Char     remain_chr;
-    private final long     total;
-    private final long     start;
-    private final Clock    clock;
-    private final String   what;
+    private final Terminal    terminal;
+    private final Char[]      spinner;
+    private final Char        done_chr;
+    private final Char        remain_chr;
+    private final long        total;
+    private final long        start;
+    private final Clock       clock;
+    private final String      title;
     private final LinePrinter updater;
+    private final IntSupplier terminalWidthSupplier;
 
     private int spinner_pos;
     private int last_pct;
     private long last_update;
 
-    public Progress(Terminal terminal,
-                    Spinner spinner,
-                    String what,
+    /**
+     * Create a progress bar using the given terminal.
+     *
+     * @param terminal The terminal to use.
+     * @param spinner The spinner to use.
+     * @param title The title of the progress.
+     * @param total The total progress value.
+     */
+    public Progress(@Nonnull Terminal terminal,
+                    @Nonnull Spinner spinner,
+                    @Nonnull String title,
                     long total) {
-        this(terminal, null, Clock.systemUTC(), spinner, what, total);
+        this(terminal,
+             null,
+             () -> terminal.getTTY().getTerminalSize().cols,
+             Clock.systemUTC(),
+             spinner,
+             title,
+             total);
     }
 
+    /**
+     * Create a progress bar using the line printer and width supplier.
+     *
+     * @param updater The line printer used to update visible progress.
+     * @param widthSupplier The width supplier to get terminal width from.
+     * @param spinner The spinner to use.
+     * @param title The title of the progress.
+     * @param total The total progress value.
+     */
+    public Progress(@Nonnull LinePrinter updater,
+                    @Nonnull IntSupplier widthSupplier,
+                    @Nonnull Spinner spinner,
+                    @Nonnull String title,
+                    long total) {
+        this(null, updater, widthSupplier, Clock.systemUTC(), spinner, title, total);
+    }
+
+    @Deprecated
     public Progress(LinePrinter updater,
                     Spinner spinner,
-                    String what,
+                    String title,
                     long total) {
-        this(null, updater, Clock.systemUTC(), spinner, what, total);
+        this(updater, () -> 128, spinner, title, total);
     }
 
     /**
@@ -134,22 +186,24 @@ public class Progress {
      * @param updater The updater to write to.
      * @param clock The clock to use for timing.
      * @param spinner The spinner type.
-     * @param what What progresses.
+     * @param title What progresses.
      * @param total The total value to be 'progressed'.
      */
     @VisibleForTesting
     protected Progress(Terminal terminal,
                        LinePrinter updater,
+                       IntSupplier widthSupplier,
                        Clock clock,
                        Spinner spinner,
-                       String what,
+                       String title,
                        long total) {
         this.terminal = terminal;
-        this.spinner = getSpinner(spinner);
-        this.done_chr = getDoneChar();
-        this.remain_chr = getRemainChar(spinner);
+        this.terminalWidthSupplier = widthSupplier;
         this.updater = updater != null ? updater : this::println;
-        this.what = what;
+        this.spinner = getSpinner(spinner);
+        this.done_chr = getDoneChar(spinner);
+        this.remain_chr = getRemainChar(spinner);
+        this.title = title;
         this.spinner_pos = 0;
         this.total = total;
         this.start = clock.millis();
@@ -162,31 +216,41 @@ public class Progress {
     }
 
     private Char getRemainChar(Spinner spinner) {
-        if (spinner == null ||
-            spinner == Spinner.ASCII) {
-            return new Unicode('-');
-        } else {
-            return new Unicode('\u22c5');
+        if (spinner == null) {
+            spinner = Spinner.ASCII;
         }
+        return spinner.remain;
     }
 
-    private Char getDoneChar() {
-        return new Unicode('#');
+    private Char getDoneChar(Spinner spinner) {
+        if (spinner == null) {
+            spinner = Spinner.ASCII;
+        }
+        return spinner.done;
+    }
+
+    private Char[] getSpinner(Spinner spinner) {
+        if (spinner == null) {
+            spinner = Spinner.ASCII;
+        }
+        return spinner.spinner;
     }
 
     public void update(long current) {
         long now = clock.millis();
         if (current > total) current = total;
+        int pts_w = terminalWidthSupplier.getAsInt() - 23 - title.length();
 
         double fraction = ((double) current) / ((double) total);
         int pct = (int) (fraction * 100.0);
+        int pts = (int) (fraction * pts_w);
 
         if (current < total) {
             if (now - last_update < 100 && pct == last_pct) {
                 return;
             }
 
-            int remaining_pct = 100 - pct;
+            int remaining_pts = pts_w - pts;
 
             long     duration_ms = clock.millis() - start;
             Duration remaining   = null;
@@ -198,23 +262,23 @@ public class Progress {
 
             spinner_pos = (spinner_pos + 1) % spinner.length;
 
-            if (pct < 100) {
+            if (pts < pts_w) {
                 updater.formatln("%s: [%s%s%s%s%s%s%s%s] %3d%%%s",
-                                 what,
+                                 title,
                                  Color.GREEN,
-                                 Strings.times(done_chr.toString(), pct),
+                                 Strings.times(done_chr.toString(), pts),
                                  new Color(Color.YELLOW, Color.BOLD),
                                  spinner[spinner_pos],
                                  Color.CLEAR, Color.YELLOW,
-                                 Strings.times(remain_chr.toString(), remaining_pct - 1),
+                                 Strings.times(remain_chr.toString(), remaining_pts - 1),
                                  Color.CLEAR,
                                  pct,
                                  remaining == null ? "" : " +(" + format(remaining) + ")");
             } else {
                 updater.formatln("%s: [%s%s%s%s%s] 100%%%s",
-                                 what,
+                                 title,
                                  Color.GREEN,
-                                 Strings.times(done_chr.toString(), 99),
+                                 Strings.times(done_chr.toString(), pts_w - 1),
                                  new Color(Color.YELLOW, Color.BOLD),
                                  spinner[spinner_pos],
                                  Color.CLEAR,
@@ -225,32 +289,13 @@ public class Progress {
         } else {
             if (now >= last_update) {
                 updater.formatln("%s: [%s%s%s] 100%% @ %s",
-                                 what,
+                                 title,
                                  Color.GREEN,
-                                 Strings.times(done_chr.toString(), 100),
+                                 Strings.times(done_chr.toString(), pts),
                                  Color.CLEAR,
                                  format(Duration.of(now - start, ChronoUnit.MILLIS)));
             }
             last_update = Long.MAX_VALUE;
-        }
-    }
-
-    private Char[] getSpinner(Spinner spinner) {
-        if (spinner == null) {
-            return ascii_spinner;
-        } else {
-            switch (spinner) {
-                case ASCII:
-                    return ascii_spinner;
-                case BLOCKS:
-                    return block_spinner;
-                case ARROWS:
-                    return arrow_spinner;
-                case CLOCK:
-                    return clock_spinner;
-                default:
-                    return ascii_spinner;
-            }
         }
     }
 
