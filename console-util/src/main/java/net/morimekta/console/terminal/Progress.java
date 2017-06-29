@@ -179,63 +179,10 @@ public class Progress {
     }
 
     /**
-     * Create a progress updater. Note that <b>either</b> terminal or the
-     * updater param must be set.
+     * Update the progress to reflect the current progress value.
      *
-     * @param terminal The terminal to print to.
-     * @param updater The updater to write to.
-     * @param clock The clock to use for timing.
-     * @param spinner The spinner type.
-     * @param title What progresses.
-     * @param total The total value to be 'progressed'.
+     * @param current The new current progress value.
      */
-    @VisibleForTesting
-    protected Progress(Terminal terminal,
-                       LinePrinter updater,
-                       IntSupplier widthSupplier,
-                       Clock clock,
-                       Spinner spinner,
-                       String title,
-                       long total) {
-        this.terminal = terminal;
-        this.terminalWidthSupplier = widthSupplier;
-        this.updater = updater != null ? updater : this::println;
-        this.spinner = getSpinner(spinner);
-        this.done_chr = getDoneChar(spinner);
-        this.remain_chr = getRemainChar(spinner);
-        this.title = title;
-        this.spinner_pos = 0;
-        this.total = total;
-        this.start = clock.millis();
-        this.clock = clock;
-
-        if (terminal != null) {
-            terminal.finish();
-        }
-        update(0);
-    }
-
-    private Char getRemainChar(Spinner spinner) {
-        if (spinner == null) {
-            spinner = Spinner.ASCII;
-        }
-        return spinner.remain;
-    }
-
-    private Char getDoneChar(Spinner spinner) {
-        if (spinner == null) {
-            spinner = Spinner.ASCII;
-        }
-        return spinner.done;
-    }
-
-    private Char[] getSpinner(Spinner spinner) {
-        if (spinner == null) {
-            spinner = Spinner.ASCII;
-        }
-        return spinner.spinner;
-    }
-
     public void update(long current) {
         long now = clock.millis();
         if (current > total) current = total;
@@ -297,6 +244,64 @@ public class Progress {
             }
             last_update = Long.MAX_VALUE;
         }
+    }
+
+    /**
+     * Create a progress updater. Note that <b>either</b> terminal or the
+     * updater param must be set.
+     *
+     * @param terminal The terminal to print to.
+     * @param updater The updater to write to.
+     * @param clock The clock to use for timing.
+     * @param spinner The spinner type.
+     * @param title What progresses.
+     * @param total The total value to be 'progressed'.
+     */
+    @VisibleForTesting
+    protected Progress(Terminal terminal,
+                       LinePrinter updater,
+                       IntSupplier widthSupplier,
+                       Clock clock,
+                       Spinner spinner,
+                       String title,
+                       long total) {
+        this.terminal = terminal;
+        this.terminalWidthSupplier = widthSupplier;
+        this.updater = updater != null ? updater : this::println;
+        this.spinner = getSpinner(spinner);
+        this.done_chr = getDoneChar(spinner);
+        this.remain_chr = getRemainChar(spinner);
+        this.title = title;
+        this.spinner_pos = 0;
+        this.total = total;
+        this.start = clock.millis();
+        this.clock = clock;
+
+        if (terminal != null) {
+            terminal.finish();
+        }
+        update(0);
+    }
+
+    private Char getRemainChar(Spinner spinner) {
+        if (spinner == null) {
+            spinner = Spinner.ASCII;
+        }
+        return spinner.remain;
+    }
+
+    private Char getDoneChar(Spinner spinner) {
+        if (spinner == null) {
+            spinner = Spinner.ASCII;
+        }
+        return spinner.done;
+    }
+
+    private Char[] getSpinner(Spinner spinner) {
+        if (spinner == null) {
+            spinner = Spinner.ASCII;
+        }
+        return spinner.spinner;
     }
 
     private void println(String line) {
