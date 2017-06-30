@@ -130,6 +130,7 @@ public class Progress {
 
     private int spinner_pos;
     private int last_pct;
+    private int last_pts;
     private long last_update;
 
     /**
@@ -189,11 +190,11 @@ public class Progress {
         int pts_w = terminalWidthSupplier.getAsInt() - 23 - title.length();
 
         double fraction = ((double) current) / ((double) total);
-        int pct = (int) (fraction * 100.0);
+        int pct = (int) (fraction * 100);
         int pts = (int) (fraction * pts_w);
 
         if (current < total) {
-            if (now - last_update < 100 && pct == last_pct) {
+            if (now - last_update < 100 && pct == last_pct && pts == last_pts) {
                 return;
             }
 
@@ -232,6 +233,7 @@ public class Progress {
                                  remaining == null ? "" : " +(" + format(remaining) + ")");
             }
             last_pct = pct;
+            last_pts = pts;
             last_update = now;
         } else {
             if (now >= last_update) {
@@ -243,6 +245,7 @@ public class Progress {
                                  format(Duration.of(now - start, ChronoUnit.MILLIS)));
             }
             last_update = Long.MAX_VALUE;
+            last_pct = 100;
         }
     }
 
@@ -276,6 +279,8 @@ public class Progress {
         this.total = total;
         this.start = clock.millis();
         this.clock = clock;
+        this.last_pct = -1;
+        this.last_pts = -1;
 
         if (terminal != null) {
             terminal.finish();
