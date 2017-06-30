@@ -28,11 +28,11 @@ public class ProgressTest {
                                   "Title",
                                   127);
         clock.tick(200);
-        p.update(50);
+        p.accept(50);
         clock.tick(300);
-        p.update(126);
+        p.accept(126);
         clock.tick(400);
-        p.update(127);
+        p.accept(127);
 
         assertThat(stripNonPrintable(console.output()),
                    is("\r" +
@@ -46,7 +46,7 @@ public class ProgressTest {
     public void testLinePrinter() {
         LinkedList<String> lines = new LinkedList<>();
         Progress p = new Progress(l -> lines.add(stripNonPrintable(l)), Progress.Spinner.CLOCK, "Foo", 100);
-        p.update(37);
+        p.accept(37);
 
         assertThat(lines, is(ImmutableList.of(
                 "Foo: [🕑⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅]   0%",
@@ -79,11 +79,11 @@ public class ProgressTest {
                                   127);
 
         clock.tick(2000);
-        p.update(50);
+        p.accept(50);
         clock.tick(1500);
-        p.update(100);
+        p.accept(100);
         clock.tick(1321);
-        p.update(127);
+        p.accept(127);
 
         assertThat(lines, is(ImmutableList.of(
                 "Title: [▂⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅⋅]   0%",

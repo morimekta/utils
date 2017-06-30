@@ -34,9 +34,9 @@ public class Interactive {
                     Progress progress = new Progress(term, Progress.Spinner.ARROWS, "Progress", 1234567890);
                     for (int i = 1; i <= 1234567890; i += 1234567) {
                         Thread.sleep(5L);
-                        progress.update(i);
+                        progress.accept(i);
                     }
-                    progress.update(1234567890);
+                    progress.accept(1234567890);
                     term.println();
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e.getMessage(), e);

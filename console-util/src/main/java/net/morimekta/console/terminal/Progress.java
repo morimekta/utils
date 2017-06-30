@@ -12,12 +12,13 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.function.IntSupplier;
+import java.util.function.LongConsumer;
 
 /**
  * Show progress on a single task in how many percent (with spinner and
  * progress-bar). Spinner type is configurable.
  */
-public class Progress {
+public class Progress implements LongConsumer {
     /**
      * Which spinner to show. Some may require extended unicode font to
      * be used in the console without just showing '?'.
@@ -132,6 +133,7 @@ public class Progress {
     private int last_pct;
     private int last_pts;
     private long last_update;
+    private long expected_done_ts;
 
     /**
      * Create a progress bar using the given terminal.
@@ -184,7 +186,18 @@ public class Progress {
      *
      * @param current The new current progress value.
      */
+    @Deprecated
     public void update(long current) {
+        accept(current);
+    }
+
+    /**
+     * Update the progress to reflect the current progress value.
+     *
+     * @param current The new current progress value.
+     */
+    @Override
+    public void accept(long current) {
         long now = clock.millis();
         if (current > total) current = total;
         int pts_w = terminalWidthSupplier.getAsInt() - 23 - title.length();
@@ -194,17 +207,24 @@ public class Progress {
         int pts = (int) (fraction * pts_w);
 
         if (current < total) {
-            if (now - last_update < 100 && pct == last_pct && pts == last_pts) {
+            if (now - last_update < 73 && pct == last_pct && pts == last_pts) {
                 return;
             }
 
             int remaining_pts = pts_w - pts;
 
-            long     duration_ms = clock.millis() - start;
+            long     duration_ms = now - start;
             Duration remaining   = null;
+            // Progress has actually gone forward, recalculate total time.
             if (duration_ms > 3000) {
-                long assumed_total = (long) (((double) duration_ms) / fraction);
-                long remaining_ms  = assumed_total - duration_ms;
+                long remaining_ms;
+                if (expected_done_ts == 0L || pct > last_pct) {
+                    long assumed_total = (long) (((double) duration_ms) / fraction);
+                    remaining_ms = Math.max(0L, assumed_total - duration_ms);
+                    expected_done_ts = now + remaining_ms;
+                } else {
+                    remaining_ms = Math.max(0L, expected_done_ts - now);
+                }
                 remaining = Duration.of(remaining_ms, ChronoUnit.MILLIS);
             }
 
@@ -286,7 +306,7 @@ public class Progress {
         if (terminal != null) {
             terminal.finish();
         }
-        update(0);
+        accept(0);
     }
 
     private Char getRemainChar(Spinner spinner) {
