@@ -72,8 +72,13 @@ public class ProcessExecutorTest {
                        "ls -1 $1\n").getBytes(UTF_8));
         }
         for (int i = 0; i < 100; ++i) {
+            // If the "root" directory is really cluttered on an overworked
+            // machine using spin-disks (e.g. travis-ci.org), this may fail
+            // without upping the timeouts.
             ProcessExecutor sut = new ProcessExecutor(
-                    "sh", sh.getAbsolutePath(), tmp.getRoot().toString());
+                    "sh", sh.getAbsolutePath(), tmp.getRoot().toString())
+                    .setDeadlineMs(10000L)
+                    .setDeadlineFlushMs(2000L);
 
             assertThat("Run " + i, sut.call(), is(0));
             assertThat("Run " + i, sut.getOutput(), is("integration.jar\n" +
