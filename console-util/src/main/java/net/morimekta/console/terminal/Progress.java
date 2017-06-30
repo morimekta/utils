@@ -255,6 +255,7 @@ public class Progress {
      *
      * @param terminal The terminal to print to.
      * @param updater The updater to write to.
+     * @param widthSupplier The width supplier to get terminal width from.
      * @param clock The clock to use for timing.
      * @param spinner The spinner type.
      * @param title What progresses.

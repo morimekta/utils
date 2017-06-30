@@ -44,7 +44,7 @@ import static java.lang.String.format;
  * Tabular selection with simple navigation. It displays a list of
  * items in a table that can be paginated and navigated between
  * using the arrow keys, numbers, pg-up, pg-down etc.
- * <p>
+ *
  * <pre>{@code
  * {message}: [c=command, o=overview]
  *  1 {line 1}
