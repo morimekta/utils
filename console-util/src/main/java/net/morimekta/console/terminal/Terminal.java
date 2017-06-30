@@ -117,7 +117,7 @@ public class Terminal extends CharReader implements Closeable, LinePrinter {
         this.switcher = switcher;
         this.lineCount = 0;
         try {
-            if (switcher.didChangeMode() && switcher.getBefore() == STTYMode.RAW) {
+            if (lp == null && switcher.didChangeMode() && switcher.getBefore() == STTYMode.RAW) {
                 this.out.write('\n');
                 this.out.flush();
             }
@@ -248,7 +248,8 @@ public class Terminal extends CharReader implements Closeable, LinePrinter {
     public <T> void waitAbortable(Future<T> task) throws IOException, InterruptedException {
         while (!task.isDone() && !task.isCancelled()) {
             Char c = readIfAvailable();
-            if (c != null && c.asInteger() == Char.ABR) {
+            if (c != null && (c.asInteger() == Char.ABR ||
+                              c.asInteger() == Char.ESC)) {
                 task.cancel(true);
                 throw new IOException("Aborted with '" + c.asString() + "'");
             }
