@@ -30,16 +30,16 @@ public class Interactive {
             term.println();
             ExecutorService exec = Executors.newSingleThreadExecutor();
             term.executeAbortable(exec, () -> {
-                try {
-                    Progress progress = new Progress(term, Progress.Spinner.ARROWS, "Progress", 1234567890);
+                try (Progress progress = new Progress(term, Progress.Spinner.ARROWS, "Progress", 1234567890)) {
                     for (int i = 1; i <= 1234567890; i += 1234567) {
                         Thread.sleep(5L);
                         progress.accept(i);
                     }
                     progress.accept(1234567890);
-                    term.println();
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e.getMessage(), e);
+                } finally {
+                    term.println();
                 }
             });
 

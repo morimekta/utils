@@ -8,17 +8,21 @@ import net.morimekta.console.chr.Unicode;
 import net.morimekta.util.Strings;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.function.IntSupplier;
-import java.util.function.LongConsumer;
+
+import static java.lang.Math.max;
 
 /**
  * Show progress on a single task in how many percent (with spinner and
- * progress-bar). Spinner type is configurable.
+ * progress-bar). Spinner type is configurable. This is the single-thread
+ * progress where everything is handled in the same thread as calls
+ * {@link #accept(long)}. This class is <i>not</i> thread safe.
  */
-public class Progress implements LongConsumer {
+public class Progress implements ProgressTask {
     /**
      * Which spinner to show. Some may require extended unicode font to
      * be used in the console without just showing '?'.
@@ -30,6 +34,7 @@ public class Progress implements LongConsumer {
          */
         ASCII(new Unicode('#'),
               new Unicode('-'),
+              new Unicode('v'),
               new Unicode[] {
                       new Unicode('|'),
                       new Unicode('/'),
@@ -46,6 +51,7 @@ public class Progress implements LongConsumer {
          */
         BLOCKS(new Unicode('▓'),
                new Unicode('⋅'),
+               new Unicode('✓'),
                new Unicode[] {
                        new Unicode('▁'),  // 1/8 block
                        new Unicode('▂'),  // 2/8 block
@@ -70,6 +76,7 @@ public class Progress implements LongConsumer {
          */
         ARROWS(new Unicode('⬛'),
                new Unicode('⋅'),
+               new Unicode('✓'),
                new Unicode[] {
                        new Unicode('⭢'),
                        new Unicode('⭨'),
@@ -88,6 +95,7 @@ public class Progress implements LongConsumer {
          */
         CLOCK(new Unicode('⬛'),
               new Unicode('⋅'),
+              new Unicode('✓'),
               new Unicode[] {
                       new Unicode(0x1f550),  // 1 o'clock
                       new Unicode(0x1f551),  // ...
@@ -105,23 +113,24 @@ public class Progress implements LongConsumer {
 
         ;
 
-        private Char   done;
-        private Char   remain;
-        private Char[] spinner;
+        Char   done;
+        Char   remain;
+        Char   complete;
+        Char[] spinner;
 
         Spinner(Char done,
                 Char remain,
+                Char complete,
                 Char[] spinner) {
             this.done = done;
             this.spinner = spinner;
             this.remain = remain;
+            this.complete = complete;
         }
     }
 
     private final Terminal    terminal;
-    private final Char[]      spinner;
-    private final Char        done_chr;
-    private final Char        remain_chr;
+    private final Spinner     spinner;
     private final long        total;
     private final long        start;
     private final Clock       clock;
@@ -130,9 +139,11 @@ public class Progress implements LongConsumer {
     private final IntSupplier terminalWidthSupplier;
 
     private int spinner_pos;
+    private double fraction;
     private int last_pct;
     private int last_pts;
     private long last_update;
+    private long spinner_update;
     private long expected_done_ts;
 
     /**
@@ -178,7 +189,7 @@ public class Progress implements LongConsumer {
                     Spinner spinner,
                     String title,
                     long total) {
-        this(updater, () -> 128, spinner, title, total);
+        this(updater, () -> 128, spinner == null ? Spinner.ASCII : spinner, title, total);
     }
 
     /**
@@ -198,11 +209,13 @@ public class Progress implements LongConsumer {
      */
     @Override
     public void accept(long current) {
+        if (isDone()) return;
+
         long now = clock.millis();
         if (current > total) current = total;
         int pts_w = terminalWidthSupplier.getAsInt() - 23 - title.length();
 
-        double fraction = ((double) current) / ((double) total);
+        fraction = ((double) current) / ((double) total);
         int pct = (int) (fraction * 100);
         int pts = (int) (fraction * pts_w);
 
@@ -220,53 +233,97 @@ public class Progress implements LongConsumer {
                 long remaining_ms;
                 if (expected_done_ts == 0L || pct > last_pct) {
                     long assumed_total = (long) (((double) duration_ms) / fraction);
-                    remaining_ms = Math.max(0L, assumed_total - duration_ms);
+                    remaining_ms = max(0L, assumed_total - duration_ms);
                     expected_done_ts = now + remaining_ms;
                 } else {
-                    remaining_ms = Math.max(0L, expected_done_ts - now);
+                    remaining_ms = max(0L, expected_done_ts - now);
                 }
                 remaining = Duration.of(remaining_ms, ChronoUnit.MILLIS);
             }
 
-            spinner_pos = (spinner_pos + 1) % spinner.length;
+            if (now >= (spinner_update + 100)) {
+                spinner_pos = (spinner_pos + 1) % spinner.spinner.length;
+                spinner_update = now;
+            }
 
             if (pts < pts_w) {
-                updater.formatln("%s: [%s%s%s%s%s%s%s%s] %3d%%%s",
+                updater.formatln("%s: [%s%s%s%s%s] %3d%% %s%s%s%s",
                                  title,
+
                                  Color.GREEN,
-                                 Strings.times(done_chr.toString(), pts),
-                                 new Color(Color.YELLOW, Color.BOLD),
-                                 spinner[spinner_pos],
-                                 Color.CLEAR, Color.YELLOW,
-                                 Strings.times(remain_chr.toString(), remaining_pts - 1),
+                                 Strings.times(spinner.done.toString(), pts),
+                                 Color.YELLOW,
+                                 Strings.times(spinner.remain.toString(), remaining_pts),
                                  Color.CLEAR,
+
                                  pct,
-                                 remaining == null ? "" : " +(" + format(remaining) + ")");
-            } else {
-                updater.formatln("%s: [%s%s%s%s%s] 100%%%s",
-                                 title,
-                                 Color.GREEN,
-                                 Strings.times(done_chr.toString(), pts_w - 1),
+
                                  new Color(Color.YELLOW, Color.BOLD),
-                                 spinner[spinner_pos],
+                                 spinner.spinner[spinner_pos],
                                  Color.CLEAR,
-                                 remaining == null ? "" : " +(" + format(remaining) + ")");
+                                 remaining == null ? "" : " + " + format(remaining));
+            } else {
+                updater.formatln("%s: [%s%s%s] 100%% %s%s%s%s",
+                                 title,
+
+                                 Color.GREEN,
+                                 Strings.times(spinner.done.toString(), pts),
+                                 Color.CLEAR,
+
+                                 new Color(Color.YELLOW, Color.BOLD),
+                                 spinner.spinner[spinner_pos],
+                                 Color.CLEAR,
+                                 remaining == null ? "" : " + " + format(remaining));
             }
             last_pct = pct;
             last_pts = pts;
             last_update = now;
         } else {
-            if (now >= last_update) {
-                updater.formatln("%s: [%s%s%s] 100%% @ %s",
-                                 title,
-                                 Color.GREEN,
-                                 Strings.times(done_chr.toString(), pts),
-                                 Color.CLEAR,
-                                 format(Duration.of(now - start, ChronoUnit.MILLIS)));
-            }
+            updater.formatln("%s: [%s%s%s] 100%% %s%s%s @ %s",
+                             title,
+
+                             Color.GREEN,
+                             Strings.times(spinner.done.toString(), pts_w),
+                             Color.CLEAR,
+
+                             new Color(Color.GREEN, Color.BOLD),
+                             spinner.complete,
+                             Color.CLEAR,
+                             format(Duration.of(now - start, ChronoUnit.MILLIS)));
             last_update = Long.MAX_VALUE;
             last_pct = 100;
         }
+    }
+
+    @Override
+    public void close() {
+        long now = clock.millis();
+        if (now >= last_update) {
+            int pts_w = terminalWidthSupplier.getAsInt() - 23 - title.length();
+            int pts = max(0, (int) (fraction * pts_w));
+            int remaining_pts = max(0, pts_w - pts);
+
+            updater.formatln("%s: [%s%s%s%s%s] %3d%% %sAborted%s",
+                             title,
+
+                             Color.GREEN,
+                             Strings.times(spinner.done.toString(), pts),
+                             Color.YELLOW,
+                             Strings.times(spinner.remain.toString(), remaining_pts),
+                             Color.CLEAR,
+
+                             last_pct,
+
+                             new Color(Color.RED, Color.BOLD),
+                             Color.CLEAR);
+
+            last_update = Long.MAX_VALUE;
+        }
+    }
+
+    @Override
+    public boolean isDone() {
+        return last_update > clock.millis();
     }
 
     /**
@@ -282,26 +339,25 @@ public class Progress implements LongConsumer {
      * @param total The total value to be 'progressed'.
      */
     @VisibleForTesting
-    protected Progress(Terminal terminal,
-                       LinePrinter updater,
-                       IntSupplier widthSupplier,
-                       Clock clock,
-                       Spinner spinner,
-                       String title,
+    protected Progress(@Nullable Terminal terminal,
+                       @Nullable LinePrinter updater,
+                       @Nonnull IntSupplier widthSupplier,
+                       @Nonnull Clock clock,
+                       @Nonnull Spinner spinner,
+                       @Nonnull String title,
                        long total) {
         this.terminal = terminal;
         this.terminalWidthSupplier = widthSupplier;
         this.updater = updater != null ? updater : this::println;
-        this.spinner = getSpinner(spinner);
-        this.done_chr = getDoneChar(spinner);
-        this.remain_chr = getRemainChar(spinner);
+        this.spinner = spinner;
         this.title = title;
-        this.spinner_pos = 0;
         this.total = total;
         this.start = clock.millis();
         this.clock = clock;
         this.last_pct = -1;
         this.last_pts = -1;
+        this.spinner_pos = 0;
+        this.spinner_update = start;
 
         if (terminal != null) {
             terminal.finish();
@@ -309,42 +365,21 @@ public class Progress implements LongConsumer {
         accept(0);
     }
 
-    private Char getRemainChar(Spinner spinner) {
-        if (spinner == null) {
-            spinner = Spinner.ASCII;
-        }
-        return spinner.remain;
-    }
-
-    private Char getDoneChar(Spinner spinner) {
-        if (spinner == null) {
-            spinner = Spinner.ASCII;
-        }
-        return spinner.done;
-    }
-
-    private Char[] getSpinner(Spinner spinner) {
-        if (spinner == null) {
-            spinner = Spinner.ASCII;
-        }
-        return spinner.spinner;
-    }
-
     private void println(String line) {
         terminal.print("\r" + Control.CURSOR_ERASE + line);
     }
 
-    private String format(Duration duration) {
+    static String format(Duration duration) {
         long h = duration.toHours();
         long m = duration.minusHours(h).toMinutes();
         if (h > 0) {
-            return String.format("%2d:%02d H  ", h, m);
+            return String.format("%2d:%02d H", h, m);
         }
         long s = duration.minusHours(h).minusMinutes(m).getSeconds();
         if (m > 0) {
             return String.format("%2d:%02d min", m, s);
         }
         long ms = duration.minusHours(h).minusMinutes(m).minusSeconds(s).toMillis();
-            return String.format("%3d.%1d s  ", s, ms / 100);
+            return String.format("%2d.%1d  s", s, ms / 100);
     }
 }
