@@ -41,7 +41,7 @@ public class ProgressManagerTest {
 
             Future<String> first = progress.addTask("First", 10000, task -> {
                 try {
-                    Thread.sleep(20);
+                    Thread.sleep(60);
                     task.accept(1000);
                 } catch (InterruptedException ignore) {
                 }
@@ -51,7 +51,7 @@ public class ProgressManagerTest {
                 try {
                     Thread.sleep(50);
                     task.accept(1000);
-                    Thread.sleep(120);
+                    Thread.sleep(100);
                     task.accept(10000);
                 } catch (InterruptedException ignore) {
                 }
@@ -61,13 +61,13 @@ public class ProgressManagerTest {
             assertThat(stripNonPrintableLines(progress.lines()),
                        is(ImmutableList.of()));
 
-            Thread.sleep(15L);
+            Thread.sleep(25L);
 
             assertThat(stripNonPrintableLines(progress.lines()),
                        is(ImmutableList.of("First: [--------------------------------------------------------------------------------------------------------------------]   0% |",
                                            " -- And 1 more...")));
 
-            Thread.sleep(15L);
+            Thread.sleep(50L);
 
             assertThat(stripNonPrintableLines(progress.lines()),
                        is(ImmutableList.of("First: [###########---------------------------------------------------------------------------------------------------------]  10% Failed",
