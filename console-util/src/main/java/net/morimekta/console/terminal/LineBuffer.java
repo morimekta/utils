@@ -189,6 +189,13 @@ public class LineBuffer {
     }
 
     /**
+     * @return The current set of lines shown.
+     */
+    public List<String> lines() {
+        return ImmutableList.copyOf(buffer);
+    }
+
+    /**
      * @return The content of the last line in the buffer.
      */
     private String lastLine() {
