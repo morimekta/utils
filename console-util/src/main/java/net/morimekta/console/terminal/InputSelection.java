@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static java.lang.Math.ceil;
+import static java.lang.Math.log10;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 import static java.lang.String.format;
@@ -511,9 +512,9 @@ public class InputSelection<E> {
         int pagesBefore = currentOffset / pageSize;
         int pagesAfter = (int) ceil(after / pageSize);
 
-        String seeBefore = CharUtil.leftJust(
+        String seeBefore = CharUtil.rightPad(
                 before == 0 ? "" : format("<-- (pages: %d, items: %d)", pagesBefore, before), 38);
-        String seeAfter = CharUtil.rightJust(
+        String seeAfter = CharUtil.leftPad(
                 after == 0 ? "" : format("(pages: %d, items: %d) -->", pagesAfter, after), 38);
 
         return format("  %s%s  ", seeBefore, seeAfter);
@@ -532,18 +533,9 @@ public class InputSelection<E> {
             builder.append(bg);
         }
 
-        int idxSize = 2;
-        if (entries.size() > 9) {
-            ++idxSize;
-        }
-        if (entries.size() > 99) {
-            ++idxSize;
-        }
-        if (entries.size() > 999) {
-            ++idxSize;
-        }
+        int idxSize = 2 + (int) log10(entries.size());
 
-        builder.append(CharUtil.rightJust(String.valueOf(absoluteIndex + 1), idxSize))
+        builder.append(CharUtil.leftPad(String.valueOf(absoluteIndex + 1), idxSize))
                .append(' ');
 
         E entry = entries.get(absoluteIndex);
