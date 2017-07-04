@@ -155,7 +155,39 @@ public class CharUtil {
         return builder.toString();
     }
 
+    /**
+     * @see #rightPad(String, int)
+     * @param string The string to just.
+     * @param width The total printable width to fill.
+     * @return The padded string.
+     * @deprecated Use rightPad instead.
+     */
+    @Deprecated
     public static String leftJust(String string, int width) {
+        return rightPad(string, width);
+    }
+
+    /**
+     * @see #leftPad(String, int)
+     * @param string The string to just.
+     * @param width The total printable width to fill.
+     * @return The padded string.
+     * @deprecated Use leftPad instead.
+     */
+    @Deprecated
+    public static String rightJust(String string, int width) {
+        return leftPad(string, width);
+    }
+
+    /**
+     * Pad the right side of the string until the <b>printed width</b> becomes the
+     * desired visible string length.
+     *
+     * @param string The string to just.
+     * @param width The total printable width to fill.
+     * @return The padded string.
+     */
+    public static String rightPad(String string, int width) {
         int pw = printableWidth(string);
         if (pw < width) {
             return string + Strings.times(" ", width - pw);
@@ -163,10 +195,38 @@ public class CharUtil {
         return string;
     }
 
-    public static String rightJust(String string, int width) {
+    /**
+     * Pad the right side of the string until the <b>printed width</b> becomes the
+     * desired visible string length.
+     *
+     * @param string The string to just.
+     * @param width The total printable width to fill.
+     * @return The padded string.
+     */
+    public static String leftPad(String string, int width) {
         int pw = printableWidth(string);
         if (pw < width) {
             return Strings.times(" ", width - pw) + string;
+        }
+        return string;
+    }
+
+    /**
+     * Pad the each side of the string until the <b>printed width</b> becomes the
+     * desired visible string length.
+     *
+     * @param string The string to just.
+     * @param width The total printable width to fill.
+     * @return The padded string.
+     */
+    public static String center(String string, int width) {
+        int pw = printableWidth(string);
+        if (pw < width) {
+            int left = (width - pw) / 2;
+            int right = (width - pw) - left;
+            return Strings.times(" ", left)
+                   + string
+                   + Strings.times(" ", right);
         }
         return string;
     }
@@ -504,6 +564,7 @@ public class CharUtil {
                         try {
                             tmp.write(ch.toString().getBytes(UTF_8));
                         } catch (IOException e) {
+                            // Should be impossible.
                             throw new UncheckedIOException(e);
                         }
                     });
