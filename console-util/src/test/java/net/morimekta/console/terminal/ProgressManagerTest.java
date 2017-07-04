@@ -67,7 +67,7 @@ public class ProgressManagerTest {
                        is(ImmutableList.of("First: [--------------------------------------------------------------------------------------------------------------------]   0% |",
                                            " -- And 1 more...")));
 
-            Thread.sleep(50L);
+            Thread.sleep(100L);
 
             assertThat(stripNonPrintableLines(progress.lines()),
                        is(ImmutableList.of("First: [###########---------------------------------------------------------------------------------------------------------]  10% Failed",
@@ -112,7 +112,7 @@ public class ProgressManagerTest {
                 try {
                     Thread.sleep(50);
                     task.accept(1000);
-                    Thread.sleep(100);
+                    Thread.sleep(150);
                     task.accept(10000);
                 } catch (InterruptedException ignore) {
                 }
@@ -128,7 +128,7 @@ public class ProgressManagerTest {
                        is(ImmutableList.of("First: [--------------------------------------------------------------------------------------------------------------------]   0% |",
                                            "Second: [-------------------------------------------------------------------------------------------------------------------]   0% |")));
 
-            Thread.sleep(50L);
+            Thread.sleep(100L);
 
             assertThat(stripNonPrintableLines(progress.lines()),
                        is(ImmutableList.of("First: [###########---------------------------------------------------------------------------------------------------------]  10% Failed",
@@ -146,7 +146,7 @@ public class ProgressManagerTest {
 
             assertThat(stripNonPrintableLines(progress.lines()),
                        is(ImmutableList.of("First: [###########---------------------------------------------------------------------------------------------------------]  10% Failed",
-                                           "Second: [###################################################################################################################] 100% v @  0.1  s")));
+                                           "Second: [###################################################################################################################] 100% v @  0.2  s")));
         }
     }
     @Test
@@ -164,7 +164,7 @@ public class ProgressManagerTest {
             Future<String> second = progress.addTask("Second", 10000, task -> {
                 Thread.sleep(50);
                 task.accept(1000);
-                Thread.sleep(120);
+                Thread.sleep(220);
                 task.accept(10000);
                 return "OK";
             });
@@ -178,7 +178,7 @@ public class ProgressManagerTest {
                        is(ImmutableList.of("First: [--------------------------------------------------------------------------------------------------------------------]   0% |",
                                            "Second: [-------------------------------------------------------------------------------------------------------------------]   0% |")));
 
-            Thread.sleep(50L);
+            Thread.sleep(100L);
 
             assertThat(stripNonPrintableLines(progress.lines()),
                        is(ImmutableList.of("First: [###########---------------------------------------------------------------------------------------------------------]  10% Failed",

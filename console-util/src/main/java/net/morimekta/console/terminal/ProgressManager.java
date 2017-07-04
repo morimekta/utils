@@ -18,6 +18,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -87,7 +88,7 @@ public class ProgressManager implements AutoCloseable {
         this(terminal,
              spinner,
              max_tasks,
-             Executors.newFixedThreadPool(max_tasks + 1),
+             Executors.newScheduledThreadPool(max_tasks + 1),
              Clock.systemUTC());
     }
 
@@ -104,7 +105,7 @@ public class ProgressManager implements AutoCloseable {
     ProgressManager(Terminal terminal,
                     Progress.Spinner spinner,
                     int maxTasks,
-                    ExecutorService executor,
+                    ScheduledExecutorService executor,
                     Clock clock) {
         this.terminal = terminal;
         this.executor = executor;
@@ -116,7 +117,7 @@ public class ProgressManager implements AutoCloseable {
         this.queuedTasks = new ConcurrentLinkedQueue<>();
         this.buffer = new LineBuffer(terminal);
         this.isWaiting = new AtomicBoolean(false);
-        this.updater = executor.submit(this::doUpdate);
+        this.updater = executor.scheduleAtFixedRate(this::doUpdate, 10L, 100L, TimeUnit.MILLISECONDS);
     }
 
     /**
@@ -124,8 +125,9 @@ public class ProgressManager implements AutoCloseable {
      */
     @Override
     public void close() {
-        if (updater.isCancelled()) return;
-
+        if (executor.isShutdown()) {
+            return;
+        }
         // ... stop updater thread. Do not interrupt.
         updater.cancel(false);
         synchronized (startedTasks) {
@@ -141,6 +143,7 @@ public class ProgressManager implements AutoCloseable {
             executor.shutdown();
             executor.awaitTermination(100L, TimeUnit.MILLISECONDS);
         } catch (InterruptedException ignore) {
+            Thread.currentThread().interrupt();
         }
     }
 
@@ -224,8 +227,8 @@ public class ProgressManager implements AutoCloseable {
     }
 
     private boolean isDone() {
-        if (!queuedTasks.isEmpty()) return false;
         synchronized (startedTasks) {
+            if (!queuedTasks.isEmpty()) return false;
             for (InternalTask task : startedTasks) {
                 if (!task.isDone()) {
                     return false;
@@ -236,34 +239,10 @@ public class ProgressManager implements AutoCloseable {
         return true;
     }
 
-    @VisibleForTesting
-    protected void sleep(long ms) throws InterruptedException {
-        Thread.sleep(10L);
-    }
-
     private void doUpdate() {
-        try {
-            // Allow for time to add the first task(s).
-            sleep(10L);
-
-            while (!updater.isCancelled()) {
-                updateLines();
-                if (updater.isCancelled() ||
-                    (isWaiting.get() && isDone())) {
-                    break;
-                }
-                sleep(100L);
-            }
-        } catch (InterruptedException ignore) {
-            synchronized (startedTasks) {
-                // And stop all the tasks, do interrupting.
-                for (InternalTask task : startedTasks) {
-                    task.cancel(true);
-                }
-                for (InternalTask task : queuedTasks) {
-                    task.cancel(false);
-                }
-            }
+        updateLines();
+        if (isWaiting.get() && isDone()) {
+            updater.cancel(false);
         }
     }
 
@@ -281,7 +260,6 @@ public class ProgressManager implements AutoCloseable {
             while (buffer.count() < updatedLines.size()) {
                 buffer.add("");
             }
-
             buffer.update(0, updatedLines);
         }
     }
@@ -432,6 +410,7 @@ public class ProgressManager implements AutoCloseable {
                         synchronized (this) {
                             stopInternal(true, false);
                         }
+                        Thread.currentThread().interrupt();
                         throw e;
                     } catch (Exception e) {
                         synchronized (this) {
