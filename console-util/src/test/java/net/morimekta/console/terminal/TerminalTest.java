@@ -14,6 +14,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.startsWith;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
@@ -176,6 +177,16 @@ public class TerminalTest {
         } catch (IOException e) {
             assertThat(e.getMessage(), is("Aborted with '<ABR>'"));
         }
+    }
+
+    @Test
+    public void testPrinter() throws IOException {
+        try (Terminal terminal = new Terminal(console.tty())) {
+            new Exception().printStackTrace(terminal.printer());
+        }
+
+        assertThat(console.output(),
+                   startsWith("java.lang.Exception\tat net.morimekta.console.terminal.TerminalTest.testPrinter(TerminalTest.java:"));
     }
 
     @Test

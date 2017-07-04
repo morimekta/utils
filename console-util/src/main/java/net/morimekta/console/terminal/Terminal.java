@@ -32,6 +32,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.PrintStream;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Callable;
@@ -44,7 +45,6 @@ import java.util.concurrent.Future;
  * from the input, and writes lines dependent on terminal mode.
  */
 public class Terminal extends CharReader implements Closeable, LinePrinter {
-    private final STTY tty;
     /**
      * Construct a default RAW terminal.
      *
@@ -131,6 +131,17 @@ public class Terminal extends CharReader implements Closeable, LinePrinter {
      */
     public STTY getTTY() {
         return tty;
+    }
+
+    /**
+     * Get a print stream that writes to the terminal according to the
+     * output mode of the terminal. Handy for e.g. printing stack traces
+     * etc while in raw mode.
+     *
+     * @return A wrapping print stream.
+     */
+    public PrintStream printer() {
+        return new TerminalPrintStream(this);
     }
 
     /**
@@ -311,6 +322,10 @@ public class Terminal extends CharReader implements Closeable, LinePrinter {
         switcher.close();
     }
 
+    protected OutputStream getOutputStream() {
+        return out;
+    }
+
     private void printlnInternal(String message) {
         try {
             if (switcher.getCurrentMode() == STTYMode.RAW) {
@@ -351,6 +366,7 @@ public class Terminal extends CharReader implements Closeable, LinePrinter {
     private final STTYModeSwitcher switcher;
     private final OutputStream out;
     private final LinePrinter  lp;
+    private final STTY tty;
 
     private int lineCount;
 }
