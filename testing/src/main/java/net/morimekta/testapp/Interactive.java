@@ -26,28 +26,9 @@ import static java.lang.String.format;
 public class Interactive {
     public static void main(String[] args) {
         try (Terminal term = new Terminal()) {
-            term.println("Press any char to continue... After done.");
-            term.println();
-            ExecutorService exec = Executors.newSingleThreadExecutor();
-            term.executeAbortable(exec, () -> {
-                try (Progress progress = new Progress(term, Progress.Spinner.ARROWS, "Progress", 1234567890)) {
-                    for (int i = 1; i <= 1234567890; i += 1234567) {
-                        Thread.sleep(5L);
-                        progress.accept(i);
-                    }
-                    progress.accept(1234567890);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e.getMessage(), e);
-                } finally {
-                    term.println();
-                }
-            });
-
-            term.println();
-
             List<String> entries = ExtraStreams.range(0x0000, 0x4000, 4)
                                                .mapToObj(i -> {
-                                                   // [ 0xd000 -> 0xe000 > is reserved for utf-16 funkyness.
+                                                   // [ 0xd000 -> 0xe000 > is reserved for utf-16 funkiness.
                                                    if (0xd000 <= i && i < 0xe000) return "";
                                                    StringBuilder builder = new StringBuilder();
                                                    for (int c = i; c < i + 4; ++c) {
@@ -60,11 +41,19 @@ public class Interactive {
                                                        }
 
                                                        builder.append("| ");
-                                                       builder.append(CharUtil.leftJust(format(
-                                                               "0x%04x:  %-8s  \"%s\"",
-                                                               u.asInteger(),
-                                                               "'" + u.asString() + "'",
-                                                               cs), 26));
+                                                       if (u.asInteger() < 0x10000) {
+                                                           builder.append(format(
+                                                                   "0x%04x:  %s  %s",
+                                                                   u.asInteger(),
+                                                                   CharUtil.rightPad("'" + u.asString() + "'", 8),
+                                                                   CharUtil.rightPad("\"" + cs + "\"", 8)));
+                                                       } else {
+                                                           builder.append(format(
+                                                                   "0x%08x:  %-8s  \"%s\" ",
+                                                                   u.asInteger(),
+                                                                   CharUtil.rightPad("'" + u.asString() + "'", 8),
+                                                                   CharUtil.rightPad("\"" + cs + "\"", 8)));
+                                                       }
                                                    }
                                                    builder.append('|');
                                                    return builder.toString();

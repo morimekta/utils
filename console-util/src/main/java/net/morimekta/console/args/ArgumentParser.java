@@ -586,7 +586,7 @@ public class ArgumentParser {
                 }
             }
         } else {
-            writer.append(CharUtil.leftJust(prefix, prefixLen));
+            writer.append(CharUtil.rightPad(prefix, prefixLen));
             writer.append(" : ");
             descLines = WordUtils.wrap(usage, usageWidth - prefixLen - USAGE_EXTRA_CHARS).split("[\\r]?[\\n]");
             writer.append(descLines[0]);
