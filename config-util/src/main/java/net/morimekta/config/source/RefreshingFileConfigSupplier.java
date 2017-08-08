@@ -20,12 +20,12 @@
  */
 package net.morimekta.config.source;
 
+import com.google.common.base.MoreObjects;
 import net.morimekta.config.Config;
 import net.morimekta.config.ConfigException;
 import net.morimekta.config.format.ConfigParser;
 
-import com.google.common.base.MoreObjects;
-
+import javax.annotation.Nonnull;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -52,15 +52,18 @@ public class RefreshingFileConfigSupplier implements Supplier<Config> {
 
     private Config config;
 
-    public RefreshingFileConfigSupplier(File configFile) {
+    public RefreshingFileConfigSupplier(@Nonnull File configFile) {
         this(configFile, getParserForName(configFile.getName()));
     }
 
-    public RefreshingFileConfigSupplier(File configFile, ConfigParser format) {
+    public RefreshingFileConfigSupplier(@Nonnull File configFile,
+                                        @Nonnull ConfigParser format) {
         this(configFile, format, Clock.systemUTC());
     }
 
-    public RefreshingFileConfigSupplier(File configFile, ConfigParser format, Clock clock) {
+    public RefreshingFileConfigSupplier(@Nonnull File configFile,
+                                        @Nonnull ConfigParser format,
+                                        @Nonnull Clock clock) {
         this.clock = clock;
         this.configFile = configFile;
         this.parser = format;
@@ -99,6 +102,10 @@ public class RefreshingFileConfigSupplier implements Supplier<Config> {
     }
 
     private void loadInternal() throws IOException, ConfigException {
+        if (!configFile.exists()) {
+            throw new ConfigException("No such config file: " + configFile.getCanonicalPath());
+        }
+
         try (FileInputStream fis = new FileInputStream(configFile);
              BufferedInputStream bis = new BufferedInputStream(fis)) {
             this.config = parser.parse(bis);

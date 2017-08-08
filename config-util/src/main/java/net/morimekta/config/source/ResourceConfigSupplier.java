@@ -20,12 +20,13 @@
  */
 package net.morimekta.config.source;
 
+import com.google.common.base.MoreObjects;
 import net.morimekta.config.Config;
 import net.morimekta.config.ConfigException;
 import net.morimekta.config.format.ConfigParser;
 
-import com.google.common.base.MoreObjects;
-
+import javax.annotation.Nonnull;
+import javax.annotation.WillClose;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.function.Supplier;
@@ -39,16 +40,23 @@ public class ResourceConfigSupplier implements Supplier<Config> {
     private final Config config;
     private final String resource;
 
-    public ResourceConfigSupplier(String resource) {
+    public ResourceConfigSupplier(@Nonnull String resource) {
         this(resource, getParserForName(resource));
     }
 
-    public ResourceConfigSupplier(String resource, ConfigParser parser) {
+    public ResourceConfigSupplier(@Nonnull String resource,
+                                  @Nonnull ConfigParser parser) {
+        this(resource, parser, getResourceAsStream(resource));
+    }
+
+    public ResourceConfigSupplier(@Nonnull String resource,
+                                  @Nonnull ConfigParser parser,
+                                  @WillClose InputStream in) {
         this.resource = resource;
-        try (InputStream in = getClass().getResourceAsStream(resource)) {
+        try (InputStream ignore = in){
             this.config = parser.parse(in);
         } catch (IOException e) {
-            throw new ConfigException(e, e.getMessage());
+            throw new ConfigException("Unable to close stream", e);
         }
     }
 
@@ -62,5 +70,16 @@ public class ResourceConfigSupplier implements Supplier<Config> {
     @Override
     public Config get() {
         return config;
+    }
+
+    private static InputStream getResourceAsStream(String resource) {
+        InputStream in = ClassLoader.getSystemClassLoader().getResourceAsStream(resource);
+        if (in == null) {
+            in = ResourceConfigSupplier.class.getResourceAsStream(resource);
+        }
+        if (in == null) {
+            throw new ConfigException("No such config resource: " + resource);
+        }
+        return in;
     }
 }
