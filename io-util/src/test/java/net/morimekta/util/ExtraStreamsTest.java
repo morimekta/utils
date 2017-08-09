@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
-import static net.morimekta.util.ExtraStreams.range;
 import static net.morimekta.util.ExtraStreams.times;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
@@ -23,10 +22,6 @@ import static org.junit.Assert.fail;
 public class ExtraStreamsTest {
     @Test
     public void testRange() {
-        assertRange(range(0, 10), 0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
-        assertRange(range(0, 10, 1, true), 0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
-        assertRange(range(0, 10, 3, true), 0, 3, 6, 9);
-        assertRange(range(100, 110, 3), 100, 103, 106, 109);
         assertRange(times(7), 0, 1, 2, 3, 4, 5, 6);
         assertRange(times(7), 0, 1, 2, 3, 4, 5, 6);
     }
@@ -34,17 +29,17 @@ public class ExtraStreamsTest {
     @Test
     public void testInvalidArguments() {
         try {
-            range(0, 1, 0);
+            times(-42);
             fail("No exception on invalid increment");
         } catch (IllegalArgumentException e) {
-            assertEquals("Invalid increment 0", e.getMessage());
+            assertEquals("Invalid recurrence count: -42", e.getMessage());
         }
 
         try {
-            range(0, 0, 1);
+            times(0);
             fail("No exception on invalid increment");
         } catch (IllegalArgumentException e) {
-            assertEquals("[0,0) not a valid range", e.getMessage());
+            assertEquals("Invalid recurrence count: 0", e.getMessage());
         }
     }
 
