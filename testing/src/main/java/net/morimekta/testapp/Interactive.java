@@ -4,17 +4,14 @@ import net.morimekta.console.chr.Char;
 import net.morimekta.console.chr.CharUtil;
 import net.morimekta.console.chr.Unicode;
 import net.morimekta.console.terminal.InputSelection;
-import net.morimekta.console.terminal.Progress;
 import net.morimekta.console.terminal.Terminal;
-import net.morimekta.util.ExtraStreams;
 import net.morimekta.util.Strings;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static java.lang.String.format;
 
@@ -26,8 +23,9 @@ import static java.lang.String.format;
 public class Interactive {
     public static void main(String[] args) {
         try (Terminal term = new Terminal()) {
-            List<String> entries = ExtraStreams.range(0x0000, 0x4000, 4)
-                                               .mapToObj(i -> {
+            List<String> entries = IntStream.range(0x0000, 0x1000)
+                                            .map(i -> 4 * i)
+                                            .mapToObj(i -> {
                                                    // [ 0xd000 -> 0xe000 > is reserved for utf-16 funkiness.
                                                    if (0xd000 <= i && i < 0xe000) return "";
                                                    StringBuilder builder = new StringBuilder();
