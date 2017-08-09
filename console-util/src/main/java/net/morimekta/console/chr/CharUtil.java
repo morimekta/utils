@@ -156,30 +156,6 @@ public class CharUtil {
     }
 
     /**
-     * @see #rightPad(String, int)
-     * @param string The string to just.
-     * @param width The total printable width to fill.
-     * @return The padded string.
-     * @deprecated Use rightPad instead.
-     */
-    @Deprecated
-    public static String leftJust(String string, int width) {
-        return rightPad(string, width);
-    }
-
-    /**
-     * @see #leftPad(String, int)
-     * @param string The string to just.
-     * @param width The total printable width to fill.
-     * @return The padded string.
-     * @deprecated Use leftPad instead.
-     */
-    @Deprecated
-    public static String rightJust(String string, int width) {
-        return leftPad(string, width);
-    }
-
-    /**
      * Pad the right side of the string until the <b>printed width</b> becomes the
      * desired visible string length.
      *

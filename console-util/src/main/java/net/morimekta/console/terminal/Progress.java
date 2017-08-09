@@ -184,24 +184,6 @@ public class Progress implements ProgressTask {
         this(null, updater, widthSupplier, Clock.systemUTC(), spinner, title, total);
     }
 
-    @Deprecated
-    public Progress(LinePrinter updater,
-                    Spinner spinner,
-                    String title,
-                    long total) {
-        this(updater, () -> 128, spinner == null ? Spinner.ASCII : spinner, title, total);
-    }
-
-    /**
-     * Update the progress to reflect the current progress value.
-     *
-     * @param current The new current progress value.
-     */
-    @Deprecated
-    public void update(long current) {
-        accept(current);
-    }
-
     /**
      * Update the progress to reflect the current progress value.
      *

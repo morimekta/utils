@@ -6,6 +6,7 @@ import net.morimekta.console.test_utils.FakeClock;
 import org.junit.Rule;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.LinkedList;
 
 import static net.morimekta.console.chr.CharUtil.stripNonPrintable;
@@ -44,10 +45,10 @@ public class ProgressTest {
     }
 
     @Test
-    public void testLinePrinter() {
+    public void testLinePrinter() throws IOException {
         LinkedList<String> lines = new LinkedList<>();
 
-        try (Progress p = new Progress(l -> lines.add(stripNonPrintable(l)), Progress.Spinner.CLOCK, "Foo", 100)) {
+        try (Progress p = new Progress(l -> lines.add(stripNonPrintable(l)), () -> console.tty().getTerminalSize().cols, Progress.Spinner.CLOCK, "Foo", 100)) {
             p.accept(37);
         }
 
@@ -60,7 +61,7 @@ public class ProgressTest {
     @Test
     public void testTerminal() {
         Progress p = new Progress(new Terminal(console.tty()), Progress.Spinner.ARROWS, "Foo", 100);
-        p.update(37);
+        p.accept(37);
 
         assertThat(console.output(), is(
                 "\r\033[K" +

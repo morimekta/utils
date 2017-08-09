@@ -7,11 +7,9 @@ import java.lang.reflect.InvocationTargetException;
 
 import static net.morimekta.console.chr.CharUtil.center;
 import static net.morimekta.console.chr.CharUtil.inputBytes;
-import static net.morimekta.console.chr.CharUtil.leftJust;
 import static net.morimekta.console.chr.CharUtil.leftPad;
 import static net.morimekta.console.chr.CharUtil.makeBorder;
 import static net.morimekta.console.chr.CharUtil.makeNumeric;
-import static net.morimekta.console.chr.CharUtil.rightJust;
 import static net.morimekta.console.chr.CharUtil.rightPad;
 import static net.morimekta.console.chr.CharUtil.stripNonPrintable;
 import static org.hamcrest.CoreMatchers.instanceOf;
@@ -61,11 +59,7 @@ public class CharUtilTest {
     public void testJust() {
         assertThat(rightPad("\033[02m𪚲𪚲\033[00m", 10),
                    is("\033[02m𪚲𪚲\033[00m      "));
-        assertThat(leftJust("\033[02m𪚲𪚲\033[00m", 10),
-                   is("\033[02m𪚲𪚲\033[00m      "));
         assertThat(leftPad("\033[02m𪚲𪚲\033[00m", 10),
-                   is("      \033[02m𪚲𪚲\033[00m"));
-        assertThat(rightJust("\033[02m𪚲𪚲\033[00m", 10),
                    is("      \033[02m𪚲𪚲\033[00m"));
         assertThat(center("\033[02m𪚲𪚲\033[00m", 10),
                    is("   \033[02m𪚲𪚲\033[00m   "));
