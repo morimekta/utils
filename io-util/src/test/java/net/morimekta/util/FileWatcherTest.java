@@ -3,6 +3,7 @@ package net.morimekta.util;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
+import org.awaitility.Duration;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -16,12 +17,17 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.WatchService;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.lang.Thread.sleep;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.concurrent.TimeUnit.MINUTES;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
@@ -33,6 +39,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 /**
@@ -65,7 +72,6 @@ public class FileWatcherTest {
         Logger logger = (Logger) LoggerFactory.getLogger(FileWatcher.class);
         logger.detachAppender(appender);
 
-        temp.delete();
         sut.close();
     }
 
@@ -138,6 +144,68 @@ public class FileWatcherTest {
         verifyNoMoreInteractions(watcher);
     }
 
+    @Test
+    public void testWeakWatchers() throws IOException {
+        File file1 = temp.newFile().getCanonicalFile();
+        writeAndMove("a", file1);
+
+        sut.startWatching(file1);
+
+        AtomicBoolean watcherCalled = new AtomicBoolean();
+        FileWatcher.Watcher watcher = f -> watcherCalled.set(true);
+
+        FileWatcher.Watcher innerWatcher = mock(FileWatcher.Watcher.class);
+        FileWatcher.Watcher weakWatcher = f -> innerWatcher.onFileUpdate(f);
+
+        sut.addWatcher(watcher);
+        sut.weakAddWatcher(weakWatcher);
+
+        System.gc();
+
+        writeAndMove("b", file1);
+
+        await().atMost(Duration.ONE_MINUTE).untilTrue(watcherCalled);
+        watcherCalled.set(false);
+
+        verify(innerWatcher).onFileUpdate(file1);
+
+        verifyNoMoreInteractions(innerWatcher);
+        reset(innerWatcher);
+
+        weakWatcher = null;
+        assertThat(weakWatcher, is(nullValue()));
+
+        System.gc();
+
+        writeAndMove("c", file1);
+
+        await().atMost(Duration.ONE_MINUTE).untilTrue(watcherCalled);
+        verifyZeroInteractions(innerWatcher);
+    }
+
+    @Test
+    public void testRemoveWeakWatchers() throws IOException, InterruptedException {
+        AtomicBoolean called = new AtomicBoolean();
+        FileWatcher.Watcher w0 = f -> called.set(true);
+        sut.weakAddWatcher(w0);
+
+        File file1 = temp.newFile().getCanonicalFile();
+        sut.startWatching(file1);
+        writeAndMove("b", file1);
+
+        await().atMost(Duration.ONE_MINUTE).untilTrue(called);
+        called.set(false);
+
+        w0 = null;
+        assertThat(w0, is(nullValue()));
+
+        System.gc();
+
+        sleep(100);
+
+        assertThat(sut.removeWatcher(f -> System.exit(0)), is(false));
+    }
+
     /**
      * Test that we can have multiple watchers in parallel and still have all
      * of them working fine.
@@ -148,21 +216,25 @@ public class FileWatcherTest {
     @Test
     public void testMultipleWatchers() throws IOException, InterruptedException {
         FileWatcher sut2 = new FileWatcher();
-
+        AtomicInteger called = new AtomicInteger(0);
+        FileWatcher.Watcher w0 = f -> called.incrementAndGet();
         FileWatcher.Watcher w1 = mock(FileWatcher.Watcher.class);
         FileWatcher.Watcher w2 = mock(FileWatcher.Watcher.class);
         FileWatcher.Watcher w3 = mock(FileWatcher.Watcher.class);
         FileWatcher.Watcher w4 = mock(FileWatcher.Watcher.class);
 
+        sut.addWatcher(w0);
         sut.addWatcher(w1);
         sut.addWatcher(w2);
 
+        sut2.addWatcher(w0);
         sut2.addWatcher(w3);
         sut2.addWatcher(w4);
 
         File f1 = temp.newFile().getCanonicalFile();
         File f2 = temp.newFile().getCanonicalFile();
         File f12 = temp.newFile().getCanonicalFile();
+        f12.delete();
 
         sut.startWatching(f1);
         sut2.startWatching(f2);
@@ -175,7 +247,8 @@ public class FileWatcherTest {
         writeAndMove("b", f2);
         writeAndMove("c", f12);
 
-        sleep(100L);
+        await().atMost(1, MINUTES).untilAtomic(called, is(4));
+        called.set(0);
 
         verify(w1).onFileUpdate(eq(f1));
         verify(w1).onFileUpdate(eq(f12));
@@ -194,16 +267,15 @@ public class FileWatcherTest {
 
         reset(w1, w2, w3, w4);
 
-        sut.removeWatcher(w2);
-        sut2.removeWatcher(w4);
-
-        sleep(100L);
+        assertThat(sut.removeWatcher(w2), is(true));
+        assertThat(sut2.removeWatcher(w4), is(true));
 
         writeAndMove("d", f1);
         writeAndMove("e", f2);
         writeAndMove("f", f12);
 
-        sleep(100L);
+        await().atMost(1, MINUTES).untilAtomic(called, is(4));
+        called.set(0);
 
         verify(w1).onFileUpdate(eq(f1));
         verify(w1).onFileUpdate(eq(f12));
@@ -216,6 +288,9 @@ public class FileWatcherTest {
 
     @Test
     public void testMultipleDirectories() throws IOException, InterruptedException {
+        AtomicInteger called = new AtomicInteger(0);
+        FileWatcher.Watcher w0 = f -> called.incrementAndGet();
+
         File dir1 = temp.newFolder("dir1");
         File dir2 = temp.newFolder("dir2");
 
@@ -223,6 +298,7 @@ public class FileWatcherTest {
         File f2 = new File(dir2, "f2").getCanonicalFile();
 
         FileWatcher.Watcher watcher = mock(FileWatcher.Watcher.class);
+        sut.addWatcher(w0);
         sut.addWatcher(watcher);
         sut.startWatching(f1);
         sut.startWatching(new File(f1.toString()));
@@ -231,7 +307,7 @@ public class FileWatcherTest {
         writeAndMove("1", f1);
         writeAndMove("2", f2);
 
-        sleep(100L);
+        await().atMost(1, MINUTES).untilAtomic(called, is(2));
 
         verify(watcher).onFileUpdate(f1);
         verify(watcher).onFileUpdate(f2);
@@ -242,6 +318,12 @@ public class FileWatcherTest {
     public void testWatcherArguments() throws IOException {
         try {
             sut.addWatcher(null);
+            fail("No exception on null watcher");
+        } catch (IllegalArgumentException e) {
+            assertEquals("Null watcher added", e.getMessage());
+        }
+        try {
+            sut.weakAddWatcher(null);
             fail("No exception on null watcher");
         } catch (IllegalArgumentException e) {
             assertEquals("Null watcher added", e.getMessage());
@@ -260,6 +342,12 @@ public class FileWatcherTest {
 
         try {
             sut.addWatcher(watcher);
+            fail("No exception on closed watcher");
+        } catch (IllegalStateException e) {
+            assertEquals("Adding watcher on closed FileWatcher", e.getMessage());
+        }
+        try {
+            sut.weakAddWatcher(watcher);
             fail("No exception on closed watcher");
         } catch (IllegalStateException e) {
             assertEquals("Adding watcher on closed FileWatcher", e.getMessage());
@@ -307,17 +395,17 @@ public class FileWatcherTest {
 
         doThrow(new IOException("IO")).when(service).close();
         when(watcherService.isShutdown()).thenReturn(false);
-        when(watcherService.awaitTermination(10, TimeUnit.SECONDS)).thenThrow(new InterruptedException("WS"));
-        when(callbackService.awaitTermination(10, TimeUnit.SECONDS)).thenThrow(new InterruptedException("WS"));
+        when(watcherService.awaitTermination(10, SECONDS)).thenThrow(new InterruptedException("WS"));
+        when(callbackService.awaitTermination(10, SECONDS)).thenThrow(new InterruptedException("WS"));
 
         sut.close();
 
         verify(service).close();
         verify(watcherService).isShutdown();
         verify(watcherService).shutdown();
-        verify(watcherService).awaitTermination(10, TimeUnit.SECONDS);
+        verify(watcherService).awaitTermination(10, SECONDS);
         verify(callbackService).shutdown();
-        verify(callbackService).awaitTermination(10, TimeUnit.SECONDS);
+        verify(callbackService).awaitTermination(10, SECONDS);
 
         verifyNoMoreInteractions(service, watcherService, callbackService);
 
@@ -352,17 +440,17 @@ public class FileWatcherTest {
         reset(service, watcherService, callbackService);
 
         when(watcherService.isShutdown()).thenReturn(false);
-        when(watcherService.awaitTermination(10, TimeUnit.SECONDS)).thenReturn(false);
-        when(callbackService.awaitTermination(10, TimeUnit.SECONDS)).thenReturn(false);
+        when(watcherService.awaitTermination(10, SECONDS)).thenReturn(false);
+        when(callbackService.awaitTermination(10, SECONDS)).thenReturn(false);
 
         sut.close();
 
         verify(service).close();
         verify(watcherService).isShutdown();
         verify(watcherService).shutdown();
-        verify(watcherService).awaitTermination(10, TimeUnit.SECONDS);
+        verify(watcherService).awaitTermination(10, SECONDS);
         verify(callbackService).shutdown();
-        verify(callbackService).awaitTermination(10, TimeUnit.SECONDS);
+        verify(callbackService).awaitTermination(10, SECONDS);
 
         verifyNoMoreInteractions(service, watcherService, callbackService);
 
