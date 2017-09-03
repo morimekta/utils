@@ -5,6 +5,14 @@
     <name>Config Utilities</name>
     <description>
         Configuration Utilities.
+
+        NOTE: This module is deprecated and will be removed at the end of the
+        v2.x versions of the utilities. Preferred config system after that is
+        either to use true type-safe config with `net.morimekta.providence:providence-config`
+        or to use a simple JSON or YAML library or java properties files. The
+        semi-typesafe layered config did not really solve the problems I had
+        hoped it would, and in essence this was just a helper for merging maps
+        and getting pre-cast values out of it.
     </description>
 
     <licenses>

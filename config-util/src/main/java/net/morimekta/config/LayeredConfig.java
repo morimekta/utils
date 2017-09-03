@@ -45,7 +45,13 @@ import java.util.function.Supplier;
  * When layers are added, they are added to one of the four groups, and inserted
  * furthest <b>away</b> from the middle. The middle is actually just a theoretical
  * position, as the 'top' and 'bottom' groups insert away from that line.
+ *
+ * @deprecated Configs maps are deprecated in favor of true type-safe config
+ *             provided by 'net.morimekta.providence:providence-config'. The
+ *             'config-utils' module will be removed at end of 2.x version of
+ *             utils.
  */
+@Deprecated
 public interface LayeredConfig extends Config {
     /**
      * Add a new fixed top layer. The new config will be handled before all

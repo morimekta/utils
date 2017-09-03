@@ -26,7 +26,13 @@ import java.util.Date;
 /**
  * Base configuration container. Essentially a type-safe map that group
  * values into a few basic types:
+ *
+ * @deprecated Configs maps are deprecated in favor of true type-safe config
+ *             provided by 'net.morimekta.providence:providence-config'. The
+ *             'config-utils' module will be removed at end of 2.x version of
+ *             utils.
  */
+@Deprecated
 public interface ConfigBuilder<Builder extends ConfigBuilder<Builder>> extends Config {
     /**
      * Put a value into the config.

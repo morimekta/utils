@@ -39,7 +39,13 @@ import static net.morimekta.config.util.ConfigUtil.asString;
  *
  * It is not implementing the Map base class since it would require also
  * implementing generic entry adders (put, putAll), and getType unsafe getters.
+ *
+ * @deprecated Configs maps are deprecated in favor of true type-safe config
+ *             provided by 'net.morimekta.providence:providence-config'. The
+ *             'config-utils' module will be removed at end of 2.x version of
+ *             utils.
  */
+@Deprecated
 public interface Config {
 
     /**

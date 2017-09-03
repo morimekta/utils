@@ -7,7 +7,7 @@ config files, and a deeply structured config. The input and output formats
 of the config is always flat, or maximally sectioned in named 'prefix sections'.
 
 **NOTE**: Since the `providence-config` project was more or less completed,
-I have concluded that this library should be *deprecated* and the type-safe config
-provided by providence used instead. But this library will live on for quite
-a while, until `providence-config` is proven stable and has replaced `config-util`
-in the most critical positions.
+I have concluded that this library is *deprecated* and the type-safe config
+provided by providence used instead. This library will be kept until the
+end of the '2.x' versions, but will probably stay compatible with future
+versions of io-utils (it's only local dependency).
