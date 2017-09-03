@@ -264,7 +264,7 @@ public class Terminal extends CharReader implements Closeable, LinePrinter {
                 task.cancel(true);
                 throw new IOException("Aborted with '" + c.asString() + "'");
             }
-            Thread.sleep(79L);
+            sleep(79L);
         }
     }
 
@@ -324,6 +324,10 @@ public class Terminal extends CharReader implements Closeable, LinePrinter {
 
     protected OutputStream getOutputStream() {
         return out;
+    }
+
+    protected void sleep(long millis) throws InterruptedException {
+        Thread.sleep(millis);
     }
 
     private void printlnInternal(String message) {

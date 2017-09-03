@@ -5,81 +5,108 @@ import net.morimekta.console.chr.Char;
 import net.morimekta.console.chr.CharUtil;
 import net.morimekta.console.test_utils.ConsoleWatcher;
 import net.morimekta.console.test_utils.FakeClock;
+import net.morimekta.console.test_utils.FakeScheduledExecutor;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
-import static org.mockito.ArgumentMatchers.isNotNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
 
 public class ProgressManagerTest {
     @Rule
     public ConsoleWatcher console = new ConsoleWatcher();
 
+    private FakeClock clock;
+    private FakeScheduledExecutor executor;
+    private Terminal terminal;
+
+    @Before
+    public void setUp() {
+        clock = new FakeClock();
+        executor = new FakeScheduledExecutor(clock);
+        terminal = new Terminal(console.tty()) {
+            @Override
+            protected void sleep(long millis) throws InterruptedException {
+                clock.tick(millis);
+            }
+        };
+    }
+
+    @After
+    public void tearDown() throws IOException {
+        terminal.close();
+    }
+
     @Test
     public void testSingleThread() throws IOException, InterruptedException, ExecutionException {
-        try (Terminal term = new Terminal(console.tty());
-             ProgressManager progress = new ProgressManager(term, Progress.Spinner.ASCII,
-                                                            1)) {
+        ArrayList<ProgressManager.InternalTask> started = new ArrayList<>();
 
-            Future<String> first = progress.addTask("First", 10000, task -> {
-                try {
-                    Thread.sleep(60);
-                    task.accept(1000);
-                } catch (InterruptedException ignore) {
-                }
-                throw new RuntimeException("Failed");
+        try (ProgressManager progress = new ProgressManager(terminal, Progress.Spinner.ASCII,
+                                                            1,
+                                                            executor,
+                                                            clock)) {
+
+            Future<String> first = progress.addTask("First", 10000, (a, b) -> {
+                started.add((ProgressManager.InternalTask) a);
             });
-            Future<String> second = progress.addTask("Second", 10000, task -> {
-                try {
-                    Thread.sleep(50);
-                    task.accept(1000);
-                    Thread.sleep(100);
-                    task.accept(10000);
-                } catch (InterruptedException ignore) {
-                }
-                return "OK";
+            Future<String> second = progress.addTask("Second", 10000, (a, b) -> {
+                started.add((ProgressManager.InternalTask) a);
             });
 
             assertThat(stripNonPrintableLines(progress.lines()),
                        is(ImmutableList.of()));
 
-            Thread.sleep(25L);
+            clock.tick(250L);
 
             assertThat(stripNonPrintableLines(progress.lines()),
                        is(ImmutableList.of("First: [--------------------------------------------------------------------------------------------------------------------]   0% |",
                                            " -- And 1 more...")));
 
-            Thread.sleep(100L);
+            assertThat(started, hasSize(1));
+
+            started.get(0).accept(1000);
+
+            clock.tick(250L);
+
+            assertThat(stripNonPrintableLines(progress.lines()),
+                       is(ImmutableList.of("First: [###########---------------------------------------------------------------------------------------------------------]  10% /",
+                                           " -- And 1 more...")));
+
+            started.get(0).completeExceptionally(new Exception("Failed"));
+
+            clock.tick(250L);  // does the render
 
             assertThat(stripNonPrintableLines(progress.lines()),
                        is(ImmutableList.of("First: [###########---------------------------------------------------------------------------------------------------------]  10% Failed",
                                            "Second: [-------------------------------------------------------------------------------------------------------------------]   0% |")));
 
-            Thread.sleep(100L);
+            assertThat(started, hasSize(2));
+
+            started.get(1).accept(1000);
+
+            clock.tick(250L);  // does the render
 
             assertThat(stripNonPrintableLines(progress.lines()),
                        is(ImmutableList.of("First: [###########---------------------------------------------------------------------------------------------------------]  10% Failed",
-                                           "Second: [###########--------------------------------------------------------------------------------------------------------]  10% |")));
+                                           "Second: [###########--------------------------------------------------------------------------------------------------------]  10% /")));
 
-            progress.waitAbortable();
+            started.get(1).complete("OK");
+
+            clock.tick(250L);  // does the render
 
             try {
                 first.get();
@@ -91,14 +118,13 @@ public class ProgressManagerTest {
 
             assertThat(stripNonPrintableLines(progress.lines()),
                        is(ImmutableList.of("First: [###########---------------------------------------------------------------------------------------------------------]  10% Failed",
-                                           "Second: [###################################################################################################################] 100% v @  0.1  s")));
+                                           "Second: [###################################################################################################################] 100% v @  0.5  s")));
         }
     }
 
     @Test
     public void testMultiThread() throws IOException, InterruptedException, ExecutionException, TimeoutException {
-        try (Terminal term = new Terminal(console.tty());
-             ProgressManager progress = new ProgressManager(term, Progress.Spinner.ASCII)) {
+        try (ProgressManager progress = new ProgressManager(terminal, Progress.Spinner.ASCII)) {
 
             Future<String> first = progress.addTask("First", 10000, task -> {
                 try {
@@ -137,12 +163,12 @@ public class ProgressManagerTest {
             progress.waitAbortable();
 
             try {
-                first.get(10L, TimeUnit.MILLISECONDS);
+                first.get(10L, MILLISECONDS);
                 fail("No exception");
             } catch (ExecutionException e) {
                 assertThat(e.getCause().getMessage(), is("Failed"));
             }
-            assertThat(second.get(10L, TimeUnit.MILLISECONDS), is("OK"));
+            assertThat(second.get(10L, MILLISECONDS), is("OK"));
 
             assertThat(stripNonPrintableLines(progress.lines()),
                        is(ImmutableList.of("First: [###########---------------------------------------------------------------------------------------------------------]  10% Failed",
@@ -153,8 +179,7 @@ public class ProgressManagerTest {
     public void testAbort() throws IOException, InterruptedException, ExecutionException {
         console.setInput(Char.ABR);
 
-        try (Terminal term = new Terminal(console.tty());
-             ProgressManager progress = new ProgressManager(term, Progress.Spinner.ASCII)) {
+        try (ProgressManager progress = new ProgressManager(terminal, Progress.Spinner.ASCII)) {
 
             Future<String> first = progress.addTask("First", 10000, task -> {
                 Thread.sleep(20);
@@ -164,7 +189,7 @@ public class ProgressManagerTest {
             Future<String> second = progress.addTask("Second", 10000, task -> {
                 Thread.sleep(50);
                 task.accept(1000);
-                Thread.sleep(220);
+                Thread.sleep(520);
                 task.accept(10000);
                 return "OK";
             });
@@ -172,17 +197,7 @@ public class ProgressManagerTest {
             assertThat(stripNonPrintableLines(progress.lines()),
                        is(ImmutableList.of()));
 
-            Thread.sleep(15L);
-
-            assertThat(stripNonPrintableLines(progress.lines()),
-                       is(ImmutableList.of("First: [--------------------------------------------------------------------------------------------------------------------]   0% |",
-                                           "Second: [-------------------------------------------------------------------------------------------------------------------]   0% |")));
-
             Thread.sleep(100L);
-
-            assertThat(stripNonPrintableLines(progress.lines()),
-                       is(ImmutableList.of("First: [###########---------------------------------------------------------------------------------------------------------]  10% Failed",
-                                           "Second: [###########--------------------------------------------------------------------------------------------------------]  10% |")));
 
             try {
                 progress.waitAbortable();
@@ -191,51 +206,26 @@ public class ProgressManagerTest {
                 assertThat(e.getMessage(), is("Aborted with '<ABR>'"));
             }
 
+            assertThat(first.isDone(), is(true));
             try {
                 first.get();
                 fail("No exception");
             } catch (ExecutionException e) {
                 assertThat(e.getCause().getMessage(), is("Failed"));
             }
+
+            assertThat(second.isCancelled(), is(true));
             try {
                 String s = second.get();
                 fail("No exception: " + s);
             } catch (CancellationException e) {
-                assertThat(e.getMessage(), is("Cancelled"));
+                // nothing to verify on exception.
             }
 
             assertThat(stripNonPrintableLines(progress.lines()),
                        is(ImmutableList.of("First: [###########---------------------------------------------------------------------------------------------------------]  10% Failed",
                                            "Second: [###########--------------------------------------------------------------------------------------------------------]  10% Cancelled")));
         }
-    }
-
-    @Test
-    @SuppressWarnings("unchecked")
-    public void testInternalTask() {
-        FakeClock clock = new FakeClock();
-        ExecutorService executor = mock(ExecutorService.class);
-        Runnable after = mock(Runnable.class);
-        Future<String> future = mock(Future.class);
-
-        ProgressManager.ProgressHandler<String> handler = mock(ProgressManager.ProgressHandler.class);
-        ProgressManager.InternalTask<String> task = new ProgressManager.InternalTask<>(clock, "Title", 1234, handler);
-
-        when(executor.submit((Callable<String>) isNotNull())).thenReturn(future);
-
-        task.start(executor, after);
-
-        verify(executor).submit((Callable<String>) isNotNull());
-        verifyNoMoreInteractions(executor, after, handler, future);
-        reset(executor, after, handler, future);
-
-        assertThat(task.isCancelled(), is(false));
-        assertThat(task.isDone(), is(false));
-
-        task.close();
-
-        assertThat(task.isCancelled(), is(true));
-        assertThat(task.isDone(), is(true));
     }
 
     private static List<String> stripNonPrintableLines(List<String> lines) {

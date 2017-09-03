@@ -5,7 +5,7 @@ import java.util.function.LongConsumer;
 /**
  * Show progress on a single task in how many percent (with spinner and
  * progress-bar). If closed before finished (updated with the total
- * progress value), it is considered 'aborted'.
+ * progress value), it is considered 'cancelled'.
  */
 public interface ProgressTask extends LongConsumer, AutoCloseable {
     @Override

@@ -12,15 +12,13 @@ import java.time.temporal.ChronoUnit;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
-import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -61,6 +59,12 @@ public class ProgressManager implements AutoCloseable {
     public interface ProgressHandler<T> {
         T handle(@Nonnull ProgressTask progress) throws Exception;
     }
+
+    @FunctionalInterface
+    public interface ProgressAsyncHandler<T> {
+        void handle(@Nonnull CompletableFuture<T> result, @Nonnull ProgressTask progress);
+    }
+
 
     /**
      * Create a progress bar using the given terminal.
@@ -133,7 +137,9 @@ public class ProgressManager implements AutoCloseable {
         synchronized (startedTasks) {
             // And stop all the tasks, do interrupting.
             for (InternalTask task : startedTasks) {
-                task.cancel(true);
+                if (!task.isDone()) {
+                    task.cancel(true);
+                }
             }
             for (InternalTask task : queuedTasks) {
                 task.close();
@@ -179,11 +185,37 @@ public class ProgressManager implements AutoCloseable {
      */
     public <T> Future<T> addTask(String title,
                                  long total,
-                                 ProgressHandler<T> handler) {
-        InternalTask<T> task = new InternalTask<>(clock, title, total, handler);
+                                 ProgressAsyncHandler<T> handler) {
+        InternalTask<T> task = new InternalTask<>(title, total, handler);
         queuedTasks.add(task);
         startTasks();
         return task;
+    }
+
+    /**
+     * Add a task to be done while showing progress. If there are too many tasks
+     * ongoing, the task will be queued and done when the local thread pool has
+     * available threads.
+     *
+     * @param title The progress title of the task.
+     * @param total The total progress to complete.
+     * @param handler The handler to do the task behind the progress being shown.
+     * @param <T> The return type for the task.
+     * @return The future returning the task result.
+     */
+    public <T> Future<T> addTask(String title,
+                                 long total,
+                                 ProgressHandler<T> handler) {
+        ProgressAsyncHandler<T> async = (result, progress) -> {
+            try {
+                result.complete(handler.handle(progress));
+            } catch (Exception e) {
+                if (!result.isCancelled()) {
+                    result.completeExceptionally(e);
+                }
+            }
+        };
+        return addTask(title, total, async);
     }
 
     protected List<String> lines() {
@@ -217,7 +249,7 @@ public class ProgressManager implements AutoCloseable {
             while (toAdd-- > 0 && !queuedTasks.isEmpty()) {
                 InternalTask task = queuedTasks.poll();
                 startedTasks.add(task);
-                task.start(executor, this::startTasks);
+                task.start();
             }
         }
     }
@@ -274,8 +306,8 @@ public class ProgressManager implements AutoCloseable {
 
             int remaining_pts = pts_w - pts;
 
-            if (task.failed.get()) {
-                return String.format("%s: [%s%s%s%s%s] %3d%% %sFailed%s",
+            if (task.isCancelled()) {
+                return String.format("%s: [%s%s%s%s%s] %3d%% %sCancelled%s",
                                      task.title,
 
                                      Color.GREEN,
@@ -288,8 +320,8 @@ public class ProgressManager implements AutoCloseable {
 
                                      new Color(Color.RED, Color.BOLD),
                                      Color.CLEAR);
-            } else if (task.cancelled.get()) {
-                return String.format("%s: [%s%s%s%s%s] %3d%% %sCancelled%s",
+            } else if (task.isCompletedExceptionally()) {
+                return String.format("%s: [%s%s%s%s%s] %3d%% %sFailed%s",
                                      task.title,
 
                                      Color.GREEN,
@@ -343,15 +375,12 @@ public class ProgressManager implements AutoCloseable {
         }
     }
 
-    static class InternalTask<T> implements Future<T>, ProgressTask {
+    class InternalTask<T> extends CompletableFuture<T> implements Runnable, ProgressTask {
         final long                       total;
         final long                       created_ts;
-        final Clock                      clock;
         final String                     title;
-        final AtomicReference<Future<T>> future;
-        final ProgressHandler<T>         handler;
-        final AtomicBoolean              cancelled;
-        final AtomicBoolean              failed;
+        final AtomicReference<Future<?>> future;
+        final ProgressAsyncHandler<T>    handler;
 
         volatile int     spinner_pos;
         volatile long    spinner_update_ts;
@@ -364,17 +393,14 @@ public class ProgressManager implements AutoCloseable {
          * Create a progress updater. Note that <b>either</b> terminal or the
          * updater param must be set.
          *
-         * @param clock The clock to use for timing.
          * @param title What progresses.
          * @param total The total value to be 'progressed'.
          */
-        InternalTask(Clock clock,
-                     String title,
+        InternalTask(String title,
                      long total,
-                     ProgressHandler<T> handler) {
+                     ProgressAsyncHandler<T> handler) {
             this.title = title;
             this.total = total;
-            this.clock = clock;
             this.handler = handler;
 
             this.future = new AtomicReference<>();
@@ -384,14 +410,11 @@ public class ProgressManager implements AutoCloseable {
             this.created_ts = clock.millis();
             this.started_ts = 0;
             this.fraction = 0.0;
-            this.cancelled = new AtomicBoolean(false);
-            this.failed = new AtomicBoolean(false);
         }
 
-        void start(ExecutorService executor,
-                   Runnable onFinished) {
+        void start() {
             synchronized (this) {
-                if (cancelled.get()) {
+                if (isCancelled()) {
                     throw new IllegalStateException("Starting cancelled task");
                 }
                 if (started_ts > 0) {
@@ -399,107 +422,89 @@ public class ProgressManager implements AutoCloseable {
                 }
                 started_ts = clock.millis();
                 spinner_update_ts = started_ts;
-            }
-            synchronized (future) {
+
                 future.set(executor.submit(() -> {
-                    try {
-                        T result = handler.handle(InternalTask.this);
-                        accept(total);
-                        return result;
-                    } catch (InterruptedException e) {
-                        synchronized (this) {
-                            stopInternal(true, false);
+                        try {
+                            handler.handle(this, this);
+                        } catch (Exception e) {
+                            if (!isCancelled()) {
+                                completeExceptionally(e);
+                            }
                         }
-                        Thread.currentThread().interrupt();
-                        throw e;
-                    } catch (Exception e) {
-                        synchronized (this) {
-                            stopInternal(false, true);
-                        }
-                        throw e;
-                    } finally {
-                        onFinished.run();
-                    }
                 }));
-                future.notifyAll();
+            }
+        }
+
+        @Override
+        public void run() {
+            synchronized (this) {
+                if (isDone()) {
+                    return;
+                }
+                if (started_ts > 0) {
+                    throw new IllegalStateException("Already Started");
+                }
+                started_ts = clock.millis();
+                spinner_update_ts = started_ts;
+            }
+            try {
+                handler.handle(this, this);
+            } catch (Exception e) {
+                completeExceptionally(e);
+            }
+        }
+
+        @Override
+        public boolean complete(T t) {
+            try {
+                synchronized (this) {
+                    if (isDone()) {
+                        return false;
+                    }
+                    accept(total);
+                    return super.complete(t);
+                }
+            } finally {
+                startTasks();
+            }
+        }
+
+        @Override
+        public boolean completeExceptionally(Throwable throwable) {
+            try {
+                synchronized (this) {
+                    if (isDone()) {
+                        return false;
+                    }
+                    stopInternal();
+                    return super.completeExceptionally(throwable);
+                }
+            } finally {
+                startTasks();
             }
         }
 
         @Override
         public boolean cancel(boolean interruptable) {
-            synchronized (this) {
-                if (isDone()) {
-                    return false;
-                }
-                stopInternal(true, false);
-            }
-
-            boolean ret = false;
-            synchronized (future) {
-                Future<T> f = future.get();
-                if (f != null) {
-                    ret = f.cancel(interruptable);
-                }
-                future.notifyAll();
-            }
-            return ret;
-        }
-
-        @Override
-        public boolean isCancelled() {
-            return cancelled.get();
-        }
-
-        @Override
-        public boolean isDone() {
-            if (cancelled.get() || failed.get()) return true;
-            Future<T> f = future.get();
-            return f != null && f.isDone();
-        }
-
-        @Override
-        public T get() throws InterruptedException, ExecutionException {
             try {
-                synchronized (future) {
-                    if (!cancelled.get() && future.get() == null) {
-                        future.wait();
+                synchronized (this) {
+                    if (isDone()) {
+                        return false;
                     }
+                    stopInternal();
+                    super.cancel(interruptable);
                 }
-                if (future.get() != null) {
-                    return future.get().get();
-                }
-                throw new CancellationException();
-            } catch (CancellationException e) {
-                CancellationException ce = new CancellationException("Cancelled");
-                ce.initCause(e);
-                throw ce;
+
+                Future<?> f = future.get();
+                return f != null && !f.isDone() && f.cancel(interruptable);
+            } finally {
+                startTasks();
             }
         }
 
         @Override
-        public T get(long l, @Nonnull TimeUnit timeUnit) throws
-                                                         InterruptedException,
-                                                         ExecutionException,
-                                                         TimeoutException {
-            try {
-                long start    = clock.millis();
-                long deadline = timeUnit.toMillis(l);
-                synchronized (future) {
-                    if (!cancelled.get() && future.get() == null) {
-                        future.wait(deadline);
-                    }
-                }
-                if (future.get() != null) {
-                    long now = clock.millis();
-                    deadline = deadline - (now - start);
-                    return future.get().get(deadline, TimeUnit.MILLISECONDS);
-                }
-            } catch (CancellationException e) {
-                CancellationException ce = new CancellationException("Cancelled");
-                ce.initCause(e);
-                throw ce;
-            }
-            throw new CancellationException("Cancelled");
+        public void close() {
+            cancel(true);
         }
 
         /**
@@ -509,12 +514,15 @@ public class ProgressManager implements AutoCloseable {
          */
         @Override
         public void accept(long current) {
-            if (isDone()) return;
-
-            long now = clock.millis();
-            current = min(current, total);
-
             synchronized (this) {
+                if (isCancelled()) {
+                    throw new IllegalStateException("Task is cancelled");
+                }
+                if (isDone()) return;
+
+                long now = clock.millis();
+                current = min(current, total);
+
                 if (now >= (spinner_update_ts + 100)) {
                     spinner_pos = spinner_pos + 1;
                     spinner_update_ts = now;
@@ -542,19 +550,8 @@ public class ProgressManager implements AutoCloseable {
             }
         }
 
-        @Override
-        public void close() {
-            synchronized (this) {
-                if (!isDone()) {
-                    stopInternal(true, false);
-                }
-            }
-        }
-
-        private void stopInternal(boolean cancelled, boolean failed) {
+        private void stopInternal() {
             long now = clock.millis();
-            this.cancelled.set(cancelled);
-            this.failed.set(failed);
             this.updated_ts = now;
             this.spinner_update_ts = now;
             this.expected_done_ts = 0L;
