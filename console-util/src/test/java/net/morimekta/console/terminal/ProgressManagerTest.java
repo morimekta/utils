@@ -53,24 +53,22 @@ public class ProgressManagerTest {
 
     @Test
     public void testSingleThread() throws IOException, InterruptedException, ExecutionException {
-        ArrayList<ProgressManager.InternalTask> started = new ArrayList<>();
+        ArrayList<ProgressManager.InternalTask<String>> started = new ArrayList<>();
 
         try (ProgressManager progress = new ProgressManager(terminal, Progress.Spinner.ASCII,
                                                             1,
                                                             executor,
                                                             clock)) {
 
-            Future<String> first = progress.addTask("First", 10000, (a, b) -> {
-                started.add((ProgressManager.InternalTask) a);
-            });
-            Future<String> second = progress.addTask("Second", 10000, (a, b) -> {
-                started.add((ProgressManager.InternalTask) a);
-            });
+            Future<String> first = progress.addTask("First", 10000,
+                                                    (a, b) -> started.add((ProgressManager.InternalTask<String>) a));
+            Future<String> second = progress.addTask("Second", 10000,
+                                                     (a, b) -> started.add((ProgressManager.InternalTask<String>) a));
 
             assertThat(stripNonPrintableLines(progress.lines()),
                        is(ImmutableList.of()));
 
-            clock.tick(250L);
+            clock.tick(250L);  // does the render
 
             assertThat(stripNonPrintableLines(progress.lines()),
                        is(ImmutableList.of("First: [--------------------------------------------------------------------------------------------------------------------]   0% |",
@@ -80,7 +78,7 @@ public class ProgressManagerTest {
 
             started.get(0).accept(1000);
 
-            clock.tick(250L);
+            clock.tick(250L);  // does the render
 
             assertThat(stripNonPrintableLines(progress.lines()),
                        is(ImmutableList.of("First: [###########---------------------------------------------------------------------------------------------------------]  10% /",
