@@ -114,7 +114,7 @@ public class ProcessExecutorTest {
         ProcessExecutor sut = new ProcessExecutor(
                 "java",
                 "-jar", integration.getAbsolutePath(),
-                "cat", "chemistry");
+                "cat", "chemistry").withJavaOptionsWorkaround();
 
         ByteArrayInputStream in = new ByteArrayInputStream("one step ahead ;)".getBytes(UTF_8));
         sut.setInput(in);

@@ -58,9 +58,9 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * programs with exceedingly large outputs can cause OOM errors.
  */
 public class ProcessExecutor implements Callable<Integer> {
-    private final String[]        cmd;
-    private final Runtime         runtime;
-    private final ExecutorService executor;
+    private final String[]              cmd;
+    private final Runtime               runtime;
+    private final ExecutorService       executor;
     private final ByteArrayOutputStream out;
     private final ByteArrayOutputStream err;
 
@@ -68,8 +68,9 @@ public class ProcessExecutor implements Callable<Integer> {
 
     private final AtomicReference<InputStream> in;
 
-    private long deadlineMs;
-    private long deadlineFlushMs;
+    private long    deadlineMs;
+    private long    deadlineFlushMs;
+    private boolean javaOptionsWorkaround;
 
     public ProcessExecutor(String... cmd) {
         this(cmd,
@@ -89,6 +90,7 @@ public class ProcessExecutor implements Callable<Integer> {
         this.in = new AtomicReference<>();
         this.deadlineMs = TimeUnit.SECONDS.toMillis(1L);
         this.deadlineFlushMs = 100L;
+        this.javaOptionsWorkaround = "java".equalsIgnoreCase(cmd[0]);
     }
 
     /**
@@ -102,7 +104,27 @@ public class ProcessExecutor implements Callable<Integer> {
      * @return The programs stderr content.
      */
     public String getError() {
+        if (javaOptionsWorkaround) {
+            String output = new String(err.toByteArray(), UTF_8);
+            if (output.startsWith("Picked up _JAVA_OPTIONS:")) {
+                int first_nl = output.indexOf("\n");
+                output = output.substring(first_nl + 1);
+            }
+            return output;
+        }
         return new String(err.toByteArray(), UTF_8);
+    }
+
+    /**
+     * Handle a special case for java. Some times the java process may
+     * print a special "Picked up _JAVA_OPTIONS: ...\n" line,
+     * which is irrelevant for testing (and makes the tests flaky).
+     *
+     * @return The process executor.
+     */
+    public ProcessExecutor withJavaOptionsWorkaround() {
+        javaOptionsWorkaround = true;
+        return this;
     }
 
     /**
