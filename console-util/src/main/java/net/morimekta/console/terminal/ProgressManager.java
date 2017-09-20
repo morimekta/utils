@@ -1,7 +1,9 @@
 package net.morimekta.console.terminal;
 
 import com.google.common.annotations.VisibleForTesting;
+import net.morimekta.console.chr.Char;
 import net.morimekta.console.chr.Color;
+import net.morimekta.console.chr.Control;
 import net.morimekta.util.Strings;
 
 import javax.annotation.Nonnull;
@@ -9,6 +11,7 @@ import java.io.IOException;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -24,6 +27,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static java.lang.Math.max;
 import static java.lang.Math.min;
+import static java.util.Comparator.comparing;
+import static net.morimekta.console.chr.Control.cursorUp;
 import static net.morimekta.console.terminal.Progress.format;
 
 /**
@@ -141,9 +146,9 @@ public class ProgressManager implements AutoCloseable {
                     task.cancel(true);
                 }
             }
-            for (InternalTask task : queuedTasks) {
-                task.close();
-            }
+        }
+        for (InternalTask task : queuedTasks) {
+            task.close();
         }
         try {
             executor.shutdown();
@@ -281,6 +286,54 @@ public class ProgressManager implements AutoCloseable {
     private void updateLines() {
         List<String> updatedLines = new LinkedList<>();
         synchronized (startedTasks) {
+            int maxUpdating = Math.min(terminal.getTTY().getTerminalSize().rows, maxTasks * 2);
+
+            if (startedTasks.size() > maxUpdating) {
+                // If we have more started then number of available rows:
+
+                // Clear the buffer (should clear all lines and move
+                buffer.clear();
+                terminal.print("" + Char.CR);
+
+                // First try to move all completed tasks off the started task list
+                // without changing the already completed order. Move the already
+                // completed tasks off that are all before non-completed tasks.
+                Iterator<InternalTask> it = startedTasks.iterator();
+                while (it.hasNext()) {
+                    InternalTask next = it.next();
+                    if (next.fraction >= 1.0) {
+                        terminal.print(renderTask(next));
+                        terminal.println();
+                        it.remove();
+                    } else {
+                        break;
+                    }
+                }
+
+                if (startedTasks.size() > maxUpdating) {
+                    // If the list of started tasks is still too large move all completed
+                    // tasks first, and then repeat.
+
+                    // SORT completed BEFORE not-completed.
+                    startedTasks.sort(comparing(t -> t.fraction < 1.0));
+
+                    it = startedTasks.iterator();
+                    while (it.hasNext()) {
+                        InternalTask next = it.next();
+                        if (next.fraction >= 1.0) {
+                            terminal.print(renderTask(next));
+                            terminal.println();
+                            it.remove();
+                        } else {
+                            break;
+                        }
+                    }
+                }
+
+                // And 1 back.
+                terminal.print(cursorUp(1));
+            }
+
             for (InternalTask task : startedTasks) {
                 updatedLines.add(renderTask(task));
             }
