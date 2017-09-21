@@ -3,7 +3,6 @@ package net.morimekta.console.terminal;
 import com.google.common.annotations.VisibleForTesting;
 import net.morimekta.console.chr.Char;
 import net.morimekta.console.chr.Color;
-import net.morimekta.console.chr.Control;
 import net.morimekta.util.Strings;
 
 import javax.annotation.Nonnull;
@@ -584,7 +583,7 @@ public class ProgressManager implements AutoCloseable {
                 if (current < total) {
                     fraction = ((double) current) / ((double) total);
 
-                    long duration_ms = now - created_ts;
+                    long duration_ms = now - started_ts;
                     if (duration_ms > 3000) {
                         // Progress has actually gone forward, recalculate total time only if
                         // we have 3 second of progress.
