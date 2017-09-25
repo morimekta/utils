@@ -438,6 +438,7 @@ public class ProgressManager implements AutoCloseable {
         volatile long    spinner_update_ts;
         volatile long    started_ts;
         volatile long    updated_ts;
+        volatile long    updated_time_ts;
         volatile long    expected_done_ts;
         volatile double  fraction;
 
@@ -587,11 +588,12 @@ public class ProgressManager implements AutoCloseable {
                     if (duration_ms > 3000) {
                         // Progress has actually gone forward, recalculate total time only if
                         // we have 3 second of progress.
-                        if (expected_done_ts == 0L || updated_ts < (now - 2000L)) {
+                        if (expected_done_ts == 0L || updated_time_ts < (now - 2000L)) {
                             // Update total / expected time once per 2 seconds.
                             long assumed_total = (long) (((double) duration_ms) / fraction);
                             long remaining_ms  = max(0L, assumed_total - duration_ms);
                             expected_done_ts = now + remaining_ms;
+                            updated_time_ts = now;
                         }
                     }
                 } else {
@@ -605,6 +607,7 @@ public class ProgressManager implements AutoCloseable {
         private void stopInternal() {
             long now = clock.millis();
             this.updated_ts = now;
+            this.updated_time_ts = now;
             this.spinner_update_ts = now;
             this.expected_done_ts = 0L;
         }
