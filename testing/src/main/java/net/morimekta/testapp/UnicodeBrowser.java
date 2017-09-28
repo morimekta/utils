@@ -40,7 +40,9 @@ public class UnicodeBrowser {
 
         if (help.get()) {
             System.out.println("Usage: " + parser.getSingleLineUsage());
+            System.out.println();
             parser.printUsage(System.out);
+            return;
         }
 
         try (Terminal term = new Terminal()) {
