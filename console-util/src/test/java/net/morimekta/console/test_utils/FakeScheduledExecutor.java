@@ -194,6 +194,9 @@ public class FakeScheduledExecutor implements ScheduledExecutorService, FakeCloc
             if (cancelled) {
                 throw new InterruptedException("Task cancelled");
             }
+            if (isShutdown()) {
+                return null;
+            }
             throw new IllegalStateException("Cannot wait for fake recurring tasks");
         }
 

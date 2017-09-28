@@ -14,8 +14,10 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -133,27 +135,30 @@ public class ProgressManager implements AutoCloseable {
      */
     @Override
     public void close() {
-        if (executor.isShutdown()) {
-            return;
-        }
-        // ... stop updater thread. Do not interrupt.
-        updater.cancel(false);
         synchronized (startedTasks) {
+            if (executor.isShutdown()) {
+                return;
+            }
+            // ... stop updater thread. Do not interrupt.
+            executor.shutdown();
+            try {
+                updater.get();
+            } catch (InterruptedException | CancellationException | ExecutionException ignore) {
+                // Ignore these closing thread errors.
+            }
             // And stop all the tasks, do interrupting.
             for (InternalTask task : startedTasks) {
-                if (!task.isDone()) {
-                    task.cancel(true);
-                }
+                task.cancel(true);
             }
-        }
-        for (InternalTask task : queuedTasks) {
-            task.close();
-        }
-        try {
-            executor.shutdown();
-            executor.awaitTermination(100L, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException ignore) {
-            Thread.currentThread().interrupt();
+            for (InternalTask task : queuedTasks) {
+                task.close();
+            }
+
+            try {
+                executor.awaitTermination(100L, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException ignore) {
+                Thread.currentThread().interrupt();
+            }
         }
     }
 
@@ -170,7 +175,6 @@ public class ProgressManager implements AutoCloseable {
             terminal.waitAbortable(updater);
         } finally {
             close();
-            Thread.sleep(1L);
             updateLines();
             terminal.finish();
         }
@@ -190,6 +194,10 @@ public class ProgressManager implements AutoCloseable {
     public <T> Future<T> addTask(String title,
                                  long total,
                                  ProgressAsyncHandler<T> handler) {
+        if (executor.isShutdown()) {
+            throw new IllegalStateException("Adding task to closed progress manager");
+        }
+
         InternalTask<T> task = new InternalTask<>(title, total, handler);
         queuedTasks.add(task);
         startTasks();
@@ -243,6 +251,10 @@ public class ProgressManager implements AutoCloseable {
 
     private void startTasks() {
         synchronized (startedTasks) {
+            if (executor.isShutdown()) {
+                return;
+            }
+
             int toAdd = maxTasks;
             for (InternalTask task : startedTasks) {
                 if (!task.isDone()) {
@@ -285,6 +297,9 @@ public class ProgressManager implements AutoCloseable {
     private void updateLines() {
         List<String> updatedLines = new LinkedList<>();
         synchronized (startedTasks) {
+            // Make sure we read terminal size before each actual update.
+            terminal.getTTY().clearCachedTerminalSize();
+
             int maxUpdating = Math.min(terminal.getTTY().getTerminalSize().rows, maxTasks * 2);
 
             if (startedTasks.size() > maxUpdating) {
