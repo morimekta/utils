@@ -1,10 +1,9 @@
 package net.morimekta.util;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Function;
 import java.util.stream.Collector;
 import java.util.stream.Stream;
 
@@ -25,7 +24,7 @@ public class ExtraCollectors {
                             // accumulator
                             (l, i) -> {
                                 if (l.isEmpty() || l.peekLast().size() >= itemsPerBatch) {
-                                    l.add(new LinkedList<>());
+                                    l.add(new ArrayList<>(itemsPerBatch));
                                 }
                                 l.peekLast().add(i);
                             },
@@ -38,7 +37,7 @@ public class ExtraCollectors {
                                 while (!b.isEmpty()) {
                                     for (T i : b.peekFirst()) {
                                         if (a.peekLast().size() >= itemsPerBatch) {
-                                            a.add(new LinkedList<>());
+                                            a.add(new ArrayList<>(itemsPerBatch));
                                         }
                                         a.peekLast().add(i);
                                     }
