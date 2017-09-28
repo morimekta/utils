@@ -1,6 +1,7 @@
 package net.morimekta.console.util;
 
 import net.morimekta.console.test_utils.ConsoleWatcher;
+import net.morimekta.console.test_utils.FakeClock;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -28,6 +29,7 @@ public class STTYTest {
     public ConsoleWatcher console = new ConsoleWatcher();
 
     private Runtime runtime;
+    private FakeClock clock;
     private Process process;
     private String output;
 
@@ -35,6 +37,7 @@ public class STTYTest {
     public void setUp() throws IOException, InterruptedException {
         output = "65 129\n";
 
+        clock = new FakeClock();
         runtime = mock(Runtime.class);
         process = mock(Process.class);
     }
@@ -48,7 +51,7 @@ public class STTYTest {
         when(process.getInputStream())
                 .thenReturn(new ByteArrayInputStream(output.getBytes()));
 
-        STTY tty = new STTY(runtime);
+        STTY tty = new STTY(runtime, clock);
 
         assertThat(tty.toString(),
                    is("STTY{interactive=true, tty=tty(rows:65, cols:129), mode=COOKED}"));
@@ -69,7 +72,7 @@ public class STTYTest {
         when(process.waitFor()).thenReturn(1);
         when(process.getErrorStream()).thenReturn(new ByteArrayInputStream("Unknown device /dev/tty\n".getBytes()));
 
-        STTY tty = new STTY(runtime);
+        STTY tty = new STTY(runtime, clock);
 
         assertThat(tty.isInteractive(), is(false));
         assertThat(tty.toString(),
@@ -99,7 +102,7 @@ public class STTYTest {
         when(process.getErrorStream()).thenReturn(new ByteArrayInputStream("".getBytes()));
         when(process.getInputStream()).thenReturn(new ByteArrayInputStream("".getBytes()));
 
-        STTY tty = new STTY(runtime);
+        STTY tty = new STTY(runtime, clock);
 
         try (STTYModeSwitcher switcher = tty.setSTTYMode(STTYMode.RAW)) {
             assertThat(switcher.didChangeMode(), is(true));

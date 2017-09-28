@@ -22,15 +22,14 @@ package net.morimekta.console.util;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
+import java.time.Clock;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -39,25 +38,23 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * A terminal controller helper.
  */
 public class STTY {
-    private final Runtime runtime;
-    private final Supplier<TerminalSize> termSize;
-    private final AtomicReference<IOException> ex;
+    private final Runtime                       runtime;
+    private final AtomicLong                    termTime;
+    private final AtomicReference<TerminalSize> termSize;
+    private final AtomicReference<IOException>  ex;
+    private final Clock clock;
 
     public STTY() {
-        this(Runtime.getRuntime());
+        this(Runtime.getRuntime(), Clock.systemUTC());
     }
 
     @VisibleForTesting
-    public STTY(Runtime runtime) {
+    public STTY(Runtime runtime, Clock clock) {
         this.runtime = runtime;
         this.ex = new AtomicReference<>();
-        this.termSize = Suppliers.memoizeWithExpiration(() -> {
-            try {
-                return getTerminalSize(runtime);
-            } catch (IOException e) {
-                ex.set(e);
-                return null;
-            }}, 1000L, TimeUnit.MILLISECONDS);
+        this.termSize = new AtomicReference<>();
+        this.termTime = new AtomicLong(0L);
+        this.clock = clock;
     }
 
     @Override
@@ -91,15 +88,38 @@ public class STTY {
      * @throws UncheckedIOException If getting the terminal size failed.
      */
     public TerminalSize getTerminalSize() {
-        return Optional.ofNullable(termSize.get())
+        return Optional.ofNullable(getTerminalSizeInternal())
                        .orElseThrow(() -> new UncheckedIOException(ex.get()));
+    }
+
+    /**
+     * Clear the cached terminal size regardless of when it was last checked.
+     */
+    public void clearCachedTerminalSize() {
+        termTime.set(0L);
     }
 
     /**
      * @return True if this is an interactive TTY terminal.
      */
     public boolean isInteractive() {
-        return termSize.get() != null;
+        return getTerminalSizeInternal() != null;
+    }
+
+    private TerminalSize getTerminalSizeInternal() {
+        return termSize.updateAndGet(ts -> {
+            if (termTime.get() < clock.millis()) {
+                try {
+                    return getTerminalSize(runtime);
+                } catch (IOException e) {
+                    ex.set(e);
+                    return null;
+                } finally {
+                    termTime.set(clock.millis() + 499);
+                }
+            }
+            return ts;
+        });
     }
 
     private static TerminalSize getTerminalSize(Runtime runtime) throws IOException {
