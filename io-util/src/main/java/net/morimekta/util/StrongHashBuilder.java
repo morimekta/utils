@@ -18,10 +18,22 @@ public class StrongHashBuilder {
     private long cur;
     private long i;
 
+    /**
+     * Create a strong hash builder.
+     */
     public StrongHashBuilder() {
-        this(6165678739293946997L, 99173L);
+        this(99173L, 6165678739293946997L);
     }
 
+    /**
+     * Create a strong hash builder.
+     *
+     * @param initialValue The initial value. Recommended to be at least a
+     *                     5-digit prime. This is the hash value if no data
+     *                     is inserted.
+     * @param valueMultiplier The value multiplier. This should be a prime
+     *                        number no less than 2^60.
+     */
     public StrongHashBuilder(long initialValue, long valueMultiplier) {
         cur = initialValue;
         mul = valueMultiplier;
@@ -29,52 +41,52 @@ public class StrongHashBuilder {
     }
 
     public StrongHashBuilder add(boolean b) {
-        cur = (cur * mul) ^ (b ? TRUE : FALSE) ^ ++i;
+        cur = (cur ^ (b ? TRUE : FALSE) ^ ++i) * mul;
         return this;
     }
 
     public StrongHashBuilder add(byte b) {
-        cur = (cur * mul) ^ b ^ ++i;
+        cur = (cur ^ b ^ ++i) * mul;
         return this;
     }
 
     public StrongHashBuilder add(short b) {
-        cur = (cur * mul) ^ b ^ ++i;
+        cur = (cur ^ b ^ ++i) * mul;
         return this;
     }
 
     public StrongHashBuilder add(int b) {
-        cur = (cur * mul) ^ b ^ ++i;
+        cur = (cur ^ b ^ ++i) * mul;
         return this;
     }
 
     public StrongHashBuilder add(long b) {
-        cur = (cur * mul) ^ b ^ ++i;
+        cur = (cur ^ b ^ ++i) * mul;
         return this;
     }
 
     public StrongHashBuilder add(char b) {
-        cur = (cur * mul) ^ b ^ ++i;
+        cur = (cur ^ b ^ ++i) * mul;
         return this;
     }
 
     public StrongHashBuilder add(double b) {
-        cur = (cur * mul) ^ Double.doubleToLongBits(b) ^ ++i;
+        cur = (cur ^ Double.doubleToLongBits(b) ^ ++i) * mul;
         return this;
     }
 
     public StrongHashBuilder add(float b) {
-        cur = (cur * mul) ^ Float.floatToIntBits(b) ^ ++i;
+        cur = (cur ^ Float.floatToIntBits(b) ^ ++i) * mul;
         return this;
     }
 
     public StrongHashBuilder add(boolean[] arr) {
         if (arr == null) {
-            cur = (cur * mul) ^ NULL ^ ++i;
+            cur = (cur ^ NULL ^ ++i) * mul;
         } else {
-            cur = (cur * mul) ^ arr.length ^ ++i;
+            cur = (cur ^ arr.length ^ ++i) * mul;
             for (boolean b : arr) {
-                cur = (cur * mul) ^ (b ? TRUE : FALSE) ^ ++i;
+                cur = (cur ^ (b ? TRUE : FALSE) ^ ++i) * mul;
             }
         }
         return this;
@@ -82,11 +94,11 @@ public class StrongHashBuilder {
 
     public StrongHashBuilder add(byte[] arr) {
         if (arr == null) {
-            cur = (cur * mul) ^ NULL ^ ++i;
+            cur = (cur ^ NULL ^ ++i) * mul;
         } else {
-            cur = (cur * mul) ^ arr.length ^ ++i;
+            cur = (cur ^ arr.length ^ ++i) * mul;
             for (byte b : arr) {
-                cur = (cur * mul) ^ b ^ ++i;
+                cur = (cur ^ b ^ ++i) * mul;
             }
         }
         return this;
@@ -94,11 +106,11 @@ public class StrongHashBuilder {
 
     public StrongHashBuilder add(short[] arr) {
         if (arr == null) {
-            cur = (cur * mul) ^ NULL ^ ++i;
+            cur = (cur ^ NULL ^ ++i) * mul;
         } else {
-            cur = (cur * mul) ^ arr.length ^ ++i;
+            cur = (cur ^ arr.length ^ ++i) * mul;
             for (short b : arr) {
-                cur = (cur * mul) ^ b ^ ++i;
+                cur = (cur ^ b ^ ++i) * mul;
             }
         }
         return this;
@@ -106,11 +118,11 @@ public class StrongHashBuilder {
 
     public StrongHashBuilder add(int[] arr) {
         if (arr == null) {
-            cur = (cur * mul) ^ NULL ^ ++i;
+            cur = (cur ^ NULL ^ ++i) * mul;
         } else {
-            cur = (cur * mul) ^ arr.length ^ ++i;
+            cur = (cur ^ arr.length ^ ++i) * mul;
             for (int b : arr) {
-                cur = (cur * mul) ^ b ^ ++i;
+                cur = (cur ^ b ^ ++i) * mul;
             }
         }
         return this;
@@ -118,11 +130,11 @@ public class StrongHashBuilder {
 
     public StrongHashBuilder add(long[] arr) {
         if (arr == null) {
-            cur = (cur * mul) ^ NULL ^ ++i;
+            cur = (cur ^ NULL ^ ++i) * mul;
         } else {
-            cur = (cur * mul) ^ arr.length ^ ++i;
+            cur = (cur ^ arr.length ^ ++i) * mul;
             for (long b : arr) {
-                cur = (cur * mul) ^ b ^ ++i;
+                cur = (cur ^ b ^ ++i) * mul;
             }
         }
         return this;
@@ -130,11 +142,11 @@ public class StrongHashBuilder {
 
     public StrongHashBuilder add(char[] arr) {
         if (arr == null) {
-            cur = (cur * mul) ^ NULL ^ ++i;
+            cur = (cur ^ NULL ^ ++i) * mul;
         } else {
-            cur = (cur * mul) ^ arr.length ^ ++i;
+            cur = (cur ^ arr.length ^ ++i) * mul;
             for (char b : arr) {
-                cur = (cur * mul) ^ b ^ ++i;
+                cur = (cur ^ b ^ ++i) * mul;
             }
         }
         return this;
@@ -142,11 +154,11 @@ public class StrongHashBuilder {
 
     public StrongHashBuilder add(float[] arr) {
         if (arr == null) {
-            cur = (cur * mul) ^ NULL ^ ++i;
+            cur = (cur ^ NULL ^ ++i) * mul;
         } else {
-            cur = (cur * mul) ^ arr.length ^ ++i;
+            cur = (cur ^ arr.length ^ ++i) * mul;
             for (float b : arr) {
-                cur = (cur * mul) ^ Float.floatToIntBits(b) ^ ++i;
+                cur = (cur ^ Float.floatToIntBits(b) ^ ++i) * mul;
             }
         }
         return this;
@@ -154,11 +166,11 @@ public class StrongHashBuilder {
 
     public StrongHashBuilder add(double[] arr) {
         if (arr == null) {
-            cur = (cur * mul) ^ NULL ^ ++i;
+            cur = (cur ^ NULL ^ ++i) * mul;
         } else {
-            cur = (cur * mul) ^ arr.length ^ ++i;
+            cur = (cur ^ arr.length ^ ++i) * mul;
             for (double b : arr) {
-                cur = (cur * mul) ^ Double.doubleToLongBits(b) ^ ++i;
+                cur = (cur ^ Double.doubleToLongBits(b) ^ ++i) * mul;
             }
         }
         return this;
@@ -166,9 +178,9 @@ public class StrongHashBuilder {
 
     public StrongHashBuilder add(Object[] arr) {
         if (arr == null) {
-            cur = (cur * mul) ^ NULL ^ ++i;
+            cur = (cur ^ NULL ^ ++i) * mul;
         } else {
-            cur = (cur * mul) ^ arr.length ^ ++i;
+            cur = (cur ^ arr.length ^ ++i) * mul;
             for (Object b : arr) {
                 add(b);
             }
@@ -178,32 +190,32 @@ public class StrongHashBuilder {
 
     public StrongHashBuilder add(CharSequence c) {
         if (c == null) {
-            cur = (cur * mul) ^ NULL ^ ++i;
+            cur = (cur ^ NULL ^ ++i) * mul;
         } else {
             final int l = c.length();
-            cur = (cur * mul) ^ l ^ ++i;
+            cur = (cur ^ l ^ ++i) * mul;
             for (int j = 0; j < l; ++j) {
-                cur = (cur * mul) ^ c.charAt(j) ^ ++i;
+                cur = (cur ^ c.charAt(j) ^ ++i) * mul;
             }
         }
         return this;
     }
 
-    public StrongHashBuilder add(StrongHashable c) {
-        if (c == null) {
-            cur = (cur * mul) ^ NULL ^ ++i;
+    public StrongHashBuilder add(StrongHashable o) {
+        if (o == null) {
+            cur = (cur ^ NULL ^ ++i) * mul;
         } else {
-            cur = (cur * mul) ^ c.strongHash() ^ ++i;
+            cur = (cur ^ o.strongHash() ^ ++i) * mul;
         }
         return this;
     }
 
-    public StrongHashBuilder add(Collection arr) {
-        if (arr == null) {
-            cur = (cur * mul) ^ NULL ^ ++i;
+    public StrongHashBuilder add(Collection c) {
+        if (c == null) {
+            cur = (cur ^ NULL ^ ++i) * mul;
         } else {
-            cur = (cur * mul) ^ arr.size() ^ ++i;
-            for (Object b : arr) {
+            cur = (cur ^ c.size() ^ ++i) * mul;
+            for (Object b : c) {
                 add(b);
             }
         }
@@ -212,9 +224,9 @@ public class StrongHashBuilder {
 
     public StrongHashBuilder add(Map map) {
         if (map == null) {
-            cur = (cur * mul) ^ NULL ^ ++i;
+            cur = (cur ^ NULL ^ ++i) * mul;
         } else {
-            cur = (cur * mul) ^ map.size() ^ ++i;
+            cur = (cur ^ map.size() ^ ++i) * mul;
             for (Map.Entry b : ((Map<?,?>) map).entrySet()) {
                 add(b.getKey());
                 add(b.getValue());
@@ -225,7 +237,7 @@ public class StrongHashBuilder {
 
     public StrongHashBuilder add(Object o) {
         if (o == null) {
-            cur = (cur * mul) ^ NULL ^ ++i;
+            cur = (cur ^ NULL ^ ++i) * mul;
         } else if (o instanceof StrongHashable) {
             add((StrongHashable) o);
         } else if (o instanceof CharSequence) {
@@ -269,7 +281,7 @@ public class StrongHashBuilder {
         } else if (o instanceof Map) {
             add((Map) o);
         } else {
-            cur = (cur * mul) ^ o.hashCode() ^ ++i;
+            cur = (cur ^ o.hashCode() ^ ++i) * mul;
         }
         return this;
     }

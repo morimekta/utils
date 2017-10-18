@@ -90,8 +90,8 @@ public class StrongHashBuilderTest {
 
         assertThat(a.strongHash(), is(b.strongHash()));
         assertThat(a.strongHash(), is(not(c.strongHash())));
-        assertThat(a.strongHash(), is(-8065934364529681497L));
-        assertThat(c.strongHash(), is(6693314637656873799L));
+        assertThat(a.strongHash(), is(-1953800169674617041L));
+        assertThat(c.strongHash(), is(-7929053942369484961L));
     }
 
     @Test
@@ -113,7 +113,20 @@ public class StrongHashBuilderTest {
         a.add((Object) null);
         a.add((StrongHashable) null);
 
-        assertThat(a.strongHash(), is(2796216992127785722L));
+        assertThat(a.strongHash(), is(836935103442443670L));
+    }
+
+    @Test
+    public void testChangePropagation() {
+        StrongHashBuilder a = new StrongHashBuilder();
+        StrongHashBuilder b = new StrongHashBuilder();
+
+        a.add(1);
+        b.add(2);
+
+        assertThat(a.strongHash(), not(b.strongHash()));
+        assertThat(a.strongHash(), is(-3814943325611433687L));
+        assertThat(b.strongHash(), is(2350735413682513310L));
     }
 
     @Test
@@ -125,6 +138,6 @@ public class StrongHashBuilderTest {
         b.add("boo");
 
         assertThat(a.strongHash(), is(not(b.strongHash())));
-        assertThat(a.strongHash(), is(-5623952953802110992L));
+        assertThat(a.strongHash(), is(5691625950207156708L));
     }
 }
