@@ -7,7 +7,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import org.junit.Test;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -44,7 +44,7 @@ public class MappedConfigTest {
         assertFalse(mapped.equals(simple));
         assertEquals(mapped, mapped);
         assertNotEquals(mapped, null);
-        assertNotEquals(mapped, new LinkedList<>());
+        assertNotEquals(mapped, new ArrayList<>());
 
         assertEquals("MappedConfig{not.just.seq=[a, b]}", mapped.toString());
     }

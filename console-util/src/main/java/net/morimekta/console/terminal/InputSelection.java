@@ -30,8 +30,8 @@ import net.morimekta.util.Strings;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.time.Clock;
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -336,7 +336,7 @@ public class InputSelection<E> {
                             // remain the same.
                             updateSelectionIndex(current);
 
-                            LinkedList<String> updates = new LinkedList<>();
+                            ArrayList<String> updates = new ArrayList<>();
 
                             if (paged) {
                                 updates.add(makeMoreEntriesLine());
@@ -352,7 +352,7 @@ public class InputSelection<E> {
                         }
                         case UPDATE_KEEP_POSITION: {
                             int off = paged ? 2 : 1;
-                            LinkedList<String> updates = new LinkedList<>();
+                            ArrayList<String> updates = new ArrayList<>();
                             for (int i = 0; i < shownEntries; ++i) {
                                 updates.add(makeEntryLine(i));
                             }
@@ -457,7 +457,7 @@ public class InputSelection<E> {
                 currentIndex = index;
                 currentOffset = offset;
 
-                LinkedList<String> updates = new LinkedList<>();
+                ArrayList<String> updates = new ArrayList<>();
                 updates.add(makeMoreEntriesLine());
                 for (int i = 0; i < shownEntries; ++i) {
                     updates.add(makeEntryLine(i));

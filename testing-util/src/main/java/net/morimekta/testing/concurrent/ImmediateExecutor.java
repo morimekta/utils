@@ -3,7 +3,7 @@ package net.morimekta.testing.concurrent;
 import javax.annotation.Nonnull;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -126,7 +126,7 @@ public class ImmediateExecutor implements ExecutorService {
             throw new IllegalStateException("Executor is shut down");
         }
 
-        List<Future<T>> results = new LinkedList<>();
+        List<Future<T>> results = new ArrayList<>();
         for (Callable<T> c : collection) {
             results.add(submit(c));
         }

@@ -36,7 +36,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
 import java.util.Date;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.function.Function;
 
 import static net.morimekta.config.util.ConfigUtil.asBoolean;
@@ -120,7 +120,7 @@ public class ConfigUtilTest {
         assertFalse(asBoolean("FALSE"));
 
         assertException("Unable to parse the string \"foo\" to boolean", "foo", ConfigUtil::asBoolean);
-        assertException("Unable to convert LinkedList to a boolean", new LinkedList<>(), ConfigUtil::asBoolean);
+        assertException("Unable to convert ArrayList to a boolean", new ArrayList<>(), ConfigUtil::asBoolean);
         assertException("Unable to convert double value to boolean", 12.34, ConfigUtil::asBoolean);
         assertException("Unable to convert number 3 to boolean", 3, ConfigUtil::asBoolean);
     }
@@ -135,7 +135,7 @@ public class ConfigUtilTest {
         assertEquals(1234567890, asInteger(new Date(1234567890000L)));
 
         assertException("Unable to parse string \"foo\" to an int", "foo", ConfigUtil::asInteger);
-        assertException("Unable to convert LinkedList to an int", new LinkedList<>(), ConfigUtil::asInteger);
+        assertException("Unable to convert ArrayList to an int", new ArrayList<>(), ConfigUtil::asInteger);
     }
 
     @Test
@@ -148,7 +148,7 @@ public class ConfigUtilTest {
         assertEquals(1234567890000L, asLong(new Date(1234567890000L)));
 
         assertException("Unable to parse string \"foo\" to a long", "foo", ConfigUtil::asLong);
-        assertException("Unable to convert LinkedList to a long", new LinkedList<>(), ConfigUtil::asLong);
+        assertException("Unable to convert ArrayList to a long", new ArrayList<>(), ConfigUtil::asLong);
     }
 
     @Test
@@ -160,7 +160,7 @@ public class ConfigUtilTest {
         assertEquals(4.0, asDouble((Numeric) () -> 4), 0.001);
 
         assertException("Unable to parse string \"foo\" to a double", "foo", ConfigUtil::asDouble);
-        assertException("Unable to convert LinkedList to a double", new LinkedList<>(), ConfigUtil::asDouble);
+        assertException("Unable to convert ArrayList to a double", new ArrayList<>(), ConfigUtil::asDouble);
     }
 
     @Test
@@ -170,7 +170,7 @@ public class ConfigUtilTest {
         assertEquals("foo", asString("foo"));
         assertEquals("4", asString((Stringable) () -> "4"));
 
-        assertException("Unable to convert LinkedList to a string", new LinkedList<>(), ConfigUtil::asString);
+        assertException("Unable to convert ArrayList to a string", new ArrayList<>(), ConfigUtil::asString);
     }
 
     @Test

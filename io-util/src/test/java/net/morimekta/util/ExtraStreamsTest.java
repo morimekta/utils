@@ -4,7 +4,7 @@ import org.junit.Test;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
@@ -62,11 +62,11 @@ public class ExtraStreamsTest {
     }
 
     public void assertRange(IntStream range, int... values) {
-        List<Integer> expected = new LinkedList<>();
+        List<Integer> expected = new ArrayList<>();
         for (int i : values) {
             expected.add(i);
         }
-        List<Integer> actual = new LinkedList<>();
+        List<Integer> actual = new ArrayList<>();
         range.forEachOrdered(actual::add);
 
         assertEquals(expected, actual);

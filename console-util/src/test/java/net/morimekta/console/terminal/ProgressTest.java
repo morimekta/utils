@@ -7,7 +7,7 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.util.LinkedList;
+import java.util.ArrayList;
 
 import static net.morimekta.console.chr.CharUtil.stripNonPrintable;
 import static org.hamcrest.CoreMatchers.is;
@@ -46,7 +46,7 @@ public class ProgressTest {
 
     @Test
     public void testLinePrinter() throws IOException {
-        LinkedList<String> lines = new LinkedList<>();
+        ArrayList<String> lines = new ArrayList<>();
 
         try (Progress p = new Progress(l -> lines.add(stripNonPrintable(l)), () -> console.tty().getTerminalSize().cols, Progress.Spinner.CLOCK, "Foo", 100)) {
             p.accept(37);
@@ -73,7 +73,7 @@ public class ProgressTest {
     @Test
     public void testRemainingDuration() {
         FakeClock clock = new FakeClock();
-        LinkedList<String> lines = new LinkedList<>();
+        ArrayList<String> lines = new ArrayList<>();
 
         Progress p = new Progress(null,
                                   l -> lines.add(stripNonPrintable(l)),

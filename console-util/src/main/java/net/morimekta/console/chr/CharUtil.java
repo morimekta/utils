@@ -25,7 +25,7 @@ import net.morimekta.util.Strings;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -563,7 +563,7 @@ public class CharUtil {
      * @return The char list representing the input.
      */
     public static List<Char> inputChars(Object... in) {
-        LinkedList<Char> list = new LinkedList<>();
+        ArrayList<Char> list = new ArrayList<>();
 
         for (Object c : in) {
             /*  */ if (c instanceof Character) {

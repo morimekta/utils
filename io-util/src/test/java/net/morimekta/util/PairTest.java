@@ -28,7 +28,7 @@ import org.junit.runners.BlockJUnit4ClassRunner;
 
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -48,7 +48,7 @@ public class PairTest {
         Pair<Integer, String> b1 = Pair.create(4, "b");
         Pair<Integer, String> b2 = Pair.create(6, "b");
 
-        List<Pair<Integer, String>> list = new LinkedList<>();
+        List<Pair<Integer, String>> list = new ArrayList<>();
         Collections.addAll(list, a1, a2, b1, b2);
 
         list.sort(Comparator.comparing(Pair::getFirst));

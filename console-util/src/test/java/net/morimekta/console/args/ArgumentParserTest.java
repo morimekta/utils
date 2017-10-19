@@ -29,7 +29,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -104,7 +104,7 @@ public class ArgumentParserTest {
 
         AtomicInteger ai = new AtomicInteger(55);
         AtomicBoolean ab = new AtomicBoolean();
-        LinkedList<String> args = new LinkedList<>();
+        ArrayList<String> args = new ArrayList<>();
         AtomicReference<String> type = new AtomicReference<>("no-type");
         Properties props = new Properties();
 
@@ -187,7 +187,7 @@ public class ArgumentParserTest {
     @Test
     public void testParse_args() {
         AtomicBoolean      b      = new AtomicBoolean(false);
-        LinkedList<String> arg    = new LinkedList<>();
+        ArrayList<String> arg    = new ArrayList<>();
         ArgumentParser     parser = new ArgumentParser("gt", "0.2.5", "Git Tools");
         parser.add(new Flag("--bool", "b", "Bool", b::set));
         parser.add(new Argument("arg", "A", arg::add, "", null, true, true, false));
@@ -200,7 +200,7 @@ public class ArgumentParserTest {
     @Test
     public void testParse_fails() {
         AtomicBoolean      b      = new AtomicBoolean(false);
-        LinkedList<String> arg    = new LinkedList<>();
+        ArrayList<String> arg    = new ArrayList<>();
 
         ArgumentParser     parser = new ArgumentParser("gt", "0.2.5", "Git Tools");
         parser.add(new Flag("--bool", "b", "Bool", b::set));
@@ -249,7 +249,7 @@ public class ArgumentParserTest {
         }
 
         AtomicBoolean      b      = new AtomicBoolean(false);
-        LinkedList<String> arg    = new LinkedList<>();
+        ArrayList<String> arg    = new ArrayList<>();
         AtomicReference<String> opt = new AtomicReference<>();
 
         ArgumentParser     parser = new ArgumentParser("gt", "0.2.5", "Git Tools");
@@ -278,7 +278,7 @@ public class ArgumentParserTest {
     @Test
     public void testValidate() {
         AtomicBoolean      b      = new AtomicBoolean(false);
-        LinkedList<String> arg    = new LinkedList<>();
+        ArrayList<String> arg    = new ArrayList<>();
         AtomicReference<String> opt = new AtomicReference<>();
 
         ArgumentParser     parser = new ArgumentParser("gt", "0.2.5", "Git Tools");
@@ -395,7 +395,7 @@ public class ArgumentParserTest {
 
         AtomicInteger ai = new AtomicInteger(55);
         AtomicBoolean ab = new AtomicBoolean();
-        LinkedList<String> args = new LinkedList<>();
+        ArrayList<String> args = new ArrayList<>();
         AtomicReference<String> type = new AtomicReference<>("no-type");
         Properties properties = new Properties();
 
@@ -425,7 +425,7 @@ public class ArgumentParserTest {
 
         AtomicInteger ai = new AtomicInteger(55);
         AtomicBoolean ab = new AtomicBoolean();
-        LinkedList<String> args = new LinkedList<>();
+        ArrayList<String> args = new ArrayList<>();
         AtomicReference<String> type = new AtomicReference<>("no-type");
         Properties properties = new Properties();
 

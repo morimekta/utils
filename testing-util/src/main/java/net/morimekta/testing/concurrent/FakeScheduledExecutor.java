@@ -5,7 +5,7 @@ import net.morimekta.testing.time.FakeClock;
 import javax.annotation.Nonnull;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.TreeSet;
@@ -386,7 +386,7 @@ public class FakeScheduledExecutor implements ScheduledExecutorService, FakeCloc
             throw new IllegalArgumentException("Empty invoke collection");
         }
 
-        List<Future<T>> results = new LinkedList<>();
+        List<Future<T>> results = new ArrayList<>();
         for (Callable<T> c : collection) {
             results.add(submit(c));
         }

@@ -5,8 +5,8 @@ import org.junit.Test;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static net.morimekta.util.ExtraCollectors.inBatchesOf;
@@ -21,20 +21,19 @@ import static org.junit.Assert.assertThat;
 public class ExtraCollectorsTest {
     @Test
     public void testInBatchesOf() {
-        List<Integer> sizes = new LinkedList<>();
-        IntStream.range(0, 10000)
-                 .mapToObj(String::valueOf)
-                 .collect(inBatchesOf(1037))
-                 .forEach(batch -> sizes.add(batch.size()));
-
+        List<Integer> sizes = IntStream.range(0, 10000)
+                                       .mapToObj(String::valueOf)
+                                       .collect(inBatchesOf(1037))
+                                       .map(List::size)
+                                       .collect(Collectors.toList());
         assertThat(sizes, is(equalTo(ImmutableList.of(1037, 1037, 1037, 1037, 1037, 1037, 1037, 1037, 1037, 667))));
 
-        sizes.clear();
-        IntStream.range(0, 10000)
-                 .parallel()
-                 .boxed()
-                 .collect(inBatchesOf(1037))
-                 .forEach(batch -> sizes.add(batch.size()));
+        sizes = IntStream.range(0, 10000)
+                         .parallel()
+                         .boxed()
+                         .collect(inBatchesOf(1037))
+                         .map(List::size)
+                         .collect(Collectors.toList());
 
         assertThat(sizes, is(equalTo(ImmutableList.of(1037, 1037, 1037, 1037, 1037, 1037, 1037, 1037, 1037, 667))));
     }

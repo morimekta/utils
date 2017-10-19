@@ -17,7 +17,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -54,7 +54,7 @@ public class FileWatcher implements AutoCloseable {
     protected FileWatcher(WatchService watchService,
                           ExecutorService watcherExecutor,
                           ExecutorService callbackExecutor) {
-        this.watchers = new LinkedList<>();
+        this.watchers = new ArrayList<>();
         this.watchDirKeys = new HashMap<>();
         this.watchKeyDirs = new HashMap<>();
         this.watchedFiles = Collections.synchronizedSet(new HashSet<>());
@@ -269,7 +269,7 @@ public class FileWatcher implements AutoCloseable {
                 key.reset();
 
                 if (updates.size() > 0) {
-                    List<Supplier<Watcher>> tmp = new LinkedList<>();
+                    List<Supplier<Watcher>> tmp = new ArrayList<>();
                     synchronized (watchers) {
                         tmp.addAll(watchers);
                     }
@@ -307,7 +307,7 @@ public class FileWatcher implements AutoCloseable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FileWatcher.class);
 
-    private final LinkedList<Supplier<Watcher>> watchers;
+    private final ArrayList<Supplier<Watcher>> watchers;
     private final Map<String, WatchKey> watchDirKeys;
     private final Map<WatchKey, String> watchKeyDirs;
     private final Set<String>           watchedFiles;

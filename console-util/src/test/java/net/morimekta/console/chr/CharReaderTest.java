@@ -8,7 +8,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
 import static java.lang.String.format;
@@ -81,7 +81,7 @@ public class CharReaderTest {
         CharReader reader = new CharReader(System.in);
 
         List<Char> expected = CharUtil.inputChars(out);
-        List<Char> actual = new LinkedList<>();
+        List<Char> actual = new ArrayList<>();
         Char c;
         while ((c = reader.read()) != null) {
             actual.add(c);

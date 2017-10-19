@@ -25,7 +25,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -117,7 +117,7 @@ public class FakeClock extends Clock {
         this(new AtomicReference<>(now),
              new AtomicReference<>(now),
              systemUTC.getZone(),
-             new LinkedList<>(),
+             new ArrayList<>(),
              new AtomicBoolean());
     }
 

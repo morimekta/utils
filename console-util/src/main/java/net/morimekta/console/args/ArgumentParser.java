@@ -36,9 +36,9 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -77,8 +77,8 @@ public class ArgumentParser {
         this.description = description;
         this.argumentOptions = argumentOptions;
 
-        this.options = new LinkedList<>();
-        this.arguments = new LinkedList<>();
+        this.options = new ArrayList<>();
+        this.arguments = new ArrayList<>();
         this.longNameOptions = new HashMap<>();
         this.shortOptions = new HashMap<>();
 
@@ -98,8 +98,8 @@ public class ArgumentParser {
         this.description = description;
         this.argumentOptions = parent.argumentOptions;
 
-        this.options = new LinkedList<>();
-        this.arguments = new LinkedList<>();
+        this.options = new ArrayList<>();
+        this.arguments = new ArrayList<>();
         this.longNameOptions = new HashMap<>();
         this.shortOptions = new HashMap<>();
 
@@ -201,7 +201,7 @@ public class ArgumentParser {
         }
 
         // No arguments can be added after a sub-command-set.
-        if (arguments.size() > 0 && arguments.getLast() instanceof SubCommandSet) {
+        if (arguments.size() > 0 && arguments.get(arguments.size() - 1) instanceof SubCommandSet) {
             throw new IllegalArgumentException("No arguments can be added after a sub-command set");
         }
 
@@ -536,9 +536,9 @@ public class ArgumentParser {
                 writer.end();
             }
 
-            if (arguments.peekLast() instanceof SubCommandSet &&
+            if (arguments.get(arguments.size() - 1) instanceof SubCommandSet &&
                 argumentOptions.isSubCommandsShown()) {
-                SubCommandSet scs = (SubCommandSet) arguments.peekLast();
+                SubCommandSet scs = (SubCommandSet) arguments.get(arguments.size() - 1);
 
                 if (!first) {
                     writer.newline();
@@ -607,8 +607,8 @@ public class ArgumentParser {
     private final String                 description;
     private final ArgumentOptions        argumentOptions;
 
-    private final LinkedList<BaseOption>     options;
-    private final LinkedList<BaseArgument>   arguments;
+    private final ArrayList<BaseOption>     options;
+    private final ArrayList<BaseArgument>   arguments;
 
     private final Map<String, BaseOption>    longNameOptions;
     private final Map<Character, BaseOption> shortOptions;

@@ -10,8 +10,8 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -84,7 +84,7 @@ public class InputSelectionTest {
             console.setInput(in);
         }
 
-        LinkedList<String> builder = new LinkedList<>();
+        ArrayList<String> builder = new ArrayList<>();
         for (int i = 1; i <= num; ++i) {
             builder.add("entry " + i);
         }

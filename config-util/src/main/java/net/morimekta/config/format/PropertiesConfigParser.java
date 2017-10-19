@@ -28,7 +28,7 @@ import net.morimekta.config.impl.SimpleConfig;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.Properties;
 import java.util.TreeSet;
 
@@ -62,7 +62,7 @@ public class PropertiesConfigParser implements ConfigParser {
                 if (config.containsKey(entryKey)) {
                     config.getCollection(entryKey).add(properties.getProperty(key));
                 } else {
-                    LinkedList<Object> sequence = new LinkedList<>();
+                    ArrayList<Object> sequence = new ArrayList<>();
                     sequence.add(properties.getProperty(key));
                     config.putCollection(entryKey, sequence);
                 }

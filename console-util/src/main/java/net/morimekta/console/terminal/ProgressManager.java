@@ -11,8 +11,8 @@ import java.io.IOException;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.CancellationException;
@@ -127,7 +127,7 @@ public class ProgressManager implements AutoCloseable {
         this.spinner = spinner;
 
         this.maxTasks = maxTasks;
-        this.startedTasks = new LinkedList<>();
+        this.startedTasks = new ArrayList<>();
         this.queuedTasks = new ConcurrentLinkedQueue<>();
         this.buffer = new LineBuffer(terminal);
         this.isWaiting = new AtomicBoolean(false);
@@ -247,7 +247,7 @@ public class ProgressManager implements AutoCloseable {
     private final Progress.Spinner         spinner;
     private final Clock                    clock;
     private final Future<?>                updater;
-    private final LinkedList<InternalTask> startedTasks;
+    private final ArrayList<InternalTask> startedTasks;
     private final Queue<InternalTask>      queuedTasks;
     private final LineBuffer               buffer;
     private final AtomicBoolean            isWaiting;
@@ -299,7 +299,7 @@ public class ProgressManager implements AutoCloseable {
     }
 
     private void updateLines() {
-        List<String> updatedLines = new LinkedList<>();
+        List<String> updatedLines = new ArrayList<>();
         synchronized (startedTasks) {
             // Make sure we read terminal size before each actual update.
             terminal.getTTY().clearCachedTerminalSize();

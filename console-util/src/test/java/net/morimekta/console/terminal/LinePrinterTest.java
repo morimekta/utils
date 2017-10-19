@@ -3,7 +3,7 @@ package net.morimekta.console.terminal;
 import com.google.common.collect.ImmutableList;
 import org.junit.Test;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 
 import static net.morimekta.console.chr.CharUtil.stripNonPrintable;
 import static org.hamcrest.CoreMatchers.is;
@@ -12,7 +12,7 @@ import static org.junit.Assert.assertThat;
 public class LinePrinterTest {
     @Test
     public void testSimpleLines() {
-        LinkedList<String> lines   = new LinkedList<>();
+        ArrayList<String> lines   = new ArrayList<>();
         LinePrinter        printer = l -> lines.add(stripNonPrintable(l));
 
         printer.println("simple");
@@ -31,8 +31,8 @@ public class LinePrinterTest {
 
     @Test
     public void testFormattedLines() {
-        LinkedList<String> lines   = new LinkedList<>();
-        LinePrinter        printer = l -> lines.add(stripNonPrintable(l));
+        ArrayList<String> lines   = new ArrayList<>();
+        LinePrinter       printer = l -> lines.add(stripNonPrintable(l));
 
         printer.info("the %d info", 1);
         printer.warn("the %d warn", 2);

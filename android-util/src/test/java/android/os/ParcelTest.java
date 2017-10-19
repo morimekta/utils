@@ -28,7 +28,7 @@ import org.junit.runners.BlockJUnit4ClassRunner;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -64,7 +64,7 @@ public class ParcelTest {
         // Make sure the object is reused.
         assertSame(parcel, other2);
 
-        List<Parcel> parcels = new LinkedList<>();
+        List<Parcel> parcels = new ArrayList<>();
         for (int i = 0; i < (2 * Parcel.kMaxPoolSize); ++i) {
             parcels.add(Parcel.obtain());
         }

@@ -23,7 +23,7 @@ package net.morimekta.console.args;
 import com.google.common.collect.ImmutableList;
 import org.junit.Test;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -181,7 +181,7 @@ public class OptionTest {
 
     @Test
     public void testApplyRepeated() {
-        LinkedList<String> values = new LinkedList<>();
+        ArrayList<String> values = new ArrayList<>();
         Option opt = new Option("--opt", "O", "o", "Option", values::add, null, true, false, false);
 
         opt.applyShort("Oval", new ArgumentList("-Oval", "not"));

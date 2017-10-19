@@ -27,7 +27,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.HashMap;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -112,7 +112,7 @@ public class SubCommandSet<SubCommandDef> extends BaseArgument {
         super(name, usage, defaultValue, false, required, false);
 
         this.argumentOptions = options;
-        this.subCommands = new LinkedList<>();
+        this.subCommands = new ArrayList<>();
         this.subCommandMap = new HashMap<>();
         this.consumer = consumer;
     }
