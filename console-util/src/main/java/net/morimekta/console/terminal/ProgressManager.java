@@ -1,6 +1,7 @@
 package net.morimekta.console.terminal;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import net.morimekta.console.chr.Char;
 import net.morimekta.console.chr.Color;
 import net.morimekta.util.Strings;
@@ -98,7 +99,10 @@ public class ProgressManager implements AutoCloseable {
         this(terminal,
              spinner,
              max_tasks,
-             Executors.newScheduledThreadPool(max_tasks + 1),
+             Executors.newScheduledThreadPool(max_tasks + 1,
+                                              new ThreadFactoryBuilder()
+                                                      .setNameFormat("progress-%d")
+                                                      .build()),
              Clock.systemUTC());
     }
 
