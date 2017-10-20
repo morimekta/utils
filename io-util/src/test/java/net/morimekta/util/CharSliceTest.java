@@ -126,7 +126,6 @@ public class CharSliceTest {
             new CharSlice("0\033".toCharArray(), 0, 2).parseInteger();
             fail();
         } catch (IllegalArgumentException e) {
-            e.printStackTrace();
             assertEquals("Char '\\u001b' not valid value for radix 8", e.getMessage());
         }
     }

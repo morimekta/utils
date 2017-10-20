@@ -84,7 +84,7 @@ public class TomlConfigTest {
                   "Expected key/value separator (one of [':', '=']): Got end of file");
         assertBad("[meh\n" +
                   "so = 6008\n",
-                  "Expected  (one of [']']): but found 'so'");
+                  "Expected end of section (']'): but found 'so'");
         assertBad("[meh] more\n" +
                   "so = 6008\n",
                   "Garbage after section: more");

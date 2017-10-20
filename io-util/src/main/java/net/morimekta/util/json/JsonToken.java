@@ -20,15 +20,16 @@
  */
 package net.morimekta.util.json;
 
-import net.morimekta.util.Slice;
+import net.morimekta.util.CharSlice;
 
+import javax.annotation.Nonnull;
 import java.util.Objects;
 
 /**
  * @author Stein Eldar Johnsen
  * @since 19.10.15
  */
-public class JsonToken extends Slice {
+public class JsonToken extends CharSlice {
     public enum Type {
         // one of []{},:
         SYMBOL,
@@ -40,9 +41,9 @@ public class JsonToken extends Slice {
         TOKEN,
     }
 
-    private static final byte[] kNull  = new byte[]{'n', 'u', 'l', 'l'};
-    private static final byte[] kTrue  = new byte[]{'t', 'r', 'u', 'e'};
-    private static final byte[] kFalse = new byte[]{'f', 'a', 'l', 's', 'e'};
+    private static final char[] kNull  = new char[]{'n', 'u', 'l', 'l'};
+    private static final char[] kTrue  = new char[]{'t', 'r', 'u', 'e'};
+    private static final char[] kFalse = new char[]{'f', 'a', 'l', 's', 'e'};
 
     public static final char kListStart = '[';
     public static final char kListEnd   = ']';
@@ -62,7 +63,7 @@ public class JsonToken extends Slice {
     public final int  lineNo;
     public final int  linePos;
 
-    public JsonToken(Type type, byte[] lineBuffer, int offset, int len, int lineNo, int linePos) {
+    public JsonToken(Type type, char[] lineBuffer, int offset, int len, int lineNo, int linePos) {
         super(lineBuffer, offset, len);
         this.type = type;
         this.lineNo = lineNo;
@@ -115,11 +116,11 @@ public class JsonToken extends Slice {
     }
 
     public boolean isInteger() {
-        return type == Type.NUMBER && !containsAny((byte) '.', (byte) 'e', (byte) 'E');
+        return type == Type.NUMBER && !containsAny('.', 'e', 'E');
     }
 
     public boolean isDouble() {
-        return type == Type.NUMBER && containsAny((byte) '.', (byte) 'e', (byte) 'E');
+        return type == Type.NUMBER && containsAny('.', 'e', 'E');
     }
 
     public boolean booleanValue() {
@@ -243,6 +244,7 @@ public class JsonToken extends Slice {
                linePos == other.linePos;
     }
 
+    @Nonnull
     @Override
     public String toString() {
         return String.format("%s('%s',%d:%d-%d)", type.toString(), asString(), lineNo, linePos, linePos + length());

@@ -199,8 +199,8 @@ public class JsonTokenizerTest {
     @Test
     public void testExpectBadSymbol() {
         assertBadSymbol("No symbols to match.", "[");
-        assertBadSymbol("Expected __string__ (one of [']']): but found '['", "[", ']');
-        assertBadSymbol("Expected __string__ (one of [']']): Got end of file", "", ']');
+        assertBadSymbol("Expected __string__ (']'): but found '['", "[", ']');
+        assertBadSymbol("Expected __string__ (']'): Got end of file", "", ']');
     }
 
     private void assertBadSymbol(String message, String str, char... symbols) {
@@ -293,7 +293,7 @@ public class JsonTokenizerTest {
         // TODO: Test that we handle utf-8 in strings correctly.
     }
 
-    private JsonTokenizer makeTokenizer(String content) {
+    private JsonTokenizer makeTokenizer(String content) throws IOException {
         byte[] src = content.getBytes(UTF_8);
         ByteArrayInputStream bais = new ByteArrayInputStream(src);
         return new JsonTokenizer(bais);

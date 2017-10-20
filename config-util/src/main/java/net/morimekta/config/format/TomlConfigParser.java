@@ -107,8 +107,8 @@ public class TomlConfigParser implements ConfigParser {
             while (token != null) {
                 if (token.isSymbol('[')) {
                     currentSection = tokenizer.expect("section name").asString();
-                    tokenizer.expectSymbol("", ']');
-                    String rest = IOUtils.readString(bais, "\n").trim();
+                    tokenizer.expectSymbol("end of section", ']');
+                    String rest = tokenizer.restOfLine().replaceAll("#.*", "");
                     if (rest.length() > 0) {
                         throw new ConfigException("Garbage after section: " + Strings.escape(rest));
                     }
@@ -120,7 +120,7 @@ public class TomlConfigParser implements ConfigParser {
                 tokenizer.expectSymbol("key/value separator", ':', '=');
                 try {
                     config.put(key, parseValue(tokenizer));
-                    String rest = IOUtils.readString(bais, "\n").trim();
+                    String rest = tokenizer.restOfLine().replaceAll("#.*", "");
                     if (rest.length() > 0) {
                         throw new ConfigException("Garbage after value: " + Strings.escape(rest));
                     }

@@ -22,6 +22,7 @@ package net.morimekta.util;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
+import javax.annotation.Nonnull;
 import java.util.Objects;
 
 /**
@@ -241,6 +242,7 @@ public class CharSlice implements Comparable<CharSlice>, Stringable, CharSequenc
         return false;
     }
 
+    @Nonnull
     @Override
     public String toString() {
         return new String(fb, off, len);
