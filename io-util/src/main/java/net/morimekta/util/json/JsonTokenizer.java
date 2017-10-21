@@ -50,9 +50,10 @@ public class JsonTokenizer {
     private int linePos;
     private int lastChar;
 
-    private int    bufferLimit;
-    private int    bufferOffset;
-    private char[] buffer;
+    private int     bufferLimit;
+    private int     bufferOffset;
+    private boolean bufferLineEnd;
+    private char[]  buffer;
 
     private JsonToken unreadToken;
 
@@ -96,6 +97,7 @@ public class JsonTokenizer {
         this.buffer = new char[BUFFER_LENGTH];
         this.bufferLimit = -1;
         this.bufferOffset = -1;
+        this.bufferLineEnd = false;
         this.lines = new ArrayList<>();
         this.unreadToken = null;
     }
@@ -104,18 +106,21 @@ public class JsonTokenizer {
         if (bufferLimit == 0) {
             return false;
         }
-        // check for "last line"
-        if (bufferLimit > 0 &&
-            bufferLimit < BUFFER_LENGTH &&
-            buffer[bufferLimit - 1] != '\n') {
-            return false;
-        }
-
         String oldLine = null;
-        if (lines.size() > 0 && bufferLimit > 0 && buffer[bufferLimit - 1] != '\n') {
-            // this is a continuation of the same line as the last one. The last
-            // line did NOT end with a newline.
-            oldLine = lines.get(lines.size() - 1);
+        if (bufferLimit > 0 && !bufferLineEnd) {
+            // check for "last line"
+            if (bufferLimit < BUFFER_LENGTH) {
+                return false;
+            }
+
+            if (lines.size() > 0) {
+                // this is a continuation of the same line as the last one. The last
+                // line did NOT end with a newline.
+                oldLine = lines.get(lines.size() - 1);
+            } else {
+                ++line;
+                linePos = 0;
+            }
         } else {
             ++line;
             linePos = 0;
@@ -123,25 +128,28 @@ public class JsonTokenizer {
 
         int off = 0;
         char[] b = new char[1];
+        bufferLineEnd = false;
         while (off < BUFFER_LENGTH && reader.read(b, 0, 1) > 0) {
             final char ch = b[0];
-            buffer[off++] = ch;
+            buffer[off] = ch;
+            ++off;
             if (ch == '\n') {
+                bufferLineEnd = true;
                 break;
             }
         }
-        if (off < (BUFFER_LENGTH - 1)) {
+        if (off < BUFFER_LENGTH) {
             buffer[off] = 0;
         }
 
         bufferOffset = -1;
         bufferLimit = off;
         if (off > 0) {
+            String newLinePart = new String(buffer, 0, bufferLimit);
             if (oldLine != null) {
-                String newLinePart = new String(buffer, 0, bufferLimit);
                 lines.set(lines.size() - 1, oldLine + newLinePart);
             } else {
-                lines.add(new String(buffer, 0, bufferLimit));
+                lines.add(newLinePart);
             }
         }
         return bufferLimit > 0;

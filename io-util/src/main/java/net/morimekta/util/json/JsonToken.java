@@ -164,16 +164,15 @@ public class JsonToken extends CharSlice {
      */
     public String decodeJsonLiteral() {
         // This decodes the string from UTF_8 bytes.
-        String raw = rawJsonLiteral();
-        final int l = raw.length();
-        StringBuilder out = new StringBuilder(l);
+        StringBuilder out = new StringBuilder(len);
 
         boolean esc = false;
-        for (int i = 0; i < l; ++i) {
+        final int end = off + len - 1;
+        for (int i = off + 1; i < end; ++i) {
+            char ch = fb[i];
             if (esc) {
                 esc = false;
 
-                char ch = raw.charAt(i);
                 switch (ch) {
                     case 'b':
                         out.append('\b');
@@ -195,16 +194,26 @@ public class JsonToken extends CharSlice {
                         out.append(ch);
                         break;
                     case 'u':
-                        if (l < i + 5) {
+                        int endU = i + 5;
+                        if (end < endU) {
                             out.append('?');
                         } else {
-                            String n = raw.substring(i + 1, i + 5);
-                            try {
-                                int cp = Integer.parseInt(n, 16);
-                                out.append((char) cp);
-                            } catch (NumberFormatException e) {
-                                out.append('?');
+                            int n = 0;
+                            int pos = i + 1;
+                            for (; pos < endU; ++pos) {
+                                ch = fb[pos];
+                                if (ch >= '0' && ch <= '9') {
+                                    n = (n << 4) + (ch - '0');
+                                } else if (ch >= 'a' && ch <= 'f') {
+                                    n = (n << 4) + (ch - ('a' - 10));
+                                } else if (ch >= 'A' && ch <= 'F') {
+                                    n = (n << 4) + (ch - ('A' - 10));
+                                } else {
+                                    n = '?';
+                                    break;
+                                }
                             }
+                            out.append((char) n);
                         }
                         i += 4;  // skipping 4 more characters.
                         break;
@@ -212,10 +221,10 @@ public class JsonToken extends CharSlice {
                         out.append('?');
                         break;
                 }
-            } else if (raw.charAt(i) == '\\') {
+            } else if (ch == '\\') {
                 esc = true;
             } else {
-                out.append(raw.charAt(i));
+                out.append(ch);
             }
         }
         return out.toString();

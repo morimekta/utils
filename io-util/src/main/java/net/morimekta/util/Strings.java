@@ -24,7 +24,6 @@ import java.text.DecimalFormat;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
-import java.util.regex.Pattern;
 
 import static java.lang.Character.isHighSurrogate;
 import static java.lang.Character.isLowSurrogate;
@@ -133,7 +132,8 @@ public class Strings {
      * @return If it is printable.
      */
     public static boolean isConsolePrintable(int cp) {
-        return Character.isDefined(cp) &&
+        return (cp >= 0x20 && cp < 0x7F) ||  // main printable ascii
+               Character.isDefined(cp) &&
                !((cp < 0x0020 && cp != '\n') ||
                  (0x007F <= cp && cp <  0x00A0) ||
                  Character.isIdentifierIgnorable(cp) ||
@@ -395,12 +395,33 @@ public class Strings {
     /**
      * Check if the string is representing an integer (or long) value.
      *
-     * @param key The key to check if is an integer.
+     * @param str The string to check if is an integer.
      * @return True if key is an integer.
      */
-    public static boolean isInteger(String key) {
-        return INT.matcher(key)
-                  .matches();
+    public static boolean isInteger(CharSequence str) {
+        return isInteger(str, 0, str.length());
+    }
+
+    /**
+     * Check if the string is representing an integer (or long) value.
+     *
+     * @param str The string to check if is an integer.
+     * @param off The offset of the string to start checking.
+     * @param len The length / number fo chars to check.
+     * @return True if key is an integer.
+     */
+    public static boolean isInteger(CharSequence str, int off, int len) {
+        if (len == 0) return false;
+        int i = off;
+        if (str.charAt(i) == '-') {
+            if (len == 1) return false;
+            ++i;
+        }
+        for (; i < len; ++i) {
+            char c = str.charAt(i);
+            if (c < '0' || c > '9') return false;
+        }
+        return true;
     }
 
     /**
@@ -713,6 +734,4 @@ public class Strings {
 
     // defeat instantiation.
     private Strings() {}
-
-    private static final Pattern INT = Pattern.compile("-?[0-9]+");
 }

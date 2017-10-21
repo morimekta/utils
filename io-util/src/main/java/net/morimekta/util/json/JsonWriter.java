@@ -27,7 +27,7 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.util.Stack;
 
-import static java.lang.Character.isSurrogatePair;
+import static java.lang.Character.isSurrogate;
 import static net.morimekta.util.Strings.isConsolePrintable;
 
 /**
@@ -507,39 +507,48 @@ public class JsonWriter {
 
             for (int i = 0; i < len; ++i) {
                 char cp = string.charAt(i);
-                switch (cp) {
-                    case '\b':
-                        writer.write("\\b");
-                        break;
-                    case '\t':
-                        writer.write("\\t");
-                        break;
-                    case '\n':
-                        writer.write("\\n");
-                        break;
-                    case '\f':
-                        writer.write("\\f");
-                        break;
-                    case '\r':
-                        writer.write("\\r");
-                        break;
-                    case '\"':
-                    case '\\':
-                        writer.write('\\');
-                        writer.write(cp);
-                        break;
-                    default:
-                        char c2 = (i + 1) < string.length() ? string.charAt(i + 1) : 0;
-                        if (((i + 1) < string.length()) && isSurrogatePair(cp, c2)) {
-                            writer.format("\\u%04x", (int) cp);
-                            writer.format("\\u%04x", (int) c2);
-                            ++i;
-                        } else if (isConsolePrintable(cp)) {
+                if ((cp < 0x7f &&
+                     cp >= 0x20 &&
+                     cp != '\"' &&
+                     cp != '\\') ||
+                    (cp > 0x7f &&
+                     isConsolePrintable(cp) &&
+                     !isSurrogate(cp))) {
+                    // quick bypass for direct printable chars.
+                    writer.write(cp);
+                } else {
+                    switch (cp) {
+                        case '\b':
+                            writer.write("\\b");
+                            break;
+                        case '\t':
+                            writer.write("\\t");
+                            break;
+                        case '\n':
+                            writer.write("\\n");
+                            break;
+                        case '\f':
+                            writer.write("\\f");
+                            break;
+                        case '\r':
+                            writer.write("\\r");
+                            break;
+                        case '\"':
+                        case '\\':
+                            writer.write('\\');
                             writer.write(cp);
-                        } else {
-                            writer.format("\\u%04x", (int) cp);
-                        }
-                        break;
+                            break;
+                        default:
+                            if (isSurrogate(cp) && (i + 1) < string.length()) {
+                                char c2 = (i + 1) < string.length() ? string.charAt(i + 1) : 0;
+                                writer.format("\\u%04x", (int) cp);
+                                writer.format("\\u%04x", (int) c2);
+                                ++i;
+                            } else {
+                                writer.format("\\u%04x", (int) cp);
+                            }
+                            break;
+                    }
                 }
             }
 
