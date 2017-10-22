@@ -70,7 +70,7 @@ public class JsonTokenizer {
      *
      * @param in Input stream to parse from.
      */
-    public JsonTokenizer(InputStream in) throws IOException {
+    public JsonTokenizer(InputStream in) {
         this(new Utf8StreamReader(in));
     }
 
@@ -87,7 +87,7 @@ public class JsonTokenizer {
      *
      * @param in Reader of content to parse.
      */
-    public JsonTokenizer(Reader in) throws IOException {
+    public JsonTokenizer(Reader in) {
         this.reader = in;
         this.line = 0;
         this.linePos = 0;
