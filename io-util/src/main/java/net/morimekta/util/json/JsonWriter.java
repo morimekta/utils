@@ -539,8 +539,8 @@ public class JsonWriter {
                             writer.write(cp);
                             break;
                         default:
-                            if (isSurrogate(cp) && (i + 1) < string.length()) {
-                                char c2 = (i + 1) < string.length() ? string.charAt(i + 1) : 0;
+                            if (isSurrogate(cp) && (i + 1) < len) {
+                                char c2 = string.charAt(i + 1);
                                 writer.format("\\u%04x", (int) cp);
                                 writer.format("\\u%04x", (int) c2);
                                 ++i;
