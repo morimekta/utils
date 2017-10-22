@@ -10,6 +10,6 @@ branches:
 script: "mvn verify"
 # Undo _JAVA_OPTIONS environment variable
 before_script:
-  - _JAVA_OPTIONS=
+  - unset _JAVA_OPTIONS
 after_success:
   - bash <(curl -s https://codecov.io/bash)
