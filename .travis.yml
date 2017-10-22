@@ -1,11 +1,12 @@
+dist: trusty
 language: java
 sudo: false
 jdk:
-  # - openjdk8 # add when openjdk8 is also supported
+  - openjdk8
   - oraclejdk8
 branches:
   only:
-  - master
+    - master
 script: "mvn verify"
 # Undo _JAVA_OPTIONS environment variable
 before_script:
