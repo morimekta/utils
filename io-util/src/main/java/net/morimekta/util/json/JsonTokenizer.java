@@ -45,6 +45,7 @@ public class JsonTokenizer {
 
     private final Reader                reader;
     private final ArrayList<String>     lines;
+    private final boolean               exceptionLines;
 
     private int line;
     private int linePos;
@@ -74,6 +75,26 @@ public class JsonTokenizer {
         this(new Utf8StreamReader(in));
     }
 
+
+    /**
+     * Create a JSON tokenizer that reads from the input steam. It will only
+     * read as far as requested, and no bytes further. It has no checking of
+     * whether the document follows the JSON standard, but will only accept
+     * JSON formatted tokens.
+     *
+     * Note that the content is assumed to be separated with newlines, which
+     * means that if multiple JSON contents are read from the same stream, they
+     * MUST have a separating newline. A single JSON object may still have
+     * newlines in it's stream.
+     *
+     * @param in Input stream to parse from.
+     * @param exceptionLines If the tokenizer should build line content for
+     *                       exceptions.
+     */
+    public JsonTokenizer(InputStream in, boolean exceptionLines) {
+        this(new Utf8StreamReader(in), exceptionLines);
+    }
+
     /**
      * Create a JSON tokenizer that reads from the char reader. It will only
      * read as far as requested, and no bytes further. It has no checking of
@@ -88,6 +109,25 @@ public class JsonTokenizer {
      * @param in Reader of content to parse.
      */
     public JsonTokenizer(Reader in) {
+        this(in, true);
+    }
+
+    /**
+     * Create a JSON tokenizer that reads from the char reader. It will only
+     * read as far as requested, and no bytes further. It has no checking of
+     * whether the document follows the JSON standard, but will only accept
+     * JSON formatted tokens.
+     *
+     * Note that the content is assumed to be separated with newlines, which
+     * means that if multiple JSON contents are read from the same stream, they
+     * MUST have a separating newline. A single JSON object may still have
+     * newlines in it's stream.
+     *
+     * @param in Reader of content to parse.
+     * @param exceptionLines If the tokenizer should build line content for
+     *                       exceptions.
+     */
+    public JsonTokenizer(Reader in, boolean exceptionLines) {
         this.reader = in;
         this.line = 0;
         this.linePos = 0;
@@ -99,124 +139,8 @@ public class JsonTokenizer {
         this.bufferOffset = -1;
         this.bufferLineEnd = false;
         this.lines = new ArrayList<>();
+        this.exceptionLines = exceptionLines;
         this.unreadToken = null;
-    }
-
-    private boolean readNextLine() throws IOException {
-        if (bufferLimit == 0) {
-            return false;
-        }
-        String oldLine = null;
-        if (bufferLimit > 0 && !bufferLineEnd) {
-            // check for "last line"
-            if (bufferLimit < BUFFER_LENGTH) {
-                return false;
-            }
-
-            if (lines.size() > 0) {
-                // this is a continuation of the same line as the last one. The last
-                // line did NOT end with a newline.
-                oldLine = lines.get(lines.size() - 1);
-            } else {
-                ++line;
-                linePos = 0;
-            }
-        } else {
-            ++line;
-            linePos = 0;
-        }
-
-        int off = 0;
-        char[] b = new char[1];
-        bufferLineEnd = false;
-        while (off < BUFFER_LENGTH && reader.read(b, 0, 1) > 0) {
-            final char ch = b[0];
-            buffer[off] = ch;
-            ++off;
-            if (ch == '\n') {
-                bufferLineEnd = true;
-                break;
-            }
-        }
-        if (off < BUFFER_LENGTH) {
-            buffer[off] = 0;
-        }
-
-        bufferOffset = -1;
-        bufferLimit = off;
-        if (off > 0) {
-            String newLinePart = new String(buffer, 0, bufferLimit);
-            if (oldLine != null) {
-                lines.set(lines.size() - 1, oldLine + newLinePart);
-            } else {
-                lines.add(newLinePart);
-            }
-        }
-        return bufferLimit > 0;
-    }
-
-    /**
-     * If the char buffer is nearing it's "end" and does not end with a newline
-     * (meaning it is a complete line), then take the reast of the current buffer
-     * and move it to the front of the buffer, and read until end of buffer, or
-     * end of line.
-     *
-     * @throws IOException On IO errors.
-     */
-    private void maybeConsolidateBuffer() throws IOException {
-        if (bufferLimit == BUFFER_LENGTH &&
-            bufferOffset >= (BUFFER_LENGTH - CONSOLIDATE_LINE_ON) &&
-            buffer[bufferLimit - 1] != '\n') {
-
-            // A: check for "old line".
-            String oldLine = null;
-            if (lines.size() > 0) {
-                // this is a continuation of the same line as the last one. The last
-                // line did NOT end with a newline.
-                oldLine = lines.get(lines.size() - 1);
-            }
-
-            // A: copy the remainder to the start of the buffer.
-            int len = bufferLimit - bufferOffset;
-            System.arraycopy(buffer, bufferOffset, buffer, 0, len);
-
-            int off = len;
-            char[] b = new char[1];
-            while (off < BUFFER_LENGTH && reader.read(b, 0, 1) > 0) {
-                char ch = b[0];
-                buffer[off] = ch;
-                ++off;
-                if (ch == '\n') {
-                    break;
-                }
-            }
-
-            bufferOffset = len;
-            bufferLimit = off;
-
-            if (off > len) {
-                if (oldLine != null) {
-                    String newLinePart = new String(buffer, 0, bufferLimit);
-                    lines.set(lines.size() - 1, oldLine + newLinePart);
-                } else {
-                    lines.add(new String(buffer, 0, bufferLimit));
-                }
-            }
-        }
-    }
-
-    private boolean readNextChar() throws IOException {
-        if (bufferOffset < 0 || bufferOffset >= (bufferLimit - 1)) {
-            if (!readNextLine()) {
-                bufferLimit = 0;
-                lastChar = -1;
-                // not valid JSON string char.
-                return false;
-            }
-        }
-        ++linePos;
-        lastChar = buffer[++bufferOffset];
-        return true;
     }
 
     /**
@@ -472,6 +396,16 @@ public class JsonTokenizer {
      */
     @Nonnull
     String getLine(int line) throws IOException {
+        if (!exceptionLines) {
+            // In case this is the correct line.
+            if (line == this.line && Math.abs(linePos - bufferOffset) < 2) {
+                // Since linePos does not exactly follow offset, we must accept +- 1.
+                return new String(buffer, 0, bufferLimit - (bufferLineEnd ? 1 : 0));
+            }
+            // Otherwise we don't have the requested line return empty string.
+            return "";
+        }
+
         if (line < 1) {
             throw new IllegalArgumentException("Invalid line number requested: " + line);
         }
@@ -493,6 +427,125 @@ public class JsonTokenizer {
     }
 
     // --- INTERNAL ---
+
+    private boolean readNextLine() throws IOException {
+        if (bufferLimit == 0) {
+            return false;
+        }
+        String oldLine = null;
+        if (bufferLimit > 0 && !bufferLineEnd) {
+            // check for "last line"
+            if (bufferLimit < BUFFER_LENGTH) {
+                return false;
+            }
+
+            if (line > 0) {
+                // this is a continuation of the same line as the last one. The last
+                // line did NOT end with a newline.
+                if (exceptionLines) {
+                    oldLine = lines.get(lines.size() - 1);
+                }
+            } else {
+                ++line;
+                linePos = 0;
+            }
+        } else {
+            ++line;
+            linePos = 0;
+        }
+
+        int off = 0;
+        char[] b = new char[1];
+        bufferLineEnd = false;
+        while (off < BUFFER_LENGTH && reader.read(b, 0, 1) > 0) {
+            final char ch = b[0];
+            buffer[off] = ch;
+            ++off;
+            if (ch == '\n') {
+                bufferLineEnd = true;
+                break;
+            }
+        }
+        if (off < BUFFER_LENGTH) {
+            buffer[off] = 0;
+        }
+
+        bufferOffset = -1;
+        bufferLimit = off;
+        if (exceptionLines && off > 0) {
+            String newLinePart = new String(buffer, 0, bufferLimit);
+            if (oldLine != null) {
+                lines.set(lines.size() - 1, oldLine + newLinePart);
+            } else {
+                lines.add(newLinePart);
+            }
+        }
+        return bufferLimit > 0;
+    }
+
+    /**
+     * If the char buffer is nearing it's "end" and does not end with a newline
+     * (meaning it is a complete line), then take the reast of the current buffer
+     * and move it to the front of the buffer, and read until end of buffer, or
+     * end of line.
+     *
+     * @throws IOException On IO errors.
+     */
+    private void maybeConsolidateBuffer() throws IOException {
+        if (bufferLimit == BUFFER_LENGTH &&
+            bufferOffset >= (BUFFER_LENGTH - CONSOLIDATE_LINE_ON) &&
+            bufferLineEnd) {
+
+            // A: check for "old line".
+            String oldLine = null;
+            if (exceptionLines && lines.size() > 0) {
+                // this is a continuation of the same line as the last one. The last
+                // line did NOT end with a newline.
+                oldLine = lines.get(lines.size() - 1);
+            }
+
+            // A: copy the remainder to the start of the buffer.
+            int len = bufferLimit - bufferOffset;
+            System.arraycopy(buffer, bufferOffset, buffer, 0, len);
+
+            int off = len;
+            char[] b = new char[1];
+            while (off < BUFFER_LENGTH && reader.read(b, 0, 1) > 0) {
+                char ch = b[0];
+                buffer[off] = ch;
+                ++off;
+                if (ch == '\n') {
+                    break;
+                }
+            }
+
+            bufferOffset = len;
+            bufferLimit = off;
+
+            if (exceptionLines && off > len) {
+                if (oldLine != null) {
+                    String newLinePart = new String(buffer, 0, bufferLimit);
+                    lines.set(lines.size() - 1, oldLine + newLinePart);
+                } else {
+                    lines.add(new String(buffer, 0, bufferLimit));
+                }
+            }
+        }
+    }
+
+    private boolean readNextChar() throws IOException {
+        if (bufferOffset < 0 || bufferOffset >= (bufferLimit - 1)) {
+            if (!readNextLine()) {
+                bufferLimit = 0;
+                lastChar = -1;
+                // not valid JSON string char.
+                return false;
+            }
+        }
+        ++linePos;
+        lastChar = buffer[++bufferOffset];
+        return true;
+    }
 
     @Nonnull
     private JsonToken nextSymbol() {
