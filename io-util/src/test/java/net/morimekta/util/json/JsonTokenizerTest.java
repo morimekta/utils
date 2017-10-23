@@ -224,7 +224,7 @@ public class JsonTokenizerTest {
 
         tokenizer.expectSymbol("Fail", JsonToken.kKeyValSep);
         tokenizer.expectString("Fail");
-        assertTrue(tokenizer.next().isSymbol(JsonToken.kMapEnd));
+        assertTrue(tokenizer.expect("Fail").isSymbol(JsonToken.kMapEnd));
 
         try {
             tokenizer.peek("__message__");
@@ -268,15 +268,6 @@ public class JsonTokenizerTest {
             assertEquals(e.asString(), ue.asString());
             assertEquals("Unchecked " + e.toString(), ue.toString());
         }
-
-        try {
-            tokenizer.getLine(0);
-            fail("No exception on invalid input.");
-        } catch (IllegalArgumentException e) {
-            assertEquals("Invalid line number requested: 0", e.getMessage());
-        }
-
-        assertEquals("{", tokenizer.getLine(1));
     }
 
     @Test

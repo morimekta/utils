@@ -46,10 +46,10 @@ public class JsonException extends Exception implements Stringable {
     public JsonException(String message, JsonTokenizer tokenizer, JsonToken token) throws IOException {
         super(message);
 
-        line = tokenizer.getLine(token.lineNo);
+        line = tokenizer.getLastLine();
         lineNo = token.lineNo;
         linePos = token.linePos;
-        len = token.asString().length();
+        len = token.length();
     }
 
     /**

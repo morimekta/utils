@@ -28,8 +28,9 @@ import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
-import java.util.ArrayList;
 import java.util.regex.Pattern;
+
+import static java.lang.String.format;
 
 /**
  * Class for tokenizing a JSON document and return one token at a time. It is
@@ -44,8 +45,6 @@ public class JsonTokenizer {
     private static final Pattern TRIMMER = Pattern.compile("(^\\s*|\\s*\\n$)");
 
     private final Reader                reader;
-    private final ArrayList<String>     lines;
-    private final boolean               exceptionLines;
 
     private int line;
     private int linePos;
@@ -75,26 +74,6 @@ public class JsonTokenizer {
         this(new Utf8StreamReader(in));
     }
 
-
-    /**
-     * Create a JSON tokenizer that reads from the input steam. It will only
-     * read as far as requested, and no bytes further. It has no checking of
-     * whether the document follows the JSON standard, but will only accept
-     * JSON formatted tokens.
-     *
-     * Note that the content is assumed to be separated with newlines, which
-     * means that if multiple JSON contents are read from the same stream, they
-     * MUST have a separating newline. A single JSON object may still have
-     * newlines in it's stream.
-     *
-     * @param in Input stream to parse from.
-     * @param exceptionLines If the tokenizer should build line content for
-     *                       exceptions.
-     */
-    public JsonTokenizer(InputStream in, boolean exceptionLines) {
-        this(new Utf8StreamReader(in), exceptionLines);
-    }
-
     /**
      * Create a JSON tokenizer that reads from the char reader. It will only
      * read as far as requested, and no bytes further. It has no checking of
@@ -109,25 +88,6 @@ public class JsonTokenizer {
      * @param in Reader of content to parse.
      */
     public JsonTokenizer(Reader in) {
-        this(in, true);
-    }
-
-    /**
-     * Create a JSON tokenizer that reads from the char reader. It will only
-     * read as far as requested, and no bytes further. It has no checking of
-     * whether the document follows the JSON standard, but will only accept
-     * JSON formatted tokens.
-     *
-     * Note that the content is assumed to be separated with newlines, which
-     * means that if multiple JSON contents are read from the same stream, they
-     * MUST have a separating newline. A single JSON object may still have
-     * newlines in it's stream.
-     *
-     * @param in Reader of content to parse.
-     * @param exceptionLines If the tokenizer should build line content for
-     *                       exceptions.
-     */
-    public JsonTokenizer(Reader in, boolean exceptionLines) {
         this.reader = in;
         this.line = 0;
         this.linePos = 0;
@@ -138,8 +98,6 @@ public class JsonTokenizer {
         this.bufferLimit = -1;
         this.bufferOffset = -1;
         this.bufferLineEnd = false;
-        this.lines = new ArrayList<>();
-        this.exceptionLines = exceptionLines;
         this.unreadToken = null;
     }
 
@@ -387,43 +345,21 @@ public class JsonTokenizer {
     }
 
     /**
-     * Returns the line requested.
-     * @param line The line number (1 .. N)
+     * Returns the last line in the buffer. Or empty string if not usable.
      * @return The line string, not including the line-break.
      * @throws IOException If unable to read from the string.
      * @throws IllegalArgumentException If the line number requested is less
      *         than 1.
      */
     @Nonnull
-    String getLine(int line) throws IOException {
-        if (!exceptionLines) {
-            // In case this is the correct line.
-            if (line == this.line && Math.abs(linePos - bufferOffset) < 2) {
-                // Since linePos does not exactly follow offset, we must accept +- 1.
-                return new String(buffer, 0, bufferLimit - (bufferLineEnd ? 1 : 0));
-            }
-            // Otherwise we don't have the requested line return empty string.
-            return "";
+    String getLastLine() throws IOException {
+        if (bufferLimit < 1) return "";
+        if (Math.abs((linePos - 1) - bufferOffset) < 2) {
+            // Since linePos does not exactly follow offset, we must accept +- 1.
+            return new String(buffer, 0, bufferLimit - (bufferLineEnd ? 1 : 0));
         }
-
-        if (line < 1) {
-            throw new IllegalArgumentException("Invalid line number requested: " + line);
-        }
-        --line;
-        while (lines.size() < line) {
-            maybeConsolidateBuffer();
-            if (!readNextLine()) {
-                throw new IOException("Oops");
-            }
-        }
-        if (lines.isEmpty()) {
-            return "";
-        }
-        String l = lines.get(line);
-        if (l.length() > 0 && l.charAt(l.length() - 1) == '\n') {
-            return l.substring(0, l.length() - 1);
-        }
-        return l;
+        // Otherwise we don't have the requested line return empty string.
+        return "";
     }
 
     // --- INTERNAL ---
@@ -432,26 +368,18 @@ public class JsonTokenizer {
         if (bufferLimit == 0) {
             return false;
         }
-        String oldLine = null;
+        boolean newLine = false;
         if (bufferLimit > 0 && !bufferLineEnd) {
             // check for "last line"
             if (bufferLimit < BUFFER_LENGTH) {
                 return false;
             }
 
-            if (line > 0) {
-                // this is a continuation of the same line as the last one. The last
-                // line did NOT end with a newline.
-                if (exceptionLines) {
-                    oldLine = lines.get(lines.size() - 1);
-                }
-            } else {
-                ++line;
-                linePos = 0;
+            if (line == 0) {
+                newLine = true;
             }
         } else {
-            ++line;
-            linePos = 0;
+            newLine = true;
         }
 
         int off = 0;
@@ -466,21 +394,19 @@ public class JsonTokenizer {
                 break;
             }
         }
-        if (off < BUFFER_LENGTH) {
-            buffer[off] = 0;
-        }
-
-        bufferOffset = -1;
-        bufferLimit = off;
-        if (exceptionLines && off > 0) {
-            String newLinePart = new String(buffer, 0, bufferLimit);
-            if (oldLine != null) {
-                lines.set(lines.size() - 1, oldLine + newLinePart);
-            } else {
-                lines.add(newLinePart);
+        if (off > 0) {
+            if (newLine) {
+                ++line;
+                linePos = 0;
             }
+            if (off < BUFFER_LENGTH) {
+                buffer[off] = 0;
+            }
+            bufferOffset = -1;
+            bufferLimit = off;
+            return true;
         }
-        return bufferLimit > 0;
+        return false;
     }
 
     /**
@@ -495,14 +421,6 @@ public class JsonTokenizer {
         if (bufferLimit == BUFFER_LENGTH &&
             bufferOffset >= (BUFFER_LENGTH - CONSOLIDATE_LINE_ON) &&
             bufferLineEnd) {
-
-            // A: check for "old line".
-            String oldLine = null;
-            if (exceptionLines && lines.size() > 0) {
-                // this is a continuation of the same line as the last one. The last
-                // line did NOT end with a newline.
-                oldLine = lines.get(lines.size() - 1);
-            }
 
             // A: copy the remainder to the start of the buffer.
             int len = bufferLimit - bufferOffset;
@@ -521,22 +439,13 @@ public class JsonTokenizer {
 
             bufferOffset = len;
             bufferLimit = off;
-
-            if (exceptionLines && off > len) {
-                if (oldLine != null) {
-                    String newLinePart = new String(buffer, 0, bufferLimit);
-                    lines.set(lines.size() - 1, oldLine + newLinePart);
-                } else {
-                    lines.add(new String(buffer, 0, bufferLimit));
-                }
-            }
         }
     }
 
     private boolean readNextChar() throws IOException {
+        if (lastChar < 0) return false;
         if (bufferOffset < 0 || bufferOffset >= (bufferLimit - 1)) {
             if (!readNextLine()) {
-                bufferLimit = 0;
                 lastChar = -1;
                 // not valid JSON string char.
                 return false;
@@ -732,7 +641,7 @@ public class JsonTokenizer {
     @Nonnull
     private JsonException newMismatchException(String format, Object... params) throws IOException {
         if (params.length > 0) {
-            format = String.format(format, params);
+            format = format(format, params);
         }
         return new JsonException(format, this, unreadToken);
     }
@@ -740,8 +649,8 @@ public class JsonTokenizer {
     @Nonnull
     private JsonException newParseException(String format, Object... params) throws IOException, JsonException {
         if (params.length > 0) {
-            format = String.format(format, params);
+            format = format(format, params);
         }
-        return new JsonException(format, getLine(line), line, linePos, 1);
+        return new JsonException(format, getLastLine(), line, linePos, 1);
     }
 }
