@@ -40,11 +40,11 @@ import static java.lang.String.format;
  * token type) after the next token has been read.
  */
 public class JsonTokenizer {
-    private static final int CONSOLIDATE_LINE_ON = 1 << 7;  // 128
-    private static final int BUFFER_LENGTH = 1 << 16;  // 64k
-    private static final Pattern TRIMMER = Pattern.compile("(^\\s*|\\s*\\n$)");
+    private static final int     CONSOLIDATE_LINE_ON = 1 <<  6; //   64 chars
+    private static final int     DEFAULT_BUFFER_SIZE = 1 << 11; // 2048 chars --> 4kb
+    private static final Pattern TRIMMER             = Pattern.compile("(^\\s*|\\s*\\n$)");
 
-    private final Reader                reader;
+    private final Reader reader;
 
     private int line;
     private int linePos;
@@ -54,6 +54,7 @@ public class JsonTokenizer {
     private int     bufferOffset;
     private boolean bufferLineEnd;
     private char[]  buffer;
+    private int     bufferSize;
 
     private JsonToken unreadToken;
 
@@ -75,6 +76,25 @@ public class JsonTokenizer {
     }
 
     /**
+     * Create a JSON tokenizer that reads from the input steam. It will only
+     * read as far as requested, and no bytes further. It has no checking of
+     * whether the document follows the JSON standard, but will only accept
+     * JSON formatted tokens.
+     *
+     * Note that the content is assumed to be separated with newlines, which
+     * means that if multiple JSON contents are read from the same stream, they
+     * MUST have a separating newline. A single JSON object may still have
+     * newlines in it's stream.
+     *
+     * @param in Input stream to parse from.
+     * @param bufferSize The size of the char buffer. Default is 2048 chars
+     *                   (4096 bytes).
+     */
+    public JsonTokenizer(InputStream in, int bufferSize) {
+        this(new Utf8StreamReader(in), bufferSize);
+    }
+
+    /**
      * Create a JSON tokenizer that reads from the char reader. It will only
      * read as far as requested, and no bytes further. It has no checking of
      * whether the document follows the JSON standard, but will only accept
@@ -88,13 +108,34 @@ public class JsonTokenizer {
      * @param in Reader of content to parse.
      */
     public JsonTokenizer(Reader in) {
+        this(in, DEFAULT_BUFFER_SIZE);
+    }
+
+
+    /**
+     * Create a JSON tokenizer that reads from the char reader. It will only
+     * read as far as requested, and no bytes further. It has no checking of
+     * whether the document follows the JSON standard, but will only accept
+     * JSON formatted tokens.
+     *
+     * Note that the content is assumed to be separated with newlines, which
+     * means that if multiple JSON contents are read from the same stream, they
+     * MUST have a separating newline. A single JSON object may still have
+     * newlines in it's stream.
+     *
+     * @param in Reader of content to parse.
+     * @param bufferSize The size of the char buffer. Default is 2048 chars
+     *                   (4096 bytes).
+     */
+    public JsonTokenizer(Reader in, int bufferSize) {
         this.reader = in;
         this.line = 0;
         this.linePos = 0;
         this.lastChar = 0;
 
         // If the line is longer than 16k, it will not be used in error messages.
-        this.buffer = new char[BUFFER_LENGTH];
+        this.buffer = new char[bufferSize];
+        this.bufferSize = bufferSize;
         this.bufferLimit = -1;
         this.bufferOffset = -1;
         this.bufferLineEnd = false;
@@ -259,18 +300,18 @@ public class JsonTokenizer {
     public String restOfLine() throws IOException {
         maybeConsolidateBuffer();
 
-        StringBuilder remainerBuilder = new StringBuilder();
+        StringBuilder remainderBuilder = new StringBuilder();
 
         if (lastChar == 0) {
             ++bufferOffset;
         }
         while (bufferOffset < (bufferLimit - 1)) {
-            remainerBuilder.append(buffer, bufferOffset, (bufferLimit - bufferOffset));
+            remainderBuilder.append(buffer, bufferOffset, (bufferLimit - bufferOffset));
 
             bufferOffset = bufferLimit - 1;
             maybeConsolidateBuffer();
         }
-        return TRIMMER.matcher(remainerBuilder.toString()).replaceAll("");
+        return TRIMMER.matcher(remainderBuilder.toString()).replaceAll("");
     }
 
     /**
@@ -346,15 +387,18 @@ public class JsonTokenizer {
 
     /**
      * Returns the last line in the buffer. Or empty string if not usable.
+     *
      * @return The line string, not including the line-break.
-     * @throws IOException If unable to read from the string.
-     * @throws IllegalArgumentException If the line number requested is less
-     *         than 1.
      */
     @Nonnull
-    String getLastLine() throws IOException {
+    public String getLastLine() {
         if (bufferLimit < 1) return "";
         if (Math.abs((linePos - 1) - bufferOffset) < 2) {
+            // only return the line if the line has not been consolidated before the
+            // exception. This should avoid showing a bad exception line pointing to
+            // the wrong content. This should never be the case in pretty-printed
+            // JSON unless some really really long strings are causing the error.
+            //
             // Since linePos does not exactly follow offset, we must accept +- 1.
             return new String(buffer, 0, bufferLimit - (bufferLineEnd ? 1 : 0));
         }
@@ -371,7 +415,7 @@ public class JsonTokenizer {
         boolean newLine = false;
         if (bufferLimit > 0 && !bufferLineEnd) {
             // check for "last line"
-            if (bufferLimit < BUFFER_LENGTH) {
+            if (bufferLimit < bufferSize) {
                 return false;
             }
 
@@ -385,7 +429,7 @@ public class JsonTokenizer {
         int off = 0;
         char[] b = new char[1];
         bufferLineEnd = false;
-        while (off < BUFFER_LENGTH && reader.read(b, 0, 1) > 0) {
+        while (off < bufferSize && reader.read(b, 0, 1) > 0) {
             final char ch = b[0];
             buffer[off] = ch;
             ++off;
@@ -399,7 +443,7 @@ public class JsonTokenizer {
                 ++line;
                 linePos = 0;
             }
-            if (off < BUFFER_LENGTH) {
+            if (off < bufferSize) {
                 buffer[off] = 0;
             }
             bufferOffset = -1;
@@ -418,8 +462,8 @@ public class JsonTokenizer {
      * @throws IOException On IO errors.
      */
     private void maybeConsolidateBuffer() throws IOException {
-        if (bufferLimit == BUFFER_LENGTH &&
-            bufferOffset >= (BUFFER_LENGTH - CONSOLIDATE_LINE_ON) &&
+        if (bufferLimit == bufferSize &&
+            bufferOffset >= (bufferSize - CONSOLIDATE_LINE_ON) &&
             bufferLineEnd) {
 
             // A: copy the remainder to the start of the buffer.
@@ -428,7 +472,7 @@ public class JsonTokenizer {
 
             int off = len;
             char[] b = new char[1];
-            while (off < BUFFER_LENGTH && reader.read(b, 0, 1) > 0) {
+            while (off < bufferSize && reader.read(b, 0, 1) > 0) {
                 char ch = b[0];
                 buffer[off] = ch;
                 ++off;
@@ -615,6 +659,8 @@ public class JsonTokenizer {
                 esc = true;
             } else if (lastChar == JsonToken.kDoubleQuote) {
                 break;
+            } else if (lastChar == JsonToken.kNewLine) {
+                throw newParseException("Unexpected newline in string literal");
             }
         }
 

@@ -88,7 +88,7 @@ public class JsonException extends Exception implements Stringable {
 
     @Override
     public String asString() {
-        if (len > 0) {
+        if (getLen() > 0) {
             return String.format("JSON Error on line %d: %s%n" +
                                  "%s%n" +
                                  "%s%s",
@@ -97,7 +97,7 @@ public class JsonException extends Exception implements Stringable {
                                  getLine(),
                                  Strings.times("-", getLinePos() - 1),
                                  Strings.times("^", getLen()));
-        } else if (lineNo > 0) {
+        } else if (getLineNo() > 0) {
             return String.format("JSON Error on line %d: %s%n" +
                                  "%s%n" +
                                  "%s^",

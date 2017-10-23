@@ -287,6 +287,6 @@ public class JsonTokenizerTest {
     private JsonTokenizer makeTokenizer(String content) throws IOException {
         byte[] src = content.getBytes(UTF_8);
         ByteArrayInputStream bais = new ByteArrayInputStream(src);
-        return new JsonTokenizer(bais);
+        return new JsonTokenizer(bais, 1 << 10);
     }
 }
