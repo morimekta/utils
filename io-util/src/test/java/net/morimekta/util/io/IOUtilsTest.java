@@ -19,7 +19,6 @@
  * under the License.
  */package net.morimekta.util.io;
 
-import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -152,12 +151,6 @@ public class IOUtilsTest {
         when(in.read()).thenThrow(new IOException("Don't do this!"));
 
         assertException("Don't do this!", " ", in);
-    }
-
-    @Test
-    public void testReadString_badInput() throws IOException {
-        InputStream in = getClass().getResourceAsStream("/read_nongood.txt");
-        IOUtils.readString(in);
     }
 
     @Test
