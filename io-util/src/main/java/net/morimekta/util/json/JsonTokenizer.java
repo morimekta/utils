@@ -527,7 +527,7 @@ public class JsonTokenizer {
     }
 
     @Nonnull
-    protected JsonToken nextNumber() throws IOException, JsonException {
+    private JsonToken nextNumber() throws IOException, JsonException {
         maybeConsolidateBuffer();
         // NOTE: This code is pretty messy because it is a full state-engine
         // to ensure that the parsed number follows the JSON number syntax.
@@ -588,7 +588,7 @@ public class JsonTokenizer {
             ++len;
             // numbers are terminated by first non-numeric character.
             if (!readNextChar()) {
-                String tmp = new String(buffer, startOffset, len + 1);
+                String tmp = new String(buffer, startOffset, len);
                 throw newParseException("Badly terminated JSON exponent: '%s'", tmp);
             }
 
@@ -598,7 +598,7 @@ public class JsonTokenizer {
                 ++len;
                 // numbers are terminated by first non-numeric character.
                 if (!readNextChar()) {
-                    String tmp = new String(buffer, startOffset, len + 1);
+                    String tmp = new String(buffer, startOffset, len);
                     throw newParseException("Badly terminated JSON exponent: '%s'", tmp);
                 }
             }

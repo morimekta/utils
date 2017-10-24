@@ -22,7 +22,6 @@ package net.morimekta.util.json;
 
 import net.morimekta.util.Binary;
 import net.morimekta.util.Strings;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
@@ -30,7 +29,9 @@ import java.io.IOException;
 import java.util.Arrays;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -115,6 +116,8 @@ public class JsonTokenizerTest {
         for (int i = 0; i < a.length; ++i) {
             assertEquals(Binary.wrap(a[i].getBytes()), Binary.wrap(b[i].getBytes()));
         }
+
+        assertThat(tokenizer.restOfLine(), is("}"));
     }
 
     @Test
@@ -122,13 +125,14 @@ public class JsonTokenizerTest {
         assertBadString("Expected __string__ (string literal): Got end of file", "");
         assertBadString("Expected __string__ (string literal): but found '11'", "11");
         assertBadString("Unexpected end of stream in string literal", "\"11");
+        assertBadString("Unexpected newline in string literal", "\"11\n\"");
     }
 
     private void assertBadString(String message, String str) {
         try {
             makeTokenizer(str).expectString("__string__");
             fail("no exception on bad string: \"" + str + "\"");
-        } catch (JsonException|IOException e) {
+        } catch (JsonException | IOException e) {
             assertEquals(message, e.getMessage());
         }
     }
@@ -173,6 +177,9 @@ public class JsonTokenizerTest {
         assertBadNumber("Wrongly terminated JSON number: '1x'", "1x");
         assertBadNumber("Negative indicator without number", "-");
         assertBadNumber("No decimal after negative indicator", "-,");
+        assertBadNumber("Badly terminated JSON exponent: '1e'", "1e");
+        assertBadNumber("Badly terminated JSON exponent: '1e-'", "1e-");
+        assertBadNumber("Badly terminated JSON exponent: '1eb'", "1eb");
     }
 
     private void assertBadNumber(String message, String str) {
@@ -201,6 +208,8 @@ public class JsonTokenizerTest {
         assertBadSymbol("No symbols to match.", "[");
         assertBadSymbol("Expected __string__ (']'): but found '['", "[", ']');
         assertBadSymbol("Expected __string__ (']'): Got end of file", "", ']');
+        assertBadSymbol("Expected __string__ (one of [']', '}']): but found '['", "[", ']', '}');
+        assertBadSymbol("Expected __string__ (one of [']', '}']): Got end of file", "", ']', '}');
     }
 
     private void assertBadSymbol(String message, String str, char... symbols) {
@@ -271,17 +280,31 @@ public class JsonTokenizerTest {
     }
 
     @Test
-    @Ignore("Not implemented yet.")
-    public void testLargeBuffer() {
-        // TODO: test that we can consolidate lines both:
+    public void testLargeBuffer() throws IOException, JsonException {
+        // Test that we can consolidate lines both:
         //  - Part of normal JSON structure parsing.
         //  - Part of string parsing.
+        StringBuilder content = new StringBuilder();
+        for (int i = 0; i < 500; ++i) {
+            content.append("\"");
+            content.append(Strings.escape(lorem));
+            content.append("\"");
+            content.append(",");
+        }
+
+        JsonTokenizer tokenizer = makeTokenizer(content.toString());
+
+        for (int i = 0; i < 500; ++i) {
+            assertThat(tokenizer.expectString("").decodeJsonLiteral(), is(lorem));
+            assertThat(tokenizer.expectSymbol("", ','), is(','));
+        }
     }
 
     @Test
-    @Ignore("Not implemented yet.")
-    public void testUtf8Strings() {
-        // TODO: Test that we handle utf-8 in strings correctly.
+    public void testUtf8Strings() throws IOException, JsonException {
+        // Test that we handle utf-8 in strings correctly.
+        JsonTokenizer tokenizer = makeTokenizer("\"æ優\\u00d6\"");
+        assertThat(tokenizer.expectString("").decodeJsonLiteral(), is("æ優Ö"));
     }
 
     private JsonTokenizer makeTokenizer(String content) throws IOException {
