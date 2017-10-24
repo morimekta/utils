@@ -71,6 +71,26 @@ public class IOUtils {
     }
 
     /**
+     * Skip all bytes in stream until (and including) given separator is found.
+     *
+     * @param in Input stream to read from.
+     * @param separator Separator bytes to skip until.
+     * @return True iff the separator was encountered.
+     * @throws IOException if unable to read from stream.
+     */
+    public static boolean skipUntil(Reader in, String separator) throws IOException {
+        if (separator == null) {
+            throw new NullPointerException("Null separator given");
+        }
+        final int len = separator.length();
+        if(len > 0) {
+            if(len == 1) { return skipUntil(in, separator.charAt(0)); }
+            return skipUntilInternal(in, separator.toCharArray(), new char[len]);
+        }
+        return true;
+    }
+
+    /**
      * Skip all bytes in stream until (and including) given byte is found.
      *
      * @param in Input stream to read from.
@@ -79,6 +99,22 @@ public class IOUtils {
      * @throws IOException if unable to read from stream.
      */
     public static boolean skipUntil(InputStream in, byte separator) throws IOException {
+        int r;
+        while((r = in.read()) >= 0) {
+            if(((byte) r) == separator) { return true; }
+        }
+        return false;
+    }
+
+    /**
+     * Skip all bytes in stream until (and including) given byte is found.
+     *
+     * @param in Input stream to read from.
+     * @param separator Byte to skip until.
+     * @return True iff the separator was encountered.
+     * @throws IOException if unable to read from stream.
+     */
+    public static boolean skipUntil(Reader in, char separator) throws IOException {
         int r;
         while((r = in.read()) >= 0) {
             if(((byte) r) == separator) { return true; }
@@ -211,6 +247,18 @@ public class IOUtils {
         while((r = in.read()) >= 0) {
             System.arraycopy(buffer, 1, buffer, 0, buffer.length - 1);
             buffer[buffer.length - 1] = (byte) r;
+            ++l;
+            if(l >= buffer.length && Arrays.equals(separator, buffer)) { return true; }
+        }
+        return false;
+    }
+
+    private static boolean skipUntilInternal(Reader in, char[] separator, char[] buffer) throws IOException {
+        int r;
+        int l = 0;
+        while((r = in.read()) >= 0) {
+            System.arraycopy(buffer, 1, buffer, 0, buffer.length - 1);
+            buffer[buffer.length - 1] = (char) r;
             ++l;
             if(l >= buffer.length && Arrays.equals(separator, buffer)) { return true; }
         }

@@ -19,8 +19,7 @@
  * under the License.
  */package net.morimekta.util.io;
 
-import net.morimekta.util.Strings;
-
+import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -29,12 +28,15 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
+import java.io.StringReader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
@@ -65,12 +67,24 @@ public class IOUtilsTest {
         mArray_withNullbyte = new byte[]{'1', '2', '3', '\0'};
         mArray_withEscaping = new byte[]{'1', '2', '3', '\t'};
         mArray_withUtf8 = new byte[]{'1', '2', '3', (byte) 0xc3, (byte) 0xa1};
+        mArray_withUtf8 = new byte[]{'1', '2', '3', (byte) 0xc3, (byte) 0xa1};
 
         mString = "123";
         mString_withEscaping = "123\t";
         mString_withUtf8 = "123á";
     }
 
+
+    @Test
+    public void testReadUntilReader() throws IOException {
+        StringReader reader = new StringReader("baobab");
+        assertThat(IOUtils.skipUntil(reader, 'o'), is(true));
+        assertThat(IOUtils.readString(reader), is("bab"));
+
+        reader = new StringReader("baobab");
+        assertThat(IOUtils.skipUntil(reader, "ao"), is(true));
+        assertThat(IOUtils.readString(reader), is("bab"));
+    }
 
     @Test
     public void testSkipUntil() throws IOException {
@@ -138,6 +152,12 @@ public class IOUtilsTest {
         when(in.read()).thenThrow(new IOException("Don't do this!"));
 
         assertException("Don't do this!", " ", in);
+    }
+
+    @Test
+    public void testReadString_badInput() throws IOException {
+        InputStream in = getClass().getResourceAsStream("/read_nongood.txt");
+        IOUtils.readString(in);
     }
 
     @Test
