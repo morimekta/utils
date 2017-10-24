@@ -20,6 +20,7 @@
  */
 package net.morimekta.util.io;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
@@ -59,7 +60,7 @@ public class Utf8StreamReader extends Reader {
     }
 
     @Override
-    public int read(char[] char_buffer, int off, int len) throws IOException {
+    public int read(@Nonnull char[] char_buffer, int off, int len) throws IOException {
         if (in == null) {
             throw new IOException("Reading from a closed stream.");
         }
