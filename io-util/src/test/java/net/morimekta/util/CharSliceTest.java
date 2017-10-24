@@ -146,7 +146,7 @@ public class CharSliceTest {
     public void testSubstring() {
         CharSlice slice = new CharSlice(data, 11, 6);
 
-        assertEquals("123", slice.substring(0, 3).asString());
+        assertEquals("123", slice.subSequence(0, 3).toString());
         assertEquals("23.4", slice.substring(1, -1).asString());
 
         // substring cannot cut outside the boundaries of the original, only
