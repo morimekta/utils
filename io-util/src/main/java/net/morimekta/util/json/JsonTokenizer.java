@@ -364,21 +364,17 @@ public class JsonTokenizer {
 
             if (lastChar == JsonToken.kDoubleQuote) {
                 return nextString();
-            } else if (lastChar == '-' || (lastChar >= '0' && lastChar <= '9')) {
+            } else if (lastChar == '.' || lastChar == '-' || (lastChar >= '0' && lastChar <= '9')) {
                 return nextNumber();
-            } else if (lastChar == JsonToken.kListStart ||
-                       lastChar == JsonToken.kListEnd ||
-                       lastChar == JsonToken.kMapStart ||
-                       lastChar == JsonToken.kMapEnd ||
-                       lastChar == JsonToken.kKeyValSep ||
-                       lastChar == JsonToken.kListSep ||
-                       lastChar == '=') {
-                return nextSymbol();
+            } else if (lastChar == '_' ||
+                       (lastChar >= 'a' && lastChar <= 'z') ||
+                       (lastChar >= 'A' && lastChar <= 'Z')) {
+                return nextToken();
             } else if (lastChar < 0x20 || lastChar >= 0x7F) {
                 // UTF-8 characters are only allowed inside JSON string literals.
                 throw newParseException("Illegal character in JSON structure: '\\u%04x'", lastChar);
             } else {
-                return nextToken();
+                return nextSymbol();
             }
         }
 
@@ -464,11 +460,13 @@ public class JsonTokenizer {
     private void maybeConsolidateBuffer() throws IOException {
         if (bufferLimit == bufferSize &&
             bufferOffset >= (bufferSize - CONSOLIDATE_LINE_ON) &&
-            bufferLineEnd) {
+            !bufferLineEnd) {
 
             // A: copy the remainder to the start of the buffer.
             int len = bufferLimit - bufferOffset;
-            System.arraycopy(buffer, bufferOffset, buffer, 0, len);
+            if (len > 0) {
+                System.arraycopy(buffer, bufferOffset, buffer, 0, len);
+            }
 
             int off = len;
             char[] b = new char[1];
@@ -477,11 +475,12 @@ public class JsonTokenizer {
                 buffer[off] = ch;
                 ++off;
                 if (ch == '\n') {
+                    bufferLineEnd = true;
                     break;
                 }
             }
 
-            bufferOffset = len;
+            bufferOffset = 0;
             bufferLimit = off;
         }
     }
@@ -598,17 +597,23 @@ public class JsonTokenizer {
             if (lastChar == '-' || lastChar == '+') {
                 ++len;
                 // numbers are terminated by first non-numeric character.
-                readNextChar();
-            }
-
-            while (lastChar >= '0' && lastChar <= '9') {
-                ++len;
-                // numbers are terminated by first non-numeric character.
                 if (!readNextChar()) {
-                    break;
+                    String tmp = new String(buffer, startOffset, len + 1);
+                    throw newParseException("Badly terminated JSON exponent: '%s'", tmp);
                 }
             }
-
+            if (lastChar >= '0' && lastChar <= '9') {
+                while (lastChar >= '0' && lastChar <= '9') {
+                    ++len;
+                    // numbers are terminated by first non-numeric character.
+                    if (!readNextChar()) {
+                        break;
+                    }
+                }
+            } else {
+                String tmp = new String(buffer, startOffset, len + 1);
+                throw newParseException("Badly terminated JSON exponent: '%s'", tmp);
+            }
         }
 
         // A number must be terminated correctly: End of stream, space or a
