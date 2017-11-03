@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static net.morimekta.util.ExtraCollectors.inBatchesOf;
+import static net.morimekta.util.ExtraCollectors.inNumBatches;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertFalse;
@@ -36,6 +37,25 @@ public class ExtraCollectorsTest {
                          .collect(Collectors.toList());
 
         assertThat(sizes, is(equalTo(ImmutableList.of(1037, 1037, 1037, 1037, 1037, 1037, 1037, 1037, 1037, 667))));
+    }
+
+    @Test
+    public void testInNumBatches() {
+        List<Integer> sizes = IntStream.range(0, 10000)
+                                       .mapToObj(String::valueOf)
+                                       .collect(inNumBatches(9))
+                                       .map(List::size)
+                                       .collect(Collectors.toList());
+        assertThat(sizes, is(equalTo(ImmutableList.of(1112, 1111, 1111, 1111, 1111, 1111, 1111, 1111, 1111))));
+
+        sizes = IntStream.range(0, 10000)
+                         .parallel()
+                         .boxed()
+                         .collect(inNumBatches(11))
+                         .map(List::size)
+                         .collect(Collectors.toList());
+
+        assertThat(sizes, is(equalTo(ImmutableList.of(910, 909, 909, 909, 909, 909, 909, 909, 909, 909, 909))));
     }
 
     @Test
