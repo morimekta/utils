@@ -18,6 +18,7 @@
  */
 package net.morimekta.util.io;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -36,13 +37,14 @@ public class ByteBufferInputStream extends InputStream {
     @Override
     public int read() throws IOException {
         if (buffer.hasRemaining()) {
-            return buffer.get() % 0x100;
+            byte b = buffer.get();
+            return b < 0 ? 0x100 + b : b;
         }
         return -1;
     }
 
     @Override
-    public int read(byte[] bytes) throws IOException {
+    public int read(@Nonnull byte[] bytes) throws IOException {
         int toRead = Math.min(bytes.length, buffer.remaining());
         if (toRead > 0) {
             buffer.get(bytes, 0, toRead);
@@ -52,7 +54,7 @@ public class ByteBufferInputStream extends InputStream {
     }
 
     @Override
-    public int read(byte[] bytes, int off, int len) throws IOException {
+    public int read(@Nonnull byte[] bytes, int off, int len) throws IOException {
         int toRead = Math.min(len, buffer.remaining());
         if (toRead > 0) {
             buffer.get(bytes, off, toRead);

@@ -18,6 +18,7 @@
  */
 package net.morimekta.util.io;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
@@ -41,7 +42,7 @@ public class ByteBufferOutputStream extends OutputStream {
     }
 
     @Override
-    public void write(byte[] bytes) throws IOException {
+    public void write(@Nonnull byte[] bytes) throws IOException {
         if (buffer.remaining() < bytes.length) {
             throw new IOException("Buffer overflow");
         }
@@ -49,7 +50,7 @@ public class ByteBufferOutputStream extends OutputStream {
     }
 
     @Override
-    public void write(byte[] bytes, int off, int len) throws IOException {
+    public void write(@Nonnull byte[] bytes, int off, int len) throws IOException {
         if (buffer.remaining() < len) {
             throw new IOException("Buffer overflow");
         }

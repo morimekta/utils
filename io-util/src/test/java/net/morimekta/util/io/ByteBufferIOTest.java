@@ -5,8 +5,10 @@ import org.junit.Test;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -167,5 +169,25 @@ public class ByteBufferIOTest {
         } catch (IOException e) {
             assertEquals("Buffer overflow", e.getMessage());
         }
+    }
+
+    @Test
+    public void testNegativeBytes() throws IOException {
+        ByteBuffer buffer = ByteBuffer.allocate(10);
+        buffer.put(new byte[]{0, 1, -1, 2, -2, 3, -3, 4, -4, 5});
+        buffer.flip();
+
+        ByteBufferInputStream bbis = new ByteBufferInputStream(buffer);
+        assertThat(bbis.read(), is(0));
+        assertThat(bbis.read(), is(1));
+        assertThat(bbis.read(), is(255));
+        assertThat(bbis.read(), is(2));
+        assertThat(bbis.read(), is(254));
+        assertThat(bbis.read(), is(3));
+        assertThat(bbis.read(), is(253));
+        assertThat(bbis.read(), is(4));
+        assertThat(bbis.read(), is(252));
+        assertThat(bbis.read(), is(5));
+        assertThat(bbis.read(), is(-1));
     }
 }
