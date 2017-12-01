@@ -45,7 +45,7 @@ import static org.mockito.Mockito.when;
  * Tests for IOUtils functions.
  */
 public class IOUtilsTest {
-    private static final String lorem =
+    public static final String lorem =
             "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et " +
             "dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut " +
             "aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse " +

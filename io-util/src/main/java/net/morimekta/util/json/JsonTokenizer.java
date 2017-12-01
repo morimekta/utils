@@ -21,6 +21,7 @@
 package net.morimekta.util.json;
 
 import net.morimekta.util.Strings;
+import net.morimekta.util.io.LineBufferedReader;
 import net.morimekta.util.io.Utf8StreamReader;
 
 import javax.annotation.Nonnull;
@@ -28,7 +29,6 @@ import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
-import java.util.regex.Pattern;
 
 import static java.lang.String.format;
 
@@ -39,22 +39,8 @@ import static java.lang.String.format;
  * original input buffer, so are not safe to use as reference (except for
  * token type) after the next token has been read.
  */
-public class JsonTokenizer {
-    private static final int     CONSOLIDATE_LINE_ON = 1 <<  6; //   64 chars
-    private static final int     DEFAULT_BUFFER_SIZE = 1 << 11; // 2048 chars --> 4kb
-    private static final Pattern TRIMMER             = Pattern.compile("(^\\s*|\\s*\\n$)");
-
-    private final Reader reader;
-
-    private int line;
-    private int linePos;
-    private int lastChar;
-
-    private int     bufferLimit;
-    private int     bufferOffset;
-    private boolean bufferLineEnd;
-    private char[]  buffer;
-    private int     bufferSize;
+public class JsonTokenizer extends LineBufferedReader {
+    private static final int DEFAULT_BUFFER_SIZE = 1 << 11; // 2048 chars --> 4kb
 
     private JsonToken unreadToken;
 
@@ -128,17 +114,7 @@ public class JsonTokenizer {
      *                   (4096 bytes).
      */
     public JsonTokenizer(Reader in, int bufferSize) {
-        this.reader = in;
-        this.line = 0;
-        this.linePos = 0;
-        this.lastChar = 0;
-
-        // If the line is longer than 16k, it will not be used in error messages.
-        this.buffer = new char[bufferSize];
-        this.bufferSize = bufferSize;
-        this.bufferLimit = -1;
-        this.bufferOffset = -1;
-        this.bufferLineEnd = false;
+        super(in, bufferSize);
         this.unreadToken = null;
     }
 
@@ -297,21 +273,9 @@ public class JsonTokenizer {
      * @throws IOException If unable to read the rest of the line.
      */
     @Nonnull
+    @Deprecated
     public String restOfLine() throws IOException {
-        maybeConsolidateBuffer();
-
-        StringBuilder remainderBuilder = new StringBuilder();
-
-        if (lastChar == 0) {
-            ++bufferOffset;
-        }
-        while (bufferOffset < (bufferLimit - 1)) {
-            remainderBuilder.append(buffer, bufferOffset, (bufferLimit - bufferOffset));
-
-            bufferOffset = bufferLimit - 1;
-            maybeConsolidateBuffer();
-        }
-        return TRIMMER.matcher(remainderBuilder.toString()).replaceAll("");
+        return getRestOfLine();
     }
 
     /**
@@ -387,122 +351,17 @@ public class JsonTokenizer {
      * @return The line string, not including the line-break.
      */
     @Nonnull
+    @Deprecated
     public String getLastLine() {
-        if (bufferLimit < 1) return "";
-        if (Math.abs((linePos - 1) - bufferOffset) < 2) {
-            // only return the line if the line has not been consolidated before the
-            // exception. This should avoid showing a bad exception line pointing to
-            // the wrong content. This should never be the case in pretty-printed
-            // JSON unless some really really long strings are causing the error.
-            //
-            // Since linePos does not exactly follow offset, we must accept +- 1.
-            return new String(buffer, 0, bufferLimit - (bufferLineEnd ? 1 : 0));
-        }
-        // Otherwise we don't have the requested line return empty string.
-        return "";
+        return getLine();
     }
 
     // --- INTERNAL ---
 
-    private boolean readNextLine() throws IOException {
-        if (bufferLimit == 0) {
-            return false;
-        }
-        boolean newLine = false;
-        if (bufferLimit > 0 && !bufferLineEnd) {
-            // check for "last line"
-            if (bufferLimit < bufferSize) {
-                return false;
-            }
-
-            if (line == 0) {
-                newLine = true;
-            }
-        } else {
-            newLine = true;
-        }
-
-        int off = 0;
-        char[] b = new char[1];
-        bufferLineEnd = false;
-        while (off < bufferSize && reader.read(b, 0, 1) > 0) {
-            final char ch = b[0];
-            buffer[off] = ch;
-            ++off;
-            if (ch == '\n') {
-                bufferLineEnd = true;
-                break;
-            }
-        }
-        if (off > 0) {
-            if (newLine) {
-                ++line;
-                linePos = 0;
-            }
-            if (off < bufferSize) {
-                buffer[off] = 0;
-            }
-            bufferOffset = -1;
-            bufferLimit = off;
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * If the char buffer is nearing it's "end" and does not end with a newline
-     * (meaning it is a complete line), then take the reast of the current buffer
-     * and move it to the front of the buffer, and read until end of buffer, or
-     * end of line.
-     *
-     * @throws IOException On IO errors.
-     */
-    private void maybeConsolidateBuffer() throws IOException {
-        if (bufferLimit == bufferSize &&
-            bufferOffset >= (bufferSize - CONSOLIDATE_LINE_ON) &&
-            !bufferLineEnd) {
-
-            // A: copy the remainder to the start of the buffer.
-            int len = bufferLimit - bufferOffset;
-            if (len > 0) {
-                System.arraycopy(buffer, bufferOffset, buffer, 0, len);
-            }
-
-            int off = len;
-            char[] b = new char[1];
-            while (off < bufferSize && reader.read(b, 0, 1) > 0) {
-                char ch = b[0];
-                buffer[off] = ch;
-                ++off;
-                if (ch == '\n') {
-                    bufferLineEnd = true;
-                    break;
-                }
-            }
-
-            bufferOffset = 0;
-            bufferLimit = off;
-        }
-    }
-
-    private boolean readNextChar() throws IOException {
-        if (lastChar < 0) return false;
-        if (bufferOffset < 0 || bufferOffset >= (bufferLimit - 1)) {
-            if (!readNextLine()) {
-                lastChar = -1;
-                // not valid JSON string char.
-                return false;
-            }
-        }
-        ++linePos;
-        lastChar = buffer[++bufferOffset];
-        return true;
-    }
-
     @Nonnull
     private JsonToken nextSymbol() {
         lastChar = 0;
-        return new JsonToken(JsonToken.Type.SYMBOL, buffer, bufferOffset, 1, line, linePos);
+        return new JsonToken(JsonToken.Type.SYMBOL, buffer, bufferOffset, 1, lineNo, linePos);
     }
 
     @Nonnull
@@ -511,7 +370,7 @@ public class JsonTokenizer {
 
         int startPos = linePos;
         int startOffset = bufferOffset;
-        int startLine = line;
+        int startLine = lineNo;
         int len = 0;
         while (lastChar == '_' || lastChar == '.' ||
                (lastChar >= '0' && lastChar <= '9') ||
@@ -545,7 +404,7 @@ public class JsonTokenizer {
 
         int startPos = linePos;
         int startOffset = bufferOffset;
-        int startLine = line;
+        int startLine = lineNo;
         // number (any type).
         int len = 0;
 
@@ -677,14 +536,14 @@ public class JsonTokenizer {
                                  result.toCharArray(),
                                  0,
                                  result.length(),
-                                 line,
+                                 lineNo,
                                  startPos);
         } else {
             return new JsonToken(JsonToken.Type.LITERAL,
                                  buffer,
                                  startOffset,
                                  bufferOffset - startOffset + 1,
-                                 line,
+                                 lineNo,
                                  startPos);
         }
     }
@@ -702,6 +561,6 @@ public class JsonTokenizer {
         if (params.length > 0) {
             format = format(format, params);
         }
-        return new JsonException(format, getLastLine(), line, linePos, 1);
+        return new JsonException(format, getLine(), lineNo, linePos, 1);
     }
 }

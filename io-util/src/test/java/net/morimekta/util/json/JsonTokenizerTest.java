@@ -117,7 +117,7 @@ public class JsonTokenizerTest {
             assertEquals(Binary.wrap(a[i].getBytes()), Binary.wrap(b[i].getBytes()));
         }
 
-        assertThat(tokenizer.restOfLine(), is("}"));
+        assertThat(tokenizer.restOfLine().trim(), is("}"));
     }
 
     @Test
