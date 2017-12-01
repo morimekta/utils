@@ -131,7 +131,6 @@ public class JsonTokenizer extends LineBufferedReader {
     @Nonnull
     public JsonToken expect(String message) throws JsonException, IOException {
         if (!hasNext()) {
-            ++linePos;
             throw newParseException("Expected %s: Got end of file", message);
         }
         JsonToken tmp = unreadToken;
@@ -153,7 +152,6 @@ public class JsonTokenizer extends LineBufferedReader {
     @Nonnull
     public JsonToken expectString(String message) throws IOException, JsonException {
         if (!hasNext()) {
-            ++linePos;
             throw newParseException("Expected %s (string literal): Got end of file", message);
         } else {
             if (unreadToken.isLiteral()) {
@@ -184,7 +182,6 @@ public class JsonTokenizer extends LineBufferedReader {
     @Nonnull
     public JsonToken expectNumber(String message) throws IOException, JsonException {
         if (!hasNext()) {
-            ++linePos;
             throw newParseException("Expected %s (number): Got end of file", message);
         } else {
             if (unreadToken.isInteger() || unreadToken.isDouble()) {
@@ -216,8 +213,6 @@ public class JsonTokenizer extends LineBufferedReader {
             throw new IllegalArgumentException("No symbols to match.");
         }
         if (!hasNext()) {
-            ++linePos;
-
             if (symbols.length == 1) {
                 throw newParseException("Expected %s ('%c'): Got end of file",
                                         message,
@@ -291,7 +286,6 @@ public class JsonTokenizer extends LineBufferedReader {
     @Nonnull
     public JsonToken peek(String message) throws IOException, JsonException {
         if (!hasNext()) {
-            ++linePos;
             throw newParseException("Expected %s: Got end of file", message);
         }
         return unreadToken;
@@ -504,7 +498,7 @@ public class JsonTokenizer extends LineBufferedReader {
 
         boolean esc = false;
         for (; ; ) {
-            if (bufferOffset >= (bufferLimit - 1)) {
+            if (!preLoaded && bufferOffset >= (bufferLimit - 1)) {
                 if (consolidatedString == null) {
                     consolidatedString = new StringBuilder();
                 }
@@ -513,7 +507,6 @@ public class JsonTokenizer extends LineBufferedReader {
             }
 
             if (!readNextChar()) {
-                ++linePos;
                 throw newParseException("Unexpected end of stream in string literal");
             }
 
@@ -561,6 +554,6 @@ public class JsonTokenizer extends LineBufferedReader {
         if (params.length > 0) {
             format = format(format, params);
         }
-        return new JsonException(format, getLine(), lineNo, linePos, 1);
+        return new JsonException(format, getLine(), lineNo, linePos + (lastChar < 0 ? 1 : 0), 1);
     }
 }
