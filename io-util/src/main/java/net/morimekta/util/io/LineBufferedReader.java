@@ -29,6 +29,10 @@ public class LineBufferedReader extends Reader {
         this(reader, bufferSize, false);
     }
 
+    public LineBufferedReader(Reader reader, boolean preLoadAll) {
+        this(reader, DEFAULT_LINE_BUFFER_SIZE, preLoadAll);
+    }
+
     public LineBufferedReader(Reader reader, int bufferSize, boolean preLoadAll) {
         this.reader = reader;
         this.lineNo = 0;
@@ -60,23 +64,36 @@ public class LineBufferedReader extends Reader {
 
     @Override
     public int read() throws IOException {
-        readNextChar();
-        return lastChar;
+        if (lastChar > 0 || readNextChar()) {
+            int ret = lastChar;
+            lastChar = 0;
+            return ret;
+        }
+        return -1;
     }
 
     @Override
     public int read(@Nonnull char[] chars, int off, int len) throws IOException {
         if (off + len > chars.length) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("off: " + off + " len: " + len + " > char[" + chars.length + "]");
         }
         if (off < 0 || len < 0) {
-            throw new IndexOutOfBoundsException();
+            throw new IllegalArgumentException("off: " + off + " len: " + len);
         }
 
         int r = 0;
+        if (len > 0 && lastChar > 0) {
+            chars[off] = (char) lastChar;
+            ++r;
+        }
+
         while (r < len && readNextChar()) {
             chars[off + r] = (char) lastChar;
             ++r;
+        }
+        if (r == len) {
+            lastChar = 0;
+            // Read whole buffer, last char is consumed.
         }
         return r;
     }
@@ -148,36 +165,35 @@ public class LineBufferedReader extends Reader {
     @Nonnull
     public String getRestOfLine() throws IOException {
         if (preLoaded) {
-            if (bufferOffset < 0 || buffer[bufferOffset] == '\n') {
+            if (bufferOffset < 0 || buffer[bufferOffset] == '\n' ||
+                (lastChar == 0 && !readNextChar())) {
                 return "";
-            }
-            if (lastChar > 0) {
-                if (!readNextChar()) {
-                    return "";
-                }
             }
 
             int start = bufferOffset;
+            int length = 1;
             while (readNextChar()) {
                 if (lastChar == '\n') {
+                    lastChar = 0;
                     break;
                 }
+                ++length;
             }
-            return new String(buffer, start, bufferOffset - start);
+            return new String(buffer, start, length);
         }
 
-        if (bufferOffset < 0 || buffer[bufferOffset] == '\n' || bufferOffset >= (bufferLimit - 1)) {
+        if (bufferOffset < 0 || buffer[bufferOffset] == '\n' ||
+            bufferOffset >= (bufferLimit - 1) ||
+            (lastChar == 0 && !readNextChar())) {
             return "";
-        } else if (lastChar >= 0) {
-            readNextChar();
         }
 
         maybeConsolidateBuffer();
         StringBuilder remainderBuilder = new StringBuilder();
         do {
-            int unreadChars = bufferLimit - bufferOffset - (bufferLineEnd ? 1 : 0);
-            remainderBuilder.append(buffer, bufferOffset, unreadChars);
-            bufferOffset += unreadChars;
+            int unreadChars = bufferLimit - bufferOffset;
+            remainderBuilder.append(buffer, bufferOffset, unreadChars - (bufferLineEnd ? 1 : 0));
+            bufferOffset = bufferLimit;
             linePos += unreadChars;
 
             if (bufferLineEnd) {
@@ -186,6 +202,7 @@ public class LineBufferedReader extends Reader {
             maybeConsolidateBuffer();
         } while (bufferOffset < (bufferLimit - 1));
 
+        lastChar = 0;
         return remainderBuilder.toString();
     }
 
@@ -308,30 +325,24 @@ public class LineBufferedReader extends Reader {
     // --          PRIVATE          --
     // -------------------------------
 
-    private static final int CONSOLIDATE_LINE_ON      = 1 << 6;  //   64 chars
+    private static final int CONSOLIDATE_LINE_ON      = 1 << 6;   //   64 chars
     private static final int DEFAULT_LINE_BUFFER_SIZE = 1 << 11;  // 2048 chars --> 4kb
 
     private boolean readNextLine() throws IOException {
-        if (bufferLimit == 0) {
-            return false;
-        }
         boolean newLine = false;
         if (bufferLimit > 0 && !bufferLineEnd) {
             // check for "last line"
             if (bufferLimit < buffer.length) {
                 return false;
             }
-
-            if (lineNo == 0) {
-                newLine = true;
-            }
         } else {
             newLine = true;
         }
 
+        bufferLineEnd = false;
+
         int off = 0;
         char[] b = new char[1];
-        bufferLineEnd = false;
         while (off < buffer.length && reader.read(b, 0, 1) > 0) {
             final char ch = b[0];
             buffer[off] = ch;
