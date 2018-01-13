@@ -521,7 +521,7 @@ public class CharUtil {
                     if ((Character) c == Char.ESC) {
                         tmp.write(Char.ESC);
                     }
-                    tmp.write(new Unicode((Character) c).toString().getBytes(UTF_8));
+                    tmp.write(c.toString().getBytes(UTF_8));
                 } else if (c instanceof Integer) {
                     if ((Integer) c == (int) Char.ESC) {
                         tmp.write(Char.ESC);
@@ -536,14 +536,11 @@ public class CharUtil {
                         tmp.write(c.toString().getBytes(UTF_8));
                     }
                 } else if (c instanceof CharSequence) {
-                    CharStream.stream((CharSequence) c).forEach(ch -> {
-                        try {
-                            tmp.write(ch.toString().getBytes(UTF_8));
-                        } catch (IOException e) {
-                            // Should be impossible.
-                            throw new UncheckedIOException(e);
-                        }
-                    });
+                    tmp.write(c.toString().getBytes(UTF_8));
+                } else if (c instanceof byte[]) {
+                    tmp.write((byte[]) c);
+                } else if (c instanceof char[]) {
+                    tmp.write(new String((char[]) c).getBytes(UTF_8));
                 } else {
                     tmp.write(c.toString().getBytes(UTF_8));
                 }
@@ -572,6 +569,12 @@ public class CharUtil {
                 list.add(new Unicode((Integer) c));
             } else if (c instanceof Char) {
                 list.add((Char) c);
+            } else if (c instanceof byte[]) {
+                CharStream.stream(new String((byte[]) c, UTF_8))
+                          .forEachOrdered(list::add);
+            } else if (c instanceof char[]) {
+                CharStream.stream(new String((char[]) c))
+                          .forEachOrdered(list::add);
             } else {
                 CharStream.stream(c.toString())
                           .forEachOrdered(list::add);

@@ -1,12 +1,15 @@
 package net.morimekta.console.chr;
 
+import com.google.common.collect.ImmutableList;
 import org.junit.Test;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static net.morimekta.console.chr.CharUtil.center;
 import static net.morimekta.console.chr.CharUtil.inputBytes;
+import static net.morimekta.console.chr.CharUtil.inputChars;
 import static net.morimekta.console.chr.CharUtil.leftPad;
 import static net.morimekta.console.chr.CharUtil.makeBorder;
 import static net.morimekta.console.chr.CharUtil.makeNumeric;
@@ -170,7 +173,50 @@ public class CharUtilTest {
                    is(bytes(27, 27)));
         assertThat(inputBytes("boo"),
                    is(bytes(98, 111, 111)));
+        assertThat(inputBytes(new StringBuilder("boo")),
+                   is(bytes(98, 111, 111)));
+        assertThat(inputBytes((Object) "boo".getBytes(UTF_8)),
+                   is(bytes(98, 111, 111)));
+        assertThat(inputBytes((Object) "boo".toCharArray()),
+                   is(bytes(98, 111, 111)));
+        assertThat(inputBytes(new Object() {
+                       @Override
+                       public String toString() {
+                           return "boo";
+                       }
+                   }),
+                   is(bytes(98, 111, 111)));
     }
+
+    @Test
+    public void testInputChars() {
+        assertThat(inputChars(127, ' ', Control.HOME, new Unicode(Char.ESC)),
+                   is(ImmutableList.of(
+                           new Unicode(Char.DEL),
+                           new Unicode(' '),
+                           Control.HOME,
+                           new Unicode(Char.ESC))));
+        assertThat(inputChars(27),
+                   is(ImmutableList.of(new Unicode(27))));
+        assertThat(inputChars('\033'),
+                   is(ImmutableList.of(new Unicode(Char.ESC))));
+        assertThat(inputChars("boo"),
+                   is(ImmutableList.of(new Unicode('b'), new Unicode('o'), new Unicode('o'))));
+        assertThat(inputChars(new StringBuilder("boo")),
+                   is(ImmutableList.of(new Unicode('b'), new Unicode('o'), new Unicode('o'))));
+        assertThat(inputChars((Object) "boo".getBytes(UTF_8)),
+                   is(ImmutableList.of(new Unicode('b'), new Unicode('o'), new Unicode('o'))));
+        assertThat(inputChars((Object) "boo".toCharArray()),
+                   is(ImmutableList.of(new Unicode('b'), new Unicode('o'), new Unicode('o'))));
+        assertThat(inputChars(new Object() {
+                       @Override
+                       public String toString() {
+                           return "boo";
+                       }
+                   }),
+                   is(ImmutableList.of(new Unicode('b'), new Unicode('o'), new Unicode('o'))));
+    }
+
 
     byte[] bytes(int... b) {
         byte[] a = new byte[b.length];
