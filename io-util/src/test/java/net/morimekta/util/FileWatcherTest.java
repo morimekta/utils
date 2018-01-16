@@ -3,6 +3,7 @@ package net.morimekta.util;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
+import org.awaitility.Awaitility;
 import org.awaitility.Duration;
 import org.junit.After;
 import org.junit.Before;
@@ -15,8 +16,11 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.WatchService;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -25,6 +29,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.await;
+import static org.awaitility.Awaitility.waitAtMost;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
@@ -33,6 +38,7 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -57,6 +63,8 @@ public class FileWatcherTest {
     @Before
     @SuppressWarnings("unchecked")
     public void setUp() throws IOException {
+        Awaitility.setDefaultPollDelay(new Duration(50, TimeUnit.MILLISECONDS));
+
         eventCaptor = ArgumentCaptor.forClass(ILoggingEvent.class);
         appender = mock(Appender.class);
         doNothing().when(appender).doAppend(eventCaptor.capture());
@@ -352,6 +360,102 @@ public class FileWatcherTest {
         } catch (IllegalStateException e) {
             assertEquals("Adding watcher on closed FileWatcher", e.getMessage());
         }
+    }
+
+    @Test
+    public void testSymlinkDirectory() throws IOException {
+        File root = temp.getRoot()
+                        .getCanonicalFile()
+                        .getAbsoluteFile();
+        File someDir = new File(root, "test");
+        Files.createDirectories(someDir.toPath());
+        File someSym = new File(root, "link");
+        File file = new File(someDir, "test.txt");
+        File toListen = new File(someSym, "test.txt");
+        write("test", file);
+
+        Files.createSymbolicLink(someSym.toPath(), someDir.toPath());
+
+        AtomicBoolean updated = new AtomicBoolean();
+        ArgumentCaptor<File> fileCaptor = ArgumentCaptor.forClass(File.class);
+        FileWatcher.Watcher watcher = mock(FileWatcher.Watcher.class);
+        doAnswer(i -> {
+            updated.set(true);
+            return null;
+        }).when(watcher).onFileUpdate(fileCaptor.capture());
+
+        sut.addWatcher(watcher);
+        sut.startWatching(toListen);
+
+        writeAndMove("other", file);
+
+        waitAtMost(Duration.ONE_SECOND).untilTrue(updated);
+
+        verify(watcher).onFileUpdate(file);
+        assertThat(fileCaptor.getValue(), is(file));
+    }
+
+    @Test
+    public void testSymlinkFile_contentChange() throws IOException, InterruptedException {
+        File someFile = new File(temp.getRoot(), "test.txt");
+        write("test", someFile);
+
+        File root = temp.newFolder("test")
+                        .getCanonicalFile()
+                        .getAbsoluteFile();
+        File someSym = new File(root, "link.txt");
+        Files.createSymbolicLink(someSym.toPath(), someFile.toPath());
+
+        FileWatcher.Watcher watcher = mock(FileWatcher.Watcher.class);
+
+        sut.addWatcher(watcher);
+        sut.startWatching(someSym);
+
+        writeAndMove("other", someFile);
+
+        Thread.sleep(1000L);
+
+        // does not trigger, only change of the link itself will trigger here.
+        verifyZeroInteractions(watcher);
+    }
+
+    @Test
+    public void testSymlinkFile_linkChange() throws IOException, InterruptedException {
+        File someFile = new File(temp.getRoot(), "test.txt");
+        write("test", someFile);
+        File otherFile = new File(temp.getRoot(), "other.txt");
+        write("other", someFile);
+
+        File root = temp.newFolder("test")
+                        .getCanonicalFile()
+                        .getAbsoluteFile();
+        File someSym = new File(root, "link.txt");
+        File tmpSym = new File(temp.getRoot(), "tmp");
+        Files.createSymbolicLink(someSym.toPath(), someFile.toPath());
+
+        AtomicBoolean updated = new AtomicBoolean();
+        ArgumentCaptor<File> fileCaptor = ArgumentCaptor.forClass(File.class);
+        FileWatcher.Watcher watcher = mock(FileWatcher.Watcher.class);
+        doAnswer(i -> {
+            updated.set(true);
+            return null;
+        }).when(watcher).onFileUpdate(fileCaptor.capture());
+
+        sut.addWatcher(watcher);
+        sut.startWatching(someSym);
+
+        Files.createSymbolicLink(tmpSym.toPath(), otherFile.toPath());
+        Files.move(tmpSym.toPath(), someSym.toPath(),
+                   StandardCopyOption.REPLACE_EXISTING,
+                   StandardCopyOption.ATOMIC_MOVE);
+
+        // Make sure it is still a symbolic link.
+        assertThat(Files.isSymbolicLink(someSym.toPath()), is(true));
+
+        waitAtMost(Duration.ONE_SECOND).untilTrue(updated);
+
+        verify(watcher).onFileUpdate(someSym);
+        assertThat(fileCaptor.getValue(), is(someSym));
     }
 
 
