@@ -25,13 +25,13 @@
 
     <scm>
         <url>https://github.com/morimekta/gcl.git</url>
-        <tag>HEAD</tag>
+        <tag>v2.4.2</tag>
     </scm>
 
     <parent>
         <groupId>net.morimekta.utils</groupId>
         <artifactId>utils</artifactId>
-        <version>2.4.2-SNAPSHOT</version>
+        <version>2.4.2</version>
     </parent>
     <artifactId>config-util</artifactId>
 
