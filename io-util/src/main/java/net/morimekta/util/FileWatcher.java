@@ -159,7 +159,8 @@ public class FileWatcher implements AutoCloseable {
             }
 
             // Resolve directory to canonical directory.
-            File parent = file.getParentFile()
+            File parent = file.getAbsoluteFile()
+                              .getParentFile()
                               .getCanonicalFile()
                               .getAbsoluteFile();
             // But do not canonical file, as if this is a symlink, we want to listen
@@ -203,7 +204,8 @@ public class FileWatcher implements AutoCloseable {
             }
 
             // Resolve directory to canonical directory.
-            File parent = file.getParentFile()
+            File parent = file.getAbsoluteFile()
+                              .getParentFile()
                               .getCanonicalFile()
                               .getAbsoluteFile();
             // But do not canonical file, as if this is a symlink, we want to listen
