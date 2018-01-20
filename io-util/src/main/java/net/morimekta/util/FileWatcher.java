@@ -37,16 +37,17 @@ import java.nio.file.WatchService;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
@@ -75,14 +76,27 @@ public class FileWatcher implements AutoCloseable {
     protected FileWatcher(WatchService watchService,
                           ExecutorService watcherExecutor,
                           ExecutorService callbackExecutor) {
+        this.mutex = new Object();
         this.watchers = new ArrayList<>();
         this.watchDirKeys = new HashMap<>();
         this.watchKeyDirs = new HashMap<>();
-        this.watchedFiles = Collections.synchronizedSet(new HashSet<>());
+        this.watchedFiles = Collections.synchronizedMap(new HashMap<>());
         this.watchService = watchService;
         this.watcherExecutor = watcherExecutor;
         this.callbackExecutor = callbackExecutor;
         this.watcherExecutor.submit(this::watchFilesTask);
+    }
+
+    /**
+     * Start watching file path and notify watcher for updates on that file.
+     *
+     * @param file The file path to watch.
+     * @param watcher The watcher to be notified.
+     */
+    public void addWatcher(File file, Watcher watcher) {
+        synchronized (mutex) {
+            startWatchingInternal(file.toPath()).add(() -> watcher);
+        }
     }
 
     /**
@@ -91,13 +105,15 @@ public class FileWatcher implements AutoCloseable {
      * use the {@link #weakAddWatcher(Watcher)} method.
      *
      * @param watcher The watcher to add.
+     * @deprecated Use {@link #addWatcher(File, Watcher)}
      */
+    @Deprecated
     public void addWatcher(Watcher watcher) {
         if (watcher == null) {
             throw new IllegalArgumentException("Null watcher added");
         }
 
-        synchronized (watchers) {
+        synchronized (mutex) {
             if (watcherExecutor.isShutdown()) {
                 throw new IllegalStateException("Adding watcher on closed FileWatcher");
             }
@@ -106,16 +122,32 @@ public class FileWatcher implements AutoCloseable {
     }
 
     /**
+     * Start watching file path and notify watcher for updates on that file.
+     * The watcher will be kept in a weak reference and will allow GC to delete
+     * the instance.
+     *
+     * @param file The file path to watch.
+     * @param watcher The watcher to be notified.
+     */
+    public void weakAddWatcher(File file, Watcher watcher) {
+        synchronized (mutex) {
+            startWatchingInternal(file.toPath()).add(new WeakReference<>(watcher)::get);
+        }
+    }
+
+    /**
      * Add a non-persistent file watcher.
      *
      * @param watcher The watcher to add.
+     * @deprecated Use {@link #weakAddWatcher(File, Watcher)}.
      */
+    @Deprecated
     public void weakAddWatcher(Watcher watcher) {
         if (watcher == null) {
             throw new IllegalArgumentException("Null watcher added");
         }
 
-        synchronized (watchers) {
+        synchronized (mutex) {
             if (watcherExecutor.isShutdown()) {
                 throw new IllegalStateException("Adding watcher on closed FileWatcher");
             }
@@ -134,8 +166,14 @@ public class FileWatcher implements AutoCloseable {
             throw new IllegalArgumentException("Null watcher removed");
         }
 
-        synchronized (watchers) {
-            return removeFromListeners(watchers, watcher);
+        synchronized (mutex) {
+            AtomicBoolean removed = new AtomicBoolean(removeFromListeners(watchers, watcher));
+            watchedFiles.forEach((path, suppliers) -> {
+                if (removeFromListeners(suppliers, watcher)) {
+                    removed.set(true);
+                }
+            });
+            return removed.get();
         }
     }
 
@@ -158,12 +196,15 @@ public class FileWatcher implements AutoCloseable {
      * pointing elsewhere.
      *
      * @param file The file to be watched.
+     * @deprecated Use {@link #addWatcher(File, Watcher)} or {@link #weakAddWatcher(File, Watcher)}
      */
     public void startWatching(File file) {
         if (file == null) {
             throw new IllegalArgumentException("Null file argument");
         }
-        startWatchingInternal(file.toPath());
+        synchronized (mutex) {
+            startWatchingInternal(file.toPath());
+        }
     }
 
     /**
@@ -175,12 +216,14 @@ public class FileWatcher implements AutoCloseable {
         if (file == null) {
             throw new IllegalArgumentException("Null file argument");
         }
-        stopWatchingInternal(file.toPath());
+        synchronized (mutex) {
+            stopWatchingInternal(file.toPath());
+        }
     }
 
     @Override
     public void close() {
-        synchronized (watchers) {
+        synchronized (mutex) {
             if (watcherExecutor.isShutdown()) {
                 return;
             }
@@ -236,7 +279,7 @@ public class FileWatcher implements AutoCloseable {
         };
     }
 
-    private void startWatchingInternal(@Nonnull Path path) {
+    private List<Supplier<Watcher>> startWatchingInternal(@Nonnull Path path) {
         try {
             if (watcherExecutor.isShutdown()) {
                 throw new IllegalStateException("Starts to watch on closed FileWatcher");
@@ -251,18 +294,20 @@ public class FileWatcher implements AutoCloseable {
             // startWatching(file).
             path = parent.resolve(path.getFileName());
 
-            watchDirKeys.computeIfAbsent(parent, dir -> {
-                try {
-                    WatchKey key = parent.register(watchService,
-                                                   new WatchEvent.Kind[]{ENTRY_MODIFY, ENTRY_CREATE, ENTRY_DELETE},
-                                                   HIGH);
-                    watchKeyDirs.put(key, parent);
-                    return key;
-                } catch (IOException e) {
-                    throw new UncheckedIOException(e.getMessage(), e);
-                }
+            return watchedFiles.computeIfAbsent(path, fp -> {
+                watchDirKeys.computeIfAbsent(parent, dir -> {
+                    try {
+                        WatchKey key = parent.register(watchService,
+                                                       new WatchEvent.Kind[]{ENTRY_MODIFY, ENTRY_CREATE, ENTRY_DELETE},
+                                                       HIGH);
+                        watchKeyDirs.put(key, parent);
+                        return key;
+                    } catch (IOException e) {
+                        throw new UncheckedIOException(e.getMessage(), e);
+                    }
+                });
+                return new ArrayList<>();
             });
-            watchedFiles.add(path);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -316,7 +361,7 @@ public class FileWatcher implements AutoCloseable {
                     WatchEvent<Path> event = (WatchEvent<Path>) ev;
 
                     Path file = parent.resolve(event.context());
-                    if (watchedFiles.contains(file)) {
+                    if (watchedFiles.containsKey(file)) {
                         LOGGER.trace("Watched file " + file + " event " + kind);
                         updates.add(file);
                     }
@@ -324,10 +369,12 @@ public class FileWatcher implements AutoCloseable {
                 // Ready the key again so it wil signal more events.
                 key.reset();
 
-                if (updates.size() > 0 && watchers.size() > 0) {
+                if (updates.size() > 0) {
                     List<Supplier<Watcher>> watcherList;
-                    synchronized (watchers) {
+                    Map<Path,List<Supplier<Watcher>>> watcherMap;
+                    synchronized (mutex) {
                         watcherList = new ArrayList<>(watchers);
+                        watcherMap = deepCopy(watchedFiles);
                     }
                     callbackExecutor.submit(() -> {
                         for (final Path file : updates) {
@@ -341,6 +388,19 @@ public class FileWatcher implements AutoCloseable {
                                     }
                                 }
                             }
+                            Optional.ofNullable(watcherMap.get(file))
+                                    .ifPresent(list -> {
+                                        for (final Supplier<Watcher> supplier : list) {
+                                            Watcher watcher = supplier.get();
+                                            if (watcher != null) {
+                                                try {
+                                                    watcher.onFileUpdate(file.toFile());
+                                                } catch (RuntimeException e) {
+                                                    LOGGER.error("Exception when notifying update on " + file, e);
+                                                }
+                                            }
+                                        }
+                                    });
                         }
                     });
                 }
@@ -349,6 +409,13 @@ public class FileWatcher implements AutoCloseable {
                 return;
             }
         }
+    }
+
+    @Nonnull
+    private static Map<Path,List<Supplier<Watcher>>> deepCopy(@Nonnull Map<Path,List<Supplier<Watcher>>> in) {
+        Map<Path,List<Supplier<Watcher>>> out = new HashMap<>();
+        in.forEach((path, suppliers) -> out.put(path, new ArrayList<>(suppliers)));
+        return in;
     }
 
     private static WatchService newWatchService() {
@@ -361,11 +428,12 @@ public class FileWatcher implements AutoCloseable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FileWatcher.class);
 
-    private final ArrayList<Supplier<Watcher>> watchers;
-    private final Map<Path, WatchKey>   watchDirKeys;
-    private final Map<WatchKey, Path>   watchKeyDirs;
-    private final Set<Path>             watchedFiles;
-    private final ExecutorService       callbackExecutor;
-    private final ExecutorService       watcherExecutor;
-    private final WatchService          watchService;
+    private final Object                             mutex;
+    private final ArrayList<Supplier<Watcher>>       watchers;
+    private final Map<Path, WatchKey>                watchDirKeys;
+    private final Map<WatchKey, Path>                watchKeyDirs;
+    private final Map<Path, List<Supplier<Watcher>>> watchedFiles;
+    private final ExecutorService                    callbackExecutor;
+    private final ExecutorService                    watcherExecutor;
+    private final WatchService                       watchService;
 }

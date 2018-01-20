@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.WatchService;
+import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -48,9 +49,6 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
-/**
- * TODO(steineldar): Make a proper class description.
- */
 public class FileWatcherTest {
     @Rule
     public TemporaryFolder temp = new TemporaryFolder();
@@ -62,7 +60,7 @@ public class FileWatcherTest {
 
     @Before
     @SuppressWarnings("unchecked")
-    public void setUp() throws IOException {
+    public void setUp() {
         Awaitility.setDefaultPollDelay(new Duration(50, TimeUnit.MILLISECONDS));
 
         eventCaptor = ArgumentCaptor.forClass(ILoggingEvent.class);
@@ -76,7 +74,7 @@ public class FileWatcherTest {
     }
 
     @After
-    public void tearDown() throws IOException {
+    public void tearDown() {
         Logger logger = (Logger) LoggerFactory.getLogger(FileWatcher.class);
         logger.detachAppender(appender);
 
@@ -91,10 +89,8 @@ public class FileWatcherTest {
         temp.newFile("test4");
         File test5 = new File(temp.getRoot(), "test5").getCanonicalFile();
 
-        File subDir = temp.newFolder();
-        subDir.mkdirs();
+        File subDir = temp.newFolder("test-" + new Random().nextInt());
         File subFile = new File(subDir, "subFile").getCanonicalFile();
-        subFile.createNewFile();
 
         write("1", test1);
         write("2", test2);
@@ -102,17 +98,15 @@ public class FileWatcherTest {
 
         sleep(100L);
 
-        sut.startWatching(test1);  // written to.
-        sut.startWatching(test3);  // copied to
-        sut.startWatching(test5);  // no event.
-
         FileWatcher.Watcher watcher = mock(FileWatcher.Watcher.class);
 
-        sut.addWatcher(watcher);
+        sut.addWatcher(test1, watcher);  // written to.
+        sut.addWatcher(test3, watcher);  // copied to
+        sut.weakAddWatcher(test5, watcher);  // no event.
 
         write("4", test1);
-        write("5", test2);  // no event.
-        subFile.renameTo(test3);
+        write("5", test2);  // no event .
+        Files.move(subFile.toPath(), test3.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
         sleep(100L);
 
