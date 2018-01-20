@@ -23,13 +23,14 @@ package net.morimekta.util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.ref.WeakReference;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
@@ -133,20 +134,9 @@ public class FileWatcher implements AutoCloseable {
             throw new IllegalArgumentException("Null watcher removed");
         }
 
-        boolean removed = false;
         synchronized (watchers) {
-            Iterator<Supplier<Watcher>> iterator = watchers.iterator();
-            while (iterator.hasNext()) {
-                Watcher next = iterator.next().get();
-                if (next == watcher) {
-                    iterator.remove();
-                    removed = true;
-                } else if (next == null) {
-                    iterator.remove();
-                }
-            }
+            return removeFromListeners(watchers, watcher);
         }
-        return removed;
     }
 
     /**
@@ -170,46 +160,10 @@ public class FileWatcher implements AutoCloseable {
      * @param file The file to be watched.
      */
     public void startWatching(File file) {
-        try {
-            if (file == null) {
-                throw new IllegalArgumentException("Null file argument");
-            }
-            if (watcherExecutor.isShutdown()) {
-                throw new IllegalStateException("Starts to watch on closed FileWatcher");
-            }
-
-            // Resolve directory to canonical directory.
-            File parent = file.getAbsoluteFile()
-                              .getParentFile()
-                              .getCanonicalFile()
-                              .getAbsoluteFile();
-            // But do not canonical file, as if this is a symlink, we want to listen
-            // to changes to the symlink, not the file it points to. If that is wanted
-            // the file should be made canonical (resolve symlinks) before calling
-            // startWatching(file).
-            file = new File(parent, file.getName());
-
-            if (watchedFiles.contains(file.toString())) {
-                // We're already watching this file, do nothing.
-                return;
-            }
-
-            if (!parent.exists()) {
-                throw new IllegalArgumentException("Parent dir of file does not exists: " + parent.toString());
-            }
-
-            if (!watchDirKeys.containsKey(parent.toString())) {
-
-                Path dirPath = Paths.get(parent.getAbsolutePath());
-                WatchKey key = dirPath.register(watchService, new WatchEvent.Kind[]{ENTRY_MODIFY, ENTRY_CREATE, ENTRY_DELETE}, HIGH);
-                watchDirKeys.put(parent.toString(), key);
-                watchKeyDirs.put(key, parent.toString());
-            }
-
-            watchedFiles.add(file.toString());
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
+        if (file == null) {
+            throw new IllegalArgumentException("Null file argument");
         }
+        startWatchingInternal(file.toPath());
     }
 
     /**
@@ -218,26 +172,10 @@ public class FileWatcher implements AutoCloseable {
      * @param file The file to be watched.
      */
     public void stopWatching(File file) {
-        try {
-            if (file == null) {
-                throw new IllegalArgumentException("Null file argument");
-            }
-
-            // Resolve directory to canonical directory.
-            File parent = file.getAbsoluteFile()
-                              .getParentFile()
-                              .getCanonicalFile()
-                              .getAbsoluteFile();
-            // But do not canonical file, as if this is a symlink, we want to listen
-            // to changes to the symlink, not the file it points to. If that is wanted
-            // the file should be made canonical (resolve symlinks) before calling
-            // startWatching(file).
-            file = new File(parent, file.getName());
-
-            watchedFiles.remove(file.toString());
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
+        if (file == null) {
+            throw new IllegalArgumentException("Null file argument");
         }
+        stopWatchingInternal(file.toPath());
     }
 
     @Override
@@ -272,6 +210,22 @@ public class FileWatcher implements AutoCloseable {
         }
     }
 
+    private <T> boolean removeFromListeners(@Nonnull List<Supplier<T>> listeners,
+                                            @Nullable T listener) {
+        Iterator<Supplier<T>> iterator = listeners.iterator();
+        boolean removed = false;
+        while (iterator.hasNext()) {
+            T next = iterator.next().get();
+            if (next == listener) {
+                iterator.remove();
+                removed = true;
+            } else if (next == null) {
+                iterator.remove();
+            }
+        }
+        return removed;
+    }
+
     private static ThreadFactory makeThreadFactory(String name) {
         AtomicInteger idx = new AtomicInteger();
         return runnable -> {
@@ -282,6 +236,55 @@ public class FileWatcher implements AutoCloseable {
         };
     }
 
+    private void startWatchingInternal(@Nonnull Path path) {
+        try {
+            if (watcherExecutor.isShutdown()) {
+                throw new IllegalStateException("Starts to watch on closed FileWatcher");
+            }
+
+            path = path.toAbsolutePath();
+            // Resolve directory to canonical directory.
+            Path parent = FileUtil.readCanonicalPath(path.getParent());
+            // But do not canonical file, as if this is a symlink, we want to listen
+            // to changes to the symlink, not the file it points to. If that is wanted
+            // the file should be made canonical (resolve symlinks) before calling
+            // startWatching(file).
+            path = parent.resolve(path.getFileName());
+
+            watchDirKeys.computeIfAbsent(parent, dir -> {
+                try {
+                    WatchKey key = parent.register(watchService,
+                                                   new WatchEvent.Kind[]{ENTRY_MODIFY, ENTRY_CREATE, ENTRY_DELETE},
+                                                   HIGH);
+                    watchKeyDirs.put(key, parent);
+                    return key;
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e.getMessage(), e);
+                }
+            });
+            watchedFiles.add(path);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    private void stopWatchingInternal(@Nonnull Path path) {
+        try {
+            path = path.toAbsolutePath();
+            // Resolve directory to canonical directory.
+            Path parent = FileUtil.readCanonicalPath(path.getParent());
+            // But do not canonical file, as if this is a symlink, we want to listen
+            // to changes to the symlink, not the file it points to. If that is wanted
+            // the file should be made canonical (resolve symlinks) before calling
+            // startWatching(file).
+            path = parent.resolve(path.getFileName());
+
+            watchedFiles.remove(path);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
     /**
      * Handle the watch service event loop.
      */
@@ -289,18 +292,20 @@ public class FileWatcher implements AutoCloseable {
         while (!watcherExecutor.isShutdown()) {
             try {
                 WatchKey key = watchService.take();
-                String parent = watchKeyDirs.get(key);
+                Path parent = watchKeyDirs.get(key);
                 if (parent == null) {
                     key.reset();
                     continue;
                 }
 
-                Set<File> updates = new TreeSet<>();
+                Set<Path> updates = new TreeSet<>();
                 for (WatchEvent<?> ev : key.pollEvents()) {
                     WatchEvent.Kind<?> kind = ev.kind();
 
-                    // Only file modification is interesting.
-                    if (kind != ENTRY_MODIFY && kind != ENTRY_CREATE) {
+                    // Only file modification, creation, deletion is interesting.
+                    if (kind != ENTRY_MODIFY &&
+                        kind != ENTRY_CREATE &&
+                        kind != ENTRY_DELETE) {
                         if (kind == OVERFLOW) {
                             LOGGER.warn("Overflow event, file updates may have been lost");
                         }
@@ -310,27 +315,27 @@ public class FileWatcher implements AutoCloseable {
                     @SuppressWarnings("unchecked")
                     WatchEvent<Path> event = (WatchEvent<Path>) ev;
 
-                    File file = new File(parent, event.context().toString());
-                    if (watchedFiles.contains(file.toString())) {
+                    Path file = parent.resolve(event.context());
+                    if (watchedFiles.contains(file)) {
                         LOGGER.trace("Watched file " + file + " event " + kind);
                         updates.add(file);
                     }
                 }
-                // Ready the key again so it vil signal more events.
+                // Ready the key again so it wil signal more events.
                 key.reset();
 
-                if (updates.size() > 0) {
-                    List<Supplier<Watcher>> tmp;
+                if (updates.size() > 0 && watchers.size() > 0) {
+                    List<Supplier<Watcher>> watcherList;
                     synchronized (watchers) {
-                        tmp = new ArrayList<>(watchers);
+                        watcherList = new ArrayList<>(watchers);
                     }
                     callbackExecutor.submit(() -> {
-                        for (final Supplier<Watcher> supplier : tmp) {
-                            Watcher watcher = supplier.get();
-                            if (watcher != null) {
-                                for (final File file : updates) {
+                        for (final Path file : updates) {
+                            for (final Supplier<Watcher> supplier : watcherList) {
+                                Watcher watcher = supplier.get();
+                                if (watcher != null) {
                                     try {
-                                        watcher.onFileUpdate(file);
+                                        watcher.onFileUpdate(file.toFile());
                                     } catch (RuntimeException e) {
                                         LOGGER.error("Exception when notifying update on " + file, e);
                                     }
@@ -357,9 +362,9 @@ public class FileWatcher implements AutoCloseable {
     private static final Logger LOGGER = LoggerFactory.getLogger(FileWatcher.class);
 
     private final ArrayList<Supplier<Watcher>> watchers;
-    private final Map<String, WatchKey> watchDirKeys;
-    private final Map<WatchKey, String> watchKeyDirs;
-    private final Set<String>           watchedFiles;
+    private final Map<Path, WatchKey>   watchDirKeys;
+    private final Map<WatchKey, Path>   watchKeyDirs;
+    private final Set<Path>             watchedFiles;
     private final ExecutorService       callbackExecutor;
     private final ExecutorService       watcherExecutor;
     private final WatchService          watchService;
