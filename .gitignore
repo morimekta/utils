@@ -22,10 +22,8 @@ target
 out/
 out
 
-.idea/*
-!.idea/codeStyleSettings.xml
-!.idea/codeStyles
-*.iml
+.idea/
+.iml
 
 dependency-reduced-pom.xml
 pom.xml.versionsBackup
