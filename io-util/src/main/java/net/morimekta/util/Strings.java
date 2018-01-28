@@ -21,9 +21,12 @@
 package net.morimekta.util;
 
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.Collection;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.regex.Pattern;
 
 import static java.lang.Character.isHighSurrogate;
 import static java.lang.Character.isLowSurrogate;
@@ -32,7 +35,12 @@ import static java.lang.Character.isLowSurrogate;
  * String utilities.
  */
 public class Strings {
-    private static final String NULL = "null";
+    private static final String        NULL                 = "null";
+    private static final DecimalFormat DOUBLE_FORMATTER     =
+            new DecimalFormat("#.##############", DecimalFormatSymbols.getInstance(Locale.US));
+    private static final DecimalFormat SCIENTIFIC_FORMATTER =
+            new DecimalFormat("0.############E0", DecimalFormatSymbols.getInstance(Locale.US));
+    private static final Pattern       CAMEL_CASE_DELIMITER = Pattern.compile("[^a-zA-Z0-9]");
 
     /**
      * Properly java-escape the string for printing to console.
@@ -448,10 +456,23 @@ public class Strings {
      * @return theCamelCasedName
      */
     public static String camelCase(String prefix, String name) {
-        StringBuilder builder = new StringBuilder();
-        builder.append(prefix);
+        return prefix + camelCase(name);
+    }
 
-        String[] parts = name.split("[-._]");
+    /**
+     * Format a name as CamelCase. The name is split on non-alphabet non-numeric
+     * chars, and joined with each part capitalized. This is also called
+     * PascalCase. There is in this instance no assumptions on the name itself,
+     * other than it contains some alphabet characters. Any uppercase letters
+     * in the name will be kept as uppercase, so that a CamelCase name will
+     * stay CamelCase through this call.
+     *
+     * @param name The name to camel-case.
+     * @return TheCamelCasedName
+     */
+    public static String camelCase(String name) {
+        StringBuilder builder = new StringBuilder();
+        String[] parts = CAMEL_CASE_DELIMITER.split(name);
         for (String part : parts) {
             if (part.isEmpty()) {
                 continue;
@@ -528,11 +549,14 @@ public class Strings {
 
     public static String capitalize(String string) {
         return string.substring(0, 1)
-                     .toUpperCase() + string.substring(1);
+                     .toUpperCase(Locale.US) + string.substring(1);
     }
 
     /**
-     * Make a minimal printable string from a double value.
+     * Make a minimal printable string from a double value. This method does
+     * not necessary generate a string that when parsed generates the identical
+     * number as given in. But ut should consistently generate the same string
+     * (locale independent) for the same number with reasonable accuracy.
      *
      * @param d The double value.
      * @return The string value.
@@ -541,12 +565,12 @@ public class Strings {
         long l = (long) d;
         if (d > ((10 << 9) - 1) || (1 / d) > (10 << 6)) {
             // Scientific notation should be used.
-            return new DecimalFormat("0.#########E0").format(d);
+            return SCIENTIFIC_FORMATTER.format(d);
         } else if (d == (double) l) {
             // actually an integer or long value.
             return Long.toString(l);
         } else {
-            return Double.toString(d);
+            return DOUBLE_FORMATTER.format(d);
         }
     }
 

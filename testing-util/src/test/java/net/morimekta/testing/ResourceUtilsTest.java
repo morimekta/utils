@@ -17,6 +17,7 @@ import static net.morimekta.testing.ResourceUtils.getResourceAsByteBuffer;
 import static net.morimekta.testing.ResourceUtils.getResourceAsString;
 import static net.morimekta.util.io.IOUtils.readString;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.startsWith;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
@@ -87,8 +88,7 @@ public class ResourceUtilsTest {
             ResourceUtils.writeContentTo("/net/morimekta/testing/test2.txt", file);
             fail("No exception on unable to write to file.");
         } catch (UncheckedIOException e) {
-            assertEquals("java.io.FileNotFoundException: " + file.getAbsolutePath() + " (No such file or directory)",
-                         e.getMessage());
+            assertThat(e.getMessage(), startsWith("java.io.FileNotFoundException: " + file.getAbsolutePath()));
         }
     }
 
