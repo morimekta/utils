@@ -314,7 +314,7 @@
             <plugin>
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <configuration>
-                    <additionalparam>-Xdoclint:all</additionalparam>
+                    <doclint>all</doclint>
                     <failOnError>true</failOnError>
                     <nodeprecatedlist>true</nodeprecatedlist>
                     <notimestamp>true</notimestamp>
