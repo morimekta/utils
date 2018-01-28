@@ -23,6 +23,7 @@ import java.util.concurrent.TimeUnit;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hamcrest.CoreMatchers.endsWith;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.fail;
@@ -182,6 +183,10 @@ public class ProcessExecutorTest {
             sut.call();
             fail("no exception");
         } catch (IOException e) {
+            if (e.getCause() == null) {
+                e.printStackTrace();
+            }
+            assertThat(e.getCause(), is(notNullValue()));
             assertThat(e.getCause().getMessage(), is("stderr"));
         }
     }
