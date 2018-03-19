@@ -11,20 +11,20 @@ import static org.junit.Assert.assertTrue;
  * Testing special aspects of the JsonToken class.
  */
 public class JsonTokenTest {
-    private final char[] buffer = "[\"\\\\↓ÑI©ôðé\\b\\f\\r\\n\\t\\\"\\u4f92\",{\"key\":1337,123.45:null}]".toCharArray();
+    private final char[] buffer = "[\"\\\\↓ÑI©ôðé\\b\\/\\f\\r\\n\\t\\\"\\u4f92\",{\"key\":1337,123.45:null}]".toCharArray();
 
     @Test
     public void testIsNull() {
         JsonToken token;
 
-        token = new JsonToken(JsonToken.Type.TOKEN, buffer, 50, 4, 1, 5);
+        token = new JsonToken(JsonToken.Type.TOKEN, buffer, 52, 4, 1, 5);
         assertEquals(JsonToken.Type.TOKEN, token.getType());
         assertEquals(1, token.getLineNo());
         assertEquals(5, token.getLinePos());
         assertEquals("null", token.asString());
         assertTrue(token.isNull());
 
-        token = new JsonToken(JsonToken.Type.TOKEN, buffer, 50, 3, 1, 1);
+        token = new JsonToken(JsonToken.Type.TOKEN, buffer, 52, 3, 1, 1);
         assertEquals("nul", token.asString());
         assertFalse(token.isNull());
     }
@@ -86,10 +86,10 @@ public class JsonTokenTest {
 
     @Test
     public void testRawJsonLiteral() {
-        JsonToken token = new JsonToken(JsonToken.Type.LITERAL, buffer, 1, 29, 1, 1);
-        assertEquals("\"\\\\↓ÑI©ôðé\\b\\f\\r\\n" +
+        JsonToken token = new JsonToken(JsonToken.Type.LITERAL, buffer, 1, 31, 1, 1);
+        assertEquals("\"\\\\↓ÑI©ôðé\\b\\/\\f\\r\\n" +
                      "\\t\\\"\\u4f92\"", token.asString());
-        assertEquals("\\\\↓ÑI©ôðé\\b\\f\\r\\n" +
+        assertEquals("\\\\↓ÑI©ôðé\\b\\/\\f\\r\\n" +
                      "\\t\\\"\\u4f92", token.rawJsonLiteral());
 
         // and with illegal escape characters.
@@ -104,10 +104,10 @@ public class JsonTokenTest {
 
     @Test
     public void testDecodeJsonLiteral() {
-        JsonToken token = new JsonToken(JsonToken.Type.LITERAL, buffer, 1, 29, 1, 1);
-        assertEquals("\"\\\\↓ÑI©ôðé\\b\\f\\r\\n" +
+        JsonToken token = new JsonToken(JsonToken.Type.LITERAL, buffer, 1, 31, 1, 1);
+        assertEquals("\"\\\\↓ÑI©ôðé\\b\\/\\f\\r\\n" +
                      "\\t\\\"\\u4f92\"", token.asString());
-        assertEquals("\\↓ÑI©ôðé\b\f\r\n" +
+        assertEquals("\\↓ÑI©ôðé\b/\f\r\n" +
                      "\t\"侒", token.decodeJsonLiteral());
 
         // and with illegal escape characters.
