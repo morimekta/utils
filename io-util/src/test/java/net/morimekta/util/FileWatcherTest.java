@@ -17,6 +17,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.WatchService;
 import java.util.Random;
@@ -60,7 +62,7 @@ public class FileWatcherTest {
 
     @Before
     @SuppressWarnings("unchecked")
-    public void setUp() {
+    public void setUp() throws IOException {
         Awaitility.setDefaultPollDelay(new Duration(50, TimeUnit.MILLISECONDS));
 
         eventCaptor = ArgumentCaptor.forClass(ILoggingEvent.class);
@@ -390,6 +392,95 @@ public class FileWatcherTest {
     }
 
     @Test
+    public void testSymlinkDirectory_configMap() throws IOException, InterruptedException {
+        File root = temp.getRoot()
+                        .getCanonicalFile()
+                        .getAbsoluteFile();
+
+        File configMap = new File(root, "map").getAbsoluteFile();
+        Files.createDirectories(configMap.toPath());
+        File configFile = new File(configMap, "test.file");
+        Files.createSymbolicLink(configFile.toPath(), Paths.get("..data/test.file"));
+
+
+        File oldData = new File(configMap, "..2018-01");
+        Files.createDirectories(oldData.toPath());
+        File oldFile = new File(oldData, "test.file");
+        write("old", oldFile);
+
+        File data = new File(configMap, "..data");
+        Files.createSymbolicLink(data.toPath(), Paths.get(oldData.getName()));
+
+        AtomicBoolean updated = new AtomicBoolean();
+        ArgumentCaptor<File> fileCaptor = ArgumentCaptor.forClass(File.class);
+        FileWatcher.Watcher watcher = mock(FileWatcher.Watcher.class);
+        doAnswer(i -> {
+            updated.set(true);
+            return null;
+        }).when(watcher).onFileUpdate(fileCaptor.capture());
+
+        sut.addWatcher(configFile, watcher);
+
+        // ------------------
+        // Update symlink directory to new data dir, and see that it triggers.
+
+        File newData = new File(configMap, "..2018-02");
+        Files.createDirectories(newData.toPath());
+        File newFile = new File(newData, "test.file");
+        write("new", newFile);
+
+        Path tmp = new File(configMap, "..tmp").toPath();
+        Files.createSymbolicLink(tmp, Paths.get(newData.getName()));
+        Files.move(tmp, data.toPath(), StandardCopyOption.ATOMIC_MOVE);
+
+        waitAtMost(Duration.ONE_SECOND).untilTrue(updated);
+
+        verify(watcher).onFileUpdate(configFile);
+        assertThat(fileCaptor.getValue(), is(configFile));
+        verifyNoMoreInteractions(watcher);
+
+        // ------------------
+        // Update old file, and see that it does *not* trigger.
+        updated.set(false);
+        reset(watcher);
+        doAnswer(i -> {
+            updated.set(true);
+            return null;
+        }).when(watcher).onFileUpdate(fileCaptor.capture());
+
+        write("really-old", oldFile);
+
+        Thread.sleep(100L);
+
+        verifyZeroInteractions(watcher);
+
+        updated.set(false);
+        reset(watcher);
+        doAnswer(i -> {
+            updated.set(true);
+            return null;
+        }).when(watcher).onFileUpdate(fileCaptor.capture());
+
+        newData = new File(configMap, "..2018-03");
+        Files.createDirectories(newData.toPath());
+        newFile = new File(newData, "test.file");
+        write("new2", newFile);
+
+        // ------------------
+        // Same type of update again, and see that it still triggers.
+
+        Files.createSymbolicLink(tmp, Paths.get(newData.getName()));
+        Files.move(tmp, data.toPath(), StandardCopyOption.ATOMIC_MOVE);
+
+        waitAtMost(Duration.ONE_SECOND).untilTrue(updated);
+
+        verify(watcher).onFileUpdate(configFile);
+        assertThat(fileCaptor.getValue(), is(configFile));
+        verifyNoMoreInteractions(watcher);
+
+    }
+
+    @Test
     public void testSymlinkFile_contentChange() throws IOException, InterruptedException {
         File someFile = new File(temp.getRoot(), "test.txt");
         write("test", someFile);
@@ -401,16 +492,18 @@ public class FileWatcherTest {
         Files.createSymbolicLink(someSym.toPath(), someFile.toPath());
 
         FileWatcher.Watcher watcher = mock(FileWatcher.Watcher.class);
+        FileWatcher.Watcher watcher2 = mock(FileWatcher.Watcher.class);
 
-        sut.addWatcher(watcher);
-        sut.startWatching(someSym);
+        sut.addWatcher(someSym, watcher);
+        sut.addWatcher(watcher2);
 
         writeAndMove("other", someFile);
 
         Thread.sleep(1000L);
 
-        // does not trigger, only change of the link itself will trigger here.
-        verifyZeroInteractions(watcher);
+        verify(watcher).onFileUpdate(someSym);  // update as requested
+        verify(watcher2).onFileUpdate(someFile);  // actual update
+        verifyNoMoreInteractions(watcher, watcher2);
     }
 
     @Test
@@ -435,8 +528,7 @@ public class FileWatcherTest {
             return null;
         }).when(watcher).onFileUpdate(fileCaptor.capture());
 
-        sut.addWatcher(watcher);
-        sut.startWatching(someSym);
+        sut.addWatcher(someSym, watcher);
 
         Files.createSymbolicLink(tmpSym.toPath(), otherFile.toPath());
         Files.move(tmpSym.toPath(), someSym.toPath(),
@@ -460,6 +552,21 @@ public class FileWatcherTest {
             fail("No exception on null file");
         } catch (IllegalArgumentException e) {
             assertEquals("Null file argument", e.getMessage());
+        }
+
+        try {
+            sut.addWatcher(null, null);
+            fail("No exception on null file");
+        } catch (IllegalArgumentException e) {
+            assertEquals("Null file argument", e.getMessage());
+        }
+
+        try {
+
+            sut.addWatcher(temp.newFile(), null);
+            fail("No exception on null file");
+        } catch (IllegalArgumentException e) {
+            assertEquals("Null watcher argument", e.getMessage());
         }
 
         try {
