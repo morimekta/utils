@@ -1,5 +1,7 @@
-Morimekta Utilities
-===================
+---
+layout: page
+title: "About Morimekta Utilities"
+---
 
 Morimekta utilities is a collection of utility libraries for java. Ranging
 in functionality from emulating android libraries to handling high performance
