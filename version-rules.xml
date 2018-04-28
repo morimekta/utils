@@ -12,7 +12,7 @@
                 <ignoreVersion type="regex">.*(RC)\d+</ignoreVersion>
                 <ignoreVersion type="regex">.*[-._](pr|M)\d+</ignoreVersion>
                 <ignoreVersion type="regex">.*does-not-exist</ignoreVersion>
-                <ignoreVersion type="regex">.*-android</ignoreVersion>
+                <ignoreVersion type="regex">.*-(android|beta|alpha)</ignoreVersion>
             </ignoreVersions>
         </rule>
     </rules>
