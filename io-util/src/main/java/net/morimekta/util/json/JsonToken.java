@@ -191,6 +191,7 @@ public class JsonToken extends CharSlice {
                         break;
                     case '\"':
                     case '\\':
+                    case '/':
                         out.append(ch);
                         break;
                     case 'u':
