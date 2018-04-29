@@ -32,6 +32,10 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * It is a minimal port of the
  * <a href="http://iharder.sourceforge.net/current/java/base64/">iharder Base64</a>
  * utility class.
+ *
+ * Note: This library should only be used when you have a controlled environment
+ * where you use base64 encoding, and it needs to be as fast as possible. If you
+ * need more functionality around base64, use the native encoder or decoder.
  */
 public class Base64 {
     /* ********  P R I V A T E   F I E L D S  ******** */
