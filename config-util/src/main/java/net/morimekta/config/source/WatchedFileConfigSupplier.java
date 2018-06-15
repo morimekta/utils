@@ -49,11 +49,6 @@ public class WatchedFileConfigSupplier extends FileConfigSupplier {
 
     public WatchedFileConfigSupplier(FileWatcher watcher, File configFile, ConfigParser format) {
         super(configFile, format);
-        watcher.addWatcher(file -> {
-            if (configFile.equals(file)) {
-                reload();
-            }
-        });
-        watcher.startWatching(configFile);
+        watcher.addWatcher(configFile.toPath(), file -> reload());
     }
 }

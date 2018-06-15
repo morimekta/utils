@@ -52,7 +52,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
-public class FileWatcherTest {
+public class FileWatcherOldTest {
     @Rule
     public TemporaryFolder temp = new TemporaryFolder();
 
@@ -86,14 +86,14 @@ public class FileWatcherTest {
 
     @Test
     public void testSimpleWatch() throws IOException, InterruptedException {
-        Path test1 = temp.newFile("test1").getCanonicalFile().toPath();
-        Path test2 = temp.newFile("test2").getCanonicalFile().toPath();
-        Path test3 = new File(temp.getRoot(), "test3").getCanonicalFile().toPath();
+        File test1 = temp.newFile("test1").getCanonicalFile();
+        File test2 = temp.newFile("test2").getCanonicalFile();
+        File test3 = new File(temp.getRoot(), "test3").getCanonicalFile();
         temp.newFile("test4");
-        Path test5 = new File(temp.getRoot(), "test5").getCanonicalFile().toPath();
+        File test5 = new File(temp.getRoot(), "test5").getCanonicalFile();
 
-        Path subDir = temp.newFolder("test-" + new Random().nextInt()).toPath();
-        Path subFile = subDir.resolve("subFile");
+        File subDir = temp.newFolder("test-" + new Random().nextInt());
+        File subFile = new File(subDir, "subFile").getCanonicalFile();
 
         write("1", test1);
         write("2", test2);
@@ -101,15 +101,15 @@ public class FileWatcherTest {
 
         sleep(100L);
 
-        FileWatcher.Listener watcher = mock(FileWatcher.Listener.class);
+        FileWatcher.Watcher watcher = mock(FileWatcher.Watcher.class);
 
         sut.addWatcher(test1, watcher);  // written to.
         sut.addWatcher(test3, watcher);  // copied to
-        sut.weakAddWatcher(test5.toFile(), watcher);  // no event.
+        sut.weakAddWatcher(test5, watcher);  // no event.
 
         write("4", test1);
         write("5", test2);  // no event .
-        Files.move(subFile, test3, REPLACE_EXISTING, ATOMIC_MOVE);
+        Files.move(subFile.toPath(), test3.toPath(), REPLACE_EXISTING, ATOMIC_MOVE);
 
         sleep(100L);
 
@@ -117,27 +117,27 @@ public class FileWatcherTest {
         // set of updates on the other side.
 
         // no callback on write to test2.
-        verify(watcher, atLeastOnce()).onPathUpdate(eq(test1));
-        verify(watcher, atLeastOnce()).onPathUpdate(eq(test3));
+        verify(watcher, atLeastOnce()).onPathUpdate(eq(test1.toPath()));
+        verify(watcher, atLeastOnce()).onPathUpdate(eq(test3.toPath()));
         verifyNoMoreInteractions(watcher);
     }
 
     @Test
     public void testStopWatching() throws IOException, InterruptedException {
-        Path file1 = temp.newFile().getCanonicalFile().toPath();
-        Path file2 = temp.newFile().getCanonicalFile().toPath();
+        File file1 = temp.newFile().getCanonicalFile();
+        File file2 = temp.newFile().getCanonicalFile();
 
-        sut.startWatching(file1.toFile());
-        sut.startWatching(file2.toFile());
+        sut.startWatching(file1);
+        sut.startWatching(file2);
 
         writeAndMove("a", file1);
         writeAndMove("b", file2);
 
         sleep(100L);
 
-        sut.stopWatching(file2.toFile());
+        sut.stopWatching(file2);
 
-        FileWatcher.Listener watcher = mock(FileWatcher.Listener.class);
+        FileWatcher.Watcher watcher = mock(FileWatcher.Watcher.class);
         sut.addWatcher(watcher);
 
         writeAndMove("c", file2);
@@ -145,22 +145,22 @@ public class FileWatcherTest {
 
         sleep(100L);
 
-        verify(watcher).onPathUpdate(file1);
+        verify(watcher).onPathUpdate(file1.toPath());
         verifyNoMoreInteractions(watcher);
     }
 
     @Test
     public void testWeakWatchers() throws IOException {
-        Path file1 = temp.newFile().getCanonicalFile().toPath();
+        File file1 = temp.newFile().getCanonicalFile();
         writeAndMove("a", file1);
 
-        sut.startWatching(file1.toFile());
+        sut.startWatching(file1);
 
-        AtomicBoolean        watcherCalled = new AtomicBoolean();
-        FileWatcher.Listener watcher       = f -> watcherCalled.set(true);
+        AtomicBoolean watcherCalled = new AtomicBoolean();
+        FileWatcher.Watcher watcher = f -> watcherCalled.set(true);
 
-        FileWatcher.Listener innerWatcher = mock(FileWatcher.Listener.class);
-        FileWatcher.Listener weakWatcher  = f -> innerWatcher.onPathUpdate(f);
+        FileWatcher.Watcher innerWatcher = mock(FileWatcher.Watcher.class);
+        FileWatcher.Watcher weakWatcher = f -> innerWatcher.onPathUpdate(f.toPath());
 
         sut.addWatcher(watcher);
         sut.weakAddWatcher(weakWatcher);
@@ -172,7 +172,7 @@ public class FileWatcherTest {
         await().atMost(Duration.ONE_MINUTE).untilTrue(watcherCalled);
         watcherCalled.set(false);
 
-        verify(innerWatcher).onPathUpdate(file1);
+        verify(innerWatcher).onPathUpdate(file1.toPath());
 
         verifyNoMoreInteractions(innerWatcher);
         reset(innerWatcher);
@@ -190,12 +190,12 @@ public class FileWatcherTest {
 
     @Test
     public void testRemoveWeakWatchers() throws IOException, InterruptedException {
-        AtomicBoolean        called = new AtomicBoolean();
-        FileWatcher.Listener w0     = f -> called.set(true);
+        AtomicBoolean called = new AtomicBoolean();
+        FileWatcher.Watcher w0 = f -> called.set(true);
         sut.weakAddWatcher(w0);
 
-        Path file1 = temp.newFile().getCanonicalFile().toPath();
-        sut.startWatching(file1.toFile());
+        File file1 = temp.newFile().getCanonicalFile();
+        sut.startWatching(file1);
         writeAndMove("b", file1);
 
         await().atMost(Duration.ONE_MINUTE).untilTrue(called);
@@ -220,13 +220,13 @@ public class FileWatcherTest {
      */
     @Test
     public void testMultipleWatchers() throws IOException, InterruptedException {
-        FileWatcher          sut2   = new FileWatcher();
-        AtomicInteger        called = new AtomicInteger(0);
-        FileWatcher.Listener w0     = f -> called.incrementAndGet();
-        FileWatcher.Listener w1     = mock(FileWatcher.Listener.class);
-        FileWatcher.Listener w2     = mock(FileWatcher.Listener.class);
-        FileWatcher.Listener w3     = mock(FileWatcher.Listener.class);
-        FileWatcher.Listener w4     = mock(FileWatcher.Listener.class);
+        FileWatcher sut2 = new FileWatcher();
+        AtomicInteger called = new AtomicInteger(0);
+        FileWatcher.Watcher w0 = f -> called.incrementAndGet();
+        FileWatcher.Watcher w1 = mock(FileWatcher.Watcher.class);
+        FileWatcher.Watcher w2 = mock(FileWatcher.Watcher.class);
+        FileWatcher.Watcher w3 = mock(FileWatcher.Watcher.class);
+        FileWatcher.Watcher w4 = mock(FileWatcher.Watcher.class);
 
         sut.addWatcher(w0);
         sut.addWatcher(w1);
@@ -236,15 +236,15 @@ public class FileWatcherTest {
         sut2.addWatcher(w3);
         sut2.addWatcher(w4);
 
-        Path f1 = temp.newFile().getCanonicalFile().toPath();
-        Path f2 = temp.newFile().getCanonicalFile().toPath();
-        Path f12 = temp.newFile().getCanonicalFile().toPath();
-        Files.deleteIfExists(f12);
+        File f1 = temp.newFile().getCanonicalFile();
+        File f2 = temp.newFile().getCanonicalFile();
+        File f12 = temp.newFile().getCanonicalFile();
+        f12.delete();
 
-        sut.startWatching(f1.toFile());
-        sut2.startWatching(f2.toFile());
-        sut.startWatching(f12.toFile());
-        sut2.startWatching(f12.toFile());
+        sut.startWatching(f1);
+        sut2.startWatching(f2);
+        sut.startWatching(f12);
+        sut2.startWatching(f12);
 
         // The "writeAndMove" version should have an atomic "CREATE" event, so
         // there is no intermediate "partially written" state to count.
@@ -255,15 +255,15 @@ public class FileWatcherTest {
         await().atMost(1, MINUTES).untilAtomic(called, is(4));
         called.set(0);
 
-        verify(w1).onPathUpdate(eq(f1));
-        verify(w1).onPathUpdate(eq(f12));
-        verify(w2).onPathUpdate(eq(f1));
-        verify(w2).onPathUpdate(eq(f12));
+        verify(w1).onPathUpdate(eq(f1.toPath()));
+        verify(w1).onPathUpdate(eq(f12.toPath()));
+        verify(w2).onPathUpdate(eq(f1.toPath()));
+        verify(w2).onPathUpdate(eq(f12.toPath()));
 
-        verify(w3).onPathUpdate(eq(f2));
-        verify(w3).onPathUpdate(eq(f12));
-        verify(w4).onPathUpdate(eq(f2));
-        verify(w4).onPathUpdate(eq(f12));
+        verify(w3).onPathUpdate(eq(f2.toPath()));
+        verify(w3).onPathUpdate(eq(f12.toPath()));
+        verify(w4).onPathUpdate(eq(f2.toPath()));
+        verify(w4).onPathUpdate(eq(f12.toPath()));
 
         verifyNoMoreInteractions(w1, w2, w3, w4);
 
@@ -282,40 +282,40 @@ public class FileWatcherTest {
         await().atMost(1, MINUTES).untilAtomic(called, is(4));
         called.set(0);
 
-        verify(w1).onPathUpdate(eq(f1));
-        verify(w1).onPathUpdate(eq(f12));
+        verify(w1).onPathUpdate(eq(f1.toPath()));
+        verify(w1).onPathUpdate(eq(f12.toPath()));
 
-        verify(w3).onPathUpdate(eq(f2));
-        verify(w3).onPathUpdate(eq(f12));
+        verify(w3).onPathUpdate(eq(f2.toPath()));
+        verify(w3).onPathUpdate(eq(f12.toPath()));
 
         verifyNoMoreInteractions(w1, w2, w3, w4);
     }
 
     @Test
     public void testMultipleDirectories() throws IOException, InterruptedException {
-        AtomicInteger        called = new AtomicInteger(0);
-        FileWatcher.Listener w0     = f -> called.incrementAndGet();
+        AtomicInteger called = new AtomicInteger(0);
+        FileWatcher.Watcher w0 = f -> called.incrementAndGet();
 
-        Path dir1 = temp.newFolder("dir1").toPath();
-        Path dir2 = temp.newFolder("dir2").toPath();
+        File dir1 = temp.newFolder("dir1");
+        File dir2 = temp.newFolder("dir2");
 
-        Path f1 = dir1.resolve("f1");
-        Path f2 = dir2.resolve("f2");
+        File f1 = new File(dir1, "f1").getCanonicalFile();
+        File f2 = new File(dir2, "f2").getCanonicalFile();
 
-        FileWatcher.Listener watcher = mock(FileWatcher.Listener.class);
+        FileWatcher.Watcher watcher = mock(FileWatcher.Watcher.class);
         sut.addWatcher(w0);
         sut.addWatcher(watcher);
-        sut.startWatching(f1.toFile());
+        sut.startWatching(f1);
         sut.startWatching(new File(f1.toString()));
-        sut.startWatching(f2.toFile());
+        sut.startWatching(f2);
 
         writeAndMove("1", f1);
         writeAndMove("2", f2);
 
         await().atMost(1, MINUTES).untilAtomic(called, is(2));
 
-        verify(watcher).onPathUpdate(f1);
-        verify(watcher).onPathUpdate(f2);
+        verify(watcher).onPathUpdate(f1.toPath());
+        verify(watcher).onPathUpdate(f2.toPath());
         verifyNoMoreInteractions(watcher);
     }
 
@@ -343,7 +343,7 @@ public class FileWatcherTest {
 
         sut.close();
 
-        FileWatcher.Listener watcher = mock(FileWatcher.Listener.class);
+        FileWatcher.Watcher watcher = mock(FileWatcher.Watcher.class);
 
         try {
             sut.addWatcher(watcher);
@@ -361,62 +361,60 @@ public class FileWatcherTest {
 
     @Test
     public void testSymlinkDirectory() throws IOException {
-        Path root = temp.getRoot()
+        File root = temp.getRoot()
                         .getCanonicalFile()
-                        .getAbsoluteFile()
-                        .toPath();
-        Path someDir = root.resolve("test");
-        Files.createDirectories(someDir);
-        Path someSym = root.resolve("link");
-        Path file = someDir.resolve("test.txt");
-        Path toListen = someSym.resolve("test.txt");
+                        .getAbsoluteFile();
+        File someDir = new File(root, "test");
+        Files.createDirectories(someDir.toPath());
+        File someSym = new File(root, "link");
+        File file = new File(someDir, "test.txt");
+        File toListen = new File(someSym, "test.txt");
         write("test", file);
 
-        Files.createSymbolicLink(someSym, someDir);
+        Files.createSymbolicLink(someSym.toPath(), someDir.toPath());
 
-        AtomicBoolean        updated    = new AtomicBoolean();
+        AtomicBoolean updated = new AtomicBoolean();
         ArgumentCaptor<Path> fileCaptor = ArgumentCaptor.forClass(Path.class);
-        FileWatcher.Listener watcher    = mock(FileWatcher.Listener.class);
+        FileWatcher.Watcher watcher = mock(FileWatcher.Watcher.class);
         doAnswer(i -> {
             updated.set(true);
             return null;
         }).when(watcher).onPathUpdate(fileCaptor.capture());
 
         sut.addWatcher(watcher);
-        sut.startWatching(toListen.toFile());
+        sut.startWatching(toListen);
 
         writeAndMove("other", file);
 
         waitAtMost(Duration.ONE_SECOND).untilTrue(updated);
 
-        verify(watcher).onPathUpdate(file);
-        assertThat(fileCaptor.getValue(), is(file));
+        verify(watcher).onPathUpdate(file.toPath());
+        assertThat(fileCaptor.getValue(), is(file.toPath()));
     }
 
     @Test
     public void testSymlinkDirectory_configMap() throws IOException, InterruptedException {
-        Path root = temp.getRoot()
+        File root = temp.getRoot()
                         .getCanonicalFile()
-                        .getAbsoluteFile()
-                        .toPath();
+                        .getAbsoluteFile();
 
-        Path configMap = root.resolve("map");
-        Files.createDirectories(configMap);
-        Path configFile = configMap.resolve("test.file");
-        Files.createSymbolicLink(configFile, Paths.get("..data/test.file"));
+        File configMap = new File(root, "map").getAbsoluteFile();
+        Files.createDirectories(configMap.toPath());
+        File configFile = new File(configMap, "test.file");
+        Files.createSymbolicLink(configFile.toPath(), Paths.get("..data/test.file"));
 
 
-        Path oldData = configMap.resolve("..2018-01");
-        Files.createDirectories(oldData);
-        Path oldFile = oldData.resolve("test.file");
+        File oldData = new File(configMap, "..2018-01");
+        Files.createDirectories(oldData.toPath());
+        File oldFile = new File(oldData, "test.file");
         write("old", oldFile);
 
-        Path data = configMap.resolve("..data");
-        Files.createSymbolicLink(data, Paths.get(oldData.getFileName().toString()));
+        File data = new File(configMap, "..data");
+        Files.createSymbolicLink(data.toPath(), Paths.get(oldData.getName()));
 
-        AtomicBoolean        updated    = new AtomicBoolean();
+        AtomicBoolean updated = new AtomicBoolean();
         ArgumentCaptor<Path> fileCaptor = ArgumentCaptor.forClass(Path.class);
-        FileWatcher.Listener watcher    = mock(FileWatcher.Listener.class);
+        FileWatcher.Watcher watcher = mock(FileWatcher.Watcher.class);
         doAnswer(i -> {
             updated.set(true);
             return null;
@@ -427,19 +425,19 @@ public class FileWatcherTest {
         // ------------------
         // Update symlink directory to new data dir, and see that it triggers.
 
-        Path newData = configMap.resolve("..2018-02");
-        Files.createDirectories(newData);
-        Path newFile = newData.resolve("test.file");
+        File newData = new File(configMap, "..2018-02");
+        Files.createDirectories(newData.toPath());
+        File newFile = new File(newData, "test.file");
         write("new", newFile);
 
-        Path tmp = configMap.resolve("..tmp");
-        Files.createSymbolicLink(tmp, Paths.get(newData.getFileName().toString()));
-        Files.move(tmp, data, REPLACE_EXISTING, ATOMIC_MOVE);
+        Path tmp = new File(configMap, "..tmp").toPath();
+        Files.createSymbolicLink(tmp, Paths.get(newData.getName()));
+        Files.move(tmp, data.toPath(), REPLACE_EXISTING, ATOMIC_MOVE);
 
         waitAtMost(Duration.ONE_SECOND).untilTrue(updated);
 
-        verify(watcher).onPathUpdate(configFile);
-        assertThat(fileCaptor.getValue(), is(configFile));
+        verify(watcher).onPathUpdate(configFile.toPath());
+        assertThat(fileCaptor.getValue(), is(configFile.toPath()));
         verifyNoMoreInteractions(watcher);
 
         // ------------------
@@ -464,39 +462,38 @@ public class FileWatcherTest {
             return null;
         }).when(watcher).onPathUpdate(fileCaptor.capture());
 
-        newData = configMap.resolve("..2018-03");
-        Files.createDirectories(newData);
-        newFile = newData.resolve("test.file");
+        newData = new File(configMap, "..2018-03");
+        Files.createDirectories(newData.toPath());
+        newFile = new File(newData, "test.file");
         write("new2", newFile);
 
         // ------------------
         // Same type of update again, and see that it still triggers.
 
-        Files.createSymbolicLink(tmp, Paths.get(newData.getFileName().toString()));
-        Files.move(tmp, data, REPLACE_EXISTING, ATOMIC_MOVE);
+        Files.createSymbolicLink(tmp, Paths.get(newData.getName()));
+        Files.move(tmp, data.toPath(), REPLACE_EXISTING, ATOMIC_MOVE);
 
         waitAtMost(Duration.ONE_SECOND).untilTrue(updated);
 
-        verify(watcher).onPathUpdate(configFile);
-        assertThat(fileCaptor.getValue(), is(configFile));
+        verify(watcher).onPathUpdate(configFile.toPath());
+        assertThat(fileCaptor.getValue(), is(configFile.toPath()));
         verifyNoMoreInteractions(watcher);
 
     }
 
     @Test
     public void testSymlinkFile_contentChange() throws IOException, InterruptedException {
-        Path someFile = new File(temp.getRoot(), "test.txt").toPath();
+        File someFile = new File(temp.getRoot(), "test.txt");
         write("test", someFile);
 
-        Path root = temp.newFolder("test")
+        File root = temp.newFolder("test")
                         .getCanonicalFile()
-                        .getAbsoluteFile()
-                        .toPath();
-        Path someSym = root.resolve("link.txt");
-        Files.createSymbolicLink(someSym, someFile);
+                        .getAbsoluteFile();
+        File someSym = new File(root, "link.txt");
+        Files.createSymbolicLink(someSym.toPath(), someFile.toPath());
 
-        FileWatcher.Listener watcher  = mock(FileWatcher.Listener.class);
-        FileWatcher.Listener watcher2 = mock(FileWatcher.Listener.class);
+        FileWatcher.Watcher watcher = mock(FileWatcher.Watcher.class);
+        FileWatcher.Watcher watcher2 = mock(FileWatcher.Watcher.class);
 
         sut.addWatcher(someSym, watcher);
         sut.addWatcher(watcher2);
@@ -505,29 +502,28 @@ public class FileWatcherTest {
 
         Thread.sleep(1000L);
 
-        verify(watcher).onPathUpdate(someSym);  // update as requested
-        verify(watcher2).onPathUpdate(someFile);  // actual update
+        verify(watcher).onPathUpdate(someSym.toPath());  // update as requested
+        verify(watcher2).onPathUpdate(someFile.toPath());  // actual update
         verifyNoMoreInteractions(watcher, watcher2);
     }
 
     @Test
     public void testSymlinkFile_linkChange() throws IOException, InterruptedException {
-        Path someFile = new File(temp.getRoot(), "test.txt").toPath();
+        File someFile = new File(temp.getRoot(), "test.txt");
         write("test", someFile);
-        Path otherFile = new File(temp.getRoot(), "other.txt").toPath();
+        File otherFile = new File(temp.getRoot(), "other.txt");
         write("other", someFile);
 
-        Path root = temp.newFolder("test")
+        File root = temp.newFolder("test")
                         .getCanonicalFile()
-                        .getAbsoluteFile()
-                        .toPath();
-        Path someSym = root.resolve("link.txt");
-        Path tmpSym = new File(temp.getRoot(), "tmp").toPath();
-        Files.createSymbolicLink(someSym, someFile);
+                        .getAbsoluteFile();
+        File someSym = new File(root, "link.txt");
+        File tmpSym = new File(temp.getRoot(), "tmp");
+        Files.createSymbolicLink(someSym.toPath(), someFile.toPath());
 
-        AtomicBoolean        updated    = new AtomicBoolean();
+        AtomicBoolean updated = new AtomicBoolean();
         ArgumentCaptor<Path> fileCaptor = ArgumentCaptor.forClass(Path.class);
-        FileWatcher.Listener watcher    = mock(FileWatcher.Listener.class);
+        FileWatcher.Watcher watcher = mock(FileWatcher.Watcher.class);
         doAnswer(i -> {
             updated.set(true);
             return null;
@@ -535,16 +531,16 @@ public class FileWatcherTest {
 
         sut.addWatcher(someSym, watcher);
 
-        Files.createSymbolicLink(tmpSym, otherFile);
-        Files.move(tmpSym, someSym, REPLACE_EXISTING, ATOMIC_MOVE);
+        Files.createSymbolicLink(tmpSym.toPath(), otherFile.toPath());
+        Files.move(tmpSym.toPath(), someSym.toPath(), REPLACE_EXISTING, ATOMIC_MOVE);
 
         // Make sure it is still a symbolic link.
-        assertThat(Files.isSymbolicLink(someSym), is(true));
+        assertThat(Files.isSymbolicLink(someSym.toPath()), is(true));
 
         waitAtMost(Duration.ONE_SECOND).untilTrue(updated);
 
-        verify(watcher).onPathUpdate(someSym);
-        assertThat(fileCaptor.getValue(), is(someSym));
+        verify(watcher).onPathUpdate(someSym.toPath());
+        assertThat(fileCaptor.getValue(), is(someSym.toPath()));
     }
 
 
@@ -669,21 +665,21 @@ public class FileWatcherTest {
                    is("[WARN] CallbackExecutor failed to terminate in 10 seconds"));
     }
 
-    private void write(String content, Path file) throws IOException {
-        try (FileOutputStream fos = new FileOutputStream(file.toFile())) {
+    private void write(String content, File file) throws IOException {
+        try (FileOutputStream fos = new FileOutputStream(file)) {
             fos.write(content.getBytes(UTF_8));
             fos.flush();
             fos.getFD().sync();
         }
     }
 
-    private void writeAndMove(String content, Path file) throws IOException {
+    private void writeAndMove(String content, File file) throws IOException {
         File tmp = temp.newFile();
         try (FileOutputStream fos = new FileOutputStream(tmp)) {
             fos.write(content.getBytes(UTF_8));
             fos.flush();
         }
 
-        Files.move(tmp.toPath(), file, REPLACE_EXISTING, ATOMIC_MOVE);
+        tmp.renameTo(file);
     }
 }

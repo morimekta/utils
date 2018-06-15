@@ -96,9 +96,27 @@ import static net.morimekta.util.FileUtil.readCanonicalPath;
  * handles its configMaps and Secrets.
  */
 public class FileWatcher implements AutoCloseable {
+    /**
+     * @deprecated Use {@link Listener} instead.
+     */
+    @Deprecated
     @FunctionalInterface
-    public interface Watcher {
+    public interface Watcher extends Listener {
         void onFileUpdate(File file);
+        @Override
+        default void onPathUpdate(Path path) {
+            onFileUpdate(path.toFile());
+        }
+    }
+
+    @FunctionalInterface
+    public interface Listener {
+        /**
+         * Called when the requested file path is updated.
+         *
+         * @param path Path to the file updated.
+         */
+        void onPathUpdate(Path path);
     }
 
     public FileWatcher() {
@@ -131,25 +149,37 @@ public class FileWatcher implements AutoCloseable {
      *
      * @param file The file path to watch.
      * @param watcher The watcher to be notified.
+     * @deprecated Use {@link #addWatcher(Path, Listener)}
      */
-    public void addWatcher(File file, Watcher watcher) {
+    @Deprecated
+    public void addWatcher(File file, Listener watcher) {
+        addWatcher(file.toPath(), watcher);
+    }
+
+    /**
+     * Start watching file path and notify watcher for updates on that file.
+     *
+     * @param file The file path to watch.
+     * @param watcher The watcher to be notified.
+     */
+    public void addWatcher(Path file, Listener watcher) {
         if (file == null) throw new IllegalArgumentException("Null file argument");
         if (watcher == null) throw new IllegalArgumentException("Null watcher argument");
         synchronized (mutex) {
-            startWatchingInternal(file.toPath()).add(() -> watcher);
+            startWatchingInternal(file).add(() -> watcher);
         }
     }
 
     /**
      * Add a file watcher that is persistent. If the reference from the
      * file watcher to the watcher itself should not prevent garbage collection,
-     * use the {@link #weakAddWatcher(Watcher)} method.
+     * use the {@link #weakAddWatcher(Listener)} method.
      *
      * @param watcher The watcher to add.
-     * @deprecated Use {@link #addWatcher(File, Watcher)}
+     * @deprecated Use {@link #addWatcher(File, Listener)}
      */
     @Deprecated
-    public void addWatcher(Watcher watcher) {
+    public void addWatcher(Listener watcher) {
         if (watcher == null) {
             throw new IllegalArgumentException("Null watcher added");
         }
@@ -169,10 +199,24 @@ public class FileWatcher implements AutoCloseable {
      *
      * @param file The file path to watch.
      * @param watcher The watcher to be notified.
+     * @deprecated Use {@link #weakAddWatcher(Path, Listener)}
      */
-    public void weakAddWatcher(File file, Watcher watcher) {
+    @Deprecated
+    public void weakAddWatcher(File file, Listener watcher) {
+        weakAddWatcher(file.toPath(), watcher);
+    }
+
+    /**
+     * Start watching file path and notify watcher for updates on that file.
+     * The watcher will be kept in a weak reference and will allow GC to delete
+     * the instance.
+     *
+     * @param file The file path to watch.
+     * @param watcher The watcher to be notified.
+     */
+    public void weakAddWatcher(Path file, Listener watcher) {
         synchronized (mutex) {
-            startWatchingInternal(file.toPath()).add(new WeakReference<>(watcher)::get);
+            startWatchingInternal(file).add(new WeakReference<>(watcher)::get);
         }
     }
 
@@ -180,10 +224,10 @@ public class FileWatcher implements AutoCloseable {
      * Add a non-persistent file watcher.
      *
      * @param watcher The watcher to add.
-     * @deprecated Use {@link #weakAddWatcher(File, Watcher)}.
+     * @deprecated Use {@link #weakAddWatcher(File, Listener)}.
      */
     @Deprecated
-    public void weakAddWatcher(Watcher watcher) {
+    public void weakAddWatcher(Listener watcher) {
         if (watcher == null) {
             throw new IllegalArgumentException("Null watcher added");
         }
@@ -202,7 +246,7 @@ public class FileWatcher implements AutoCloseable {
      * @param watcher The watcher to be removed.
      * @return True if the watcher was removed from the list.
      */
-    public boolean removeWatcher(Watcher watcher) {
+    public boolean removeWatcher(Listener watcher) {
         if (watcher == null) {
             throw new IllegalArgumentException("Null watcher removed");
         }
@@ -225,7 +269,7 @@ public class FileWatcher implements AutoCloseable {
      * changes to the symlink definition, not the content of the file.
      *
      * @param file The file to be watched.
-     * @deprecated Use {@link #addWatcher(File, Watcher)} or {@link #weakAddWatcher(File, Watcher)}
+     * @deprecated Use {@link #addWatcher(File, Listener)} or {@link #weakAddWatcher(File, Listener)}
      */
     @Deprecated
     public void startWatching(File file) {
@@ -241,7 +285,7 @@ public class FileWatcher implements AutoCloseable {
      * Stop watching a specific file.
      *
      * @param file The file to be watched.
-     * @deprecated Use {@link #removeWatcher(Watcher)} and let it clean up watched
+     * @deprecated Use {@link #removeWatcher(Listener)} and let it clean up watched
      *             files itself.
      */
     @Deprecated
@@ -317,7 +361,7 @@ public class FileWatcher implements AutoCloseable {
         };
     }
 
-    private List<Supplier<Watcher>> startWatchingInternal(@Nonnull Path path) {
+    private List<Supplier<Listener>> startWatchingInternal(@Nonnull Path path) {
         try {
             if (watcherExecutor.isShutdown()) {
                 throw new IllegalStateException("Starts to watch on closed FileWatcher");
@@ -419,9 +463,9 @@ public class FileWatcher implements AutoCloseable {
                 key.reset();
 
                 if (updates.size() > 0) {
-                    List<Supplier<Watcher>> watcherList;
-                    Map<Path,List<Supplier<Watcher>>> watcherMap;
-                    Set<Path> updatedRequests = new TreeSet<>();
+                    List<Supplier<Listener>>           watcherList;
+                    Map<Path,List<Supplier<Listener>>> watcherMap;
+                    Set<Path>                          updatedRequests = new TreeSet<>();
                     synchronized (mutex) {
                         watcherList = new ArrayList<>(this.watchers);
                         watcherMap = deepCopy(watchedFiles);
@@ -440,11 +484,11 @@ public class FileWatcher implements AutoCloseable {
 
                     callbackExecutor.submit(() -> {
                         for (final Path file : updates) {
-                            for (final Supplier<Watcher> supplier : watcherList) {
-                                Watcher watcher = supplier.get();
+                            for (final Supplier<Listener> supplier : watcherList) {
+                                Listener watcher = supplier.get();
                                 if (watcher != null) {
                                     try {
-                                        watcher.onFileUpdate(file.toFile());
+                                        watcher.onPathUpdate(file);
                                     } catch (RuntimeException e) {
                                         LOGGER.error("Exception when notifying update on " + file, e);
                                     }
@@ -454,11 +498,11 @@ public class FileWatcher implements AutoCloseable {
                         for (Path request : updatedRequests) {
                             Optional.ofNullable(watcherMap.get(request))
                                     .ifPresent(list -> {
-                                        for (final Supplier<Watcher> supplier : list) {
-                                            Watcher watcher = supplier.get();
+                                        for (final Supplier<Listener> supplier : list) {
+                                            Listener watcher = supplier.get();
                                             if (watcher != null) {
                                                 try {
-                                                    watcher.onFileUpdate(request.toFile());
+                                                    watcher.onPathUpdate(request);
                                                 } catch (RuntimeException e) {
                                                     LOGGER.error("Exception when notifying update on " + request, e);
                                                 }
@@ -476,8 +520,8 @@ public class FileWatcher implements AutoCloseable {
     }
 
     @Nonnull
-    private static Map<Path,List<Supplier<Watcher>>> deepCopy(@Nonnull Map<Path,List<Supplier<Watcher>>> in) {
-        Map<Path,List<Supplier<Watcher>>> out = new HashMap<>();
+    private static Map<Path,List<Supplier<Listener>>> deepCopy(@Nonnull Map<Path,List<Supplier<Listener>>> in) {
+        Map<Path,List<Supplier<Listener>>> out = new HashMap<>();
         in.forEach((path, suppliers) -> out.put(path, new ArrayList<>(suppliers)));
         return in;
     }
@@ -570,11 +614,11 @@ public class FileWatcher implements AutoCloseable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FileWatcher.class);
 
-    private final Object                             mutex;
+    private final Object                              mutex;
     // List of listeners.
-    private final ArrayList<Supplier<Watcher>>       watchers;
+    private final ArrayList<Supplier<Listener>>       watchers;
     // Watched files, as a map from requested file path to list of watchers.
-    private final Map<Path, List<Supplier<Watcher>>> watchedFiles;
+    private final Map<Path, List<Supplier<Listener>>> watchedFiles;
 
     // Directory to watcher KEY.
     private final Map<Path, WatchKey> watchDirKeys;
