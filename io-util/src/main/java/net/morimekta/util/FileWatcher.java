@@ -119,8 +119,19 @@ public class FileWatcher implements AutoCloseable {
         void onPathUpdate(Path path);
     }
 
+    /**
+     * Create a FileWatcher with default watch service.
+     */
     public FileWatcher() {
-        this(newWatchService(),
+        this(newWatchService());
+    }
+
+    /**
+     * Create a FileWatcher using the provided watch service.
+     * @param watchService
+     */
+    public FileWatcher(WatchService watchService) {
+        this(watchService,
              Executors.newSingleThreadExecutor(makeThreadFactory("FileWatcher")),
              Executors.newSingleThreadExecutor(makeThreadFactory("FileWatcherCallback")));
     }
