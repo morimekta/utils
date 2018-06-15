@@ -22,6 +22,7 @@ package net.morimekta.util;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.NotLinkException;
 import java.nio.file.Path;
@@ -137,6 +138,25 @@ public class FileUtil {
         } else {
             Files.createSymbolicLink(link, target);
         }
+    }
+
+    /**
+     * Delete the file or directory recursively.
+     *
+     * @param path The file or directory path.
+     * @throws IOException If delete failed at some point.
+     */
+    public static void deleteRecursively(Path path) throws IOException {
+        if (Files.isDirectory(path)) {
+            Files.list(path).forEach(file -> {
+                try {
+                    deleteRecursively(file);
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e.getMessage(), e);
+                }
+            });
+        }
+        Files.delete(path);
     }
 
     private FileUtil() {}
