@@ -196,7 +196,7 @@ public class StrongHashBuilder {
         return this;
     }
 
-    public StrongHashBuilder add(Object[] arr) {
+    public <T> StrongHashBuilder add(T[] arr) {
         if (arr == null) {
             cur = (cur ^ NULL ^ ++i) * mul;
         } else {

@@ -53,7 +53,7 @@ public class StrongHashBuilderTest {
             bld.add((Object) new double[]{6.2d});
             bld.add((Object) new char[]{'7'});
             bld.add((Object) new String[]{"8"});
-            bld.add((Object) new Object[]{UUID.nameUUIDFromBytes("test-2".getBytes(UTF_8))});
+            bld.add((Object) new UUID[]{UUID.nameUUIDFromBytes("test-2".getBytes(UTF_8))});
             bld.add((Object) ImmutableList.of(UUID.nameUUIDFromBytes("test-2".getBytes(UTF_8))));
             bld.add((Object) ImmutableMap.of(
                     UUID.nameUUIDFromBytes("test-2".getBytes(UTF_8)),
@@ -81,7 +81,7 @@ public class StrongHashBuilderTest {
         c.add((Object) new double[]{6.2d});
         c.add((Object) new String[]{"8"});  // swapped with
         c.add((Object) new char[]{'7'});    // this
-        c.add((Object) new Object[]{UUID.nameUUIDFromBytes("test-2".getBytes(UTF_8))});
+        c.add((Object) new UUID[]{UUID.nameUUIDFromBytes("test-2".getBytes(UTF_8))});
         c.add((Object) ImmutableList.of(UUID.nameUUIDFromBytes("test-2".getBytes(UTF_8))));
         c.add((Object) ImmutableMap.of(
                 UUID.nameUUIDFromBytes("test-2".getBytes(UTF_8)),
@@ -106,7 +106,7 @@ public class StrongHashBuilderTest {
         a.add((char[]) null);
         a.add((float[]) null);
         a.add((double[]) null);
-        a.add((Object[]) null);
+        a.add((UUID[]) null);
         a.add((CharSequence) null);
         a.add((Collection) null);
         a.add((Map) null);
