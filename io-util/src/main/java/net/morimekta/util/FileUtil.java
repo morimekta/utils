@@ -117,23 +117,13 @@ public class FileUtil {
                 throw new NotLinkException(String.format("%s is not a symbolic link", link));
             }
             // This operation will follow the link. And we want it to.
-            if (Files.isDirectory(link)) {
-                // TODO: Figure out how to atomically replace link to directory.
-                // Java complains about target being a directory, as it seems to
-                // resolve the old link and trying to move onto that target, and
-                // it won't replace a directory with a link.
-                // And that is despite the NOFOLLOW_LINKS option.
-                Files.delete(link);
-                Files.createSymbolicLink(link, target);
-            } else {
-                Path parent = readCanonicalPath(link.getParent());
-                Path temp   = parent.resolve(String.format("..tmp.%x", new Random().nextLong()));
-                try {
-                    Files.createSymbolicLink(temp, target);
-                    Files.move(temp, link, ATOMIC_MOVE, REPLACE_EXISTING, NOFOLLOW_LINKS);
-                } finally {
-                    Files.deleteIfExists(temp);
-                }
+            Path parent = readCanonicalPath(link.getParent());
+            Path temp   = parent.resolve(String.format("..tmp.%x", new Random().nextLong()));
+            try {
+                Files.createSymbolicLink(temp, target);
+                Files.move(temp, link, ATOMIC_MOVE, REPLACE_EXISTING, NOFOLLOW_LINKS);
+            } finally {
+                Files.deleteIfExists(temp);
             }
         } else {
             Files.createSymbolicLink(link, target);

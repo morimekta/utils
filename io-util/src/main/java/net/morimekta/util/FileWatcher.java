@@ -128,7 +128,7 @@ public class FileWatcher implements AutoCloseable {
 
     /**
      * Create a FileWatcher using the provided watch service.
-     * @param watchService
+     * @param watchService Watcher service to use.
      */
     public FileWatcher(WatchService watchService) {
         this(watchService,
