@@ -7,6 +7,7 @@ jdk:
 branches:
   only:
     - master
+    - develop
 script: "mvn verify"
 # Undo _JAVA_OPTIONS environment variable
 before_script:
