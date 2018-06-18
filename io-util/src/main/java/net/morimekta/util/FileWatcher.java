@@ -163,8 +163,31 @@ public class FileWatcher implements AutoCloseable {
      * @deprecated Use {@link #addWatcher(Path, Listener)}
      */
     @Deprecated
+    public void addWatcher(File file, Watcher watcher) {
+        addWatcher(file.toPath(), watcher);
+    }
+
+    /**
+     * Start watching file path and notify watcher for updates on that file.
+     *
+     * @param file The file path to watch.
+     * @param watcher The watcher to be notified.
+     * @deprecated Use {@link #addWatcher(Path, Listener)}
+     */
+    @Deprecated
     public void addWatcher(File file, Listener watcher) {
         addWatcher(file.toPath(), watcher);
+    }
+
+    /**
+     * Start watching file path and notify watcher for updates on that file.
+     *
+     * @param file The file path to watch.
+     * @param watcher The watcher to be notified.
+     */
+    @Deprecated
+    public void addWatcher(Path file, Watcher watcher) {
+        addWatcher(file, (Listener) watcher);
     }
 
     /**
@@ -179,6 +202,19 @@ public class FileWatcher implements AutoCloseable {
         synchronized (mutex) {
             startWatchingInternal(file).add(() -> watcher);
         }
+    }
+
+    /**
+     * Add a file watcher that is persistent. If the reference from the
+     * file watcher to the watcher itself should not prevent garbage collection,
+     * use the {@link #weakAddWatcher(Listener)} method.
+     *
+     * @param watcher The watcher to add.
+     * @deprecated Use {@link #addWatcher(File, Listener)}
+     */
+    @Deprecated
+    public void addWatcher(Watcher watcher) {
+        addWatcher((Listener) watcher);
     }
 
     /**
@@ -213,8 +249,35 @@ public class FileWatcher implements AutoCloseable {
      * @deprecated Use {@link #weakAddWatcher(Path, Listener)}
      */
     @Deprecated
+    public void weakAddWatcher(File file, Watcher watcher) {
+        weakAddWatcher(file.toPath(), watcher);
+    }
+
+    /**
+     * Start watching file path and notify watcher for updates on that file.
+     * The watcher will be kept in a weak reference and will allow GC to delete
+     * the instance.
+     *
+     * @param file The file path to watch.
+     * @param watcher The watcher to be notified.
+     * @deprecated Use {@link #weakAddWatcher(Path, Listener)}
+     */
+    @Deprecated
     public void weakAddWatcher(File file, Listener watcher) {
         weakAddWatcher(file.toPath(), watcher);
+    }
+
+    /**
+     * Start watching file path and notify watcher for updates on that file.
+     * The watcher will be kept in a weak reference and will allow GC to delete
+     * the instance.
+     *
+     * @param file The file path to watch.
+     * @param watcher The watcher to be notified.
+     */
+    @Deprecated
+    public void weakAddWatcher(Path file, Watcher watcher) {
+        weakAddWatcher(file, (Listener) watcher);
     }
 
     /**
@@ -238,6 +301,17 @@ public class FileWatcher implements AutoCloseable {
      * @deprecated Use {@link #weakAddWatcher(File, Listener)}.
      */
     @Deprecated
+    public void weakAddWatcher(Watcher watcher) {
+        weakAddWatcher((Listener) watcher);
+    }
+
+    /**
+     * Add a non-persistent file watcher.
+     *
+     * @param watcher The watcher to add.
+     * @deprecated Use {@link #weakAddWatcher(File, Listener)}.
+     */
+    @Deprecated
     public void weakAddWatcher(Listener watcher) {
         if (watcher == null) {
             throw new IllegalArgumentException("Null watcher added");
@@ -249,6 +323,17 @@ public class FileWatcher implements AutoCloseable {
             }
             watchers.add(new WeakReference<>(watcher)::get);
         }
+    }
+
+    /**
+     * Remove a watcher from the list of listeners.
+     *
+     * @param watcher The watcher to be removed.
+     * @return True if the watcher was removed from the list.
+     */
+    @Deprecated
+    public boolean removeWatcher(Watcher watcher) {
+        return removeWatcher((Listener) watcher);
     }
 
     /**
