@@ -53,7 +53,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
-import static com.sun.nio.file.SensitivityWatchEventModifier.HIGH;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
@@ -491,8 +490,7 @@ public class FileWatcher implements AutoCloseable {
             try {
                 WatchKey key = directory.register(
                         watchService,
-                        new WatchEvent.Kind[]{ENTRY_MODIFY, ENTRY_CREATE, ENTRY_DELETE},
-                        HIGH);
+                        ENTRY_MODIFY, ENTRY_CREATE, ENTRY_DELETE);
                 watchKeyDirs.put(key, directory);
                 return key;
             } catch (IOException e) {
