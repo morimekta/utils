@@ -443,7 +443,7 @@ public class Base64 {
      *
      * @param s the string to decode
      * @return the decoded data
-     * @throws NullPointerException if <tt>s</tt> is null
+     * @throws NullPointerException if <code>s</code> is null
      */
     public static byte[] decode(String s) {
         if (s == null) {
