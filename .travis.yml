@@ -2,15 +2,16 @@ dist: trusty
 language: java
 sudo: false
 jdk:
-  - openjdk8
   - oraclejdk8
+  - openjdk8
+  - openjdk11
 branches:
   only:
     - master
     - develop
-script: "mvn verify"
-# Undo _JAVA_OPTIONS environment variable
 before_script:
+  # Undo _JAVA_OPTIONS environment variable
   - unset _JAVA_OPTIONS
+script: "mvn verify"
 after_success:
   - bash <(curl -s https://codecov.io/bash)
