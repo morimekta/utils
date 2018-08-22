@@ -24,7 +24,7 @@ import java.io.InputStream;
 
 /**
  * A {@link Base64InputStream} will read data from another
- * <tt>InputStream</tt>, given in the constructor, and encode
+ * <code>InputStream</code>, given in the constructor, and encode
  * to Base64 notation on the fly.
  *
  * @see Base64

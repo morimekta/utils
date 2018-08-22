@@ -663,7 +663,7 @@ public class Base64 {
      * @param s the string to decode
      * @param options encodeToString options such as URL_SAFE
      * @return the decoded data
-     * @throws NullPointerException if <tt>s</tt> is null
+     * @throws NullPointerException if <code>s</code> is null
      */
     public static byte[] decode(String s, int options) {
         if (s == null) {
